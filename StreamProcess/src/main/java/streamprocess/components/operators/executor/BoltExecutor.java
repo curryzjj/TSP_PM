@@ -1,7 +1,7 @@
 package streamprocess.components.operators.executor;
 
 import System.util.Configuration;
-import com.sun.org.apache.xerces.internal.impl.dv.DatatypeException;
+import engine.Exception.DatabaseException;
 import streamprocess.components.operators.api.Operator;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
@@ -20,9 +20,9 @@ public abstract class BoltExecutor implements IExecutor {
         this.op = op;
     }
     //implemented by the BatchExecutor  (DatatypeException->DatabaseException)
-    public abstract void execute(JumboTuple in) throws InterruptedException, DatatypeException, BrokenBarrierException;
-    public abstract void execute(Tuple in) throws InterruptedException, DatatypeException, BrokenBarrierException;
-    public abstract void profile_execute(JumboTuple in) throws InterruptedException, DatatypeException, BrokenBarrierException;
+    public abstract void execute(JumboTuple in) throws InterruptedException, DatabaseException, BrokenBarrierException;
+    public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException;
+    public abstract void profile_execute(JumboTuple in) throws InterruptedException, DatabaseException, BrokenBarrierException;
     //end
 
     public void loadDB(Configuration conf,TopologyContext context,OutputCollector collector){

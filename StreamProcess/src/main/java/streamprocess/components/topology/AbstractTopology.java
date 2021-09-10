@@ -1,13 +1,19 @@
 package streamprocess.components.topology;
 
+import System.constants.BaseConstants;
+import System.util.ClassLoaderUtils;
 import System.util.Configuration;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractSpout;
 import streamprocess.components.operators.base.BaseSink;
+import sun.misc.ClassLoaderUtil;
+
 /**
- * Extended by the user to implement their logic
+ * Extended by the user to implement their topology-logic
  */
 public abstract class AbstractTopology  {
+    private static final Logger LOG= LoggerFactory.getLogger(AbstractTopology.class);
     protected final TopologyBuilder builder;
     protected final Configuration config;
     private final String topologyName;
@@ -16,20 +22,35 @@ public abstract class AbstractTopology  {
         this.config=config;
         this.builder=new TopologyBuilder();
     }
+    //the below function are used in the log
     protected String getConfigKey(){ return null;}
     protected String getConfigKey(String name){ return null;}
+    //end
     public String getTopologyName() {
         return topologyName;
     }
     //loadSpout and some overload function
-    AbstractSpout loadSpout(){return null;}
-    protected AbstractSpout loadSpout(String configKey, String configPrefix){return null;}
-    protected AbstractSpout loadSpout(String name){return null;}
+    AbstractSpout loadSpout(){
+        return loadSpout(BaseConstants.BaseConf.SPOUT_CLASS, getConfigPrefix());
+    }
+    protected AbstractSpout loadSpout(String configKey, String configPrefix){
+        String spoutClass=config.getString(String.format(configKey,configPrefix));
+        AbstractSpout spout;
+        spout=(AbstractSpout) ClassLoaderUtils.newInstance(spoutClass,"spout",getLogger());
+        spout.setConfigPrefix(configPrefix);
+        return spout;
+    }
     //end
     //loadSink and some overload function
-    BaseSink loadSink(){return null;}
-    protected BaseSink loadSink(String configKey, String configPrefix){return null;}
-    protected BaseSink loadSink(String name){return null;}
+    BaseSink loadSink(){
+        return loadSink(BaseConstants.BaseConf.SINK_CLASS, getConfigPrefix());
+    }
+    protected BaseSink loadSink(String configKey, String configPrefix){
+        String sinkClass = config.getString(String.format(configKey, configPrefix));
+        BaseSink sink = (BaseSink) ClassLoaderUtils.newInstance(sinkClass, "sink", getLogger());
+        sink.setConfigPrefix(configPrefix);
+        return sink;
+    }
     //end
     /**
      * Utility method to parse a configuration key with the application prefix..

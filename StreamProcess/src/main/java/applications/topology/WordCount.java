@@ -5,7 +5,8 @@ import UserApplications.constants.WordCountConstants.Component;
 import applications.bolts.common.StringParserBolt;
 import applications.bolts.wordcount.SplitSentenceBolt;
 import applications.bolts.wordcount.WordCountBolt;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import streamprocess.components.exception.InvalidIDException;
 import streamprocess.components.grouping.ShuffleGrouping;
 import streamprocess.components.topology.BasicTopology;
@@ -14,6 +15,7 @@ import streamprocess.controller.input.InputStreamController;
 import streamprocess.execution.runtime.tuple.Fields;
 
 public class WordCount extends BasicTopology{
+    private static final Logger LOG= LoggerFactory.getLogger(WordCount.class);
     public WordCount(String topologyName, Configuration config){
         super(topologyName,config);
     }
@@ -44,11 +46,11 @@ public class WordCount extends BasicTopology{
 
     @Override
     protected Logger getLogger() {
-        return null;
+        return LOG;
     }
 
     @Override
     protected String getConfigPrefix() {
-        return null;
+        return "the constants in the applicationConstants";
     }
 }

@@ -3,6 +3,7 @@ package streamprocess.components.operators.executor;
 import System.util.Configuration;
 import streamprocess.components.operators.api.AbstractSpout;
 import streamprocess.components.topology.TopologyContext;
+import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.Marker;
 
@@ -11,80 +12,75 @@ import java.util.Map;
 public class BasicSpoutBatchExecutor extends SpoutExecutor{
     private final AbstractSpout _op;
 
-    BasicSpoutBatchExecutor(AbstractSpout op) {
+    public BasicSpoutBatchExecutor(AbstractSpout op) {
         super(op);
-        this._op=op;
-    }
-
-    public void bulk_emit_nonblocking(int batch) throws InterruptedException {
-        for (int i = 0; i < batch; i++) {
-            _op.nextTuple_noblocking();
-        }
-    }
-    public void bulk_emit(int batch) throws InterruptedException {
-        for (int i = 0; i < batch; i++) {
-            _op.nextTuple();
-        }
+        this._op = op;
     }
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
-
+        _op.prepare(stormConf, context, collector);
     }
 
     @Override
     public int getID() {
-        return 0;
+        return _op.getId();
     }
+
 
     @Override
     public double get_read_selectivity() {
-        return 0;
+        return _op.read_selectivity;
     }
 
     @Override
     public Map<String, Double> get_input_selectivity() {
-        return null;
+        return _op.input_selectivity;
     }
 
     @Override
     public Map<String, Double> get_output_selectivity() {
-        return null;
+        return _op.output_selectivity;
     }
 
     @Override
     public double get_branch_selectivity() {
-        return 0;
+        return _op.branch_selectivity;
     }
 
     @Override
     public String getConfigPrefix() {
-        return null;
+        return _op.getConfigPrefix();
     }
 
     @Override
     public TopologyContext getContext() {
-        return null;
+        return _op.getContext();
     }
 
     @Override
     public void display() {
-
+        _op.display();
     }
 
     @Override
     public double getResults() {
-        return 0;
+        return _op.getResults();
     }
 
     @Override
     public double getLoops() {
-        return 0;
+        return _op.getLoops();
     }
 
     @Override
     public boolean isScalable() {
-        return false;
+        return _op.scalable;
+    }
+
+    @Override
+    public Integer default_scale(Configuration conf) {
+        return _op.default_scale(conf);
     }
 
     @Override
@@ -94,11 +90,22 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
 
     @Override
     public void callback(int callee, Marker marker) {
-
+        _op.callback(callee, marker);
     }
 
-    @Override
-    public Integer default_scale(Configuration conf) {
-        return null;
+    public void bulk_emit_nonblocking(int batch) throws InterruptedException {
+        for (int i = 0; i < batch; i++) {
+            _op.nextTuple_nonblocking();
+        }
+    }
+
+    public void bulk_emit(int batch) throws InterruptedException {
+        for (int i = 0; i < batch; i++) {
+            _op.nextTuple();
+        }
+    }
+
+    public void setExecutionNode(ExecutionNode executionNode) {
+        _op.setExecutionNode(executionNode);
     }
 }

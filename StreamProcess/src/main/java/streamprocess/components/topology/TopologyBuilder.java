@@ -7,16 +7,17 @@ import streamprocess.components.grouping.ShuffleGrouping;
 import streamprocess.components.operators.api.AbstractBolt;
 import streamprocess.components.operators.api.AbstractSpout;
 import streamprocess.components.operators.base.BaseSink;
+import streamprocess.components.operators.executor.BasicSpoutBatchExecutor;
 import streamprocess.components.operators.executor.IExecutor;
 import streamprocess.controller.input.InputStreamController;
+import streamprocess.execution.runtime.tuple.OutputFieldsDeclarer;
 import streamprocess.execution.runtime.tuple.streaminfo;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import static System.Constants.boltType;
-import static System.Constants.sinkType;
+import static System.Constants.*;
 
 /**
  * Builder pattern for Topology_components class
@@ -36,7 +37,15 @@ public class TopologyBuilder {
      * @throws InvalidIDException
      */
     public TopologyBuilder setSpout(String id, AbstractSpout s,int numTasks) throws InvalidIDException{
-        TopologyComponent topologyComponent=null;
+        if(idSet.contains(id)){//id=spout,parser
+            throw new InvalidIDException("operator ID already taken");
+        }
+        idSet.add(id);
+        HashMap<String,streaminfo> output_streams;
+        OutputFieldsDeclarer declarer=new OutputFieldsDeclarer();//implement after
+        s.declareOutputFields(declarer);
+        output_streams=declarer.getFieldsDeclaration();
+        TopologyComponent topologyComponent=new MultiStreamComponent(id,spoutType,new BasicSpoutBatchExecutor(s),numTasks,null,output_streams,null);
         topology.addRecord(topologyComponent);
         return this;
     }
@@ -53,7 +62,13 @@ public class TopologyBuilder {
      * @param groups   :multiple groups.
      * @throws InvalidIDException
      */
-    private TopologyBuilder setBolt(char type, String id, AbstractBolt b, int numTasks, Grouping... groups) throws InvalidIDException {return this;}
+    private TopologyBuilder setBolt(char type, String id, AbstractBolt b, int numTasks, Grouping... groups) throws InvalidIDException {
+        if (idSet.contains(id)) {
+            throw new InvalidIDException("Operator ID already taken");
+        }
+
+        return this;
+    }
     /**
      * @param type
      * @param id

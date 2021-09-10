@@ -16,4 +16,8 @@ public interface BaseConstants {
         String SINK = "sink";
         String FORWARD = "forward";
     }
+    interface BaseConf{
+        String SPOUT_CLASS="%s.spout.class";
+        String SINK_CLASS="%s.sink.class";
+    }
 }
