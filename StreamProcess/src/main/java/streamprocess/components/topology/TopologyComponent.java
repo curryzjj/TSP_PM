@@ -26,7 +26,7 @@ public abstract class TopologyComponent implements Serializable {
      * < StreamID, Streaminfo >
      */
     final HashMap<String, streaminfo> output_streams;
-    private final String id;
+    private final String id;//the name of the operator
     private final IExecutor op;//this is the operator structure passed in from user application
     private final HashMap<String, HashMap<String, Grouping>> grouping_to_downstream;//not sure
     private ArrayList<ExecutionNode> executor;//executor of this operator is initiated after execution graph is created.
@@ -69,7 +69,7 @@ public abstract class TopologyComponent implements Serializable {
     public IExecutor getOp() {
         return op;
     }
-    public String getId() { return ""; }
+    public String getId() { return id; }
     public int getNumTasks() {
         return numTasks;
     }
@@ -84,16 +84,21 @@ public abstract class TopologyComponent implements Serializable {
         executorID.add(vertex.getExecutorID());
     }
     public void setGrouping(String downOp, Grouping g) {
-        //implement after
+        //implement after the TopologyBuilder.setBolt()
+        String stream=g.getStreamID();
+        this.grouping_to_downstream.computeIfAbsent(downOp,k->new HashMap<>());
+        this.grouping_to_downstream.get(downOp).put(stream,g);
     }
     public Fields get_output_fields(String sourceStreamId) {
-       //implement after
+       //implement after streaminfo
         return null;
     }
     public Map<TopologyComponent, Grouping> getChildrenOfStream() {
         return getChildrenOfStream(DEFAULT_STREAM_ID);
     }
     //implement by the multi_component
+    public abstract void setChildren(TopologyComponent topologyComponent, Grouping g);
+    public abstract void setParents(TopologyComponent topologyComponent, Grouping g);
     public abstract Set<String> getOutput_streamsIds();
 
     public abstract Map<TopologyComponent, Grouping> getChildrenOfStream(String streamId);

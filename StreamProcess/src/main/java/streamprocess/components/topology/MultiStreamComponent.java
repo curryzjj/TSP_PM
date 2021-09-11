@@ -38,7 +38,29 @@ public class MultiStreamComponent extends TopologyComponent {
         //for grouping implement after
         this.toCompress = topo.toCompress;
     }
+
     /*children and Grouping to downstream structures are "upload" by children operator.*/
+    @Override
+    public void setChildren(TopologyComponent downOp, Grouping g) {
+        String stream=g.getStreamID();
+        Map<TopologyComponent,Grouping> childOpList=children.get(stream);
+        if(childOpList==null){
+            childOpList=new HashMap<>();
+        }
+        childOpList.put(downOp,g);//update children
+        children.put(stream,childOpList);
+    }
+
+    @Override
+    public void setParents(TopologyComponent upOp, Grouping g) {
+        String stream = g.getStreamID();
+        Map<TopologyComponent, Grouping> parentOpList = parents.get(stream);
+        if (parentOpList == null) {
+            parentOpList = new HashMap<>();
+        }
+        parentOpList.put(upOp, g);//update parents
+        parents.put(stream, parentOpList);
+    }
     @Override
     public Set<String> getOutput_streamsIds() {
         return output_streams.keySet();

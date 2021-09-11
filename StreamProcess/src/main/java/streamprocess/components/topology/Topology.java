@@ -16,7 +16,7 @@ public class Topology implements Serializable {
      * <Operator ID, Operator>
      */
     private final LinkedHashMap<String, TopologyComponent> records;
-    private TopologyComponent sink;
+    private TopologyComponent sink;//not sure where to use?
     private InputStreamController scheduler;
     private Platform p;
 
@@ -27,7 +27,9 @@ public class Topology implements Serializable {
         records = new LinkedHashMap<>();
     }
     //Add/get element(spout/bolt) in topology
-    public void addRecord(TopologyComponent rec) { }
+    public void addRecord(TopologyComponent rec) {
+        records.put(rec.getId(),rec);
+    }
     public TopologyComponent getRecord(String componentID) { return records.get(componentID); }
     public TopologyComponent getComponent(String componentId) { return records.get(componentId); }
     public LinkedHashMap<String, TopologyComponent> getRecords() { return records; }
