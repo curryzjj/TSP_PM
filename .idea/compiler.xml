@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="StreamProcess" />
         <module name="TransactionalProcess" />
+        <module name="PMManager" />
         <module name="Common" />
       </profile>
     </annotationProcessing>

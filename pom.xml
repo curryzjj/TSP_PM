@@ -12,6 +12,7 @@
         <module>StreamProcess</module>
         <module>Common</module>
         <module>TransactionalProcess</module>
+        <module>PMManager</module>
     </modules>
 
     <properties>
