@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Example01_GettingStarted {
-    private static long MB=1024L*1024L;
-    private static long GB=1024*MB;
     public static Logger LOG= LoggerFactory.getLogger(Example01_GettingStarted.class);
     public static void main(String[] args){
         LOG.info("Test Start");
