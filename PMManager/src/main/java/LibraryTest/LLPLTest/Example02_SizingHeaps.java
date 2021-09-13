@@ -11,7 +11,7 @@ public class Example02_SizingHeaps {
     private static long GB=1024*MB;
     private static Logger LOG= LoggerFactory.getLogger(Example02_SizingHeaps.class);
     public static void main(String[] args) {
-        String path="/dev/pmem0/llpl/";
+        String path="/pmem1/llpl/";
         LOG.info("Test start");
         //heap of fixed size
         Heap fixedHeap=Heap.createHeap(path+"fixed",100*MB);
