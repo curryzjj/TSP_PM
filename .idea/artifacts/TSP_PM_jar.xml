@@ -1,0 +1,21 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="TSP_PM:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/TSP_PM_jar</output-path>
+    <root id="archive" name="TSP_PM_jar.jar">
+      <element id="archive" name="TSP_PM.jar">
+        <element id="module-output" name="TransactionalProcess" />
+        <element id="module-output" name="StreamProcess" />
+        <element id="module-output" name="Common" />
+        <element id="module-output" name="TSP_PM" />
+        <element id="module-output" name="PMManager" />
+      </element>
+      <element id="library" level="project" name="Maven: org.overseer:overseer:1.0" />
+      <element id="library" level="project" name="Maven: org.apache.commons:commons-lang3:3.4" />
+      <element id="library" level="project" name="Maven: com.intel.pmem:llpl:1.2.0-release" />
+      <element id="library" level="project" name="Maven: log4j:log4j:1.2.17" />
+      <element id="library" level="project" name="Maven: org.slf4j:slf4j-api:1.7.7" />
+      <element id="library" level="project" name="Maven: commons-lang:commons-lang:2.6" />
+      <element id="library" level="project" name="Maven: org.slf4j:slf4j-log4j12:1.7.7" />
+    </root>
+  </artifact>
+</component>

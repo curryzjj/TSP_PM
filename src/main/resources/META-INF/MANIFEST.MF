@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Main-Class: LibraryTest.LLPLTest.Example01_GettingStarted
+Class-Path: overseer-1.0.jar commons-lang3-3.4.jar llpl-1.2.0-release.ja
+ r log4j-1.2.17.jar slf4j-api-1.7.7.jar commons-lang-2.6.jar slf4j-log4j
+ 12-1.7.7.jar
+
