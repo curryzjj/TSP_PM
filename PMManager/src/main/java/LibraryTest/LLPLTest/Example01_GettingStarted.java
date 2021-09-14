@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 public class Example01_GettingStarted {
     public static Logger LOG= LoggerFactory.getLogger(Example01_GettingStarted.class);
     public static void main(String[] args){
-        LOG.info("Test Start");
         String path="/mnt/pmem0/jjzhao";
+        LOG.info("Test Start:"+"Path="+path);
         boolean initialized=Heap.exists(path);
         //first run -- create heap
        Heap heap=initialized ? Heap.openHeap(path):Heap.createHeap(path);
