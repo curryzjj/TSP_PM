@@ -1,18 +1,16 @@
-package LibraryTest.LLPLTest;
-
+package Library.LLPL;
 import com.intel.pmem.llpl.Heap;
 import com.intel.pmem.llpl.MemoryBlock;
 import com.intel.pmem.llpl.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
-public class Example01_GettingStarted {
-    public static Logger LOG= LoggerFactory.getLogger(Example01_GettingStarted.class);
-    public static void main(String[] args){
-        String path="/mnt/pmem0/jjzhao";
+import static System.Constants.Default_Heap_Path;
+public class GettingStarted {
+    public String path=Default_Heap_Path;
+    public static Logger LOG= LoggerFactory.getLogger(GettingStarted.class);
+    public void createHeap(){
+        System.out.println("11");
         LOG.info("Test Start:"+"Path="+path);
-        System.out.print(System.getProperty("os.arch"));
         boolean initialized=Heap.exists(path);
         //first run -- create heap
         Heap heap=initialized ? Heap.openHeap(path):Heap.createHeap(path);

@@ -7,4 +7,6 @@ public interface Constants {
     char spoutType = 'p';
     char boltType = 'b';
     char virtualType = 'v';
+    //PM constants
+    String Default_Heap_Path="/mnt/pmem0/jjzhao";
 }
