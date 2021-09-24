@@ -42,6 +42,7 @@ public abstract class Operator {
     boolean Stateful = false;//stateful or stateless operator
     public boolean scalable = true;
 
+
     Logger LOG;
     public int fid =-1;
     public boolean forceStop;

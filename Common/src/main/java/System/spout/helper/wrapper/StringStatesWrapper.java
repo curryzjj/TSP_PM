@@ -1,4 +1,13 @@
 package System.spout.helper.wrapper;
 
-public class StringStatesWrapper {
+import System.spout.helper.wrapper.basic.StateWrapper;
+
+public class StringStatesWrapper extends StateWrapper {
+    public StringStatesWrapper(boolean verbose, int size) {
+        super(verbose, size);
+    }
+
+    public StringStatesWrapper(int size) {
+        super(size);
+    }
 }

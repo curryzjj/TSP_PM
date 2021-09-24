@@ -19,5 +19,7 @@ public interface BaseConstants {
     interface BaseConf{
         String SPOUT_CLASS="%s.spout.class";
         String SINK_CLASS="%s.sink.class";
+        String SPOUT_TEST_PATH = "%s.test.spout.path";
+        String SPOUT_PATH = "%s.spout.path";
     }
 }

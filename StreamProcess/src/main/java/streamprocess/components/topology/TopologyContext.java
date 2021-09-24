@@ -7,4 +7,11 @@ package streamprocess.components.topology;
  * <profiling/>
  */
 public class TopologyContext {
+    public TopologyComponent getComponent(int taskId) {
+        return null;
+    }
+
+    public int getThisTaskIndex() {
+        return 0;
+    }
 }
