@@ -11,8 +11,8 @@ public class GettingStartTest {
         started=new GettingStarted();
     }
     public void test1(){
-        LOG.info("Test Start:"+"Path="+started.path+"name="+started.name);
         setup();
+        LOG.info("Test Start:"+"Path="+started.path+"name="+started.name);
         started.createHeap();
         if(started.freeHeap(started.path+started.name)){
             LOG.info("freeHeap successfully");
