@@ -9,5 +9,5 @@ public interface Constants {
     char virtualType = 'v';
     //PM constants
     String Default_Heap_Path="/mnt/pmem0/jjzhao";
-    String Default_Heap_Name="default";
+    String Default_Heap_Name="/default";
 }
