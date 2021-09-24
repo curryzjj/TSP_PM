@@ -8,6 +8,6 @@ public interface Constants {
     char boltType = 'b';
     char virtualType = 'v';
     //PM constants
-    String Default_Heap_Path="/mnt/pmem0/jjzhao";
+    String Default_Heap_Path="/mnt/persist-memory/pmem0/jjzhao";
     String Default_Heap_Name="/default";
 }

@@ -56,6 +56,9 @@ public class GettingStarted {
             otherBlock.free(false);
             block.free(false);
             heap.setRoot(0);
+            if(this.freeHeap(this.path+this.name)){
+                LOG.info("freeHeap successfully");
+            }
         }
     }
     public boolean freeHeap(String path){

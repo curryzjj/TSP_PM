@@ -14,8 +14,5 @@ public class GettingStartTest {
         setup();
         LOG.info("Test Start:"+"Path="+started.path+"name="+started.name);
         started.createHeap();
-        if(started.freeHeap(started.path+started.name)){
-            LOG.info("freeHeap successfully");
-        }
     }
 }
