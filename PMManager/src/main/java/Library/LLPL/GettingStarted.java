@@ -1,19 +1,27 @@
 package Library.LLPL;
+import com.intel.pmem.llpl.AnyHeap;
 import com.intel.pmem.llpl.Heap;
 import com.intel.pmem.llpl.MemoryBlock;
 import com.intel.pmem.llpl.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
+
+import static System.Constants.Default_Heap_Name;
 import static System.Constants.Default_Heap_Path;
 public class GettingStarted {
     public String path=Default_Heap_Path;
+    public String name=Default_Heap_Name;
     public static Logger LOG= LoggerFactory.getLogger(GettingStarted.class);
     public void createHeap(){
-        System.out.println("11");
-        LOG.info("Test Start:"+"Path="+path);
-        boolean initialized=Heap.exists(path);
+        boolean initialized=Heap.exists(path+name);
         //first run -- create heap
-        Heap heap=initialized ? Heap.openHeap(path):Heap.createHeap(path);
+        Heap heap=initialized ? Heap.openHeap(path+name):Heap.createHeap(path+name);
         LOG.info("create heap");
         if(!initialized){
             //create block
@@ -39,12 +47,30 @@ public class GettingStarted {
             long blockHandle=heap.getRoot();
             MemoryBlock block=heap.memoryBlockFromHandle(blockHandle);
             long value1=block.getLong(0);
+            LOG.info("get value1"+value1);
             long value2=block.getLong(8);
+            LOG.info("get value2"+value2);
             MemoryBlock otherBlock=heap.memoryBlockFromHandle(block.getLong(16));
             int otherValue=otherBlock.getInt(0);
+            LOG.info("get otherValue"+otherValue);
             otherBlock.free(false);
             block.free(false);
             heap.setRoot(0);
         }
+    }
+    public boolean freeHeap(String path){
+        boolean ret=false;
+        Path pathToDeleted=new File(path).toPath();
+        if(Files.exists(pathToDeleted)){
+            try{
+                Files.walk(pathToDeleted).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if(!Files.exists(pathToDeleted)){
+            ret=true;
+        }
+        return ret;
     }
 }
