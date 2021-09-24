@@ -21,7 +21,14 @@ public class GettingStarted {
     public void createHeap(){
         boolean initialized=Heap.exists(path+name);
         //first run -- create heap
-        Heap heap=initialized ? Heap.openHeap(path+name):Heap.createHeap(path+name);
+        Heap heap = null;
+        if(initialized){
+            heap=Heap.openHeap(path+name);
+        }else{
+            if(this.createFolder(path+name)){
+              heap = Heap.createHeap(path+name);
+            }
+        }
         LOG.info("create heap");
         if(!initialized){
             //create block
@@ -73,6 +80,18 @@ public class GettingStarted {
         }
         if(!Files.exists(pathToDeleted)){
             ret=true;
+        }
+        return ret;
+    }
+    public boolean createFolder(String path){
+        boolean ret=false;
+        File file=new File(path);
+        if(file.exists()){
+            return false;
+        }
+        ret=file.mkdir();
+        if(!ret){
+            LOG.info("can not create folder at "+path);
         }
         return ret;
     }
