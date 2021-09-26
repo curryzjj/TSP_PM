@@ -77,9 +77,30 @@ public class ExecutionGraph {
     private ExecutionNode addVirtual(Platform p){return null;}
     private void add(){}
     private void Loading(Configuration conf,Platform p){}
-    private void build_streamController(int batch){}
+    private void build_streamController(int batch){
+
+    }
     //used by the build_streamController
-    private HashMap<String, PartitionController> init_pc(String streamId,TopologyComponent srcOP,int batch, ExecutionNode executor, boolean common){return null;}
+    private HashMap<String, PartitionController> init_pc(String streamId,TopologyComponent srcOP,
+                                                         int batch, ExecutionNode executor, boolean common){
+         HashMap<String,PartitionController> PClist=new HashMap<>();
+         if(srcOP.getChildrenOfStream(streamId)!=null){
+             for(TopologyComponent childOP:srcOP.getChildrenOfStream(streamId).keySet()){
+                 HashMap<Integer,ExecutionNode> downExecutor_list=new HashMap<>();
+                 for(ExecutionNode e:childOP.getExecutorList()){
+                     downExecutor_list.put(e.getExecutorID(),e);
+                 }
+                 PClist.put(childOP.getId(),partitionController_create(srcOP,childOP,streamId,downExecutor_list,batch,executor,common));
+             }
+         }
+         return PClist;
+    }
+    private PartitionController partitionController_create(TopologyComponent srcOP, TopologyComponent childOP,
+                                                           String streamId, HashMap<Integer,ExecutionNode> downExexutor_list,
+                                                           int batch, ExecutionNode executor,boolean common){
+         //wait for the PartitionController
+         return null;
+    }
     //end
     //end
     //end

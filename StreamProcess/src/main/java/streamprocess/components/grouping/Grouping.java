@@ -30,7 +30,7 @@ public abstract class Grouping implements Serializable {
         return componentId;
     }
     public Fields getFields(){return null;}
-    //use in the outputController
+    //use in the ExecutionGraph to set the outputController
     public boolean isShuffle() {
         return this instanceof ShuffleGrouping;
     }
