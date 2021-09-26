@@ -2,14 +2,18 @@ package streamprocess.execution;
 
 import System.Platform.Platform;
 import System.util.Configuration;
+import streamprocess.components.topology.MultiStreamComponent;
 import streamprocess.components.topology.Topology;
 import streamprocess.components.topology.TopologyComponent;
 import streamprocess.controller.input.InputStreamController;
-import streamprocess.controller.output.PartitionController;
+import streamprocess.controller.output.MultiStreamOutputContoller;
+import streamprocess.controller.output.OutputController;
+import streamprocess.controller.output.partition.PartitionController;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class ExecutionGraph {
     public final Topology topology;
@@ -21,8 +25,8 @@ public class ExecutionGraph {
     private ExecutionNode virtualNode;
     private ExecutionNode spout;
     private ExecutionNode sink;
-    private boolean shared;//share by multi producers
-    private boolean common;//shared by mutlti consumers
+    private boolean shared;//OutputController share by multi producers
+    private boolean common;//OutputController shared by multi consumers
     //some Constructors
     public ExecutionGraph(Topology topo, Map<String, Integer> parallelism, Configuration conf){
         executionNodeArrayList=new ArrayList<>();
@@ -36,13 +40,30 @@ public class ExecutionGraph {
     //Configure set the numTasks of the operator, and create the Operator->executor link
     private void addRecord(TopologyComponent operator, Platform p){
         //create executionNode and assign unique vertex id to it,each task has an executor
-        int operator_numTasks=1;
+        int operator_numTasks=operator.getNumTasks();
         for(int i=0;i< operator_numTasks;i++){
             ExecutionNode vertex = new ExecutionNode(operator, vertex_id++, p);//Every executionNode obtain its unique vertex id..
             //set First or Last ExecutorNode
+            if(i==operator_numTasks-1){
+                vertex.setLast_executorOfBolt(true);
+            }
+            if(i==0){
+                vertex.setFirst_executor(true);
+                if(conf.getBoolean("profile",false)){
+                    vertex.setNeedsProfile();
+                }
+            }
             addExecutor(vertex);
-            //creates Operator->executor link
+            operator.link_to_executor(vertex);//creates Operator->executor link
         }
+    }
+    private ExecutionNode addRecord(ExecutionNode e, TopologyComponent topo, Platform platform) {
+
+        //creates executor->Operator link
+        ExecutionNode vertex = new ExecutionNode(e, topo, platform);//Every executionNode obtain its unique vertex id..
+        addExecutor(vertex);
+        topo.link_to_executor(vertex);//creates Operator->executor link.
+        return vertex;
     }
     private void Configuration(Topology topology, Map<String, Integer> parallelism, Configuration conf, Platform p){
         //set num of Tasks specified in operator
@@ -61,29 +82,85 @@ public class ExecutionGraph {
      * @param p
      */
      private void setup(Configuration conf, Platform p){
+         shared= conf.getBoolean("shared",false);
+         common=conf.getBoolean("common",false);
          final ArrayList<ExecutionNode> executionNodeArrayList = getExecutionNodeArrayList();
          //buildTopology
          spout = executionNodeArrayList.get(0);
          sink = executionNodeArrayList.get(executionNodeArrayList.size() - 1);
          virtualNode = addVirtual(p);
          //create the Parent-Children executor link
-         add();
+         for(ExecutionNode executor:executionNodeArrayList){
+             if(executor.isLeafNode()){
+                 continue;
+             }
+             final TopologyComponent operator=executor.operator;
+             for(String stream:operator.get_childrenStream()){
+                 add(operator.getChildrenOfStream(stream).keySet(),executor,operator);
+             }
+         }
+         for (ExecutionNode par : sink.operator.getExecutorList()) {
+             par.getChildren().put(virtualNode.operator, new ArrayList<>());
+             par.getChildrenOf(virtualNode.operator).add(virtualNode);
+             virtualNode.getParents().putIfAbsent(sink.operator, new ArrayList<>());
+             virtualNode.getParentsOf(sink.operator).add(par);
+         }
          //build_streamController
-         build_streamController(0);
+         build_streamController(conf.getInt("batch",100));
          //loading statistics
          Loading(conf,p);
      }
      //used by the above setup
     private ExecutionNode addVirtual(Platform p){return null;}
-    private void add(){}
+    private void add(Set<TopologyComponent> children, ExecutionNode executor, TopologyComponent operator){
+         for(TopologyComponent child:children){
+             executor.getChildren().putIfAbsent(child,new ArrayList<>());
+             final ArrayList<ExecutionNode> childrenExecutor=child.getExecutorList();
+             for(ExecutionNode childExecutor:childrenExecutor){
+                 executor.getChildrenOf(child).add(childExecutor);
+                 childExecutor.getParents().putIfAbsent(operator,new ArrayList<>());
+                 childExecutor.getParentsOf(operator).add(executor);
+             }
+         }
+    }
     private void Loading(Configuration conf,Platform p){}
     private void build_streamController(int batch){
-
+         if(!shared){
+             for(ExecutionNode executor:executionNodeArrayList){//build sc for each executor who is not leaf mapping_node
+                 if(executor.isLeafNode()){
+                     continue;
+                 }
+                 //<output_streamId,<DownOpId,PC>> for each executor
+                 HashMap<String,HashMap<String,PartitionController>> PCMaps=new HashMap<>();
+                 for(String streamId:executor.operator.getOutput_streamsIds()){
+                     HashMap<String,PartitionController> PClist=init_pc(streamId,executor.operator,batch,executor,common);
+                     PCMaps.put(streamId,PClist);
+                 }
+                 OutputController sc=new MultiStreamOutputContoller((MultiStreamComponent) executor.operator,PCMaps);
+                 executor.setController(sc);
+             }
+         }else{
+             for(TopologyComponent operator:topology.getRecords().values()){
+                 if(operator.isLeadNode()){
+                     continue;
+                 }
+                 //<output_streamId,<DownOpId,PC>> for operator
+                 HashMap<String,HashMap<String,PartitionController>> PCMaps=new HashMap<>();
+                 for(String streamId:operator.getOutput_streamsIds()){
+                     HashMap<String,PartitionController> PClist=init_pc(streamId,operator,batch,null,common);
+                     PCMaps.put(streamId,PClist);
+                 }
+                 OutputController sc=new MultiStreamOutputContoller((MultiStreamComponent) operator,PCMaps);
+                 for(ExecutionNode executor:operator.getExecutorList()){
+                     executor.setController(sc);
+                 }
+             }
+         }
     }
     //used by the build_streamController
     private HashMap<String, PartitionController> init_pc(String streamId,TopologyComponent srcOP,
                                                          int batch, ExecutionNode executor, boolean common){
-         HashMap<String,PartitionController> PClist=new HashMap<>();
+         HashMap<String,PartitionController> PClist=new HashMap<>();//<childOp.Id,PartitionController>
          if(srcOP.getChildrenOfStream(streamId)!=null){
              for(TopologyComponent childOP:srcOP.getChildrenOfStream(streamId).keySet()){
                  HashMap<Integer,ExecutionNode> downExecutor_list=new HashMap<>();

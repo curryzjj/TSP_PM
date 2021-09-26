@@ -17,11 +17,13 @@ public class ExecutionNode implements Serializable {
     public final TopologyComponent operator;//Operator structure shouldn't be referenced as tp_engine information.....
     private final int executorID;//global ID for this executorNode in current topology
     public final IExecutor op;//Operator should be owned by executionNode as it maintains unique information such as context information.
-    private boolean first_executor;
     private InputStreamController inputStreamController;
     private OutputController controller;
     private HashMap<TopologyComponent, ArrayList<ExecutionNode>> parents = new HashMap();
     private HashMap<TopologyComponent, ArrayList<ExecutionNode>> children = new HashMap();
+    private boolean last_executor=false;
+    private boolean first_executor;
+    private boolean needsProfile;
 
     public ExecutionNode(TopologyComponent rec, int i, Platform p, int compressRatio) {
         this.operator = rec;
@@ -39,6 +41,13 @@ public class ExecutionNode implements Serializable {
         this.executorID = i;
         op = null;
     }
+
+    public ExecutionNode(ExecutionNode e, TopologyComponent topo, Platform platform) {
+        this.operator = topo;
+        this.executorID = e.getExecutorID();
+        op = null;
+    }
+
     //First executor: what is the different->use the first executor as the profiling target
     public boolean isFirst_executor() { return first_executor; }
     public void setFirst_executor(boolean first_executor) {
@@ -109,5 +118,13 @@ public class ExecutionNode implements Serializable {
     
     public int getExecutorID() {
         return 0;
+    }
+
+    public void setLast_executorOfBolt(boolean last_executor) {
+        this.last_executor=last_executor;
+    }
+
+    public void setNeedsProfile() {
+        this.needsProfile = true;
     }
 }

@@ -2,10 +2,12 @@ package streamprocess.controller.output;
 
 import System.util.DataTypes.StreamValues;
 import streamprocess.components.topology.TopologyContext;
+import streamprocess.controller.output.partition.PartitionController;
 import streamprocess.execution.runtime.collector.MetaGroup;
 import streamprocess.execution.runtime.tuple.Marker;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.LinkedList;
 
 /**
@@ -17,6 +19,21 @@ public abstract class OutputController implements Serializable {
     OutputController(){
 
     }
+    public boolean isShared() {
+        return shared;
+    }
+
+    public void setShared() {
+        this.shared = true;
+    }
+
+    public abstract PartitionController getPartitionController(String streamId, String boltID);
+
+    public abstract Collection<PartitionController> getPartitionController();
+
+    public abstract Collection<PartitionController> getPartitionController(String StreamId);
+
+    public abstract boolean isEmpty();
     /**
      * Initialize output queue for each partition
      * @param linked

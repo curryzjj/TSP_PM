@@ -110,5 +110,6 @@ public abstract class TopologyComponent implements Serializable {
     public abstract boolean isLeafNode();
 
     public abstract boolean isLeadNode();
+    public abstract Set<String> get_childrenStream();
     //end
 }
