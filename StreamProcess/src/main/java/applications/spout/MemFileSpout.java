@@ -44,11 +44,11 @@ public class MemFileSpout extends AbstractSpout {
 
     @Override
     public void nextTuple() throws InterruptedException {
-
+        //wait for the OutputCollector
     }
 
     @Override
     public void nextTuple_nonblocking() throws InterruptedException {
-
+        //wait for the OutputCollector
     }
 }
