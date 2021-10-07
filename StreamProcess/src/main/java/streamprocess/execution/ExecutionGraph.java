@@ -123,7 +123,7 @@ public class ExecutionGraph {
              }
          }
     }
-    private void Loading(Configuration conf,Platform p){}
+    private void Loading(Configuration conf,Platform p){}//impl after
     private void build_streamController(int batch){
          if(!shared){
              for(ExecutionNode executor:executionNodeArrayList){//build sc for each executor who is not leaf mapping_node
