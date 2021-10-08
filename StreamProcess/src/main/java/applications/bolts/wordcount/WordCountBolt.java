@@ -1,9 +1,11 @@
 package applications.bolts.wordcount;
 
 import System.util.Configuration;
+import System.util.OsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.base.MapBolt;
+import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Fields;
 import streamprocess.execution.runtime.tuple.JumboTuple;
@@ -21,12 +23,17 @@ public class WordCountBolt extends MapBolt {
 
     @Override
     public Integer default_scale(Configuration conf) {
-        return super.default_scale(conf);
+        int numNodes=conf.getInt("num_socket",1);
+        if(numNodes==8){
+            return 80;
+        }else {
+            return 1;
+        }
     }
 
     @Override
     public void initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
-        super.initialize(thread_Id, thisTaskId, graph);
+        long pid= OsUtils.getPID(TopologyContext.HPCMonotor);
     }
 
     @Override
