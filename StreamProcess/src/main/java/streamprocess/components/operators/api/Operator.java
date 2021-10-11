@@ -111,7 +111,19 @@ public abstract class Operator {
     public void setFields(String streamId, Fields fields) {
         this.fields.put(streamId, fields);
     }
-    public void declareOutputFields(OutputFieldsDeclarer declarer){}
+    public void declareOutputFields(OutputFieldsDeclarer declarer){
+        if(fields.isEmpty()){
+            if(getDefaultFields()!=null){
+                fields.put(BaseConstants.BaseStream.DEFAULT,getDefaultFields());
+            }
+            if(getDefaultStreamFields()!=null){
+                fields.putAll(getDefaultStreamFields());
+            }
+        }
+        for(Map.Entry<String,Fields> e:fields.entrySet()){
+            declarer.declareStream(e.getKey(),e.getValue());
+        }
+    }
     //default fields
     protected Fields getDefaultFields() {//@define the output fields
         return new Fields(TEXT);

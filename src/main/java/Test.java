@@ -1,14 +1,39 @@
-import java.util.HashMap;
+import java.util.*;
 
 public class Test {
-    public static void main(String[] args){
-        HashMap<String ,HashMap<String,String>> PClist = new HashMap<>();
-        HashMap<String,String> C_PC=new HashMap<>();
-        for(int i=0;i<5;i++){
-            C_PC.put("c"+i,"pc"+i);
+    private List<String> _fields;
+    public Test(String... fields) {
+        this.Fields(Arrays.asList(fields));
+        System.out.println(Arrays.asList(fields));
+    }
+    private final Map<String, Integer> _index = new HashMap<>();
+    public void Fields(List<String> fields) {
+        _fields = new ArrayList<>(fields.size());
+        for (String field : fields) {
+            if (_fields.contains(field)) {
+                throw new IllegalArgumentException(
+                        String.format("duplicate field '%s'", field)
+                );
+            }
+            _fields.add(field);
         }
-        PClist.put("streamId",C_PC);
-        System.out.println(PClist.get("streamId").values());
-        System.out.println(PClist.get("streamId").keySet());
+        index();
+    }
+    private void index() {
+        for (int i = 0; i < _fields.size(); i++) {
+            _index.put(_fields.get(i), i);
+        }
+    }
+    public List<Object> select(Test input_fields,Object... tuple){
+        List<Object> ret=new ArrayList<>(input_fields._fields.size());
+        for(String s:input_fields._fields){
+            ret.add(tuple[_index.get(s)]);
+        }
+        return ret;
+    }
+    public static void main(String[] args){
+        Test test=new Test("word","count");
+        System.out.println(test._fields);
+        System.out.println(test._index.get("count"));
     }
 }

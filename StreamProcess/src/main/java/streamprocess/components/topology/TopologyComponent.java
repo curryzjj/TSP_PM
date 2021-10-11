@@ -84,14 +84,12 @@ public abstract class TopologyComponent implements Serializable {
         executorID.add(vertex.getExecutorID());
     }
     public void setGrouping(String downOp, Grouping g) {
-        //implement after the TopologyBuilder.setBolt()
         String stream=g.getStreamID();
         this.grouping_to_downstream.computeIfAbsent(downOp,k->new HashMap<>());
         this.grouping_to_downstream.get(downOp).put(stream,g);
     }
     public Fields get_output_fields(String sourceStreamId) {
-       //implement after streaminfo
-        return null;
+        return output_streams.get(sourceStreamId).getFields();
     }
     public Map<TopologyComponent, Grouping> getChildrenOfStream() {
         return getChildrenOfStream(DEFAULT_STREAM_ID);

@@ -2,6 +2,7 @@ package applications.bolts.wordcount;
 
 import System.util.Configuration;
 import System.util.OsUtils;
+import UserApplications.constants.WordCountConstants.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.base.MapBolt;
@@ -10,6 +11,7 @@ import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Fields;
 import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.Tuple;
+
 
 import java.util.concurrent.BrokenBarrierException;
 
@@ -38,7 +40,7 @@ public class WordCountBolt extends MapBolt {
 
     @Override
     protected Fields getDefaultFields() {
-        return super.getDefaultFields();
+        return new Fields(Field.WORD, Field.COUNT);
     }
 
     @Override

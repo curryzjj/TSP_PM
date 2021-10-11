@@ -16,6 +16,8 @@ public abstract class executorThread extends Thread {
     public final ExecutionNode executor;
     TopologyContext context;
     private boolean ready;
+    public boolean running = true;
+    public boolean profiling = false;
     int batch;
 
 

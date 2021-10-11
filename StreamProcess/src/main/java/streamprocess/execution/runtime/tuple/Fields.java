@@ -1,5 +1,7 @@
 package streamprocess.execution.runtime.tuple;
 
+import System.util.DataTypes.StreamValues;
+
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.Consumer;
@@ -25,16 +27,36 @@ public class Fields implements Iterable<String>, Serializable {
     }
     @Override
     public Iterator<String> iterator() {
-        return null;
+        return _fields.iterator();
     }
-
-    @Override
-    public void forEach(Consumer<? super String> action) {
-        Iterable.super.forEach(action);
+    //used by the fieldsPartition
+    public List<Object> select(Fields input_fields,Object... tuple){
+        List<Object> ret=new ArrayList<>(input_fields._fields.size());
+        for(String s:input_fields._fields){
+            ret.add(tuple[_index.get(s)]);
+        }
+        return ret;
     }
+    public List<Object> select(Fields input_fields, StreamValues tuple) {
 
-    @Override
-    public Spliterator<String> spliterator() {
-        return Iterable.super.spliterator();
+        List<Object> ret = new ArrayList<>(input_fields._fields.size());
+        for (String s : input_fields._fields) {
+            ret.add(tuple.get((_index.get(s))));
+        }
+        return ret;
+    }
+    public int fieldIndex(String field){
+        Integer ret=_index.get(field);
+        if(ret==null){
+            throw new IllegalArgumentException(field+"does not exist");
+        }
+        return ret;
+    }
+    //public method
+    public String get(int i) {
+        return _fields.get(i);
+    }
+    public int size() {
+        return _fields.size();
     }
 }

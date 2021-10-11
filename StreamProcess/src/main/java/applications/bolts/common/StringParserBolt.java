@@ -26,12 +26,17 @@ public class StringParserBolt extends MapBolt {
 
     @Override
     public Integer default_scale(Configuration conf) {
-        return super.default_scale(conf);
+        int numNodes = conf.getInt("num_socket", 1);
+        if (numNodes == 8) {
+            return 4;
+        } else {
+            return 1;
+        }
     }
 
     @Override
     protected Fields getDefaultFields() {
-        return super.getDefaultFields();
+        return fields;
     }
 
     @Override

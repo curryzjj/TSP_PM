@@ -3,9 +3,11 @@ package streamprocess.components.topology;
 import ch.usi.overseer.OverHpc;
 import engine.Database;
 import streamprocess.components.grouping.Grouping;
+import streamprocess.controller.input.InputStreamController;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.threads.executorThread;
+import streamprocess.execution.runtime.tuple.Fields;
 import streamprocess.optimization.ExecutionPlan;
 
 import java.util.*;
@@ -37,28 +39,88 @@ public class TopologyContext {
         this._taskId=executor.getExecutorID();
     }
 
-    public HashMap<String,Map<TopologyComponent, Grouping>> getThisSources(){
-       return this.getComponent(this.getThisComponentId()).getParents();
-    }
-    public String getThisComponentId(){return this.getComponentId(this._taskId);}
-    private String getComponentId(int taskId) {
-        return getComponent(taskId).getId();
-    }
-    private TopologyComponent getComponent(String component) {
-        return graph.topology.getComponent(component);
-    }
 
-
-
-    public TopologyComponent getThisComponent() {
-        return this.getComponent(this._taskId);
-    }
-    public TopologyComponent getComponent(int taskId) { return graph.getExecutionNodeArrayList().get(taskId).operator;}
+    //get context information
     public Database getDb() {
         return db;
     }
-
+    public static ExecutionGraph getGraph() {
+        return graph;
+    }
+    public static ExecutionPlan getPlan() {
+        return plan;
+    }
+    public int getThisTaskId() {
+        return _taskId;
+    }
     public int getThisTaskIndex() {
-        return 0;
+        return getThisTaskId();
+    }
+    //get group information
+    public ExecutionNode getExecutor(int taskId){
+        return graph.getExecutionNode(taskId);
+    }
+    public TopologyComponent getComponent(int taskId) {
+        return graph.getExecutionNodeArrayList().get(taskId).operator;
+    }
+    private TopologyComponent getComponent(String componentId) {
+        return graph.topology.getComponent(componentId);
+    }
+    public InputStreamController getScheduler() {
+        return graph.getGlobal_tuple_scheduler();
+    }
+    public Fields getComponentOutputFields(String componentId, String sourceStreamId){
+        TopologyComponent op=graph.topology.getComponent(componentId);
+        return op.get_output_fields(sourceStreamId);
+    }
+    //get component information
+    public HashMap<String,Map<TopologyComponent, Grouping>> getThisSources(){
+        return this.getComponent(this._taskId).getParents();
+    }
+    public TopologyComponent getThisComponent() {
+        return this.getComponent(this._taskId);
+    }
+    public String getThisComponentId(){
+        return getComponent(this._taskId).getId();
+    }
+    public int getNUMTasks() {
+        return this.getComponent(_taskId).getNumTasks();
+    }
+    //function
+    public void wait_for_all() throws InterruptedException{
+        for(int id:threadMap.keySet()){
+            if(id!=getThisTaskId()){
+                threadMap.get(id).join(10000);
+            }
+        }
+    }
+    public void stop_running(){
+        threadMap.get(getThisTaskId()).running=false;
+        threadMap.get(getThisTaskId()).interrupt();
+    }
+    public void stop_runningALL(){
+        for (int id : threadMap.keySet()) {
+            if (id != getThisTaskId()) {
+                threadMap.get(id).running = false;
+                threadMap.get(id).interrupt();
+            }
+        }
+    }
+    public void force_existALL(){
+        for(int id: threadMap.keySet()){
+            if(id!=getThisTaskId()){
+                while(threadMap.get(id).isAlive()){
+                    threadMap.get(id).running=false;
+                    threadMap.get(id).interrupt();
+                }
+            }
+        }
+    }
+    public void Sequential_stopAll(){
+        this.stop_runningALL();
+        force_existALL();
+        //stop myself.
+        threadMap.get(getThisTaskId()).running = false;
+        threadMap.get(getThisTaskId()).interrupt();
     }
 }
