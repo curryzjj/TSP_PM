@@ -9,6 +9,8 @@ import java.util.Properties;
 
 public class Configuration extends HashMap {
 
+    private static final long serialVersionUID = -694570235097133148L;
+
     public static final String TOPOLOGY_WORKER_CHILDOPTS = "work_opt";
     public static final String METRICS_ENABLED = "metrics.enabled";
     public static final String METRICS_REPORTER = "metrics.reporter";
@@ -28,7 +30,7 @@ public class Configuration extends HashMap {
     /**
      * Bolt-specific configuration for windowed bolts to specify the maximum time lag of the tuple timestamp
      * in milliseconds. It means that the tuple timestamps cannot be out of order by more than this amount.
-     * This config will be effective only if {@link TimestampExtractor} is specified.
+     * This config will be effective only if {@linkTimestampExtractor} is specified.
      */
 
     public static final String TOPOLOGY_BOLTS_TUPLE_TIMESTAMP_MAX_LAG_MS = "topology.bolts.tuple.timestamp.max.lag.ms";
@@ -50,6 +52,33 @@ public class Configuration extends HashMap {
     protected String configPrefix = "";
     String GENERATOR_COUNT = "generator.count";
 
+    public static Configuration fromMap(Map map) {
+        Configuration config = new Configuration();
+
+        for (Object k : map.keySet()) {
+            String key = (String) k;
+            Object value = map.get(key);
+
+            if (value instanceof String) {
+                String str = (String) value;
+
+                if (DataTypeUtils.isInteger(str)) {
+                    config.put(key, Integer.parseInt(str));
+                } else if (NumberUtils.isNumber(str)) {
+                    config.put(key, Double.parseDouble(str));
+                } else if (value.equals("true") || value.equals("false")) {
+                    config.put(key, Boolean.parseBoolean(str));
+                } else {
+                    config.put(key, value);
+                }
+            } else {
+                config.put(key, value);
+            }
+        }
+
+        return config;
+    }
+
     public static Configuration fromProperties(Properties properties) {
         Configuration config = new Configuration();
 
@@ -60,6 +89,28 @@ public class Configuration extends HashMap {
         return config;
     }
 
+    public static Configuration fromStr(String str) {
+        Map<String, String> map = strToMap(str);
+        Configuration config = new Configuration();
+
+        for (String key : map.keySet()) {
+            config.put(key, parseString(map.get(key)));
+        }
+
+        return config;
+    }
+
+    public static Map<String, String> strToMap(String str) {
+        Map<String, String> map = new HashMap<>();
+        String[] arguments = str.split(",");
+
+        for (String arg : arguments) {
+            String[] kv = arg.split("=");
+            map.put(kv[0].trim(), kv[1].trim());
+        }
+
+        return map;
+    }
 
     private static Object parseString(String value) {
         if (DataTypeUtils.isInteger(value)) {
@@ -69,6 +120,7 @@ public class Configuration extends HashMap {
         } else if (value.equals("true") || value.equals("false")) {
             return Boolean.parseBoolean(value);
         }
+
         return value;
     }
 
