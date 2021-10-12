@@ -2,6 +2,9 @@ package streamprocess.execution;
 
 import System.Platform.Platform;
 import System.util.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import streamprocess.components.grouping.Grouping;
 import streamprocess.components.topology.MultiStreamComponent;
 import streamprocess.components.topology.Topology;
 import streamprocess.components.topology.TopologyComponent;
@@ -9,13 +12,17 @@ import streamprocess.controller.input.InputStreamController;
 import streamprocess.controller.output.MultiStreamOutputContoller;
 import streamprocess.controller.output.OutputController;
 import streamprocess.controller.output.PartitionController;
+import streamprocess.controller.output.partition.AllPartitionController;
+import streamprocess.controller.output.partition.FieldsPartitionController;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class ExecutionGraph {
+public class ExecutionGraph implements Serializable {
+    private static final Logger LOG = LoggerFactory.getLogger(ExecutionGraph.class);
     public final Topology topology;
     private final InputStreamController global_tuple_scheduler;
     private final Configuration conf;
@@ -35,8 +42,15 @@ public class ExecutionGraph {
         this.global_tuple_scheduler=topo.getScheduler();
         Configuration(this.topology, parallelism, conf, topology.getPlatform());
     }
+    public ExecutionGraph(ExecutionGraph graph,Configuration conf){
+        executionNodeArrayList=new ArrayList<>();
+        this.conf=conf;
+        topology=new Topology(graph.topology);
+        topology.clean_executorInformation();
+        global_tuple_scheduler=graph.global_tuple_scheduler;
+        Configuration(graph,conf,topology.getPlatform());
+    }
     //end
-
     //Configure set the numTasks of the operator, and create the Operator->executor link
     private void addRecord(TopologyComponent operator, Platform p){
         //create executionNode and assign unique vertex id to it,each task has an executor
@@ -72,6 +86,16 @@ public class ExecutionGraph {
         }
         setup(conf,p);
     }
+    private void Configuration(ExecutionGraph graph, Configuration conf, Platform p) {
+        for (ExecutionNode e : graph.getExecutionNodeArrayList()) {
+            if (!e.isVirtual()) {
+                addRecord(e, topology.getRecord(e.operator.getId()), p);
+            }
+        }
+        spout = executionNodeArrayList.get(0);
+        sink = executionNodeArrayList.get(executionNodeArrayList.size() - 1);
+        setup(conf, p);
+    }
     //end
 
     //setup
@@ -105,7 +129,7 @@ public class ExecutionGraph {
              virtualNode.getParents().putIfAbsent(sink.operator, new ArrayList<>());
              virtualNode.getParentsOf(sink.operator).add(par);
          }
-         //build_streamController
+         //build_OutputController
          build_streamController(conf.getInt("batch",100));
          //loading statistics
          Loading(conf,p);
@@ -175,8 +199,16 @@ public class ExecutionGraph {
     private PartitionController partitionController_create(TopologyComponent srcOP, TopologyComponent childOP,
                                                            String streamId, HashMap<Integer,ExecutionNode> downExexutor_list,
                                                            int batch, ExecutionNode executor,boolean common){
-         //wait for the PartitionController
-         return null;
+        Grouping g=srcOP.getGrouping_to_downstream(childOP.getId(), streamId);
+        //implement other partition controller in the future
+        if(g.isAll()){
+            return new AllPartitionController(srcOP,childOP,downExexutor_list,batch,executor,common,conf.getBoolean("profile",false),conf);
+        }else if(g.isFields()){
+            return new FieldsPartitionController(srcOP,childOP,downExexutor_list, srcOP.get_output_fields(streamId),g.getFields(),batch,executor,common,conf.getBoolean("profile",false),conf);
+        }else {
+            LOG.info("create partition controller error: not suppourted yet");
+            return null;
+        }
     }
     //end
     //end

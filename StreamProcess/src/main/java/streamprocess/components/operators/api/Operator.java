@@ -1,11 +1,17 @@
 package streamprocess.components.operators.api;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import System.constants.BaseConstants;
 import System.util.Configuration;
+import System.util.OsUtils;
+import engine.Database;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
@@ -20,32 +26,50 @@ import static System.constants.BaseConstants.BaseField.TEXT;
 public abstract class Operator {
     //some common operator
     public static final String map = "map";//Takes one element and produces one element. A map function that doubles the values of the input stream
+    public static final String filter = "filter";//Evaluates a boolean function for each element and retains those for which the function returns true, e.g., A filter that filters out zero values:
+    public static final String reduce = "reduce";//Combine multiple input data into one output data.
+    public static final String w_apply = "w_apply";
     //end
-    public final Map<String, Double> input_selectivity;//used to capture multi-stream
-    public final Map<String, Double> output_selectivity;//output
+    private static final long serialVersionUID = -7816511217365808709L;
+    public static String flatMap = "flatMap";//Takes one element and produces zero, one, or more elements, e.g., A flatmap function that splits sentences to words:
+    public static String w_join = "w_join";//Join two data streams on a given key and a common window.
+    public static String union = "union";//Union of two or more data streams creating a new stream containing all the elements from all the streams. SimExecutionNode: If you union a data stream with itself you will GetAndUpdate each element twice in the resulting stream.
+    public final Map<String, Double> input_selectivity;//input_selectivity used to capture multi-stream effect.
+    public final Map<String, Double> output_selectivity;//output_selectivity can be > 1
     public final double branch_selectivity;
-    public double read_selectivity;//the ratio of actual reading
-    public TopologyContext context;//This object provides information about the component's place within the StreamProcess.topology, such as Task ids, inputs and outputs, etc.
-    public String configPrefix = BaseConstants.BASE_PREFIX;
-    public double loops = -1;//by default use argument loops.
-
     private final boolean ByP;//Time by processing? or by input_event.
     private final double Event_frequency;
-    private double window;
-    private double results = 0;//???
 
-    protected final Map<String, Fields> fields; //??
-    protected OutputCollector collector;
-    protected ExecutionNode executor;//who owns this Operator
-    protected Configuration config;
+    public Map<String, Fields> getOutputFields() {
+        return fields;
+    }
 
-    boolean Stateful = false;//stateful or stateless operator
+    protected final Map<String, Fields> fields;
+    public double read_selectivity;//the ratio of actual reading..
+    public double loops = -1;//by default use argument loops.
     public boolean scalable = true;
-
-
-    Logger LOG;
-    public int fid =-1;
+    public TopologyContext context;
+    /** wait for transactionProcess
+    public Clock clock;
+    public State state = null;
+    public OrderLock lock;//used for lock_ratio-based ordering constraint.
+    public OrderValidate orderValidate;
+    public transient TxnContext[] txn_context = new TxnContext[combo_bid_size];
+    **/
+    public transient Database db;//this is only used if the bolt is transactional bolt. DB is shared by all operators.
+    //    public transient TxnContext txn_context;
     public boolean forceStop;
+    public int fid = -1;//if fid is -1 it means it does not participate
+    public String configPrefix = BaseConstants.BASE_PREFIX;
+    protected OutputCollector collector;
+    protected Configuration config;
+    protected ExecutionNode executor;//who owns this Spout
+    Logger LOG;
+    int partition_count_;
+    int partition_id_;
+    boolean Stateful = false;
+    private double window = 1;//by default window fieldSize is 1, means per-tuple execution
+    private double results = 0;
 
     /**
      * @param log
@@ -59,9 +83,8 @@ public abstract class Operator {
     Operator(Logger log, Map<String, Double> input_selectivity,
              Map<String, Double> output_selectivity, double branch_selectivity,
              double read_selectivity, boolean byP, double event_frequency, double window_size) {
-
-         LOG = log;
-   //     OsUtils.configLOG(LOG);
+        LOG = log;
+        OsUtils.configLOG(LOG);
         if (input_selectivity == null) {
             this.input_selectivity = new HashMap<>();
             this.input_selectivity.put(DEFAULT_STREAM_ID, 1.0);
@@ -171,7 +194,13 @@ public abstract class Operator {
      * @param context
      * @param collector
      */
-    public void prepare(Map conf, TopologyContext context, OutputCollector collector) {}
+    public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
+        this.config=Configuration.fromMap(conf);
+        setContext(context);
+        this.collector=collector;
+        base_initialize(context.getThisTaskId()-context.getThisComponent().getExecutorList().get(0).getExecutorID(),context.getThisTaskId(),
+                context.getGraph());
+    }
     public void loadDB(Map conf, TopologyContext context, OutputCollector collector){}
     public void loadDB(int thread_Id, int thisTaskId, ExecutionGraph graph){}
 
@@ -186,8 +215,22 @@ public abstract class Operator {
      * @param graph
      * called by the prepare
      */
-    private void base_initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {}
-
+    private void base_initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
+        if(LOG==null){
+            LOG= LoggerFactory.getLogger(Operator.class);
+            LOG.info("The operator has no LOG, create a default one for it here.");
+        }
+        if(OsUtils.isMac()){
+            LogManager.getLogger(LOG.getName()).setLevel(Level.DEBUG);
+        }else {
+            LogManager.getLogger(LOG.getName()).setLevel(Level.INFO);
+        }
+        if(this instanceof Checkpointable){
+            //implement after the transaction process
+        }
+        db=getContext().getDb();
+        initialize(thread_Id,thisTaskId,graph);
+    }
     /**
      * This is the API to client application code.
      * This can be overwrite by specific operator to do some initialization work.
@@ -224,14 +267,19 @@ public abstract class Operator {
      * @param sourceId
      * @param marker
      */
-
-
-
+    public boolean checkpoint_store(Serializable value,int sourceId,Marker marker){
+        //implement after the transaction process
+        return false;
+    }
     /**
      * Simple forward the marker
      *
      * @param sourceId
      * @return
      */
+    public boolean checkpoint_forward(int sourceId){
+        //implement after the transaction process
+        return false;
+    }
 
 }

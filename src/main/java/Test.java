@@ -32,8 +32,7 @@ public class Test {
         return ret;
     }
     public static void main(String[] args){
-        Test test=new Test("word","count");
-        System.out.println(test._fields);
-        System.out.println(test._index.get("count"));
+        Child child=new Child();
+        Child child1=new Child("1");
     }
 }

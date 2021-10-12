@@ -85,7 +85,7 @@ public abstract class InputStreamController implements Serializable {
     public HashMap<Integer, Queue> getReceive_queue(String streamId) {
         return RQ.get(streamId);
     }
-    public void initialize() {
+    public void initialize() {//used in the ExecutionNode
         keySet = RQ.keySet();
     }
     public synchronized void setReceive_queue(String streamId, int executorID, Queue q) {

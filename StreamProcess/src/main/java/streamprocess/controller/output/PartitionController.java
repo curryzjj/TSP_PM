@@ -114,6 +114,9 @@ public abstract class PartitionController implements IPartitionController {
     public HashMap<Integer, ExecutionNode> getDownExecutor_list() {
         return downExecutor_list;
     }
+    public Double getPartition_ratio(int executorID) {
+        return partition_ratio.get(executorID);
+    }
     //create message
     private Marker package_marker(String streamId, Marker marker) {
         return new Marker(streamId, marker.timeStampNano, marker.msgId, marker.getMyiteration());

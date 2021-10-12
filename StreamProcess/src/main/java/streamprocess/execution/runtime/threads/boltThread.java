@@ -41,11 +41,11 @@ public class boltThread extends executorThread{
      */
     private Object fetchResult() {
         //implemented in the InputStreamController
-        return null;
+        return scheduler.fetchResults();
     }
     private <STAT> JumboTuple fetchResult(STAT stat, int batch) {
         //implemented in the InputStreamController
-        return null;
+        return scheduler.fetchResults(batch);
     }
     @Override
     protected void _execute_noControl() throws InterruptedException, Exception, BrokenBarrierException {

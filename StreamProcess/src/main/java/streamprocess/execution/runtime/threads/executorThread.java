@@ -2,7 +2,9 @@ package streamprocess.execution.runtime.threads;
 
 import System.Platform.Platform;
 import System.util.Configuration;
+import net.openhft.affinity.AffinityLock;
 import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
 import ch.usi.overseer.OverHpc;
@@ -11,21 +13,42 @@ import java.util.HashMap;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 
-public abstract class executorThread extends Thread {
+import static xerial.jnuma.Numa.newCPUBitMask;
+import static xerial.jnuma.Numa.setLocalAlloc;
 
+public abstract class executorThread extends Thread {
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(executorThread.class);
     public final ExecutionNode executor;
-    TopologyContext context;
-    private boolean ready;
+    protected final CountDownLatch latch;
+    final Configuration conf;
+    private final HashMap<Integer, executorThread> threadMap;
+    private final OverHpc hpcMonotor;
     public boolean running = true;
     public boolean profiling = false;
+    public long[] cpu;
+    public int node;
+    public boolean migrating = false;
+    protected AffinityLock lock;
+    double expected_throughput = 0;
+    boolean not_yet_profiled = true;
+    TopologyContext context;//every thread owns its unique context, which will be pushed to its emitting tuple.
+    double cnt = 0;
+    long start_emit = 0;
+    long end_emit = 0;
     int batch;
-
-
+    private boolean start = true;
+    private volatile boolean ready = false;
     protected executorThread(ExecutionNode e, Configuration conf, TopologyContext context,
                              long[] cpu, int node, CountDownLatch latch, OverHpc HPCMonotor,
                              HashMap<Integer, executorThread> threadMap){
-
-        this.executor = e;
+        this.context=context;
+        executor = e;
+        this.conf=conf;
+        this.cpu=cpu;
+        this.node=node;
+        this.latch=latch;
+        hpcMonotor=HPCMonotor;
+        this.threadMap=threadMap;
     }
     //get+set TopologyContext
     public TopologyContext getContext() {
@@ -37,7 +60,7 @@ public abstract class executorThread extends Thread {
     //end
 
     //bind Thread
-    protected long[] sequential_binding(){ return null;}
+    protected long[] sequential_binding(){return null;}
     protected long[] binding(){ return null;}
     protected long[] rebinding(){ return null;}
     protected long[] rebinding_clean(){ return null;}
@@ -48,8 +71,17 @@ public abstract class executorThread extends Thread {
         allocate_OutputQueue();
         assign_InputQueue();
     }
-    private void allocate_OutputQueue() { }
-    private void assign_InputQueue(){}
+    private void allocate_OutputQueue() {
+        executor.allocate_OutputQueue(conf.getBoolean("linked", false), (int) (conf.getInt("targetHz") * conf.getDouble("checkpoint")));
+    }
+    private void assign_InputQueue(){
+        for (String streamId : executor.operator.getOutput_streamsIds()) {
+            assign_InputQueue(streamId);
+        }
+    }
+    private void assign_InputQueue(String streamId) {
+        executor.setReceive_queueOfChildren(streamId);
+    }
     //end
 
     //pause, restart, and migrate
@@ -77,4 +109,5 @@ public abstract class executorThread extends Thread {
     public int getExecutorID(){return executor.getExecutorID();}
     public String getOP(){return executor.getOP();}
     //end
+
 }
