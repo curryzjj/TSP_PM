@@ -1,5 +1,7 @@
 package streamprocess.execution.runtime.tuple;
 
+import streamprocess.execution.runtime.tuple.msgs.Marker;
+
 import java.io.Serializable;
 
 public abstract class Message implements Serializable {

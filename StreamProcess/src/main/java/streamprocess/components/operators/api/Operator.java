@@ -11,7 +11,7 @@ import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.Fields;
-import streamprocess.execution.runtime.tuple.Marker;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.execution.runtime.tuple.OutputFieldsDeclarer;
 
 import static System.Constants.DEFAULT_STREAM_ID;

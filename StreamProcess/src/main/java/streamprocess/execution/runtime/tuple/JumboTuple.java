@@ -1,6 +1,7 @@
 package streamprocess.execution.runtime.tuple;
 
 import streamprocess.components.topology.TopologyContext;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 public class JumboTuple implements Comparable<JumboTuple> {//batch tuple
     public final Message[] msg;
@@ -68,7 +69,6 @@ public class JumboTuple implements Comparable<JumboTuple> {//batch tuple
         return msg[index_msg].getValue(index_field);
     }
     public String getString(int index_field, int index_msg) {
-
         return new String(getCharArray(index_field, index_msg));
 
     }
@@ -115,6 +115,9 @@ public class JumboTuple implements Comparable<JumboTuple> {//batch tuple
     }
     public Marker getMarker(int i) {
         return msg[i].getMarker();
+    }
+    public void add(Integer p, Message message) {
+        msg[p] = message;
     }
     @Override
     public int compareTo(JumboTuple o) {

@@ -5,7 +5,7 @@ import streamprocess.components.operators.api.AbstractSpout;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
-import streamprocess.execution.runtime.tuple.Marker;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.util.Map;
 

@@ -4,7 +4,7 @@ import System.constants.BaseConstants;
 import System.spout.helper.wrapper.StringStatesWrapper;
 import System.util.OsUtils;
 import org.slf4j.Logger;
-import streamprocess.execution.runtime.tuple.Marker;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.*;
 import java.util.ArrayList;

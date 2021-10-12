@@ -1,4 +1,6 @@
-package streamprocess.execution.runtime.tuple;
+package streamprocess.execution.runtime.tuple.msgs;
+
+import streamprocess.execution.runtime.tuple.Message;
 
 public class Marker extends Message {
     public final long msgId;//this records the ancestor message id of this message.

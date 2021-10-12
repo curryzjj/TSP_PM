@@ -4,7 +4,7 @@ import System.util.Configuration;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
-import streamprocess.execution.runtime.tuple.Marker;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.Serializable;
 import java.util.Map;

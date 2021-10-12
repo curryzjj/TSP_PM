@@ -8,7 +8,7 @@ import streamprocess.components.topology.TopologyComponent;
 import streamprocess.controller.input.InputStreamController;
 import streamprocess.controller.output.MultiStreamOutputContoller;
 import streamprocess.controller.output.OutputController;
-import streamprocess.controller.output.partition.PartitionController;
+import streamprocess.controller.output.PartitionController;
 
 import java.util.ArrayList;
 import java.util.HashMap;

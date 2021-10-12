@@ -2,7 +2,7 @@ package streamprocess.components.operators.executor;
 
 import streamprocess.components.operators.api.Operator;
 import streamprocess.execution.ExecutionNode;
-import streamprocess.execution.runtime.tuple.Marker;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 public abstract class SpoutExecutor implements IExecutor {
     private final Operator op;

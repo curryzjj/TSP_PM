@@ -2,7 +2,7 @@ package streamprocess.components.operators.api;
 
 import org.slf4j.Logger;
 import streamprocess.execution.runtime.tuple.JumboTuple;
-import streamprocess.execution.runtime.tuple.Marker;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.execution.runtime.tuple.Tuple;
 
 import java.util.Map;

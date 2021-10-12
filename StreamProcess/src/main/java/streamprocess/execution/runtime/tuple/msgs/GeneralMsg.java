@@ -1,6 +1,5 @@
 package streamprocess.execution.runtime.tuple.msgs;
 
-import streamprocess.execution.runtime.tuple.Marker;
 import streamprocess.execution.runtime.tuple.Message;
 
 import java.util.Arrays;

@@ -27,7 +27,7 @@ public abstract class InputStreamController implements Serializable {
     public abstract JumboTuple fetchResults_inorder();
     public abstract Object fetchResults();
     public abstract Tuple fetchResults_single();
-    public abstract JumboTuple fetchResults(STAT stat, int batch);
+    public abstract JumboTuple fetchResults(int batch);//bypass STAT
     //fetch result
     protected Tuple fetchFromqueue_single(Queue queue){
         Tuple tuple;
@@ -84,6 +84,9 @@ public abstract class InputStreamController implements Serializable {
     }
     public HashMap<Integer, Queue> getReceive_queue(String streamId) {
         return RQ.get(streamId);
+    }
+    public void initialize() {
+        keySet = RQ.keySet();
     }
     public synchronized void setReceive_queue(String streamId, int executorID, Queue q) {
         HashMap<Integer, Queue> integerP1C1QueueHashMap = RQ.get(streamId);

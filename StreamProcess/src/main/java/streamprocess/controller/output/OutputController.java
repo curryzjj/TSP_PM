@@ -2,9 +2,8 @@ package streamprocess.controller.output;
 
 import System.util.DataTypes.StreamValues;
 import streamprocess.components.topology.TopologyContext;
-import streamprocess.controller.output.partition.PartitionController;
 import streamprocess.execution.runtime.collector.MetaGroup;
-import streamprocess.execution.runtime.tuple.Marker;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.Serializable;
 import java.util.Collection;

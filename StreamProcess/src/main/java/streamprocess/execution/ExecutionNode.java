@@ -18,6 +18,7 @@ public class ExecutionNode implements Serializable {
     private final int executorID;//global ID for this executorNode in current topology
     public final IExecutor op;//Operator should be owned by executionNode as it maintains unique information such as context information.
     private InputStreamController inputStreamController;
+    public final int compressRatio;
     private OutputController controller;
     private HashMap<TopologyComponent, ArrayList<ExecutionNode>> parents = new HashMap();
     private HashMap<TopologyComponent, ArrayList<ExecutionNode>> children = new HashMap();
@@ -29,23 +30,20 @@ public class ExecutionNode implements Serializable {
         this.operator = rec;
         this.executorID = i;
         op = null;
-    }
-
-    public ExecutionNode(ExecutionNode e, TopologyComponent topo, Platform p, TopologyComponent operator, int executorID) {
-        this.operator = operator;
-        this.executorID = executorID;
-        op = null;
+        this.compressRatio = compressRatio;
     }
     public ExecutionNode(TopologyComponent rec, int i, Platform p) {
         this.operator = rec;
         this.executorID = i;
         op = null;
+        compressRatio = 1;
     }
 
     public ExecutionNode(ExecutionNode e, TopologyComponent topo, Platform platform) {
         this.operator = topo;
         this.executorID = e.getExecutorID();
         op = null;
+        compressRatio = e.compressRatio;
     }
 
     //First executor: what is the different->use the first executor as the profiling target
@@ -54,7 +52,7 @@ public class ExecutionNode implements Serializable {
         this.first_executor = first_executor;
     }
     //end
-    
+
     //custom inputStreamController for this execution mapping_node.
     //How about the inputStreamController in the Topology
     public boolean hasScheduler() {
@@ -113,9 +111,9 @@ public class ExecutionNode implements Serializable {
     }
     private boolean isLeadNode() { return true; }
     //end
-    
-    
-    
+
+
+
     public int getExecutorID() {
         return 0;
     }

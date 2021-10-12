@@ -3,14 +3,14 @@ package streamprocess.controller.output;
 import System.util.DataTypes.StreamValues;
 import streamprocess.components.topology.MultiStreamComponent;
 import streamprocess.components.topology.TopologyContext;
-import streamprocess.controller.output.partition.PartitionController;
 import streamprocess.execution.runtime.collector.MetaGroup;
-import streamprocess.execution.runtime.tuple.Marker;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.execution.runtime.tuple.streaminfo;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import System.Constants;
 
 public class MultiStreamOutputContoller extends OutputController{
     private final HashMap<String, HashMap<String, PartitionController>> PClist;
@@ -34,12 +34,12 @@ public class MultiStreamOutputContoller extends OutputController{
 
     @Override
     public PartitionController getPartitionController(String streamId, String boltID) {
-        return null;
+        return PClist.get(streamId).get(boltID);
     }
 
     @Override
     public Collection<PartitionController> getPartitionController() {
-        return null;
+        return PClist.get(Constants.DEFAULT_STREAM_ID).values();
     }
 
     @Override
@@ -49,17 +49,32 @@ public class MultiStreamOutputContoller extends OutputController{
 
     @Override
     public boolean isEmpty() {
-        return false;
+        for(String stream:PClist.keySet()){
+            for(String op:PClist.get(stream).keySet()){
+                if(!PClist.get(stream).get(op).isEmpty()){
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     @Override
     public void allocatequeue(boolean linked, int desired_elements_epoch_per_core) {
-
+        for(String stream:PClist.keySet()){
+            for(String op:PClist.get(stream).keySet()){
+                PClist.get(stream).get(op).allocate_queue(linked,desired_elements_epoch_per_core);
+            }
+        }
     }
 
     @Override
-    public void emitOnStream(MetaGroup MetaGroup, String streamId, long bid, Object... data) throws InterruptedException {
-
+    public void emitOnStream(MetaGroup MetaGroup, String streamId, long bid, Object... output) throws InterruptedException {
+        PartitionController[] it=collections.get(streamId);
+        for (int i = 0; i < it.length; i++) {
+            PartitionController p = it[i];
+            p.emit(MetaGroup.get(p.childOP), streamId, bid, output);
+        }
     }
 
     @Override
@@ -73,7 +88,7 @@ public class MultiStreamOutputContoller extends OutputController{
     }
 
     @Override
-    public void emitOnStream(MetaGroup MetaGroup, String streamId, char[] data) throws InterruptedException {
+    public void emitOnStream(MetaGroup MetaGroup, String streamId, char[] data) throws InterruptedException {//here
 
     }
 
