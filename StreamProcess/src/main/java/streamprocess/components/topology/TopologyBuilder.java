@@ -48,7 +48,7 @@ public class TopologyBuilder {
         }
         idSet.add(id);
         HashMap<String,streaminfo> output_streams;
-        OutputFieldsDeclarer declarer=new OutputFieldsDeclarer();//implement after
+        OutputFieldsDeclarer declarer=new OutputFieldsDeclarer();
         s.declareOutputFields(declarer);
         output_streams=declarer.getFieldsDeclaration();
         TopologyComponent topologyComponent=new MultiStreamComponent(id,spoutType,new BasicSpoutBatchExecutor(s),numTasks,null,output_streams,null);

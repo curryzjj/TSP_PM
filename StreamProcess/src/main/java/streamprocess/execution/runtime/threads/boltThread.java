@@ -2,6 +2,7 @@ package streamprocess.execution.runtime.threads;
 
 import System.util.Configuration;
 import ch.usi.overseer.OverHpc;
+import engine.Exception.DatabaseException;
 import streamprocess.components.operators.executor.BoltExecutor;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.controller.input.InputStreamController;
@@ -48,19 +49,19 @@ public class boltThread extends executorThread{
         return scheduler.fetchResults(batch);
     }
     @Override
-    protected void _execute_noControl() throws InterruptedException, Exception, BrokenBarrierException {
+    protected void _execute_noControl() throws InterruptedException, DatabaseException, BrokenBarrierException {
         Object tuple=fetchResult();
         bolt.execute((Tuple) tuple);
         bolt.execute((JumboTuple) tuple);
     }
 
     @Override
-    protected void _execute() throws InterruptedException, Exception, BrokenBarrierException {
+    protected void _execute() throws InterruptedException, DatabaseException, BrokenBarrierException {
         _execute_noControl();
     }
 
     @Override
-    protected void _profile() throws InterruptedException, Exception, BrokenBarrierException {
+    protected void _profile() throws InterruptedException, DatabaseException, BrokenBarrierException {
 
     }
 

@@ -1,5 +1,6 @@
 package streamprocess.components.operators.executor;
 
+import engine.Clock;
 import streamprocess.components.operators.api.Operator;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
@@ -15,7 +16,9 @@ public abstract class SpoutExecutor implements IExecutor {
     //OLTP
     //public void configureWriter(){}
     //public void configureLocker(){}
-    // public void setclock(Clock clock) {}
+    public void setclock(Clock clock) {
+        this.op.clock=clock;
+    }
 
     public int getStage() {
         return op.getFid();

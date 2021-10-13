@@ -2,8 +2,10 @@ package streamprocess.execution.runtime.threads;
 
 import System.Platform.Platform;
 import System.util.Configuration;
+import engine.Exception.DatabaseException;
 import net.openhft.affinity.AffinityLock;
-import org.apache.log4j.Logger;
+
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
@@ -17,7 +19,7 @@ import static xerial.jnuma.Numa.newCPUBitMask;
 import static xerial.jnuma.Numa.setLocalAlloc;
 
 public abstract class executorThread extends Thread {
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(executorThread.class);
+    private static final Logger LOG= LoggerFactory.getLogger(executorThread.class);
     public final ExecutionNode executor;
     protected final CountDownLatch latch;
     final Configuration conf;
@@ -32,6 +34,7 @@ public abstract class executorThread extends Thread {
     double expected_throughput = 0;
     boolean not_yet_profiled = true;
     TopologyContext context;//every thread owns its unique context, which will be pushed to its emitting tuple.
+    //for calculating throughput
     double cnt = 0;
     long start_emit = 0;
     long end_emit = 0;
@@ -95,12 +98,21 @@ public abstract class executorThread extends Thread {
     //end
 
     //profile and routing(Exception->DatabaseException)
-    protected abstract void _execute_noControl() throws InterruptedException, Exception, BrokenBarrierException;
-    protected abstract void _execute() throws InterruptedException, Exception, BrokenBarrierException;
-    protected abstract void _profile() throws InterruptedException, Exception, BrokenBarrierException;
+    protected abstract void _execute_noControl() throws InterruptedException, DatabaseException, BrokenBarrierException;
+    protected abstract void _execute() throws InterruptedException, DatabaseException, BrokenBarrierException;
+    protected abstract void _profile() throws InterruptedException, DatabaseException, BrokenBarrierException;
     //The above is implemented by the bolt(spout)Thread and called by the below
-    void profile_routing(Platform p) throws InterruptedException, Exception, BrokenBarrierException {}
-    void routing() throws InterruptedException, Exception, BrokenBarrierException{}
+    void profile_routing(Platform p) throws InterruptedException, DatabaseException, BrokenBarrierException {}
+    void routing() throws InterruptedException, DatabaseException, BrokenBarrierException{
+        if(start){
+            cnt=0;
+            start_emit=System.nanoTime();
+        }
+        while(running){
+            _execute();
+        }
+        end_emit=System.nanoTime();
+    }
     //end
 
     //public methods

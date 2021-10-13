@@ -8,7 +8,7 @@ import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.threads.executorThread;
 import streamprocess.execution.runtime.tuple.Fields;
-import streamprocess.optimization.ExecutionPlan;
+import streamprocess.execution.ExecutionPlan;
 
 import java.util.*;
 
@@ -18,6 +18,7 @@ import java.util.*;
  * methods, respectively. This object provides information about the component's
  * place within the StreamProcess.topology, such as Task ids, inputs and outputs, etc.
  * <profiling/>
+ * initialize in the executionManager at distributeTasks
  */
 public class TopologyContext {
     public static ExecutionPlan plan;
@@ -25,7 +26,7 @@ public class TopologyContext {
     private static ExecutionGraph graph;
     private static Database db;
     private static HashMap<Integer, executorThread> threadMap;
-    private final int _taskId;
+    private final int _taskId;//executorID
     /**
      * Instead of Store Brisk.topology, we Store Brisk.execution graph directly!
      * This is a global access memory structure,

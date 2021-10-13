@@ -7,6 +7,7 @@ import java.util.Map;
 import System.constants.BaseConstants;
 import System.util.Configuration;
 import System.util.OsUtils;
+import engine.Clock;
 import engine.Database;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -49,8 +50,8 @@ public abstract class Operator {
     public double loops = -1;//by default use argument loops.
     public boolean scalable = true;
     public TopologyContext context;
-    /** wait for transactionProcess
     public Clock clock;
+    /** wait for transactionProcess
     public State state = null;
     public OrderLock lock;//used for lock_ratio-based ordering constraint.
     public OrderValidate orderValidate;
@@ -120,7 +121,7 @@ public abstract class Operator {
         fields = new HashMap<>();
     }
     public void setStateful(){ Stateful = true;}
-    public void display(){};//??
+    public void display(){};//display something when the thread stop
     public OutputCollector getCollector() {
         return collector;
     }

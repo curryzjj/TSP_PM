@@ -225,10 +225,17 @@ public class ExecutionNode implements Serializable {
     public void setNeedsProfile() {
         this.needsProfile = true;
     }
+    public boolean needsProfile() {
+        return this.needsProfile;
+    }
     public String toString() {
         return this.getOP();
     }
     public boolean isVirtual() {
         return executorID == -2;
+    }
+
+    public void display() {
+        op.display();
     }
 }

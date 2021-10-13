@@ -9,6 +9,8 @@ import streamprocess.components.topology.MultiStreamComponent;
 import streamprocess.components.topology.Topology;
 import streamprocess.components.topology.TopologyComponent;
 import streamprocess.controller.input.InputStreamController;
+import streamprocess.controller.input.scheduler.SequentialScheduler;
+import streamprocess.controller.input.scheduler.UniformedScheduler;
 import streamprocess.controller.output.MultiStreamOutputContoller;
 import streamprocess.controller.output.OutputController;
 import streamprocess.controller.output.PartitionController;
@@ -27,7 +29,7 @@ public class ExecutionGraph implements Serializable {
     private final InputStreamController global_tuple_scheduler;
     private final Configuration conf;
     final ArrayList<ExecutionNode> executionNodeArrayList;
-    int vertex_id = 0;//Each executor has its unique vertex id.
+    int vertex_id = 0;//Each executionNode has its unique vertex id.
 
     private ExecutionNode virtualNode;
     private ExecutionNode spout;
@@ -50,37 +52,29 @@ public class ExecutionGraph implements Serializable {
         global_tuple_scheduler=graph.global_tuple_scheduler;
         Configuration(graph,conf,topology.getPlatform());
     }
-    //end
-    //Configure set the numTasks of the operator, and create the Operator->executor link
-    private void addRecord(TopologyComponent operator, Platform p){
-        //create executionNode and assign unique vertex id to it,each task has an executor
-        int operator_numTasks=operator.getNumTasks();
-        for(int i=0;i< operator_numTasks;i++){
-            ExecutionNode vertex = new ExecutionNode(operator, vertex_id++, p);//Every executionNode obtain its unique vertex id..
-            //set First or Last ExecutorNode
-            if(i==operator_numTasks-1){
-                vertex.setLast_executorOfBolt(true);
-            }
-            if(i==0){
-                vertex.setFirst_executor(true);
-                if(conf.getBoolean("profile",false)){
-                    vertex.setNeedsProfile();
-                }
-            }
-            addExecutor(vertex);
-            operator.link_to_executor(vertex);//creates Operator->executor link
+    public ExecutionGraph(ExecutionGraph graph, int compressRatio, Configuration conf){
+        executionNodeArrayList=new ArrayList<>();
+        this.conf=conf;
+        topology= graph.topology;
+        topology.clean_executorInformation();
+        global_tuple_scheduler=getGlobal_tuple_scheduler();
+        if (compressRatio == -1) {
+            LOG.info("automatically decide the compress ratio");
+            compressRatio = (int) Math.max(5, Math.ceil(graph.getExecutionNodeArrayList().size() / 36.0));
         }
-    }
-    private ExecutionNode addRecord(ExecutionNode e, TopologyComponent topo, Platform platform) {
 
-        //creates executor->Operator link
-        ExecutionNode vertex = new ExecutionNode(e, topo, platform);//Every executionNode obtain its unique vertex id..
-        addExecutor(vertex);
-        topo.link_to_executor(vertex);//creates Operator->executor link.
-        return vertex;
+        LOG.info("Creates the compressed graph with compressRatio:" + compressRatio);
+        Configuration(topology, compressRatio, conf, topology.getPlatform());
     }
+    //Configure set the numTasks of the operator, and create the Operator->executor link
     private void Configuration(Topology topology, Map<String, Integer> parallelism, Configuration conf, Platform p){
         //set num of Tasks specified in operator
+        if(parallelism!=null){//implement in the schedulingPlan
+            for(String tr:parallelism.keySet()){
+                TopologyComponent record=topology.getRecord(tr);
+                record.setNumTasks(parallelism.get(tr));
+            }
+        }
         for (TopologyComponent tr : topology.getRecords().values()) {
             addRecord(tr, p);
         }
@@ -96,8 +90,74 @@ public class ExecutionGraph implements Serializable {
         sink = executionNodeArrayList.get(executionNodeArrayList.size() - 1);
         setup(conf, p);
     }
-    //end
+    private void Configuration(Topology topology, int compressRatio, Configuration conf, Platform p) {
+        for (TopologyComponent tr : topology.getRecords().values()) {
+            if (!tr.isLeadNode() && tr.toCompress) {
+                addRecord_RebuildRelationships(tr, compressRatio, p);
+            } else {
+                if (!tr.toCompress) {
+                    LOG.info("Exe:" + tr.getId() + "not able to allocate in last round, do not compress it.");
+                }
+                addRecord(tr, p);
+            }
+        }
+        setup(conf, p);
+    }
+    //addRecord
+    private void addRecord(TopologyComponent operator, Platform p){
+        //create executionNode and assign unique vertex id to it,each task has an executionNode
+        int operator_numTasks=operator.getNumTasks();
+        for(int i=0;i< operator_numTasks;i++){
+            ExecutionNode vertex = new ExecutionNode(operator, vertex_id++, p);//Every executionNode obtain its unique vertex id..
+            //set First or Last ExecutionNode
+            if(i==operator_numTasks-1){
+                vertex.setLast_executorOfBolt(true);
+            }
+            if(i==0){//use the first executor as the profiling target
+                vertex.setFirst_executor(true);
+                if(conf.getBoolean("profile",false)){
+                    vertex.setNeedsProfile();
+                }
+            }
+            addExecutor(vertex);//add ExecutionNode in the list
+            operator.link_to_executor(vertex);//creates Operator->executor link, add executionNode in the TopologyComponent ArrayList<ExecutionNode>
+        }
+    }
+    private ExecutionNode addRecord(ExecutionNode e, TopologyComponent topo, Platform platform) {
 
+        //creates executor->Operator link
+        ExecutionNode vertex = new ExecutionNode(e, topo, platform);//Every executionNode obtain its unique vertex id..
+        addExecutor(vertex);
+        topo.link_to_executor(vertex);//creates Operator->executor link.
+        return vertex;
+    }
+    private void addRecord_RebuildRelationships(TopologyComponent operator, int compressRatio, Platform p) {
+        if (compressRatio < 1) {
+            LOG.info("compressRatio must be greater than 1, and your setting:" + compressRatio);
+            System.exit(-1);
+        }
+        //create executionNode and assign unique vertex id to it.
+        for (int i = 0; i < operator.getNumTasks() / compressRatio; i++) {
+            //creates executor->Operator link
+            ExecutionNode vertex = new ExecutionNode(operator, vertex_id++, p, compressRatio);//Every executionNode obtain its unique vertex id..
+            if (i == operator.getNumTasks() - 1) {
+                vertex.setLast_executorOfBolt(true);
+            }
+            if (i == 0) {
+                vertex.setFirst_executor(true);
+            }
+            addExecutor(vertex);
+            operator.link_to_executor(vertex);//creates Operator->executor link.
+        }
+        //left-over
+        int left_over = operator.getNumTasks() % compressRatio;
+        if (left_over > 0) {
+            ExecutionNode vertex = new ExecutionNode(operator, vertex_id++, p, left_over);//Every executionNode obtain its unique vertex id..
+            vertex.setLast_executorOfBolt(true);
+            addExecutor(vertex);
+            operator.link_to_executor(vertex);//creates Operator->executor link.
+        }
+    }
     //setup
     /**
      * this will set up partition partition (also the partition ratio)
@@ -131,7 +191,7 @@ public class ExecutionGraph implements Serializable {
          }
          //build_OutputController
          build_streamController(conf.getInt("batch",100));
-         //loading statistics
+         //loading statistics wait for the STAT
          Loading(conf,p);
      }
      //used by the above setup
@@ -148,6 +208,23 @@ public class ExecutionGraph implements Serializable {
          }
     }
     private void Loading(Configuration conf,Platform p){}//impl after
+    public void build_inputSchedule(){
+         for(ExecutionNode executor:executionNodeArrayList){
+             if(executor.isSourceNode()){
+                 continue;
+             }
+             //Each thread has its own Brisk.execution.runtime.tuple scheduler, which can be customize for each bolt.
+             if(!executor.hasScheduler()){
+                 if (global_tuple_scheduler instanceof SequentialScheduler) {
+                     executor.setInputStreamController(new SequentialScheduler());
+                 } else if (global_tuple_scheduler instanceof UniformedScheduler) {
+                     executor.setInputStreamController(new UniformedScheduler());
+                 } else {
+                     LOG.error("Unknown input scheduler!");
+                 }
+             }
+         }
+    }
     private void build_streamController(int batch){
          if(!shared){
              for(ExecutionNode executor:executionNodeArrayList){//build sc for each executor who is not leaf mapping_node
@@ -210,17 +287,12 @@ public class ExecutionGraph implements Serializable {
             return null;
         }
     }
-    //end
-    //end
-    //end
-
     //get+add ExecutionNode getExecutionNodeArrayList
     void addExecutor(ExecutionNode e){ executionNodeArrayList.add(e);}
     public ExecutionNode getExecutionNode(int id){return executionNodeArrayList.get(id);}
     public ArrayList<ExecutionNode> getExecutionNodeArrayList() {
         return executionNodeArrayList;
     }
-    //end
     //some public function
     public ExecutionNode getSpout() {
         return spout;
@@ -237,7 +309,8 @@ public class ExecutionGraph implements Serializable {
     public Integer getSinkThread() {
         return sink.getExecutorID();
     }
-    public void build_inputSchedule(){}
-    //end
+    public ArrayList<ExecutionNode> sort() {
+        return getExecutionNodeArrayList();
+    }
 }
 

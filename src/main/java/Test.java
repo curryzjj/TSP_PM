@@ -31,8 +31,10 @@ public class Test {
         }
         return ret;
     }
-    public static void main(String[] args){
-        Child child=new Child();
-        Child child1=new Child("1");
+    public static void main(String[] args) throws InterruptedException {
+        long a=System.nanoTime();
+        Thread.sleep(1);
+        long b=System.nanoTime();
+        System.out.println(b-a);
     }
 }
