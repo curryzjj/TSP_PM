@@ -1,6 +1,7 @@
 package streamprocess.components.operators.executor;
 
 import System.util.Configuration;
+import engine.Clock;
 import engine.Exception.DatabaseException;
 import streamprocess.components.operators.api.Operator;
 import streamprocess.components.topology.TopologyContext;
@@ -26,7 +27,7 @@ public abstract class BoltExecutor implements IExecutor {
     //end
 
     public void loadDB(Configuration conf,TopologyContext context,OutputCollector collector){
-        op.loadDB((Map) conf,context,collector);
+        op.loadDB(conf,context,collector);
     }
     public  void setExecutionNode(ExecutionNode e){ op.setExecutionNode(e); }
     //public void setclock(Clock clock){}
@@ -118,5 +119,9 @@ public abstract class BoltExecutor implements IExecutor {
     @Override
     public double getEmpty() {
         return 0;
+    }
+
+    public void setclock(Clock clock) {
+        this.op.clock=clock;
     }
 }

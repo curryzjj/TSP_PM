@@ -24,7 +24,7 @@ import streamprocess.execution.runtime.tuple.OutputFieldsDeclarer;
 import static System.Constants.DEFAULT_STREAM_ID;
 import static System.constants.BaseConstants.BaseField.TEXT;
 
-public abstract class Operator {
+public abstract class Operator implements Serializable{
     //some common operator
     public static final String map = "map";//Takes one element and produces one element. A map function that doubles the values of the input stream
     public static final String filter = "filter";//Evaluates a boolean function for each element and retains those for which the function returns true, e.g., A filter that filters out zero values:
@@ -70,7 +70,7 @@ public abstract class Operator {
     int partition_id_;
     boolean Stateful = false;
     private double window = 1;//by default window fieldSize is 1, means per-tuple execution
-    private double results = 0;
+    private double throughputResults = 0;
 
     /**
      * @param log
@@ -182,10 +182,10 @@ public abstract class Operator {
         return loops;
     }
     public double getResults() {
-        return results;
+        return throughputResults;
     }
     public void setResults(double results) {
-        this.results = results;
+        this.throughputResults = results;
     }
 
     /**
@@ -202,8 +202,10 @@ public abstract class Operator {
         base_initialize(context.getThisTaskId()-context.getThisComponent().getExecutorList().get(0).getExecutorID(),context.getThisTaskId(),
                 context.getGraph());
     }
-    public void loadDB(Map conf, TopologyContext context, OutputCollector collector){}
-    public void loadDB(int thread_Id, int thisTaskId, ExecutionGraph graph){}
+    public void loadDB(Configuration conf, TopologyContext context, OutputCollector collector){}
+    public void loadDB(int thread_Id, int thisTaskId, ExecutionGraph graph){
+        //initialize in the Topology by the TableInitializer
+    }
 
     public void cleanup() {}
     public void callback(int callee, Marker marker){};

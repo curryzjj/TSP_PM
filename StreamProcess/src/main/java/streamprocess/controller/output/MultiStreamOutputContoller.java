@@ -1,6 +1,8 @@
 package streamprocess.controller.output;
 
 import System.util.DataTypes.StreamValues;
+import org.jctools.queues.SpscArrayQueue;
+import org.jctools.queues.SpscLinkedQueue;
 import streamprocess.components.topology.MultiStreamComponent;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.runtime.collector.MetaGroup;
@@ -10,6 +12,8 @@ import streamprocess.execution.runtime.tuple.streaminfo;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Queue;
+
 import System.Constants;
 
 public class MultiStreamOutputContoller extends OutputController{
@@ -89,7 +93,11 @@ public class MultiStreamOutputContoller extends OutputController{
 
     @Override
     public void emitOnStream(MetaGroup MetaGroup, String streamId, char[] data) throws InterruptedException {//here
-
+        PartitionController[] it = collections.get(streamId);
+        for (int i = 0; i < it.length; i++) {
+            PartitionController p = it[i];
+            p.force_emit(MetaGroup.get(p.childOP), streamId, -1, data);//default bid is -1
+        }
     }
 
     @Override
@@ -139,7 +147,11 @@ public class MultiStreamOutputContoller extends OutputController{
 
     @Override
     public void force_emitOnStream(MetaGroup MetaGroup, String streamId, char[] data) throws InterruptedException {
-
+        PartitionController[] it = collections.get(streamId);
+        for (int i = 0; i < it.length; i++) {
+            PartitionController p = it[i];
+            p.force_emit(MetaGroup.get(p.childOP), streamId, -1, data);//default bid is -1
+        }
     }
 
     @Override
@@ -149,7 +161,11 @@ public class MultiStreamOutputContoller extends OutputController{
 
     @Override
     public void force_emitOnStream(MetaGroup MetaGroup, String streamId, long bid, Object... data) throws InterruptedException {
-
+        PartitionController[] it = collections.get(streamId);
+        for (int i = 0; i < it.length; i++) {
+            PartitionController p = it[i];
+            p.force_emit(MetaGroup.get(p.childOP), streamId, bid, data);
+        }
     }
 
     @Override

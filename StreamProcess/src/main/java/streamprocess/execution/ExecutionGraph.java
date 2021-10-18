@@ -5,6 +5,7 @@ import System.util.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.grouping.Grouping;
+import streamprocess.components.operators.executor.VirtualExecutor;
 import streamprocess.components.topology.MultiStreamComponent;
 import streamprocess.components.topology.Topology;
 import streamprocess.components.topology.TopologyComponent;
@@ -16,12 +17,15 @@ import streamprocess.controller.output.OutputController;
 import streamprocess.controller.output.PartitionController;
 import streamprocess.controller.output.partition.AllPartitionController;
 import streamprocess.controller.output.partition.FieldsPartitionController;
+import streamprocess.controller.output.partition.ShufflePartitionController;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import static System.Constants.virtualType;
 
 public class ExecutionGraph implements Serializable {
     private static final Logger LOG = LoggerFactory.getLogger(ExecutionGraph.class);
@@ -195,7 +199,14 @@ public class ExecutionGraph implements Serializable {
          Loading(conf,p);
      }
      //used by the above setup
-    private ExecutionNode addVirtual(Platform p){return null;}
+    private ExecutionNode addVirtual(Platform p){
+        MultiStreamComponent virtual = new MultiStreamComponent("Virtual", virtualType, new VirtualExecutor(), 1, null, null, null);
+        ExecutionNode virtualNode = new ExecutionNode(virtual, -2, p);
+        addExecutor(virtualNode);
+        virtual.link_to_executor(virtualNode);//creates Operator->executor link.
+
+        return virtualNode;
+    }
     private void add(Set<TopologyComponent> children, ExecutionNode executor, TopologyComponent operator){
          for(TopologyComponent child:children){
              executor.getChildren().putIfAbsent(child,new ArrayList<>());
@@ -242,7 +253,7 @@ public class ExecutionGraph implements Serializable {
              }
          }else{
              for(TopologyComponent operator:topology.getRecords().values()){
-                 if(operator.isLeadNode()){
+                 if(operator.isLeafNode()){
                      continue;
                  }
                  //<output_streamId,<DownOpId,PC>> for operator
@@ -252,6 +263,7 @@ public class ExecutionGraph implements Serializable {
                      PCMaps.put(streamId,PClist);
                  }
                  OutputController sc=new MultiStreamOutputContoller((MultiStreamComponent) operator,PCMaps);
+                 sc.setShared();
                  for(ExecutionNode executor:operator.getExecutorList()){
                      executor.setController(sc);
                  }
@@ -274,15 +286,18 @@ public class ExecutionGraph implements Serializable {
          return PClist;
     }
     private PartitionController partitionController_create(TopologyComponent srcOP, TopologyComponent childOP,
-                                                           String streamId, HashMap<Integer,ExecutionNode> downExexutor_list,
+                                                           String streamId, HashMap<Integer,ExecutionNode> downExecutor_list,
                                                            int batch, ExecutionNode executor,boolean common){
         Grouping g=srcOP.getGrouping_to_downstream(childOP.getId(), streamId);
         //implement other partition controller in the future
         if(g.isAll()){
-            return new AllPartitionController(srcOP,childOP,downExexutor_list,batch,executor,common,conf.getBoolean("profile",false),conf);
+            return new AllPartitionController(srcOP,childOP,downExecutor_list,batch,executor,common,conf.getBoolean("profile",false),conf);
         }else if(g.isFields()){
-            return new FieldsPartitionController(srcOP,childOP,downExexutor_list, srcOP.get_output_fields(streamId),g.getFields(),batch,executor,common,conf.getBoolean("profile",false),conf);
-        }else {
+            return new FieldsPartitionController(srcOP,childOP,downExecutor_list, srcOP.get_output_fields(streamId),g.getFields(),batch,executor,common,conf.getBoolean("profile",false),conf);
+        }else if(g.isShuffle()){
+            return new ShufflePartitionController(srcOP, childOP
+                    , downExecutor_list, batch, executor, common, conf.getBoolean("profile", false), conf);
+        } else {
             LOG.info("create partition controller error: not suppourted yet");
             return null;
         }
@@ -311,6 +326,10 @@ public class ExecutionGraph implements Serializable {
     }
     public ArrayList<ExecutionNode> sort() {
         return getExecutionNodeArrayList();
+    }
+    //display
+    public ArrayList<ExecutionNode> display_ExecutionNodeList(){
+        return executionNodeArrayList;
     }
 }
 

@@ -1,16 +1,61 @@
 package streamprocess.components.operators.base;
 
+import System.constants.BaseConstants;
+import System.util.ClassLoaderUtils;
+import System.util.Configuration;
+import applications.sink.formatter.BasicFormatter;
+import applications.sink.formatter.Formatter;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractBolt;
-import streamprocess.components.operators.api.BaseOperator;
+import streamprocess.execution.ExecutionGraph;
+import streamprocess.execution.runtime.tuple.Fields;
 
 import java.util.Map;
 
-public abstract class BaseSink extends AbstractBolt {
+public abstract class BaseSink extends BaseOperator {
+    private static final Logger LOG= LoggerFactory.getLogger(BaseSink.class);
+    protected static ExecutionGraph graph;
+    protected int thisTaskId;
+    boolean isSINK=true;
+    protected static final int max_num_msg=(int) 1E5;
+    private BaseSink(Logger log){super(log);}
+    BaseSink(Map<String, Double> input_selectivity, double read_selectivity) {
+        super(LOG, input_selectivity, null, (double) 1, read_selectivity);
+    }
+    public BaseSink(Map<String, Double> input_selectivity) {
+        this(input_selectivity, 0);
+    }
 
-    BaseSink(Logger log, Map<String, Double> input_selectivity,
-             Map<String, Double> output_selectivity, boolean byP, double event_frequency, double w) {
-        super(log,input_selectivity,output_selectivity,byP,event_frequency,w);
-        System.out.print("");
+    @Override
+    public void initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
+        this.thisTaskId=thisTaskId;
+        BaseSink.graph=graph;
+        String formatterClass=config.getString(getConfigKey(),null);
+        Formatter formatter;
+        //TODO:initialize formatter
+        if (formatterClass == null) {
+            formatter = new BasicFormatter();
+        } else {
+            formatter = (Formatter) ClassLoaderUtils.newInstance(formatterClass, "formatter", getLogger());
+        }
+
+        formatter.initialize(Configuration.fromMap(config), getContext());
+        if(thisTaskId==graph.getSink().getExecutorID()){
+            isSINK=true;
+        }
+    }
+
+    protected abstract Logger getLogger();
+
+    @Override
+    protected Fields getDefaultFields() {
+        return new Fields("");
+    }
+    private String getConfigKey() {
+        return String.format(BaseConstants.BaseConf.SINK_FORMATTER, configPrefix);
+    }
+    protected void killTopology(){
+        LOG.info("Killing application");
     }
 }

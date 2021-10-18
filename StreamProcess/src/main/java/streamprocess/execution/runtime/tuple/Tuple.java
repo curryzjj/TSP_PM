@@ -115,4 +115,8 @@ public class Tuple {
 
         return (short) getValue(timeIdx);
     }
+
+    public int fieldSize() {
+        return message.field_size;
+    }
 }

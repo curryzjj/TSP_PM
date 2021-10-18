@@ -4,6 +4,7 @@ import System.util.Configuration;
 import System.util.DataTypes.StreamValues;
 import System.util.OsUtils;
 import org.jctools.queues.MpscArrayQueue;
+import org.jctools.queues.SpscArrayQueue;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import scala.util.parsing.combinator.testing.Str;
@@ -163,12 +164,12 @@ public abstract class PartitionController implements IPartitionController {
     //actually offer method
     private boolean bounded_offer(Queue queue,final Object e){
         do{
-            if (((MpscArrayQueue) queue).offerIfBelowThreshold(e,threashold)) {
+        if (((MpscArrayQueue) queue).offerIfBelowThreshold(e,threashold)) {
                 return true;
             }
             int timestamp_counter=SPIN_TRIES;
             applyWaitMethod(timestamp_counter);
-        } while(!Thread.interrupted());
+       } while(!Thread.interrupted());
         return true;
     }
     private boolean nonbounded_offer(Queue queue, final Object e) {
@@ -187,6 +188,7 @@ public abstract class PartitionController implements IPartitionController {
     }
     private boolean _offer(Object tuple,int targetId){
         Queue queue=get_queue(targetId);
+       // System.out.println(queue);
         return bounded_offer(queue,tuple);
     }
     private boolean _try_offer(Object tuple,int targetId){

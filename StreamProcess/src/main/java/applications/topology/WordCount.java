@@ -16,6 +16,8 @@ import streamprocess.controller.input.InputStreamController;
 import streamprocess.controller.input.scheduler.SequentialScheduler;
 import streamprocess.execution.runtime.tuple.Fields;
 
+import static UserApplications.constants.WordCountConstants.PREFIX;
+
 public class WordCount extends BasicTopology{
     private static final Logger LOG= LoggerFactory.getLogger(WordCount.class);
     public WordCount(String topologyName, Configuration config){
@@ -53,6 +55,6 @@ public class WordCount extends BasicTopology{
 
     @Override
     protected String getConfigPrefix() {
-        return "the constants in the applicationConstants";
+        return PREFIX;
     }
 }

@@ -25,6 +25,7 @@ public class spoutThread extends executorThread{
     private final int timeSliceLengthMs;
     private final int elements;
     private final OutputCollector collector;
+    boolean binding_finish=false;
     int sleep_time = 0;
     int busy_time = 0;
 
@@ -37,6 +38,7 @@ public class spoutThread extends executorThread{
         super(e, conf, context, cpu, node, latch, HPCMonotor, threadMap);
         this.sp=(BasicSpoutBatchExecutor) e.op;
         this.collector = new OutputCollector(e,context);
+        batch = conf.getInt("batch", 100);
         this.loadTargetHz = loadTargetHz;
         this.timeSliceLengthMs = timeSliceLengthMs;
         sp.setExecutionNode(e);
@@ -77,13 +79,14 @@ public class spoutThread extends executorThread{
                     binding=sequential_binding();
                 }
             }
-            initilize_queue(this.executor.getExecutorID());
+            initilize_queue(executor.getExecutorID());
             sp.prepare(conf,context,collector);
             Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
             if(binding!=null){
                 LOG.info("Successfully create spoutExecutors "+sp.getContext().getThisTaskId()+"on node:"+
                         ""+node+"binding:"+Long.toBinaryString(0x1000000000000000L| binding[0]).substring(1));
             }
+            binding_finish=true;
             LOG.info("Operator:\t" + executor.getOP_full() + " is ready");
             this.Ready(LOG);
             System.gc();
@@ -105,7 +108,6 @@ public class spoutThread extends executorThread{
                 lock.release();
             }
             this.executor.display();
-            double expected_throughput=0;
             if(end_emit==0){//Interrupt
                 end_emit=System.nanoTime();
             }

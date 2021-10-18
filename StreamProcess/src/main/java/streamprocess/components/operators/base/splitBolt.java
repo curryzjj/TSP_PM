@@ -1,7 +1,6 @@
 package streamprocess.components.operators.base;
 
 import org.slf4j.Logger;
-import streamprocess.components.operators.api.BaseOperator;
 
 import java.util.Map;
 

@@ -54,4 +54,16 @@ public class OutputCollector<T> {
         assert data !=null && sc!=null;
         sc.emitOnStream(meta,streamId,data);
     }
+    //force_emit
+    public void force_emit(char[] values) throws InterruptedException {
+        force_emit(DEFAULT_STREAM_ID, values);
+    }
+    public void force_emit(String streamId, char[] data) throws InterruptedException {
+        assert data != null && sc != null;
+        sc.force_emitOnStream(meta, streamId, data);
+    }
+    public void force_emit(long bid, Object... data) throws InterruptedException {
+        assert data != null && sc != null;
+        sc.force_emitOnStream(meta, DEFAULT_STREAM_ID, bid, data);
+    }
 }

@@ -1,6 +1,9 @@
 package streamprocess.components.operators.executor;
 
 import System.util.Configuration;
+import applications.AppRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractSpout;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
@@ -10,6 +13,7 @@ import streamprocess.execution.runtime.tuple.msgs.Marker;
 import java.util.Map;
 
 public class BasicSpoutBatchExecutor extends SpoutExecutor{
+    private static final Logger LOG= LoggerFactory.getLogger(BasicSpoutBatchExecutor.class);
     private final AbstractSpout _op;
 
     public BasicSpoutBatchExecutor(AbstractSpout op) {

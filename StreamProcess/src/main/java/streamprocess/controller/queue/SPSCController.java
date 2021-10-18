@@ -19,6 +19,7 @@ public class SPSCController extends QueueController{
     private final HashMap<Integer,Queue> outputQueue=new HashMap<>();////<Downstream executor ID, corresponding output queue>
     public SPSCController(HashMap<Integer, ExecutionNode> downExecutor_list) {
         super(downExecutor_list);
+        Queue temp1=new SpscArrayQueue(1024);//Don't why need this
     }
 
     @Override

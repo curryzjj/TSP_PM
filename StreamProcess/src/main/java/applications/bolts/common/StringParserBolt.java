@@ -3,6 +3,7 @@ package applications.bolts.common;
 import System.spout.helper.parser.Parser;
 import System.util.Configuration;
 import UserApplications.parser.StringParser;
+import com.oracle.tools.packager.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.base.MapBolt;
@@ -40,8 +41,11 @@ public class StringParserBolt extends MapBolt {
     }
 
     @Override
-    public void execute(Tuple in) throws InterruptedException, Exception, BrokenBarrierException {
+    public void execute(Tuple in) throws InterruptedException{
         //some process on the Tuple in
+        char[] string=in.getCharArray(0);
+        char[] emit=parser.parse(string);
+        collector.force_emit(emit);
     }
 
     @Override

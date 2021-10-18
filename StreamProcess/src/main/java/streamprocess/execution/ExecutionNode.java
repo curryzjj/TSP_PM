@@ -3,9 +3,11 @@ package streamprocess.execution;
 import System.Platform.Platform;
 import com.oracle.tools.packager.Log;
 import org.apache.commons.lang.SerializationUtils;
+import org.jctools.queues.SpscArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.executor.IExecutor;
+import streamprocess.components.operators.executor.SpoutExecutor;
 import streamprocess.components.topology.TopologyComponent;
 import streamprocess.controller.input.InputStreamController;
 import streamprocess.controller.output.OutputController;
@@ -155,18 +157,21 @@ public class ExecutionNode implements Serializable {
         return children.get(operator);
     }
     public boolean isSourceNode() {
-        return true;
+        return operator.getOp() instanceof SpoutExecutor;
     }
     public boolean isLeafNode() {
-        return true;
+        return operator.isLeafNode();
     }
-    private boolean isLeadNode() { return true; }
+    private boolean isLeadNode() {
+        final ExecutionNode node = operator.getExecutorList().iterator().next();
+        return this == node;
+    }
     //end
     //Output_queue
     public void setReceive_queueOfChildren(String streamId){//used int the executorThread
         if(!isLeafNode()){
             final OutputController controller=getController();
-            if(!controller.isShared()||this.isLeafNode()){
+            if(!controller.isShared()||this.isLeadNode()){
                 //for each downstream Operator ID
                 if(operator.getChildrenOfStream(streamId)!=null){
                     for(TopologyComponent op:this.operator.getChildrenOfStream(streamId).keySet()){

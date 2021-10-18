@@ -1,6 +1,14 @@
 package System;
 
+import System.util.OsUtils;
+
 public interface Constants {
+    String Project_Path=System.getProperty("user.home")
+//            + (OsUtils.isMac() ? "" : OsUtils.OS_wrapper("Documents"))
+            + OsUtils.OS_wrapper("hair-loss") + OsUtils.OS_wrapper("TSP_PM_Result");
+    String STAT_Path = System.getProperty("user.home")
+//            + (OsUtils.isMac() ? "" : OsUtils.OS_wrapper("Documents"))
+            + OsUtils.OS_wrapper("TSP_PM") + OsUtils.OS_wrapper("STAT");
     //Stream process constants
     String DEFAULT_STREAM_ID = "default";
     char sinkType = 's';

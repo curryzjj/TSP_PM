@@ -117,8 +117,7 @@ public abstract class AbstractSpout extends Operator {
         String path;
         if(OsUtils.isWindows()){
             OS_prefix="win.";
-        }
-        if(OsUtils.isUnix()){
+        }else{
             OS_prefix="unix.";
         }
         if(OsUtils.isMac()){
@@ -126,7 +125,8 @@ public abstract class AbstractSpout extends Operator {
         }else{
             path = config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_PATH)));
         }
-        String s = System.getProperty("user.home").concat("/data/app/").concat(path);//why not config in the properties
+        String s = System.getProperty("user.home").concat("/hair-loss/app/benchmarks/").concat(path);//why not config in the properties
+        array=new ArrayList<>();
         try{
             openFile(s);
         } catch (FileNotFoundException e) {

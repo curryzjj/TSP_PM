@@ -15,8 +15,7 @@ import java.util.HashMap;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 
-import static xerial.jnuma.Numa.newCPUBitMask;
-import static xerial.jnuma.Numa.setLocalAlloc;
+import static xerial.jnuma.Numa.*;
 
 public abstract class executorThread extends Thread {
     private static final Logger LOG= LoggerFactory.getLogger(executorThread.class);
@@ -64,7 +63,15 @@ public abstract class executorThread extends Thread {
 
     //bind Thread
     protected long[] sequential_binding(){return null;}
-    protected long[] binding(){ return null;}
+    protected long[] binding(){
+        setLocalAlloc();
+        if(executor!=null){
+            LOG.info(this.executor.getOP_full());
+        }
+        LOG.info(" binding to node:" + node + " cpu:" + (int) cpu[0]);
+        lock = AffinityLock.acquireLock((int) cpu[0]);
+        return getAffinity();
+    }
     protected long[] rebinding(){ return null;}
     protected long[] rebinding_clean(){ return null;}
     //end

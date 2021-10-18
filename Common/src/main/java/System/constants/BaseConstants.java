@@ -18,8 +18,12 @@ public interface BaseConstants {
     }
     interface BaseConf{
         String SPOUT_CLASS="%s.spout.class";
-        String SINK_CLASS="%s.sink.class";
         String SPOUT_TEST_PATH = "%s.test.spout.path";
         String SPOUT_PATH = "%s.spout.path";
+        String SPOUT_PARSER = "%s.spout.parser";
+        String SINK_CLASS="%s.sink.class";
+        String SINK_FORMATTER = "%s.sink.formatter";
+        String SPOUT_THREADS ="%s.spout.threads" ;
+        String SINK_THREADS = "%s.sink.threads";
     }
 }

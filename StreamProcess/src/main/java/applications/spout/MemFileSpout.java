@@ -1,6 +1,7 @@
 package applications.spout;
 
 import System.util.Configuration;
+import com.oracle.tools.packager.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractSpout;

@@ -3,6 +3,7 @@ package streamprocess.components.topology;
 import System.constants.BaseConstants;
 import System.util.ClassLoaderUtils;
 import System.util.Configuration;
+import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractSpout;
@@ -23,8 +24,12 @@ public abstract class AbstractTopology  {
         this.builder=new TopologyBuilder();
     }
     //the below function are used in the log
-    protected String getConfigKey(){ return null;}
-    protected String getConfigKey(String name){ return null;}
+    protected String getConfigKey(){
+        return String.format(BaseConstants.BaseConf.SPOUT_PARSER, getConfigPrefix());
+    }
+    protected String getConfigKey(String name){
+        return String.format(BaseConstants.BaseConf.SINK_THREADS, String.format("%s.%s", getConfigPrefix(), name));
+    }
     //end
     public String getTopologyName() {
         return topologyName;

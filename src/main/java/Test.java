@@ -1,3 +1,5 @@
+import org.jctools.queues.SpscArrayQueue;
+
 import java.util.*;
 
 public class Test {
@@ -32,9 +34,7 @@ public class Test {
         return ret;
     }
     public static void main(String[] args) throws InterruptedException {
-        long a=System.nanoTime();
-        Thread.sleep(1);
-        long b=System.nanoTime();
-        System.out.println(b-a);
+        Queue test=new SpscArrayQueue(1024);
+        System.out.println("ture");
     }
 }

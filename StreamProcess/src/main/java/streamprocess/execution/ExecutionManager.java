@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.exception.UnhandledCaseException;
 import streamprocess.components.topology.TopologyContext;
+import streamprocess.execution.runtime.threads.boltThread;
 import streamprocess.execution.runtime.threads.executorThread;
 import streamprocess.execution.runtime.threads.spoutThread;
 import streamprocess.optimization.OptimizationManager;
@@ -61,9 +62,10 @@ public class ExecutionManager {
                 case spoutType:thread=launchSpout_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor),conf,plan.toSocket(e.getExecutorID()),latch);
                 break;
                 case boltType:
-                case sinkType:thread=launchBolt_InCore();
+                case sinkType:thread=launchBolt_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor),conf,plan.toSocket(e.getExecutorID()),latch);
                 break;
                 case virtualType:
+                    LOG.info("Won't launch virtual ground");
                     break;
                 default:
                     throw new UnhandledCaseException("type not recognized");
@@ -91,8 +93,26 @@ public class ExecutionManager {
         }
         return launchSpout_InCore(e,context,conf,node,cpu,latch);
     }
-    private executorThread launchBolt_InCore(){return null;}
-    private executorThread launchBolt_SingleCore(){return null;}
+    private executorThread launchBolt_InCore(ExecutionNode e,TopologyContext context,Configuration conf,int node,long[] cores,CountDownLatch latch){
+        boltThread bt;
+        bt=new boltThread(e,context,conf,cores,node,latch,HPCMonotor,optimizationManager,ThreadMap,clock);
+        bt.setDaemon(true);
+        if (!(conf.getBoolean("monte", false) || conf.getBoolean("simulation", false))) {
+            bt.start();
+        }
+        ThreadMap.putIfAbsent(e.getExecutorID(), bt);
+        return bt;
+    }
+    private executorThread launchBolt_SingleCore(ExecutionNode e,TopologyContext context,Configuration conf,int node,CountDownLatch latch){
+        long cpu[];
+        if (!conf.getBoolean("NAV", true)) {
+            //implement after AC
+            cpu=new long[2];
+        } else {
+            cpu = new long[1];
+        }
+        return launchBolt_InCore(e, context, conf, node, cpu, latch);
+    }
     public void redistributeTasks(ExecutionGraph g,Configuration conf, ExecutionPlan plan) throws InterruptedException{}
     public void exit() throws IOException {
         LOG.info("Execution stops");
@@ -105,4 +125,10 @@ public class ExecutionManager {
         }
     }
     public executorThread getSinkThread(){return ThreadMap.get(g.getSinkThread());}
+
+    public void exist() {
+        LOG.info("Execution stops.");
+        LOG.info("ExecutionManager is going to stop all threads sequentially");
+        this.getSinkThread().getContext().Sequential_stopAll();//Only one sink will do the measure_end
+    }
 }

@@ -3,6 +3,7 @@ package streamprocess.controller.queue;
 import System.util.OsUtils;
 import org.jctools.queues.MpscArrayQueue;
 import org.jctools.queues.MpscLinkedQueue8;
+import org.jctools.queues.SpscArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionNode;
@@ -19,6 +20,7 @@ public class MPSCController extends QueueController{
     private Map<Integer,Queue> outputQueue;//<Downstream executor Id, corresponding output queue>
     public MPSCController(HashMap<Integer, ExecutionNode> downExecutor_list) {
         super(downExecutor_list);
+        Queue temp1=new MpscArrayQueue(1024);//Don't why need this
     }
 
     @Override
@@ -36,7 +38,7 @@ public class MPSCController extends QueueController{
         outputQueue=new HashMap<>();
         for(int executor:downExecutor_list.keySet()){
             if(OsUtils.isWindows()||OsUtils.isMac()){
-                outputQueue.put(executor,new MpscArrayQueue(desired_elements_epoch_per_core));
+                outputQueue.put(executor,new MpscArrayQueue(1024));//TODO:fixed the error
             }else{
                 if(linked){
                     outputQueue.put(executor,new MpscLinkedQueue8<>());
