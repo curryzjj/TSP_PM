@@ -6,12 +6,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractSpout;
 import streamprocess.execution.ExecutionGraph;
+import streamprocess.execution.runtime.tuple.Tuple;
 
 import java.io.BufferedWriter;
 
 public class MemFileSpout extends AbstractSpout {
     private static final Logger LOG = LoggerFactory.getLogger(MemFileSpout.class);
     protected int element = 0;
+
+    long meauseStartTime;
+    long meauseLatencyStartTime;
+    long meauseFinishTime;
 
     private transient BufferedWriter writer;
     public MemFileSpout(){
@@ -34,6 +39,7 @@ public class MemFileSpout extends AbstractSpout {
         LOG.info("Spout initialize is being called");
         cnt = 0;
         counter = 0;
+        this.graph=graph;
         taskId = getContext().getThisTaskIndex();//context.getThisTaskId(); start from 0..
         load_input();
     }
@@ -45,12 +51,23 @@ public class MemFileSpout extends AbstractSpout {
 
     @Override
     public void nextTuple() throws InterruptedException {
-        collector.emit(array_array[counter]);
-        counter++;
-        if(counter==array_array.length){
-            counter=0;
+        if(exe!=1){
+            collector.emit(array_array[counter]);
+            counter++;
+            if(counter==array_array.length){
+                counter=0;
+            }
+            exe--;
+        }else {
+            collector.emit(array_array[counter]);
+            if (taskId == graph.getSpout().getExecutorID()) {
+                LOG.info("Thread:" + taskId + " is going to stop all threads sequentially");
+                context.stop_running();
+            }
         }
+
     }
+
 
     @Override
     public void nextTuple_nonblocking() throws InterruptedException {

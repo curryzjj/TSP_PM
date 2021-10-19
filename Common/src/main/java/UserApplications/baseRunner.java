@@ -57,9 +57,12 @@ public abstract class baseRunner {
     @Parameter(names = {"-bt"}, description = "fixed batch", required = false)
     public int batch = 1;
 
-
     @Parameter(names = {"-tt"}, description = "parallelism", required = false)
     public int tthread = 1;
+
+    @Parameter(names = {"-DataBase"}, description = "DataBase", required = false)
+    public String DataBase= "in-memory";
+
 
     public  baseRunner() {
         CFG_PATH = "../TSP_PM/Common/src/main/resources/config/%s.properties";
@@ -97,5 +100,6 @@ public abstract class baseRunner {
 
         config.put("tthread", 1);
         config.put("runtimeInSeconds", runtimeInSeconds);
+        config.put("DataBase",DataBase);
     }
 }

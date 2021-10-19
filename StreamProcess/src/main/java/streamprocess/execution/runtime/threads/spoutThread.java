@@ -38,7 +38,7 @@ public class spoutThread extends executorThread{
         super(e, conf, context, cpu, node, latch, HPCMonotor, threadMap);
         this.sp=(BasicSpoutBatchExecutor) e.op;
         this.collector = new OutputCollector(e,context);
-        batch = conf.getInt("batch", 100);
+        batch = conf.getInt("batch", 1);
         this.loadTargetHz = loadTargetHz;
         this.timeSliceLengthMs = timeSliceLengthMs;
         sp.setExecutionNode(e);
@@ -99,6 +99,7 @@ public class spoutThread extends executorThread{
             if(this.executor.needsProfile()){
                 profile_routing(context.getGraph().topology.getPlatform());
             }else {
+                LOG.info(this.executor.getOP_full()+" started");
                 routing();
             }
         } catch (DatabaseException|BrokenBarrierException |InterruptedException e) {
@@ -120,7 +121,7 @@ public class spoutThread extends executorThread{
             LOG.info(this.executor.getOP_full()
                             + "\tfinished execution and exit with throughput (k input_event/s) of:\t"
                             + actual_throughput + "(" + actual_throughput / expected_throughput + ")"
-                            + " on node: " + node
+                            + " on node: " + node+" cnt="+cnt
             );
             try {
                 Thread.sleep(1000);

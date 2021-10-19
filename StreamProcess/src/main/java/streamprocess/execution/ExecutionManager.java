@@ -73,7 +73,7 @@ public class ExecutionManager {
         }
     }
     private executorThread launchSpout_InCore(ExecutionNode e, TopologyContext context,Configuration conf,int node,long[] cores,CountDownLatch latch){
-       spoutThread st;
+        spoutThread st;
        st=new spoutThread(e,context,conf,cores,node,latch,loadTargetHz,timeSliceLengthMs,HPCMonotor,ThreadMap,clock);
        st.setDaemon(true);
         if (!(conf.getBoolean("monte", false) || conf.getBoolean("simulation", false))) {
@@ -125,10 +125,12 @@ public class ExecutionManager {
         }
     }
     public executorThread getSinkThread(){return ThreadMap.get(g.getSinkThread());}
+    public executorThread getSpoutThread(){
+        return ThreadMap.get(g.getSpoutThread());
+    }
 
     public void exist() {
         LOG.info("Execution stops.");
-        LOG.info("ExecutionManager is going to stop all threads sequentially");
         this.getSinkThread().getContext().Sequential_stopAll();//Only one sink will do the measure_end
     }
 }

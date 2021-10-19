@@ -324,6 +324,9 @@ public class ExecutionGraph implements Serializable {
     public Integer getSinkThread() {
         return sink.getExecutorID();
     }
+    public Integer getSpoutThread(){
+         return spout.getExecutorID();
+    }
     public ArrayList<ExecutionNode> sort() {
         return getExecutionNodeArrayList();
     }

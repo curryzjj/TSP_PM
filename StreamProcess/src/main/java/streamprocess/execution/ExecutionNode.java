@@ -30,7 +30,7 @@ public class ExecutionNode implements Serializable {
     //model related structures. Source executor Id, related model.
     //public final HashMap<Integer, STAT> profiling = new HashMap<>();
     public final int compressRatio;
-    private final int executorID;//global ID for this executorNode in current Brisk.topology
+    private final int executorID;//global ID for this executorNode in current TSP_PM.topology
     //    public HashMap<Integer, Boolean> BP=new HashMap<>();//Backpressure corrected.
     private final boolean BP = false;
     //Below are created later.
@@ -222,7 +222,7 @@ public class ExecutionNode implements Serializable {
     }
 
     public int getExecutorID() {
-        return 0;
+        return executorID;
     }
     public void setLast_executorOfBolt(boolean last_executor) {
         this.last_executor=last_executor;

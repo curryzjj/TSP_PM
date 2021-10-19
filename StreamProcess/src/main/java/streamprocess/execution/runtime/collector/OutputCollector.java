@@ -9,6 +9,7 @@ import streamprocess.components.topology.TopologyComponent;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.controller.output.OutputController;
 import streamprocess.execution.ExecutionNode;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import static System.Constants.DEFAULT_STREAM_ID;
 
@@ -65,5 +66,19 @@ public class OutputCollector<T> {
     public void force_emit(long bid, Object... data) throws InterruptedException {
         assert data != null && sc != null;
         sc.force_emitOnStream(meta, DEFAULT_STREAM_ID, bid, data);
+    }
+    //broadcast marker
+    public void broadcast_marker(long bid, Marker marker) throws InterruptedException {
+        if (executor.isLeafNode()) {
+            return;
+        }
+        sc.marker_boardcast(meta, bid, marker);
+    }
+
+    public void broadcast_marker(String streamId, long bid, Marker marker) throws InterruptedException {
+        if (executor.isLeafNode()) {
+            return;
+        }
+        sc.marker_boardcast(meta, streamId, bid, marker);
     }
 }

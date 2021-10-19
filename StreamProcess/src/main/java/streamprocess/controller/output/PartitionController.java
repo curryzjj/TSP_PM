@@ -119,11 +119,11 @@ public abstract class PartitionController implements IPartitionController {
         return partition_ratio.get(executorID);
     }
     //create message
-    private Marker package_marker(String streamId, Marker marker) {
-        return new Marker(streamId, marker.timeStampNano, marker.msgId, marker.getMyiteration());
+    private Marker package_marker(String streamId, Marker marker,String msg) {
+        return new Marker(streamId, marker.timeStampNano, marker.msgId, marker.getMyiteration(),msg);
     }
-    private Marker package_marker(String streamId, long timestamp, long bid, int myiteration) {
-        return new Marker(streamId, timestamp, bid, myiteration);
+    private Marker package_marker(String streamId, long timestamp, long bid, int myiteration, String msg) {
+        return new Marker(streamId, timestamp, bid, myiteration,msg);
     }
     private GeneralMsg package_message(String streamId, Object... msg) {
         return new GeneralMsg<>(streamId, msg);
@@ -352,7 +352,7 @@ public abstract class PartitionController implements IPartitionController {
     protected boolean force_offer(int srcId, int targetId, String streamId, long bid, StreamValues output) {
         return _offer(new Tuple(bid, srcId, context[srcId - firt_executor_Id], package_message(streamId, output)), targetId);
     }
-    //offer_maker method
+    //offer_marker method
     protected boolean offer_marker(int srcId, int targetId, String streamId, long bid, Marker marker) {
         Tuple marker_tuple = (new Tuple(bid, srcId, context[srcId - firt_executor_Id], marker));
         return _offer_marker(marker_tuple, targetId);
@@ -360,20 +360,20 @@ public abstract class PartitionController implements IPartitionController {
     protected boolean offer_create_marker(Tuple marker_tuple, int targetId) {
         return _offer_marker(marker_tuple, targetId);
     }
-    //emit_maker uses the offer_maker method
+    //emit_marker uses the offer_maker method
     public int marker_boardcast(Meta meta, String streamId,long bid,Marker marker){
         for (int target : targetTasks) {
             offer_marker(meta.src_id, target, streamId, bid, marker);
         }
         return targetTasks.length;
     }
-    public int create_marker_single(Meta meta, String streamId, long timestamp, long bid, int myiteration) {
-        Tuple marker = create_marker(meta.src_id, streamId, timestamp, bid, package_marker(streamId, timestamp, bid, myiteration));
+    public int create_marker_single(Meta meta, String streamId, long timestamp, long bid, int myiteration,String msg) {
+        Tuple marker = create_marker(meta.src_id, streamId, timestamp, bid, package_marker(streamId, timestamp, bid, myiteration,msg));
         offer_create_marker(marker, targetTasks[0]);//only send to the first instance.
         return targetTasks.length;
     }
-    public int create_marker_boardcast(Meta meta, String streamId, long timestamp, long bid, int myiteration) {
-        Tuple marker = create_marker(meta.src_id, streamId, timestamp, bid, package_marker(streamId, timestamp, bid, myiteration));
+    public int create_marker_boardcast(Meta meta, String streamId, long timestamp, long bid, int myiteration,String msg) {
+        Tuple marker = create_marker(meta.src_id, streamId, timestamp, bid, package_marker(streamId, timestamp, bid, myiteration,msg));
         for (int target : targetTasks) {
             offer_create_marker(marker, target);
         }
@@ -621,25 +621,25 @@ public abstract class PartitionController implements IPartitionController {
             }
         }
         //end
-        JumboTuple spout_add_marker(int targetId, String streamId, long timestamp, long bid, int myiteration, TopologyContext context) {
+        JumboTuple spout_add_marker(int targetId, String streamId, long timestamp, long bid, int myiteration, TopologyContext context,String msg) {
             final int index = targetId - base;
             final int p = pointer[index];
             if (p == 0) {
                 buffers[index] = new JumboTuple(src_Id, BIDGenerator.getInstance().getAndIncrement(), batch_size, context);
             }
-            buffers[index].add(p, package_marker(streamId, timestamp, bid, myiteration));
+            buffers[index].add(p, package_marker(streamId, timestamp, bid, myiteration,msg));
             buffers[index].length = p + 1;
             pointer[index] = 0;
             return buffers[index];
         }
 
-        JumboTuple add_marker(int targetId, String streamId, long bid, Marker marker, TopologyContext context) {
+        JumboTuple add_marker(int targetId, String streamId, long bid, Marker marker, TopologyContext context,String msg) {
             final int index = targetId - base;
             final int p = pointer[index];
             if (p == 0) {
                 buffers[index] = new JumboTuple(src_Id, bid, batch_size, context);
             }
-            buffers[index].add(p, package_marker(streamId, marker));
+            buffers[index].add(p, package_marker(streamId, marker,msg));
             buffers[index].length = p + 1;
             pointer[index] = 0;
             return buffers[index];

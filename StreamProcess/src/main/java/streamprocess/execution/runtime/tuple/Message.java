@@ -16,5 +16,4 @@ public abstract class Message implements Serializable {
     public String getStreamId(){return streamId;}
     public abstract boolean isMarker();
     public abstract Marker getMarker();
-
 }

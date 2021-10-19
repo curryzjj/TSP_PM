@@ -99,6 +99,9 @@ public class TopologyContext {
         threadMap.get(getThisTaskId()).running=false;
         threadMap.get(getThisTaskId()).interrupt();
     }
+    public HashMap<Integer, executorThread> getThreadMap(){
+        return this.threadMap;
+    }
     public void stop_runningALL(){
         for (int id : threadMap.keySet()) {
             if (id != getThisTaskId()) {

@@ -60,7 +60,6 @@ public class MeasureSink extends BaseSink {
 
     @Override
     public void execute(Tuple input) throws InterruptedException {
-        check(cnt, input);
         if(enable_latency_measurement){
             this.latency_measure();
         }
@@ -80,15 +79,6 @@ public class MeasureSink extends BaseSink {
             cnt++;
     }
 
-    protected void check(int cnt, Tuple input) {
-        if (cnt == 0) {
-            meauseStartTime=System.nanoTime();
-        } else if (cnt == (exe - 40 * 10 - 1)) {
-            meauseFinishTime=System.nanoTime();
-            measure_end();
-            context.stop_running();
-        }
-    }
     protected void measure_end() {
         long time_elapsed = meauseFinishTime - meauseStartTime;
         double throughtResult= ((double) (cnt) * 1E6 / time_elapsed);//count/ns * 1E6 --> EVENTS/ms
@@ -99,6 +89,10 @@ public class MeasureSink extends BaseSink {
         double avg_latency=((double) (latencySum)  /latencyCount );
         LOG.info(this.executor.getOP_full()+"\tReceived:" + cnt+" events" + " Throughput(k input_event/s) of:\t" + throughtResult);
         LOG.info(this.executor.getOP_full()+"\tAverage latency(ms) of:\t" + avg_latency);
+        if (thisTaskId == graph.getSink().getExecutorID()) {
+            LOG.info("Thread:" + thisTaskId + " is going to stop all threads sequentially");
+            context.Sequential_stopAll();
+        }
     }
 
     @Override

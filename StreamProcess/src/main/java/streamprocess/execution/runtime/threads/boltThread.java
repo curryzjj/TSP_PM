@@ -158,7 +158,7 @@ public class boltThread extends executorThread{
             LOG.info(this.executor.getOP_full()
                             + "\tfinished execution and exist with throughput of:\t"
                             + actual_throughput + "(" + (actual_throughput / expected_throughput) + ")"
-                            + " on node: " + node + " fetch miss rate:" + miss / (cnt + miss) * 100
+                            + " on node: " + node + " fetch miss rate:" + miss / (cnt + miss) * 100+" cnt="+cnt
 //					+ " ( " + Arrays.show(cpu) +")"
             );
             try {

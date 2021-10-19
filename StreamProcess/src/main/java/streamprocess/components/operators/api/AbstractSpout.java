@@ -4,11 +4,14 @@ import System.constants.BaseConstants;
 import System.spout.helper.wrapper.StringStatesWrapper;
 import System.util.OsUtils;
 import org.slf4j.Logger;
+import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Scanner;//通过 Scanner 类来获取用户的输入
+
+import static UserApplications.CONTROL.NUM_EVENTS;
 
 public abstract class AbstractSpout extends Operator {
 
@@ -23,13 +26,19 @@ public abstract class AbstractSpout extends Operator {
     protected int counter = 0;
     protected int taskId;
     protected int cnt;
+    protected int exe;
+    protected ExecutionGraph graph;
 
     protected AbstractSpout(Logger log) {
         super(log, true, -1, 1);
+        exe=NUM_EVENTS;
     }
 
     protected String getConfigKey(String template){ return String.format(template,configPrefix);}//append "application name"
     public abstract void nextTuple() throws InterruptedException;
+    public void forward_marker(int sourceId,long bid,String msg){
+
+    };
     public void nextTuple_nonblocking() throws InterruptedException{ nextTuple();}
 
     //the following are used by the load_input

@@ -230,12 +230,22 @@ public class MultiStreamOutputContoller extends OutputController{
 
     @Override
     public void marker_boardcast(MetaGroup MetaGroup, long bid, Marker marker) throws InterruptedException {
-
+        for (String streamId : PClist.keySet()) {
+            PartitionController[] it = collections.get(streamId);
+            for (int i = 0; i < it.length; i++) {
+                PartitionController p = it[i];
+                p.marker_boardcast(MetaGroup.get(p.childOP), streamId, bid, marker);
+            }
+        }
     }
 
     @Override
     public void marker_boardcast(MetaGroup MetaGroup, String streamId, long bid, Marker marker) throws InterruptedException {
-
+        PartitionController[] it = collections.get(streamId);
+        for (int i = 0; i < it.length; i++) {
+            PartitionController p = it[i];
+            p.marker_boardcast(MetaGroup.get(p.childOP), streamId, bid, marker);
+        }
     }
 
     @Override

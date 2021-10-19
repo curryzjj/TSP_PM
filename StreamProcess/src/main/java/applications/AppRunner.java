@@ -62,14 +62,16 @@ public class AppRunner extends baseRunner {
     private static double runTopologyLocally(Topology topology,Configuration conf) throws UnhandledCaseException, InterruptedException {
         TopologySubmitter submitter=new TopologySubmitter();
         final_topology=submitter.submitTopology(topology,conf);
-        executorThread sinkThread = submitter.getOM().getEM().getSinkThread();
+        executorThread spoutThread = submitter.getOM().getEM().getSpoutThread();
         long start = System.currentTimeMillis();
-        sinkThread.join((long) (3 * 1E3 * 60));//sync_ratio for sink thread to stop. Maximally sync_ratio for 10 mins
+        spoutThread.join((long) (3 * 1E3 * 60));//sync_ratio for sink thread to stop. Maximally sync_ratio for 10 mins
         long time_elapsed = (long) ((System.currentTimeMillis() - start) / 1E3 / 60);//in mins
         if (time_elapsed > 20) {
             LOG.info("Program error, exist...");
             System.exit(-1);
         }
+        //TODO:implement the wait after the checkpoint
+        Thread.sleep((long) (1 * 1E3 * 1));
         submitter.getOM().join();
         submitter.getOM().getEM().exist();
         return 0;
