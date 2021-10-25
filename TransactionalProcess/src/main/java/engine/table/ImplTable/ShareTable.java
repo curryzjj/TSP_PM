@@ -37,12 +37,12 @@ public class ShareTable extends BaseTable {
 
     @Override
     public TableRecord SelectKeyRecord(String primary_key) {
-        return null;
+        return primary_index_.SearchRecord(primary_key);
     }
 
     @Override
     public void SelectRecords(int idx_id, String secondary_key, TableRecords records) {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
