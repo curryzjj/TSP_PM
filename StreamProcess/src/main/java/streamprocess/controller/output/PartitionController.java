@@ -1,13 +1,11 @@
 package streamprocess.controller.output;
 
 import System.util.Configuration;
-import System.util.DataTypes.StreamValues;
+import applications.DataTypes.StreamValues;
 import System.util.OsUtils;
 import org.jctools.queues.MpscArrayQueue;
-import org.jctools.queues.SpscArrayQueue;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
-import scala.util.parsing.combinator.testing.Str;
 import streamprocess.components.topology.TopologyComponent;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.controller.queue.MPSCController;

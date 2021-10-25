@@ -63,12 +63,12 @@ public class SplitSentenceBolt extends splitBolt {
     }
 
     @Override
-    public void execute(JumboTuple in) throws Exception {
+    public void execute(JumboTuple in) throws DatabaseException, BrokenBarrierException, InterruptedException {
         super.execute(in);
     }
 
     @Override
-    public void profile_execute(JumboTuple in) throws Exception {
+    public void profile_execute(JumboTuple in) throws DatabaseException, BrokenBarrierException, InterruptedException {
         super.profile_execute(in);
     }
 

@@ -1,6 +1,6 @@
 package streamprocess.controller.output;
 
-import System.util.DataTypes.StreamValues;
+import applications.DataTypes.StreamValues;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.runtime.collector.MetaGroup;
 import streamprocess.execution.runtime.tuple.msgs.Marker;

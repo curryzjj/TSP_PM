@@ -1,16 +1,14 @@
 package streamprocess.controller.output.partition;
 
 import System.util.Configuration;
-import System.util.DataTypes.StreamValues;
+import applications.DataTypes.StreamValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyComponent;
-import streamprocess.components.topology.TopologyContext;
 import streamprocess.controller.output.PartitionController;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.Meta;
 import streamprocess.execution.runtime.tuple.Fields;
-import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.util.HashMap;
 import java.util.LinkedList;

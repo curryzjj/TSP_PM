@@ -131,6 +131,7 @@ public class ExecutionManager {
 
     public void exist() {
         LOG.info("Execution stops.");
+        System.out.println(this.getSinkThread().getContext().getThreadMap());
         this.getSinkThread().getContext().Sequential_stopAll();//Only one sink will do the measure_end
     }
 }

@@ -26,4 +26,12 @@ public interface BaseConstants {
         String SPOUT_THREADS ="%s.spout.threads" ;
         String SINK_THREADS = "%s.sink.threads";
     }
+    interface CCOptions{
+        int CCOption_LOCK = 0;
+        int CCOption_OrderLOCK = 1;
+        int CCOption_LWM = 2;
+        int CCOption_TStream = 3;
+        int CCOption_SStore = 4;
+        int CCOption_OTS = 5;//ordered timestamp
+    }
 }

@@ -1,7 +1,7 @@
 package streamprocess.controller.output.partition;
 
 import System.util.Configuration;
-import System.util.DataTypes.StreamValues;
+import applications.DataTypes.StreamValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyComponent;

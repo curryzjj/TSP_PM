@@ -36,9 +36,6 @@ public abstract class AbstractSpout extends Operator {
 
     protected String getConfigKey(String template){ return String.format(template,configPrefix);}//append "application name"
     public abstract void nextTuple() throws InterruptedException;
-    public void forward_marker(int sourceId,long bid,String msg){
-
-    };
     public void nextTuple_nonblocking() throws InterruptedException{ nextTuple();}
 
     //the following are used by the load_input

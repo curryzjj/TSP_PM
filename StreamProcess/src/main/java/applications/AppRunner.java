@@ -71,7 +71,7 @@ public class AppRunner extends baseRunner {
             System.exit(-1);
         }
         //TODO:implement the wait after the checkpoint
-        Thread.sleep((long) (1 * 1E3 * 1));
+        Thread.sleep((long) (3 * 1E3 * 1));
         submitter.getOM().join();
         submitter.getOM().getEM().exist();
         return 0;

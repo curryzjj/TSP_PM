@@ -1,3 +1,4 @@
+import System.tools.FastZipfGenerator;
 import org.jctools.queues.SpscArrayQueue;
 
 import java.util.*;
@@ -34,7 +35,25 @@ public class Test {
         return ret;
     }
     public static void main(String[] args) throws InterruptedException {
-        Queue test=new SpscArrayQueue(1024);
-        System.out.println("ture");
+        FastZipfGenerator keygenerator=new FastZipfGenerator(40,1,0);
+        Set[] input_keys = new Set[10_000];
+        for (int k = 0; k < 10_000; k++) {
+            Set<Integer> keys = new LinkedHashSet<>();
+            for (int i = 0; i < 30; i++) {
+                int key = keygenerator.next();
+                while (keys.contains(key)) {
+                    key = keygenerator.next();
+                }
+                keys.add(key);
+            }
+            input_keys[k] = keys;
+        }
+        Set<Integer> keys = new LinkedHashSet<>();
+        keys.addAll(input_keys[0 % 10_000]);
+        System.out.println(keys);
+        long[] p_bid=new long[30];
+        for (int i=0;i<30;i++){//what is this for?
+            p_bid[i]=0;
+        }
     }
 }

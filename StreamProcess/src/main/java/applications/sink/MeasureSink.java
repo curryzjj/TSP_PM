@@ -61,7 +61,7 @@ public class MeasureSink extends BaseSink {
     @Override
     public void execute(Tuple input) throws InterruptedException {
         if(enable_latency_measurement){
-            this.latency_measure();
+            //this.latency_measure();
         }
     }
     protected void latency_measure() {

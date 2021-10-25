@@ -11,6 +11,8 @@ import streamprocess.controller.output.OutputController;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
+import java.util.Set;
+
 import static System.Constants.DEFAULT_STREAM_ID;
 
 /**
@@ -80,5 +82,32 @@ public class OutputCollector<T> {
             return;
         }
         sc.marker_boardcast(meta, streamId, bid, marker);
+    }
+    public void broadcast_ack(Marker marker) {
+        final int executorID = this.executor.getExecutorID();
+        for (TopologyComponent op : executor.getParents_keySet()) {
+            for (ExecutionNode src : op.getExecutorList()) {
+                src.op.callback(executorID, marker);
+            }
+        }
+    }
+    //create marker
+    public void create_marker_single(long boardcast_time,String streamId,long bid,int myiteration){
+        sc.create_marker_single(meta,boardcast_time,streamId,bid,myiteration);
+    }
+    public void create_marker_boardcast(long boardcast_time, String streamId, long bid, int myiteration) throws InterruptedException {
+        sc.create_marker_boardcast(meta, boardcast_time, streamId, bid, myiteration);
+    }
+    //emit single
+    public void emit_single(String streamId, long[] bid, long msg_id, Object data) throws InterruptedException {
+        assert data != null && sc != null;
+        sc.force_emitOnStream(meta, streamId, bid, msg_id, data);
+    }
+    public void emit_single(String streamId, long bid, Object... data) throws InterruptedException {
+        assert data != null && sc != null;
+        sc.force_emitOnStream(meta, streamId, bid, data);
+    }
+    public void emit_single(long bid, Set<Integer> keys) throws InterruptedException {
+        emit_single(DEFAULT_STREAM_ID, bid, keys);
     }
 }

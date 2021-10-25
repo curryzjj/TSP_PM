@@ -1,8 +1,6 @@
 package streamprocess.controller.output;
 
-import System.util.DataTypes.StreamValues;
-import org.jctools.queues.SpscArrayQueue;
-import org.jctools.queues.SpscLinkedQueue;
+import applications.DataTypes.StreamValues;
 import streamprocess.components.topology.MultiStreamComponent;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.runtime.collector.MetaGroup;
@@ -12,7 +10,6 @@ import streamprocess.execution.runtime.tuple.streaminfo;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Queue;
 
 import System.Constants;
 
@@ -224,8 +221,12 @@ public class MultiStreamOutputContoller extends OutputController{
     }
 
     @Override
-    public void create_marker_boardcast(MetaGroup meta, long boardcast_time, String streamId, long bid, int myiteration) throws InterruptedException {
-
+    public void create_marker_boardcast(MetaGroup meta, long timestamp, String streamId, long bid, int myiteration) throws InterruptedException {
+        PartitionController[] it = collections.get(streamId);
+        for (int i = 0; i < it.length; i++) {
+            PartitionController p = it[i];
+            p.create_marker_boardcast(meta.get(p.childOP), streamId, timestamp, bid, myiteration,"");
+        }
     }
 
     @Override

@@ -23,7 +23,7 @@ public abstract class AbstractBolt extends Operator {
         super(log, input_selectivity, output_selectivity, 1, 1, byP, event_frequency, w);
     }
     public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException;//shoud be the DatabaseException
-    public void execute(JumboTuple in) throws InterruptedException, Exception, BrokenBarrierException {}
+    public void execute(JumboTuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {}
 
     @Override
     public void cleanup() {
@@ -34,7 +34,7 @@ public abstract class AbstractBolt extends Operator {
     public void callback(int callee, Marker marker) {
         super.callback(callee, marker);
     }
-    public void profile_execute(JumboTuple in) throws InterruptedException, Exception, BrokenBarrierException {//shoud be the DatabaseException
+    public void profile_execute(JumboTuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {//shoud be the DatabaseException
         execute(in);
     }
 }

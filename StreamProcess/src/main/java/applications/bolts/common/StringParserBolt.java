@@ -2,8 +2,8 @@ package applications.bolts.common;
 
 import System.spout.helper.parser.Parser;
 import System.util.Configuration;
-import UserApplications.parser.StringParser;
-import com.oracle.tools.packager.Log;
+import System.parser.StringParser;
+import engine.Exception.DatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.base.MapBolt;
@@ -49,12 +49,12 @@ public class StringParserBolt extends MapBolt {
     }
 
     @Override
-    public void execute(JumboTuple in) throws Exception {
+    public void execute(JumboTuple in) throws DatabaseException, BrokenBarrierException, InterruptedException {
         super.execute(in);
     }
 
     @Override
-    public void profile_execute(JumboTuple in) throws Exception {
+    public void profile_execute(JumboTuple in) throws DatabaseException, BrokenBarrierException, InterruptedException {
         super.profile_execute(in);
     }
 }

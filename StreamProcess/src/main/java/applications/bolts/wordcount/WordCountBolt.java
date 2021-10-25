@@ -1,7 +1,7 @@
 package applications.bolts.wordcount;
 
 import System.util.Configuration;
-import System.util.DataTypes.StreamValues;
+import applications.DataTypes.StreamValues;
 import System.util.OsUtils;
 import UserApplications.constants.WordCountConstants.Field;
 import engine.Exception.DatabaseException;
@@ -55,6 +55,7 @@ public class WordCountBolt extends MapBolt {
         char[] word = input.getCharArray(0);
         int key = Arrays.hashCode(word);
         long v = counts.getOrDefault(key, 0L);
+        collector.force_emit(0, new StreamValues(word, 1L));
         if (v == 0) {
             counts.put(key, 1L);
             collector.force_emit(0, new StreamValues(word, 1L));
@@ -66,12 +67,12 @@ public class WordCountBolt extends MapBolt {
     }
 
     @Override
-    public void execute(JumboTuple in) throws Exception {
+    public void execute(JumboTuple in) throws DatabaseException, BrokenBarrierException, InterruptedException {
         super.execute(in);
     }
 
     @Override
-    public void profile_execute(JumboTuple in) throws Exception {
+    public void profile_execute(JumboTuple in) throws DatabaseException, BrokenBarrierException, InterruptedException {
         super.profile_execute(in);
     }
 }

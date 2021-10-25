@@ -1,10 +1,9 @@
 package streamprocess.execution.runtime.tuple;
 
-import System.util.DataTypes.StreamValues;
+import applications.DataTypes.StreamValues;
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.function.Consumer;
 
 public class Fields implements Iterable<String>, Serializable {
     private final List<String> _fields;
