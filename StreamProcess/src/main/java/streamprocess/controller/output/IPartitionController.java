@@ -1,6 +1,6 @@
 package streamprocess.controller.output;
 
-import applications.DataTypes.StreamValues;
+import System.util.DataTypes.StreamValues;
 import streamprocess.execution.runtime.collector.Meta;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 

@@ -1,6 +1,6 @@
 package streamprocess.controller.output;
 
-import applications.DataTypes.StreamValues;
+import System.util.DataTypes.StreamValues;
 import streamprocess.components.topology.MultiStreamComponent;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.runtime.collector.MetaGroup;

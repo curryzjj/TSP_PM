@@ -1,6 +1,6 @@
 package streamprocess.execution.runtime.tuple;
 
-import applications.DataTypes.StreamValues;
+import System.util.DataTypes.StreamValues;
 
 import java.io.Serializable;
 import java.util.*;

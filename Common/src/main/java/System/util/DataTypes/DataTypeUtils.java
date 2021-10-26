@@ -1,4 +1,4 @@
-package applications.DataTypes;
+package System.util.DataTypes;
 
 public class DataTypeUtils {
     public static boolean isInteger(String str) {

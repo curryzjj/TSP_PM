@@ -1,7 +1,7 @@
 package System.parser;
 
 import System.spout.helper.parser.Parser;
-import applications.DataTypes.StreamValues;
+import System.util.DataTypes.StreamValues;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

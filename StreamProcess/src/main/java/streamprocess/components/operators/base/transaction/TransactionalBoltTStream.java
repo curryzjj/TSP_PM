@@ -27,7 +27,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     }
     //used in the T-Stream_CC
     protected abstract void PRE_TXN_PROCESS(long bid, long timestamp) throws DatabaseException, InterruptedException;
-    protected abstract void TXN_PROCESS() throws DatabaseException, InterruptedException;
+    protected abstract void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException;
     protected void REQUEST_POST() throws InterruptedException{};//implement in the application
     protected void REQUEST_REQUEST_CORE() throws InterruptedException{};//implement in the application
     protected void execute_ts_normal(Tuple in) throws DatabaseException, InterruptedException {

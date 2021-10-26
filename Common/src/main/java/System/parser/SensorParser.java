@@ -1,7 +1,7 @@
 package System.parser;
 
 import System.spout.helper.parser.Parser;
-import applications.DataTypes.StreamValues;
+import System.util.DataTypes.StreamValues;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;

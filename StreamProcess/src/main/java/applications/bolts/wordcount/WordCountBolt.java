@@ -1,7 +1,7 @@
 package applications.bolts.wordcount;
 
 import System.util.Configuration;
-import applications.DataTypes.StreamValues;
+import System.util.DataTypes.StreamValues;
 import System.util.OsUtils;
 import UserApplications.constants.WordCountConstants.Field;
 import engine.Exception.DatabaseException;

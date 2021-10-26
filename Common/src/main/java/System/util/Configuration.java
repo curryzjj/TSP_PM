@@ -1,6 +1,6 @@
 package System.util;
 
-import applications.DataTypes.DataTypeUtils;
+import System.util.DataTypes.DataTypeUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
 import java.util.HashMap;

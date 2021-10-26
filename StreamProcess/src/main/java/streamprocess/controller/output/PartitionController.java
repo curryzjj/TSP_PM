@@ -1,7 +1,7 @@
 package streamprocess.controller.output;
 
 import System.util.Configuration;
-import applications.DataTypes.StreamValues;
+import System.util.DataTypes.StreamValues;
 import System.util.OsUtils;
 import org.jctools.queues.MpscArrayQueue;
 import org.joda.time.DateTime;

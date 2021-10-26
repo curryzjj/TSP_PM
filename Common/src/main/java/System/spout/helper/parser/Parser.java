@@ -1,7 +1,7 @@
 package System.spout.helper.parser;
 
 import System.util.Configuration;
-import applications.DataTypes.StreamValues;
+import System.util.DataTypes.StreamValues;
 
 import java.io.Serializable;
 import java.util.List;

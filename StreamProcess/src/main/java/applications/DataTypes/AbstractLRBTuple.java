@@ -1,5 +1,7 @@
 package applications.DataTypes;
 
+import System.util.DataTypes.StreamValues;
+
 public abstract class AbstractLRBTuple extends StreamValues {
     /**
      * The tuple type ID for position reports.
