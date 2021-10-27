@@ -34,7 +34,7 @@ public class TopologySubmitter {
              * TODO:binding the DB to CPU
              * TODO:OM.lanuch
              */
-
+            OM.launch(topology,topology.getPlatform(),topology.db);
         }else{
             OM.launch(topology,topology.getPlatform(),topology.db);
         }

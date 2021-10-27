@@ -58,6 +58,7 @@ public class OptimizationManager extends Thread {
         executionPlan=new ExecutionPlan(null,null);
         executionPlan.setProfile();
         EM.distributeTasks(conf,executionPlan,latch,false,false,db,p);
+        final String dumpLocks = AffinityLock.dumpLocks();
         return executionPlan;
     }
 

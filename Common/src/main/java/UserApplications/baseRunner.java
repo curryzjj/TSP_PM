@@ -101,5 +101,7 @@ public abstract class baseRunner {
         config.put("tthread", 1);
         config.put("runtimeInSeconds", runtimeInSeconds);
         config.put("DataBase",DataBase);
+
+        config.put("Sequential_Binding",true);
     }
 }

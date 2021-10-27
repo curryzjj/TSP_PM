@@ -76,7 +76,7 @@ public class spoutThread extends executorThread{
             }
             if(enable_numa_placement){
                 if(conf.getBoolean("Sequential_Binding",true)){
-                    binding=sequential_binding();
+                 // binding=sequential_binding();
                 }
             }
             initilize_queue(executor.getExecutorID());

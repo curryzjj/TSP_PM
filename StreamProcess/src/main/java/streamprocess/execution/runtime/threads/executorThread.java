@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 
+import static streamprocess.execution.affinity.SequentialBinding.next_cpu;
 import static xerial.jnuma.Numa.*;
 
 public abstract class executorThread extends Thread {
@@ -62,7 +63,13 @@ public abstract class executorThread extends Thread {
     //end
 
     //bind Thread
-    protected long[] sequential_binding(){return null;}
+    protected long[] sequential_binding(){
+        setLocalAlloc();
+        int cpu = next_cpu();
+        AffinityLock.acquireLock(cpu);
+        LOG.info(this.executor.getOP_full() + " binding to node:" + node + " cpu:" + cpu);
+        return null;
+    }
     protected long[] binding(){
         setLocalAlloc();
         if(executor!=null){
