@@ -4,7 +4,8 @@ import streamprocess.execution.runtime.tuple.Fields;
 
 import java.io.Serializable;
 
-import static System.Constants.DEFAULT_STREAM_ID;
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
+
 
 /**
  * use in the outputController

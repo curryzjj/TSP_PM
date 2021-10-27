@@ -5,7 +5,7 @@ import streamprocess.execution.runtime.tuple.Fields;
 public class FieldsGrouping extends Grouping{
     private Fields fields;
 
-    FieldsGrouping(String componentId, String streamID,Fields fields) {
+   public FieldsGrouping(String componentId, String streamID,Fields fields) {
         super(componentId, streamID);
         this.fields = fields;
     }

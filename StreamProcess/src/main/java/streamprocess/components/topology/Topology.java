@@ -3,6 +3,8 @@ package streamprocess.components.topology;
 import System.Platform.Platform;
 import engine.Database;
 import streamprocess.controller.input.InputStreamController;
+import streamprocess.execution.Initialize.TableInitilizer;
+import utils.SpinLock;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
@@ -18,11 +20,10 @@ public class Topology implements Serializable {
      */
     //TODO initialize the DB
     public Database db;
-    /**
-    public TransactionTopology txnTopology;
+    public TransactionalTopology txnTopology;
     public SpinLock[] spinlock;
     public TableInitilizer tableinitilizer;
-     **/
+
     private final LinkedHashMap<String, TopologyComponent> records;
     private TopologyComponent sink;//not sure where to use?
     private InputStreamController scheduler;

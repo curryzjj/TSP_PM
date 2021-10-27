@@ -9,7 +9,8 @@ import streamprocess.execution.runtime.tuple.streaminfo;
 import java.io.Serializable;
 import java.util.*;
 
-import static System.Constants.DEFAULT_STREAM_ID;
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
+
 
 /**
  * Helper class. SchemaRecord all necessary information about a spout/bolt.

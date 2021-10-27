@@ -9,7 +9,7 @@ import engine.table.RecordSchema;
 import engine.table.tableRecords.TableRecord;
 
 public class InMemeoryDatabase extends Database {
-    public InMemeoryDatabase(String path) {
+    public InMemeoryDatabase() {
         storageManager = new StorageManager();
         eventManager = new EventManager();
     }

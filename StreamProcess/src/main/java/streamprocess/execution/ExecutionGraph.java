@@ -25,7 +25,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static System.Constants.virtualType;
+import static System.constants.BaseConstants.BaseStream.virtualType;
+
 
 public class ExecutionGraph implements Serializable {
     private static final Logger LOG = LoggerFactory.getLogger(ExecutionGraph.class);

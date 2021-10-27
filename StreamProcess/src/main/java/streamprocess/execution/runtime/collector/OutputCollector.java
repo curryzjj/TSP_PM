@@ -13,7 +13,7 @@ import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.util.Set;
 
-import static System.Constants.DEFAULT_STREAM_ID;
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 
 /**
  * outputCollector is unique to each executor
@@ -40,9 +40,6 @@ public class OutputCollector<T> {
         }
         OsUtils.configLOG(LOG);
     }
-    public void emit(char[] data) throws InterruptedException{
-        emit(DEFAULT_STREAM_ID,data);
-    }
     public void emit_nowait(char[] data) throws InterruptedException{
         emit_nowait(DEFAULT_STREAM_ID,data);
     }
@@ -56,6 +53,20 @@ public class OutputCollector<T> {
     private void emit(String streamId,char[] data) throws InterruptedException{
         assert data !=null && sc!=null;
         sc.emitOnStream(meta,streamId,data);
+    }
+    public void emit(char[] data) throws InterruptedException{
+        emit(DEFAULT_STREAM_ID,data);
+    }
+    public void emit(long bid, Object... values) throws InterruptedException {
+        emit(DEFAULT_STREAM_ID, bid, values);
+    }
+    public void emit(String streamId, long bid, Object... data) throws InterruptedException {
+        assert data != null && sc != null;
+        sc.emitOnStream(meta, streamId, bid, data);
+    }
+    public void emit(String streamId, long bid, Object data) throws InterruptedException {
+        assert data != null && sc != null;
+        sc.emitOnStream(meta, streamId, bid, data);
     }
     //force_emit
     public void force_emit(char[] values) throws InterruptedException {

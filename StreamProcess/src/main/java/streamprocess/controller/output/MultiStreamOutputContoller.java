@@ -13,6 +13,8 @@ import java.util.LinkedList;
 
 import System.Constants;
 
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
+
 public class MultiStreamOutputContoller extends OutputController{
     private final HashMap<String, HashMap<String, PartitionController>> PClist;
     private HashMap<String, PartitionController[]> collections; //<output_streamId,PC[]>> for each stream
@@ -40,7 +42,7 @@ public class MultiStreamOutputContoller extends OutputController{
 
     @Override
     public Collection<PartitionController> getPartitionController() {
-        return PClist.get(Constants.DEFAULT_STREAM_ID).values();
+        return PClist.get(DEFAULT_STREAM_ID).values();
     }
 
     @Override

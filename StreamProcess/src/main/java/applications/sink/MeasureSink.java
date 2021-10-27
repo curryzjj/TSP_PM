@@ -16,6 +16,7 @@ import java.util.HashMap;
 import System.Constants;
 
 import static System.Constants.Project_Path;
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
 
 public class MeasureSink extends BaseSink {
@@ -35,7 +36,7 @@ public class MeasureSink extends BaseSink {
 
     public MeasureSink() {
         super(new HashMap<>());
-        this.input_selectivity.put(Constants.DEFAULT_STREAM_ID, 1.0);
+        this.input_selectivity.put(DEFAULT_STREAM_ID, 1.0);
         this.input_selectivity.put("tn", 1.0);
     }
 

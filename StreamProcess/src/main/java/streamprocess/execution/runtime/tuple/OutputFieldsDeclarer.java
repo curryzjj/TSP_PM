@@ -2,7 +2,7 @@ package streamprocess.execution.runtime.tuple;
 
 import java.util.HashMap;
 
-import static System.Constants.DEFAULT_STREAM_ID;
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 
 public class OutputFieldsDeclarer {
     private final HashMap<String,streaminfo> _fields=new HashMap<>();

@@ -18,8 +18,7 @@ import streamprocess.optimization.OptimizationManager;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
-
-import static System.Constants.*;
+import static System.constants.BaseConstants.BaseStream.*;
 
 public class ExecutionManager {
     private final static Logger LOG = LoggerFactory.getLogger(ExecutionManager.class);

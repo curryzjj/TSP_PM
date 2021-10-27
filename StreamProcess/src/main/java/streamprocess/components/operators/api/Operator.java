@@ -20,9 +20,8 @@ import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.Fields;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.execution.runtime.tuple.OutputFieldsDeclarer;
-
-import static System.Constants.DEFAULT_STREAM_ID;
 import static System.constants.BaseConstants.BaseField.TEXT;
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 
 public abstract class Operator implements Serializable{
     //some common operator

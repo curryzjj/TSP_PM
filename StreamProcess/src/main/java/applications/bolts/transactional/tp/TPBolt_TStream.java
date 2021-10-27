@@ -17,8 +17,8 @@ import static UserApplications.CONTROL.combo_bid_size;
 public class TPBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream.class);
     ArrayDeque<LREvent> LREvents = new ArrayDeque<>();
-    public TPBolt_TStream(Logger log, int fid) {
-        super(log,fid);
+    public TPBolt_TStream(int fid) {
+        super(LOG,fid);
         this.configPrefix="tptxn";
         //state=new ValueState();
     }
@@ -68,10 +68,7 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
     }
     void TP_REQUEST_POST(LREvent event) throws InterruptedException {
         //TODO:some process to Post the event to the sink or emit
-    }
-    @Override
-    protected void TXN_PROCESS(long _bid) throws DatabaseException, InterruptedException {//not used
-
+        collector.emit(event.getBid(), true, event.getTimestamp());//the tuple is finished.
     }
 
 }

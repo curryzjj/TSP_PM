@@ -8,7 +8,7 @@ import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.util.ArrayList;
 
-import static System.Constants.DEFAULT_STREAM_ID;
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.enable_debug;
 
 public abstract class TransactionalSpout extends AbstractSpout implements Checkpointable {

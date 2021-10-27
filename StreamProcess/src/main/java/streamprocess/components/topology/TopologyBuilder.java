@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static System.Constants.*;
+import static System.constants.BaseConstants.BaseStream.*;
 
 /**
  * Builder pattern for Topology_components class
@@ -129,6 +130,18 @@ public class TopologyBuilder {
         if(topology.getScheduler()==null){
             LOG.info("JumboTuple scheduler is not set, use default Brisk.execution.runtime.tuple scheduler instead!");
             topology.setScheduler(new SequentialScheduler());
+        }
+        return topology;
+    }
+    public Topology createTopology(Database db, TransactionalTopology txnTopology) {
+
+        if (topology.getScheduler() == null) {
+            LOG.info("Tuple input scheduler is not set, use default scheduler instead!");
+            topology.setScheduler(new SequentialScheduler());
+        }
+        if (db != null) {
+            this.topology.db = db;
+            this.topology.txnTopology = txnTopology;
         }
         return topology;
     }

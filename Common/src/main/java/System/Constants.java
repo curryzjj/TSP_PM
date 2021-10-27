@@ -9,12 +9,6 @@ public interface Constants {
     String STAT_Path = System.getProperty("user.home")
 //            + (OsUtils.isMac() ? "" : OsUtils.OS_wrapper("Documents"))
             + OsUtils.OS_wrapper("TSP_PM") + OsUtils.OS_wrapper("STAT");
-    //Stream process constants
-    String DEFAULT_STREAM_ID = "default";
-    char sinkType = 's';
-    char spoutType = 'p';
-    char boltType = 'b';
-    char virtualType = 'v';
     //PM constants
     String Default_Heap_Path="/mnt/persist-memory/pmem0/jjzhao";
     String Default_Heap_Name="/default";

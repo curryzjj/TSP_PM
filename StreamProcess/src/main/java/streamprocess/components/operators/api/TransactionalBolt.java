@@ -74,7 +74,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
     }
     @Override
     public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException;
-    protected abstract void TXN_PROCESS(long _bid) throws DatabaseException, InterruptedException;
+    protected void TXN_PROCESS(long _bid) throws DatabaseException, InterruptedException{};
     protected void PRE_EXECUTE(Tuple in){
         _bid = in.getBID();
         input_event = in.getValue(0);

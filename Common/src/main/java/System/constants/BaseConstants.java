@@ -1,5 +1,4 @@
 package System.constants;
-import static System.Constants.DEFAULT_STREAM_ID;
 public interface BaseConstants {
     String BASE_PREFIX = "compatibility";
     interface BaseField {
@@ -8,13 +7,18 @@ public interface BaseConstants {
         String TEXT = "text";
     }
     interface BaseStream {
-        String DEFAULT = DEFAULT_STREAM_ID;
+        String DEFAULT = "default";
+        //Stream process constants
+        String DEFAULT_STREAM_ID = "default";
+        char sinkType = 's';
+        char spoutType = 'p';
+        char boltType = 'b';
+        char virtualType = 'v';
     }
     interface BaseComponent {
         String PARSER = "parser";
         String SPOUT = "spout";
         String SINK = "sink";
-        String FORWARD = "forward";
     }
     interface BaseConf{
         String SPOUT_CLASS="%s.spout.class";
@@ -33,5 +37,8 @@ public interface BaseConstants {
         int CCOption_TStream = 3;
         int CCOption_SStore = 4;
         int CCOption_OTS = 5;//ordered timestamp
+    }
+    interface DBOptions{
+        int In_Memory=0;
     }
 }
