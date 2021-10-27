@@ -6,7 +6,7 @@ import engine.table.tableRecords.SchemaRecord;
 import java.util.HashSet;
 import java.util.List;
 
-public class DataBox implements Comparable,Cloneable{
+public abstract class DataBox implements Comparable,Cloneable{
     //multi-types constructions
     public DataBox() throws DataBoxException {
     }
@@ -95,7 +95,9 @@ public class DataBox implements Comparable,Cloneable{
         throw new DataBoxException("not cloneable");
     }
     //override but not implemented
-
+    public int getSize() throws DataBoxException {
+        throw new DataBoxException("Not Implemented");
+    }
     public int compareTo(Object obj) throws DataBoxException {
         throw new DataBoxException("Not Implemented");
     }
@@ -117,6 +119,7 @@ public class DataBox implements Comparable,Cloneable{
         //wait for the multi types to implement
         throw new DataBoxException("Not Implemented");
     }
+
     /**
      * An enum with the current supported types.
      */

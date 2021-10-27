@@ -45,7 +45,6 @@ public class OptimizationManager extends Thread {
         return EM;
     }
     public ExecutionPlan launch(Topology topology, Platform p, Database db) throws UnhandledCaseException {
-
         this.topology=topology;
         final String initial_locks= AffinityLock.dumpLocks();
         boolean nav = conf.getBoolean("NAV", true);

@@ -17,10 +17,10 @@ import streamprocess.components.topology.Topology;
 import streamprocess.components.topology.TransactionalTopology;
 import streamprocess.controller.input.scheduler.SequentialScheduler;
 import streamprocess.execution.Initialize.TableInitilizer;
+import streamprocess.execution.Initialize.impl.TPInitializer;
 import streamprocess.execution.runtime.tuple.Fields;
 import utils.SpinLock;
 
-import static System.constants.BaseConstants.DBOptions.In_Memory;
 import static UserApplications.constants.TP_TxnConstants.Conf.Executor_Threads;
 import static UserApplications.constants.TP_TxnConstants.PREFIX;
 import static UserApplications.constants.TP_TxnConstants.Stream.POSITION_REPORTS_STREAM_ID;
@@ -30,7 +30,6 @@ public class TP_txn extends TransactionalTopology {
     protected TP_txn(String topologyName, Configuration config) {
         super(topologyName, config);
     }
-
     @Override
     public Topology buildTopology() {
         try {
@@ -66,14 +65,12 @@ public class TP_txn extends TransactionalTopology {
     }
 
     @Override
-    protected void InitializeDB() {
-        //switch different kinds of DB
-        switch (config.getInt("DBOptions",0)){
-            case In_Memory:this.db=new InMemeoryDatabase();
-        }
-    }
-    @Override
     public TableInitilizer createDB(SpinLock[] spinlock) {
-        return null;
+        double scale_factor = config.getDouble("scale_factor", 1);
+        double theta = config.getDouble("theta", 1);
+        int tthread = config.getInt("tthread");
+        TableInitilizer ini = new TPInitializer(db, scale_factor, theta, tthread, config);
+        ini.creates_Table(config);
+        return ini;
     }
 }
