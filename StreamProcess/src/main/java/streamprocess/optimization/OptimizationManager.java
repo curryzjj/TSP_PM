@@ -54,10 +54,12 @@ public class OptimizationManager extends Thread {
         boolean parallelism_tune = conf.getBoolean("parallelism_tune", false);
         EM=new ExecutionManager(g,conf,this,db,p);
         latch = new CountDownLatch(g.getExecutionNodeArrayList().size() + 1 - 1);//+1:OM -1:virtual
-        LOG.info("Native execution");
-        executionPlan=new ExecutionPlan(null,null);
-        executionPlan.setProfile();
-        EM.distributeTasks(conf,executionPlan,latch,false,false,db,p);
+        if(nav){
+            LOG.info("Native execution");
+            executionPlan=new ExecutionPlan(null,null);
+            executionPlan.setProfile();
+            EM.distributeTasks(conf,executionPlan,latch,false,false,db,p);
+        }
         final String dumpLocks = AffinityLock.dumpLocks();
         return executionPlan;
     }

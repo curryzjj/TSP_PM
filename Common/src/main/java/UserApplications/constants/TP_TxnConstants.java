@@ -15,7 +15,8 @@ public interface TP_TxnConstants extends BaseConstants {
         String POSITION = "position";
     }
     interface  Conf extends BaseConf{
-        String Executor_Threads ="lrf.executor.threads";
+        int NUM_SEGMENTS = 100;
+        String Executor_Threads ="tptxn.executor.threads";
     }
     interface Component extends BaseComponent {
         String DISPATCHER = "DISPATCHER";

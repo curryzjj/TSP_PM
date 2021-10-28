@@ -22,13 +22,19 @@ import streamprocess.execution.runtime.tuple.Fields;
 import utils.SpinLock;
 
 import static UserApplications.constants.TP_TxnConstants.Conf.Executor_Threads;
+import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 import static UserApplications.constants.TP_TxnConstants.PREFIX;
 import static UserApplications.constants.TP_TxnConstants.Stream.POSITION_REPORTS_STREAM_ID;
+import static utils.PartitionHelper.setPartition_interval;
 
 public class TP_txn extends TransactionalTopology {
     private static final Logger LOG= LoggerFactory.getLogger(TP_txn.class);
     protected TP_txn(String topologyName, Configuration config) {
         super(topologyName, config);
+    }
+    @Override
+    public void initialize() {
+        super.initialize();
     }
     @Override
     public Topology buildTopology() {
@@ -69,6 +75,7 @@ public class TP_txn extends TransactionalTopology {
         double scale_factor = config.getDouble("scale_factor", 1);
         double theta = config.getDouble("theta", 1);
         int tthread = config.getInt("tthread");
+        setPartition_interval((int) (Math.ceil(NUM_SEGMENTS / (double) tthread)), tthread);
         TableInitilizer ini = new TPInitializer(db, scale_factor, theta, tthread, config);
         ini.creates_Table(config);
         return ini;

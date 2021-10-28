@@ -5,6 +5,7 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import UserApplications.baseRunner;
 import applications.topology.WordCount;
+import applications.topology.transactional.TP_txn;
 import org.jctools.queues.SpscArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ public class AppRunner extends baseRunner {
     private AppRunner(){
         driver=new AppDriver();
         driver.addApp("WordCount", WordCount.class);
+        driver.addApp("TPtxn", TP_txn.class);
     }
     private void run() throws UnhandledCaseException, InterruptedException {
         //Get the running environment

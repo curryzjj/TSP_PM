@@ -4,6 +4,7 @@ import System.util.Configuration;
 import ch.usi.overseer.OverHpc;
 import engine.Clock;
 import engine.Exception.DatabaseException;
+import net.openhft.affinity.AffinitySupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.executor.BasicSpoutBatchExecutor;
@@ -15,8 +16,8 @@ import java.util.HashMap;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 
-import static UserApplications.CONTROL.enable_app_combo;
-import static UserApplications.CONTROL.enable_numa_placement;
+import static UserApplications.CONTROL.*;
+import static net.openhft.affinity.AffinityLock.dumpLocks;
 
 public class spoutThread extends executorThread{
     private static final Logger LOG = LoggerFactory.getLogger(spoutThread.class);
@@ -70,24 +71,28 @@ public class spoutThread extends executorThread{
     public void run() {
         try{
             Thread.currentThread().setName("Operator:"+executor.getOP()+"\tExecutor ID:"+executor.getExecutorID());
+            Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+            initilize_queue(executor.getExecutorID());
+            sp.prepare(conf,context,collector);
             long[] binding=null;
             if (!conf.getBoolean("NAV",true)){
                 binding=binding();
             }
             if(enable_numa_placement){
                 if(conf.getBoolean("Sequential_Binding",true)){
-                 // binding=sequential_binding();
+                 binding=sequential_binding();
                 }
             }
-            initilize_queue(executor.getExecutorID());
-            sp.prepare(conf,context,collector);
-            Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
             if(binding!=null){
                 LOG.info("Successfully create spoutExecutors "+sp.getContext().getThisTaskId()+"on node:"+
                         ""+node+"binding:"+Long.toBinaryString(0x1000000000000000L| binding[0]).substring(1));
             }
             binding_finish=true;
-            LOG.info("Operator:\t" + executor.getOP_full() + " is ready");
+            if (enable_shared_state){
+                LOG.info("Operator:\t"+executor.getOP_full()+"is ready"+"\nlock_ratio dumps\n"+dumpLocks());
+            }else{
+                LOG.info("Operator:\t" + executor.getOP_full() + " is ready");
+            }
             this.Ready(LOG);
             System.gc();
             latch.countDown();//tells others I'm really ready.

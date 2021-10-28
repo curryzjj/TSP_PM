@@ -6,6 +6,7 @@ import UserApplications.CONTROL;
 import ch.usi.overseer.OverHpc;
 import engine.Clock;
 import engine.Database;
+import engine.transaction.TxnProcessingEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.exception.UnhandledCaseException;
@@ -17,15 +18,18 @@ import streamprocess.optimization.OptimizationManager;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import static System.constants.BaseConstants.BaseStream.*;
+import static UserApplications.CONTROL.enable_shared_state;
 
 public class ExecutionManager {
     private final static Logger LOG = LoggerFactory.getLogger(ExecutionManager.class);
     private final static long migration_gaps = 10000;
     //wait for transaction process
     public static Clock clock = null;//used in the checkpoint
-    //TxnProcessingEngine tp_engine;
+    TxnProcessingEngine tp_engine;
     public final HashMap<Integer, executorThread> ThreadMap = new HashMap<>();
     //public final AffinityController AC;//not sure
     private final OptimizationManager optimizationManager;
@@ -55,6 +59,21 @@ public class ExecutionManager {
         g.build_inputSchedule();
         //TODO:support the FaultTolerance
         //TODO:support the TxnprocessEngine
+        HashMap<Integer, List<Integer>> stage_map = new HashMap<>();//Stages --> Executors.
+        for (ExecutionNode e : g.getExecutionNodeArrayList()) {
+            stage_map.putIfAbsent(e.op.getStage(), new LinkedList<>());
+            stage_map.get(e.op.getStage()).add(e.getExecutorID());
+        }
+        int stage = 0;//currently only stage 0 is required..
+        List<Integer> integers = stage_map.get(stage);
+        if (enable_shared_state){
+            tp_engine=TxnProcessingEngine.getInstance();
+            tp_engine.engine_init(
+                    g.getExecutionNodeArrayList().get(0).getExecutorID(),
+                    g.getExecutionNodeArrayList().get(g.getExecutionNodeArrayList().size()-1).getExecutorID(),
+                    g.getExecutionNodeArrayList().size(),
+                    conf.getInt("TP",10));
+        }
         executorThread thread = null;
         for (ExecutionNode e : g.getExecutionNodeArrayList()) {
             switch(e.operator.type){

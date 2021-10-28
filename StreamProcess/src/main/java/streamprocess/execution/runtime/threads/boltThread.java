@@ -4,6 +4,8 @@ import System.util.Configuration;
 import ch.usi.overseer.OverHpc;
 import engine.Clock;
 import engine.Exception.DatabaseException;
+import net.openhft.affinity.AffinityLock;
+import net.openhft.affinity.AffinitySupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.executor.BoltExecutor;
@@ -94,6 +96,8 @@ public class boltThread extends executorThread{
         try{
             Thread.currentThread().setName("Operator:"+executor.getOP()+"\tExecutor ID:"+executor.getExecutorID());
             Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+            initilize_queue(this.executor.getExecutorID());
+            bolt.prepare(conf,context,collector);
             long[] binding=null;
             if (!conf.getBoolean("NAV",true)){
                 binding=binding();
@@ -103,11 +107,13 @@ public class boltThread extends executorThread{
                     binding=sequential_binding();
                 }
             }
-            initilize_queue(this.executor.getExecutorID());
-            bolt.prepare(conf,context,collector);
             this.Ready(LOG);
             if (enable_shared_state){
-                LOG.info("Operator:\t"+executor.getOP_full()+"is ready"+"\n lock_ratio dumps"+dumpLocks());
+                LOG.info("Operator:\t"+executor.getOP_full()+"is ready"+"\nlock_ratio dumps\n"+dumpLocks());
+            }else{
+                if(conf.getBoolean("NAV",true)){
+                    LOG.info("Operator:\t" + executor.getOP_full() + " is ready");
+                }
             }
             if (binding != null) {
                 LOG.info("Successfully create boltExecutors " + bolt.getContext().getThisTaskId()
@@ -115,9 +121,6 @@ public class boltThread extends executorThread{
                         + " on node: " + node
                         + "binding:" + Long.toBinaryString(0x1000000000000000L | binding[0]).substring(1)
                 );
-            }
-            if(conf.getBoolean("NAV",true)){
-                LOG.info("Operator:\t" + executor.getOP_full() + " is ready");
             }
             binding_finished=true;
             if (enable_shared_state){

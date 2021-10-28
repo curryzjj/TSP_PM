@@ -19,6 +19,9 @@ import static UserApplications.CONTROL.*;
 public class TxnProcessingEngine {
     private static final Logger LOG= LoggerFactory.getLogger(TxnProcessingEngine.class);
     private static TxnProcessingEngine instance=new TxnProcessingEngine();
+    public static TxnProcessingEngine getInstance() {
+        return instance;
+    }
     //Task_process
     private Integer num_op = -1;
     private Integer first_exe;
@@ -30,6 +33,7 @@ public class TxnProcessingEngine {
 
     //Operation_chain
     private ConcurrentHashMap<String, Holder_in_range> holder_by_stage;//multi table support. <table_name, Holder_in_range>
+
     public class Holder{
         public ConcurrentHashMap<String, MyList<Operation>> holder_v1=new ConcurrentHashMap<>();//multi operation support. <key, list of operations>
     }
