@@ -10,11 +10,14 @@ import streamprocess.components.topology.TopologyComponent;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.controller.output.OutputController;
 import streamprocess.execution.ExecutionNode;
+import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.util.Set;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
+import static UserApplications.CONTROL.NUM_EVENTS;
+import static UserApplications.CONTROL.enable_debug;
 
 /**
  * outputCollector is unique to each executor
@@ -95,14 +98,6 @@ public class OutputCollector<T> {
         }
         sc.marker_boardcast(meta, streamId, bid, marker);
     }
-    public void broadcast_ack(Marker marker) {
-        final int executorID = this.executor.getExecutorID();
-        for (TopologyComponent op : executor.getParents_keySet()) {
-            for (ExecutionNode src : op.getExecutorList()) {
-                src.op.callback(executorID, marker);
-            }
-        }
-    }
     //create marker
     public void create_marker_single(long boardcast_time,String streamId,long bid,int myiteration){
         sc.create_marker_single(meta,boardcast_time,streamId,bid,myiteration);
@@ -125,5 +120,22 @@ public class OutputCollector<T> {
     }
     public void emit_single(long bid, Set<Integer> keys) throws InterruptedException {
         emit_single(DEFAULT_STREAM_ID, bid, keys);
+    }
+    //ack
+    public void ack(Tuple input, Marker marker) {
+        final int executorID = executor.getExecutorID();
+        if (enable_debug)
+            LOG.info(executor.getOP_full() + " is giving acknowledgement for marker:" + marker.msgId + " to " + input.getSourceComponent());
+        final ExecutionNode src = input.getContext().getExecutor(input.getSourceTask());
+        if (input.getBID() != NUM_EVENTS)
+            src.op.callback(executorID, marker);
+    }
+    public void broadcast_ack(Marker marker) {
+        final int executorID = this.executor.getExecutorID();
+        for (TopologyComponent op : executor.getParents_keySet()) {
+            for (ExecutionNode src : op.getExecutorList()) {
+                src.op.callback(executorID, marker);
+            }
+        }
     }
 }

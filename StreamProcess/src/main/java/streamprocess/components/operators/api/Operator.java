@@ -13,6 +13,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.checkpoint.Checkpointable;
+import streamprocess.checkpoint.Status;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
@@ -48,14 +50,13 @@ public abstract class Operator implements Serializable{
     public double read_selectivity;//the ratio of actual reading..
     public double loops = -1;//by default use argument loops.
     public boolean scalable = true;
+
     public TopologyContext context;
     public Clock clock;
-    /** wait for transactionProcess
-    public State state = null;
-    public OrderLock lock;//used for lock_ratio-based ordering constraint.
-    public OrderValidate orderValidate;
-    public transient TxnContext[] txn_context = new TxnContext[combo_bid_size];
-    **/
+    public Status status = null;
+//    public OrderLock lock;//used for lock_ratio-based ordering constraint.
+//    public OrderValidate orderValidate;
+//    public transient TxnContext[] txn_context = new TxnContext[combo_bid_size];
     public transient Database db;//this is only used if the bolt is transactional bolt. DB is shared by all operators.
     //    public transient TxnContext txn_context;
     public boolean forceStop;
@@ -231,7 +232,14 @@ public abstract class Operator implements Serializable{
             LogManager.getLogger(LOG.getName()).setLevel(Level.INFO);
         }
         if(this instanceof Checkpointable){
-            //implement after the transaction process
+            if (status == null) {
+                LOG.info("The operator" + executor.getOP() + " is declared as checkpointable " +
+                        "but no state is initialized");
+//				System.exit(-1);
+            } else {
+                    status.source_status_ini(executor);
+                    status.dst_status_init(executor);
+            }
         }
         db=getContext().getDb();
         initialize(thread_Id,thisTaskId,graph);

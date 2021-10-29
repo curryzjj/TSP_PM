@@ -27,7 +27,6 @@ import static UserApplications.CONTROL.enable_shared_state;
 public class ExecutionManager {
     private final static Logger LOG = LoggerFactory.getLogger(ExecutionManager.class);
     private final static long migration_gaps = 10000;
-    //wait for transaction process
     public static Clock clock = null;//used in the checkpoint
     TxnProcessingEngine tp_engine;
     public final HashMap<Integer, executorThread> ThreadMap = new HashMap<>();
@@ -57,8 +56,8 @@ public class ExecutionManager {
         LOG.info("Finally, targetHZ set to:" + loadTargetHz);
         timeSliceLengthMs = conf.getInt("timeSliceLengthMs");
         g.build_inputSchedule();
+        clock = new Clock(conf.getDouble("checkpoint", 1));
         //TODO:support the FaultTolerance
-        //TODO:support the TxnprocessEngine
         if (enable_shared_state){
             HashMap<Integer, List<Integer>> stage_map = new HashMap<>();
             for (ExecutionNode e : g.getExecutionNodeArrayList()) {

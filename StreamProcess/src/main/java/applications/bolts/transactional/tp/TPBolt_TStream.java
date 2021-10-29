@@ -8,6 +8,7 @@ import engine.transaction.function.AVG;
 import engine.transaction.function.CNT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.checkpoint.Status;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
 
 import java.util.ArrayDeque;
@@ -21,7 +22,7 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
     public TPBolt_TStream(int fid) {
         super(LOG,fid);
         this.configPrefix="tptxn";
-        //state=new ValueState();
+        status=new Status();
     }
     @Override
     protected void PRE_TXN_PROCESS(long bid, long timestamp) throws DatabaseException, InterruptedException {

@@ -97,7 +97,7 @@ public abstract class BoltExecutor implements IExecutor {
     public void earlier_clean_state(Marker marker) { }
 
     @Override
-    public void clean_state(Marker marker) {
+    public void clean_status(Marker marker) {
 
     }
 

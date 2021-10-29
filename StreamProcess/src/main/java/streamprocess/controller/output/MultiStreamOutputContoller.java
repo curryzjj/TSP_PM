@@ -257,7 +257,11 @@ public class MultiStreamOutputContoller extends OutputController{
 
     @Override
     public void setContext(int executorID, TopologyContext context) {
-
+        for (String stream : PClist.keySet()) {
+            for (String op : PClist.get(stream).keySet()) {
+                PClist.get(stream).get(op).setContext(executorID, context);
+            }
+        }
     }
 
     @Override

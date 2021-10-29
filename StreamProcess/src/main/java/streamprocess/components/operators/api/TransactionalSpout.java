@@ -4,6 +4,7 @@ import System.tools.FastZipfGenerator;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.checkpoint.Checkpointable;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public abstract class TransactionalSpout extends AbstractSpout implements Checkp
     protected int element=0;
     protected ArrayList<String> array;
     protected int counter=0;
+
 
     boolean rt = false;
     protected int total_children_tasks=0;

@@ -32,7 +32,7 @@ public interface IExecutor extends Serializable {
     Integer default_scale(Configuration conf);
     //void configureWriter(Writer writer);
     //void configureLocker(OrderLock lock, OrderValidate orderValidate);
-    void clean_state(Marker marker);
+    void clean_status(Marker marker);
     int getStage();
     void earlier_clean_state(Marker marker);
     boolean IsStateful();

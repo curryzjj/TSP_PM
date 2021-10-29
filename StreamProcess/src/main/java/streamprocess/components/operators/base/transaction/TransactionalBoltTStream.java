@@ -8,6 +8,7 @@ import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
@@ -41,7 +42,10 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {
         if(in.isMarker()){
-            TXN_PROCESS();
+           // TXN_PROCESS();
+            System.out.println("marker");
+            final Marker marker = in.getMarker();
+            this.collector.ack(in,marker);
         }else{
             execute_ts_normal(in);
         }

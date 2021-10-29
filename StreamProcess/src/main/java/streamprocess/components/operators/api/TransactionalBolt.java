@@ -6,6 +6,7 @@ import engine.transaction.TxnContext;
 import engine.transaction.TxnManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.checkpoint.Checkpointable;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;

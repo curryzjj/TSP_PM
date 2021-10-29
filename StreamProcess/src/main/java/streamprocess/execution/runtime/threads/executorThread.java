@@ -52,6 +52,9 @@ public abstract class executorThread extends Thread {
         this.latch=latch;
         hpcMonotor=HPCMonotor;
         this.threadMap=threadMap;
+        if (executor != null && !this.executor.isLeafNode()) {
+            this.executor.getController().setContext(this.executor.getExecutorID(), context);
+        }
     }
     //get+set TopologyContext
     public TopologyContext getContext() {

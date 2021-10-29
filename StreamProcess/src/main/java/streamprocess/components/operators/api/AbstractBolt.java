@@ -32,7 +32,7 @@ public abstract class AbstractBolt extends Operator {
 
     @Override
     public void callback(int callee, Marker marker) {
-        super.callback(callee, marker);
+       status.callback_bolt(callee,marker,executor);
     }
     public void profile_execute(JumboTuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {//shoud be the DatabaseException
         execute(in);

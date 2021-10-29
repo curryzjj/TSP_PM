@@ -90,7 +90,7 @@ public class VirtualExecutor implements IExecutor{
     }
 
     @Override
-    public void clean_state(Marker marker) {
+    public void clean_status(Marker marker) {
 
     }
 

@@ -1,9 +1,7 @@
 package streamprocess.execution;
 
 import System.Platform.Platform;
-import com.oracle.tools.packager.Log;
 import org.apache.commons.lang.SerializationUtils;
-import org.jctools.queues.SpscArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.executor.IExecutor;
@@ -12,7 +10,7 @@ import streamprocess.components.topology.TopologyComponent;
 import streamprocess.controller.input.InputStreamController;
 import streamprocess.controller.output.OutputController;
 import streamprocess.controller.output.PartitionController;
-import streamprocess.execution.runtime.collector.OutputCollector;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.Serializable;
 import java.util.*;
@@ -242,5 +240,9 @@ public class ExecutionNode implements Serializable {
 
     public void display() {
         op.display();
+    }
+
+    public void clean_status(Marker marker) {
+        op.clean_status(marker);
     }
 }

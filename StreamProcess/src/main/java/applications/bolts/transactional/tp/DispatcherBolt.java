@@ -4,7 +4,8 @@ import applications.DataTypes.PositionReport;
 import engine.Exception.DatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamprocess.components.operators.api.Checkpointable;
+import streamprocess.checkpoint.Checkpointable;
+import streamprocess.checkpoint.Status;
 import streamprocess.components.operators.base.filterBolt;
 import streamprocess.execution.runtime.tuple.OutputFieldsDeclarer;
 import streamprocess.execution.runtime.tuple.Tuple;
@@ -19,6 +20,7 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
     private static final Logger LOG= LoggerFactory.getLogger(DispatcherBolt.class);
     public DispatcherBolt(){
         super(LOG,new HashMap<>());
+        status=new Status();
         this.output_selectivity.put(POSITION_REPORTS_STREAM_ID,0.9885696197046802);//what this for???
     }
     @Override
@@ -26,6 +28,7 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
         long bid=in.getBID();
         if(in.isMarker()){
             forward_checkpoint(in.getSourceTask(),bid,in.getMarker());
+            ack_checkpoint(in.getMarker());
         }else{
             String raw = null;
             try {

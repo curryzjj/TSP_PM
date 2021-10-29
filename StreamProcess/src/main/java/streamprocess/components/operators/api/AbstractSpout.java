@@ -173,5 +173,6 @@ public abstract class AbstractSpout extends Operator {
 
     @Override
     public void callback(int callee, Marker marker) {
+        status.callback_spout(callee,marker,executor);
     }
 }
