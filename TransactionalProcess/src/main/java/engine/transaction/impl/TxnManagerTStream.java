@@ -21,8 +21,10 @@ public class TxnManagerTStream extends TxnManagerDedicated {
     TxnProcessingEngine instance;
     protected int delta;//range of each partition. depends on the number of op in the stage.
 
-    public TxnManagerTStream(StorageManager storageManager) {
-        super(storageManager);
+    public TxnManagerTStream(StorageManager storageManager,String thisComponentId, int thread_Id,int NUM_SEGMENTS,int num_tasks) {
+        super(storageManager,thisComponentId,thread_Id,num_tasks);
+        instance=TxnProcessingEngine.getInstance();
+        delta = (int) Math.ceil(NUM_SEGMENTS / (double) num_tasks);//NUM_ITEMS / tthread;
     }
     private int getTaskId(String key) {
         Integer _key = Integer.valueOf(key);

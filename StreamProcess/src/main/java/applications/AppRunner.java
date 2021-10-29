@@ -27,7 +27,7 @@ public class AppRunner extends baseRunner {
     private AppRunner(){
         driver=new AppDriver();
         driver.addApp("WordCount", WordCount.class);
-        driver.addApp("TPtxn", TP_txn.class);
+        driver.addApp("TP_txn", TP_txn.class);
     }
     private void run() throws UnhandledCaseException, InterruptedException {
         //Get the running environment

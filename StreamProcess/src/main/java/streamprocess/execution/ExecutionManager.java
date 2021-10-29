@@ -59,19 +59,20 @@ public class ExecutionManager {
         g.build_inputSchedule();
         //TODO:support the FaultTolerance
         //TODO:support the TxnprocessEngine
-        HashMap<Integer, List<Integer>> stage_map = new HashMap<>();//Stages --> Executors.
-        for (ExecutionNode e : g.getExecutionNodeArrayList()) {
-            stage_map.putIfAbsent(e.op.getStage(), new LinkedList<>());
-            stage_map.get(e.op.getStage()).add(e.getExecutorID());
-        }
-        int stage = 0;//currently only stage 0 is required..
-        List<Integer> integers = stage_map.get(stage);
         if (enable_shared_state){
+            HashMap<Integer, List<Integer>> stage_map = new HashMap<>();
+            for (ExecutionNode e : g.getExecutionNodeArrayList()) {
+                stage_map.putIfAbsent(e.op.getStage(), new LinkedList<>());
+                stage_map.get(e.op.getStage()).add(e.getExecutorID());
+            }
+            int stage = 0;//currently only stage 0 is required..
+            List<Integer> integers = stage_map.get(stage);
             tp_engine=TxnProcessingEngine.getInstance();
+            tp_engine.initialize(integers.size(), conf.getString("application"));
             tp_engine.engine_init(
-                    g.getExecutionNodeArrayList().get(0).getExecutorID(),
-                    g.getExecutionNodeArrayList().get(g.getExecutionNodeArrayList().size()-1).getExecutorID(),
-                    g.getExecutionNodeArrayList().size(),
+                    integers.get(0),
+                    integers.get(integers.size() - 1),
+                    integers.size(),
                     conf.getInt("TP",10));
         }
         executorThread thread = null;

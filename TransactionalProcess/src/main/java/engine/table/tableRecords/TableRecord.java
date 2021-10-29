@@ -13,9 +13,9 @@ public class TableRecord implements Comparable<TableRecord>{
     public Content content_;
     public SchemaRecord record_;
     public TableRecord(SchemaRecord record){
-        switch(content_type){
-
-        }
+//        switch(content_type){
+//
+//        }
         record_=record;
     }
     @Override

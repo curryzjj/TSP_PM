@@ -12,6 +12,8 @@ import streamprocess.execution.runtime.tuple.Tuple;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 
+import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
+
 public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public TransactionalBoltTStream(Logger log,int fid){
         super(log,fid);
@@ -20,7 +22,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public void initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
         super.initialize(thread_Id, thisTaskId, graph);
         //TODO:initialize the transactionManager
-        transactionManager=new TxnManagerTStream(db.getStorageManager());
+        transactionManager=new TxnManagerTStream(db.getStorageManager(),this.context.getThisComponentId(),thread_Id,NUM_SEGMENTS,this.context.getThisComponent().getNumTasks());
     }
     public void loadDB(Map conf, TopologyContext context, OutputCollector collector){
         loadDB(context.getThisTaskId()-context.getThisComponent().getExecutorList().get(0).getExecutorID(),context.getThisTaskId(),context.getGraph());

@@ -155,7 +155,11 @@ public class MultiStreamOutputContoller extends OutputController{
 
     @Override
     public void force_emitOnStream(MetaGroup MetaGroup, String streamId, long bid, StreamValues data) throws InterruptedException {
-
+        PartitionController[] it = collections.get(streamId);
+        for (int i = 0; i < it.length; i++) {
+            PartitionController p = it[i];
+            p.force_emit(MetaGroup.get(p.childOP), streamId, bid, data);
+        }
     }
 
     @Override

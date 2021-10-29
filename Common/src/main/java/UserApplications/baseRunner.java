@@ -1,10 +1,8 @@
 package UserApplications;
 
-import System.util.OsUtils;
 import com.beust.jcommander.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.util.parsing.combinator.testing.Str;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,7 +14,8 @@ public abstract class baseRunner {
     public static final Logger LOG= LoggerFactory.getLogger(baseRunner.class);
     protected static String CFG_PATH = null;
     @Parameter(names={"-a","--app"},description = "The application to be executed",required = false)
-    public String application = "WordCount";
+    public String application = "TP_txn";
+    //public String application = "WordCount";
     @Parameter(names = {"-t", "--Brisk.topology-name"}, required = false, description = "The name of the Brisk.topology")
     public String topologyName;
     @Parameter(names = {"-mp"}, description = "Metric path", required = false)
@@ -83,7 +82,7 @@ public abstract class baseRunner {
         config.put("benchmark", benchmark);
         config.put("profile", profile);
         config.put("NAV", NAV);
-
+        config.put("application",application);
 
         config.put("measure", measure);
 
@@ -98,7 +97,6 @@ public abstract class baseRunner {
         config.put("microbenchmark", microbenchmark);
         config.put("metrics.output", metric_path);
 
-        config.put("tthread", 1);
         config.put("runtimeInSeconds", runtimeInSeconds);
         config.put("DataBase",DataBase);
 

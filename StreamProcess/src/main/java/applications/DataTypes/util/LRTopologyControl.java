@@ -66,6 +66,7 @@ public class LRTopologyControl {
 
     // Input (all)
     public final static String VEHICLE_ID_FIELD_NAME = "vid"; // also used in some output tuples
+
     // Position Report
     public final static String SPEED_FIELD_NAME = "spd"; // also used in Toll Notification
     public final static String XWAY_FIELD_NAME = "xway";

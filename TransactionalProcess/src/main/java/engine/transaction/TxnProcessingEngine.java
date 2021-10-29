@@ -30,7 +30,21 @@ public class TxnProcessingEngine {
     private int TOTAL_CORES;
     private ExecutorServiceInstance standalone_engine;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
-
+    //initialize
+    private String app;
+    public void initialize(int size,String app){
+        num_op=size;
+        this.app=app;
+        holder_by_stage = new ConcurrentHashMap<>();
+        switch(app){
+            case "TP_txn":
+                holder_by_stage.put("segment_speed", new Holder_in_range(num_op));
+                holder_by_stage.put("segment_cnt", new Holder_in_range(num_op));
+                break;
+            default:
+                throw new UnsupportedOperationException("app not recognized");
+        }
+    }
     //Operation_chain
     private ConcurrentHashMap<String, Holder_in_range> holder_by_stage;//multi table support. <table_name, Holder_in_range>
 

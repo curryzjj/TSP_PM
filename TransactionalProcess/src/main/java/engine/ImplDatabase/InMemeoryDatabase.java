@@ -24,7 +24,7 @@ public class InMemeoryDatabase extends Database {
 
     @Override
     public void InsertRecord(String table, TableRecord record) throws DatabaseException {
-
+        storageManager.InsertRecord(table, record);
     }
 
     @Override

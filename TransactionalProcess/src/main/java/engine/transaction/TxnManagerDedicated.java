@@ -8,13 +8,21 @@ import engine.table.tableRecords.TableRecord;
 import engine.transaction.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Int;
 
 public abstract class TxnManagerDedicated implements TxnManager{
     public static final Logger LOG= LoggerFactory.getLogger(TxnManagerDedicated.class);
     protected final StorageManager storageManager;
+    private final String thisComponentId;
+    private final long thread_id;
+    private final long num_tasks;
 
-    public TxnManagerDedicated(StorageManager storageManager){
+
+    public TxnManagerDedicated(StorageManager storageManager,String thisComponentId, int thread_Id, int num_tasks){
         this.storageManager = storageManager;
+        this.thisComponentId = thisComponentId;
+        this.thread_id = thread_Id;
+        this.num_tasks = num_tasks;
     }
     @Override
     public boolean Asy_ModifyRecord_Read(TxnContext txn_context, String srcTable, String key, SchemaRecordRef record_ref, Function function) throws DatabaseException {

@@ -28,7 +28,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
 //    public State state = null;
 //    public OrderLock lock;//used for lock_ratio-based ordering constraint.
 //    public OrderValidate orderValidate;
-    public transient TxnContext[] txn_context = new TxnContext[combo_bid_size];
+    public TxnContext[] txn_context = new TxnContext[combo_bid_size];
     //public SINKCombo sink=new SINKCCombo()
 
     public TransactionalBolt(Logger log,int fid) {
@@ -78,7 +78,8 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
     protected void PRE_EXECUTE(Tuple in){
         _bid = in.getBID();
         input_event = in.getValue(0);
-        txn_context[0] = new TxnContext(thread_Id, this.fid, _bid);
+        TxnContext temp=new TxnContext(thread_Id, this.fid, _bid);
+        txn_context[0] = temp;
         sum = 0;
     }
     protected long timestamp;

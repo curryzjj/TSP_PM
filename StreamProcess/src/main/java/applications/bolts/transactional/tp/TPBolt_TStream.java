@@ -1,5 +1,6 @@
 package applications.bolts.transactional.tp;
 
+import applications.DataTypes.PositionReport;
 import applications.events.lr.LREvent;
 import engine.Exception.DatabaseException;
 import engine.transaction.TxnContext;
@@ -26,7 +27,7 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
     protected void PRE_TXN_PROCESS(long bid, long timestamp) throws DatabaseException, InterruptedException {
         for (long i = _bid; i < _bid + combo_bid_size; i++) {
             TxnContext txnContext = new TxnContext(thread_Id, this.fid, i);
-            LREvent event = (LREvent) input_event;
+            LREvent event = new LREvent((PositionReport) input_event,tthread,bid);
             (event).setTimestamp(timestamp);
             REQUEST_CONSTRUCT(event, txnContext);
         }

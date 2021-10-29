@@ -6,6 +6,8 @@ import engine.index.HashTableIndex;
 import engine.index.StdUnorderedIndex;
 import engine.table.BaseTable;
 import engine.table.RecordSchema;
+import engine.table.RowID;
+import engine.table.tableRecords.SchemaRecord;
 import engine.table.tableRecords.TableRecord;
 import engine.table.tableRecords.TableRecords;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +29,12 @@ public class ShareTable extends BaseTable {
 
     @Override
     public boolean InsertRecord(TableRecord record) throws DatabaseException {
+        SchemaRecord record_ptr=record.record_;
+        assert record.record_!=null;
+        if(primary_index_.InsertRecord(record_ptr.GetPrimaryKey(),record)){
+            int records=numRecords.getAndIncrement();
+            record.setID(new RowID(records));//which row
+        }
         return false;
     }
 

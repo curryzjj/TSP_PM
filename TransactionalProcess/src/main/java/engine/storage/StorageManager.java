@@ -6,6 +6,7 @@ import engine.ImplDatabase.InMemeoryDatabase;
 import engine.table.BaseTable;
 import engine.table.ImplTable.ShareTable;
 import engine.table.RecordSchema;
+import engine.table.tableRecords.TableRecord;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -66,5 +67,10 @@ public class StorageManager {
             t.close();
         }
         tables.clear();
+    }
+
+    public void InsertRecord(String tableName, TableRecord record) throws DatabaseException {
+        BaseTable tab = getTable(tableName);
+        tab.InsertRecord(record);
     }
 }

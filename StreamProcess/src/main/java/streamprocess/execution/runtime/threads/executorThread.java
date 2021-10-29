@@ -66,7 +66,7 @@ public abstract class executorThread extends Thread {
     protected long[] sequential_binding(){
           setLocalAlloc();
           int cpu = next_cpu();
-          AffinityLock.acquireLock();
+          AffinityLock.acquireLock(cpu);
           LOG.info(this.executor.getOP_full() + " binding to node:" + node + " cpu:" + cpu);
           return null;
     }

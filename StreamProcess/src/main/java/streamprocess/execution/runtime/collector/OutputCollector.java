@@ -1,5 +1,6 @@
 package streamprocess.execution.runtime.collector;
 
+import System.util.DataTypes.StreamValues;
 import System.util.OsUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -113,6 +114,10 @@ public class OutputCollector<T> {
     public void emit_single(String streamId, long[] bid, long msg_id, Object data) throws InterruptedException {
         assert data != null && sc != null;
         sc.force_emitOnStream(meta, streamId, bid, msg_id, data);
+    }
+    public void emit_single(String streamId, long bid, StreamValues data) throws InterruptedException {
+        assert data != null && sc != null;
+        sc.force_emitOnStream(meta, streamId, bid, data);
     }
     public void emit_single(String streamId, long bid, Object... data) throws InterruptedException {
         assert data != null && sc != null;

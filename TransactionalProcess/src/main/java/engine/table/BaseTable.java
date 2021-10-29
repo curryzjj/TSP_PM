@@ -9,7 +9,7 @@ import java.io.Closeable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class BaseTable implements ITable {
-    final AtomicInteger numRecords = new AtomicInteger();
+    protected final AtomicInteger numRecords = new AtomicInteger();
     final int secondary_count_;
     private RecordSchema schema;
     private TableStats stats;

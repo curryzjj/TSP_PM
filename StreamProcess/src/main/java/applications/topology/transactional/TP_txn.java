@@ -29,7 +29,7 @@ import static utils.PartitionHelper.setPartition_interval;
 
 public class TP_txn extends TransactionalTopology {
     private static final Logger LOG= LoggerFactory.getLogger(TP_txn.class);
-    protected TP_txn(String topologyName, Configuration config) {
+    public TP_txn(String topologyName, Configuration config) {
         super(topologyName, config);
     }
     @Override
@@ -43,11 +43,11 @@ public class TP_txn extends TransactionalTopology {
             builder.setSpout(Component.SPOUT,spout,sinkThreads);
             builder.setBolt(Component.DISPATCHER,
                     new DispatcherBolt(),
-                    1,
+                    2,
                     new ShuffleGrouping(Component.SPOUT));
             builder.setBolt(Component.EXECUTOR,
                     new TPBolt_TStream(0),
-                    config.getInt(Executor_Threads,2),
+                    config.getInt(Executor_Threads,1),
                     new FieldsGrouping(Component.DISPATCHER,POSITION_REPORTS_STREAM_ID, SegmentIdentifier.getSchema())
                     );
             builder.setSink(Component.SINK, sink, sinkThreads
@@ -74,7 +74,7 @@ public class TP_txn extends TransactionalTopology {
     public TableInitilizer createDB(SpinLock[] spinlock) {
         double scale_factor = config.getDouble("scale_factor", 1);
         double theta = config.getDouble("theta", 1);
-        int tthread = config.getInt("tthread");
+        int tthread = config.getInt(Executor_Threads,1);
         setPartition_interval((int) (Math.ceil(NUM_SEGMENTS / (double) tthread)), tthread);
         TableInitilizer ini = new TPInitializer(db, scale_factor, theta, tthread, config);
         ini.creates_Table(config);

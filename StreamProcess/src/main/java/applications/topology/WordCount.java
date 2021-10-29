@@ -35,9 +35,9 @@ public class WordCount extends BasicTopology{
             spout.setFields(new Fields(Field.TEXT));
             builder.setSpout(Component.SPOUT,spout,spoutThreads);
             StringParserBolt parserBolt=new StringParserBolt(parser,new Fields(Field.WORD));
-            builder.setBolt(Component.PARSER,parserBolt,1,new ShuffleGrouping(Component.SPOUT));
-            builder.setBolt(Component.SPLITTER,new SplitSentenceBolt(),1,new ShuffleGrouping(Component.PARSER));
-            builder.setBolt(Component.COUNTER,new WordCountBolt(),1,new ShuffleGrouping(Component.SPLITTER));
+            builder.setBolt(Component.PARSER,parserBolt,2,new ShuffleGrouping(Component.SPOUT));
+            builder.setBolt(Component.SPLITTER,new SplitSentenceBolt(),2,new ShuffleGrouping(Component.PARSER));
+            builder.setBolt(Component.COUNTER,new WordCountBolt(),2,new ShuffleGrouping(Component.SPLITTER));
             builder.setSink(Component.SINK,sink,sinkThreads,new ShuffleGrouping(Component.COUNTER));
 
         }catch (InvalidIDException e){

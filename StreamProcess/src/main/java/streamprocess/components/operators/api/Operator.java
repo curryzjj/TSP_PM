@@ -59,7 +59,7 @@ public abstract class Operator implements Serializable{
     public transient Database db;//this is only used if the bolt is transactional bolt. DB is shared by all operators.
     //    public transient TxnContext txn_context;
     public boolean forceStop;
-    public int fid = -1;//if fid is -1 it means it does not participate
+    public int fid = -1;//if fid is -1 it means it does not participate transactional process
     public String configPrefix = BaseConstants.BASE_PREFIX;
     protected OutputCollector collector;
     protected Configuration config;

@@ -11,10 +11,7 @@ import streamprocess.execution.runtime.collector.Meta;
 import streamprocess.execution.runtime.tuple.Fields;
 import streamprocess.execution.runtime.tuple.TupleUtils;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 public class FieldsPartitionController extends PartitionController {
     private static Logger LOG = LoggerFactory.getLogger(FieldsPartitionController.class);
@@ -32,7 +29,8 @@ public class FieldsPartitionController extends PartitionController {
     }
     //chooseTasks method
     public int chooseTasks(Object... values) {
-        int targetTaskIndex = TupleUtils.chooseTaskIndex(output_fields.select(input_fields, values), targetTasksize);
+        List<Object> temp= output_fields.select(input_fields, values);
+        int targetTaskIndex = TupleUtils.chooseTaskIndex(temp, targetTasksize);
         return targetTasks[targetTaskIndex];
     }
     public int chooseTasks(Object values) {
