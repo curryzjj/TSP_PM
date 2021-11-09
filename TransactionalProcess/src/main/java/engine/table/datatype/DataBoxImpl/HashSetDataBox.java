@@ -2,7 +2,11 @@ package engine.table.datatype.DataBoxImpl;
 
 import engine.Exception.DataBoxException;
 import engine.table.datatype.DataBox;
+import engine.table.datatype.serialize.Serialize;
+import utils.TransactionalProcessConstants.DataBoxTypes;
 
+
+import java.io.IOException;
 import java.util.HashSet;
 
 public class HashSetDataBox extends DataBox {
@@ -26,8 +30,8 @@ public class HashSetDataBox extends DataBox {
     }
 
     @Override
-    public Types type() {
-        return Types.OTHERS;
+    public DataBoxTypes type() {
+        return DataBoxTypes.OTHERS;
     }
 
     public HashSet getHashSet() {
@@ -66,6 +70,11 @@ public class HashSetDataBox extends DataBox {
     public byte[] getBytes() {
         //not applicable.
         return null;
+    }
+
+    @Override
+    public byte[] Serialize() throws DataBoxException, IOException {
+        return Serialize.serializeObject(set);
     }
 
     @Override

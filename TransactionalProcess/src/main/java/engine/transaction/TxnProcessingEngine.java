@@ -1,9 +1,14 @@
 package engine.transaction;
 
 import System.util.OsUtils;
-import engine.storage.StorageManager;
+import engine.storage.ImplStorageManager.StorageManager;
+import engine.table.datatype.DataBox;
+import engine.table.datatype.DataBoxImpl.DoubleDataBox;
+import engine.table.datatype.DataBoxImpl.IntDataBox;
+import engine.table.tableRecords.SchemaRecord;
 import engine.transaction.common.MyList;
 import engine.transaction.common.Operation;
+import engine.transaction.function.AVG;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.SOURCE_CONTROL;
@@ -161,7 +166,25 @@ public class TxnProcessingEngine {
         //TODO:after implement the TStreamContent
         switch (operation.accessType){
             case READ_WRITE_READ:
-
+                assert operation.record_ref!=null;
+                //read source_data
+                List<DataBox> srcRecord=operation.s_record.record_.getValues();
+                if(operation.function instanceof AVG){
+                    double latestAvgSpeeds = srcRecord.get(1).getDouble();
+                    double lav=0;
+                    if (latestAvgSpeeds == 0) {//not initialized
+                        lav = operation.function.delta_double;
+                    } else{
+                        lav=latestAvgSpeeds+3;
+                        //lav = (latestAvgSpeeds + operation.function.delta_double) / 2;
+                    }
+                    srcRecord.get(1).setDouble(lav);//write to state.
+                    operation.record_ref.setRecord(new SchemaRecord(new DoubleDataBox(lav)));//return updated record.
+                }else{
+                    HashSet cnt_segment = srcRecord.get(1).getHashSet();
+                    cnt_segment.add(operation.function.delta_int);//update hashset; updated state also. TODO: be careful of this.
+                    operation.record_ref.setRecord(new SchemaRecord(new IntDataBox(cnt_segment.size())));//return updated record.
+                }
         }
     }
 

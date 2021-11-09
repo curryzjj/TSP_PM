@@ -6,9 +6,11 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
+
 import static utils.TransactionalProcessConstants.content_type;
 
-public class TableRecord implements Comparable<TableRecord>{
+public class TableRecord implements Comparable<TableRecord>, Serializable {
     private static final Logger LOG= LoggerFactory.getLogger(TableRecord.class);
     public Content content_;
     public SchemaRecord record_;

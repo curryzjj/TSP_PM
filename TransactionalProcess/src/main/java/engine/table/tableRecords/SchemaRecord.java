@@ -5,6 +5,7 @@ import engine.table.RowID;
 import engine.table.datatype.DataBox;
 import utils.Utils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -12,7 +13,7 @@ import java.util.Objects;
 /**
  * A wrapper class for an individual d_record. Simply stores a list of DataBoxes.
  */
-public class SchemaRecord {
+public class SchemaRecord implements Serializable {
     public boolean is_visible;
     public RecordSchema schema_ptr;
     private RowID id;

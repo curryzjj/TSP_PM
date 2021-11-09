@@ -40,5 +40,6 @@ public interface BaseConstants {
     }
     interface DBOptions{
         int In_Memory=0;
+        int RocksDB=1;
     }
 }

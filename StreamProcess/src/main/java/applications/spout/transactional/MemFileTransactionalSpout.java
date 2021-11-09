@@ -43,9 +43,8 @@ public class MemFileTransactionalSpout extends TransactionalSpout {
         if(exe!=1){
             if(exe==NUM_EVENTS){
                 clock.start();
-            } else if(exe==100){
-                forward_checkpoint(this.taskId, bid, null,"finish");
             }
+            forward_checkpoint(this.taskId, bid, null,"finish");
             collector.emit(array_array[counter],bid);
             bid++;
             counter++;

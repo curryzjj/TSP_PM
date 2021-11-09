@@ -5,6 +5,9 @@ import engine.table.datatype.DataBox;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import utils.TransactionalProcessConstants.DataBoxTypes;
+
 
 public class StringDataBox extends DataBox {
     private String s;
@@ -67,8 +70,8 @@ public class StringDataBox extends DataBox {
     }
 
     @Override
-    public Types type() {
-        return DataBox.Types.STRING;
+    public DataBoxTypes type() {
+        return DataBoxTypes.STRING;
     }
 
     @Override
@@ -113,5 +116,10 @@ public class StringDataBox extends DataBox {
     @Override
     public String toString() {
         return this.s;
+    }
+
+    @Override
+    public byte[] Serialize() throws DataBoxException {
+        return s.getBytes(StandardCharsets.UTF_8);
     }
 }

@@ -1,7 +1,10 @@
 package engine.transaction.impl;
 
+import engine.Exception.DatabaseException;
 import engine.Meta.MetaTypes;
-import engine.storage.StorageManager;
+import engine.storage.AbstractStorageManager;
+import engine.storage.ImplStorageManager.RocksDBManager;
+import engine.storage.ImplStorageManager.StorageManager;
 import engine.table.tableRecords.SchemaRecordRef;
 import engine.table.tableRecords.TableRecord;
 import engine.transaction.TxnContext;
@@ -10,9 +13,12 @@ import engine.transaction.TxnProcessingEngine;
 import engine.transaction.common.MyList;
 import engine.transaction.common.Operation;
 import engine.transaction.function.Function;
+import javafx.scene.control.Tab;
+import org.apache.flink.shaded.guava18.com.google.common.collect.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,7 +27,7 @@ public class TxnManagerTStream extends TxnManagerDedicated {
     TxnProcessingEngine instance;
     protected int delta;//range of each partition. depends on the number of op in the stage.
 
-    public TxnManagerTStream(StorageManager storageManager,String thisComponentId, int thread_Id,int NUM_SEGMENTS,int num_tasks) {
+    public TxnManagerTStream(AbstractStorageManager storageManager, String thisComponentId, int thread_Id, int NUM_SEGMENTS, int num_tasks) {
         super(storageManager,thisComponentId,thread_Id,num_tasks);
         instance=TxnProcessingEngine.getInstance();
         delta = (int) Math.ceil(NUM_SEGMENTS / (double) num_tasks);//NUM_ITEMS / tthread;
@@ -45,7 +51,8 @@ public class TxnManagerTStream extends TxnManagerDedicated {
     }
 
     @Override
-    public void start_evaluate(int thread_id, long mark_ID) throws InterruptedException, BrokenBarrierException {
+    public void start_evaluate(int thread_id, long mark_ID) throws InterruptedException, BrokenBarrierException, IOException, DatabaseException {
         instance.start_evaluation(thread_id,mark_ID);
+        storageManager.commitAllTables();
     }
 }

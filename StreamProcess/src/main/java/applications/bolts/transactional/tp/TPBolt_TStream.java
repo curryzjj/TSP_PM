@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import streamprocess.checkpoint.Status;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
 
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.concurrent.BrokenBarrierException;
 
@@ -49,20 +50,24 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
         LREvents.add(event);
     }
     @Override
-    protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException {
+    protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException {
         transactionManager.start_evaluate(thread_Id,this.fid);
-        //REQUEST_REQUEST_CORE();
-        //REQUEST_POST();
+        REQUEST_REQUEST_CORE();
+        REQUEST_POST();
+        LREvents.clear();//clear stored events.
     }
     protected void REQUEST_REQUEST_CORE() {
         for (LREvent event : LREvents) {
             TS_REQUEST_CORE(event);
         }
+        System.out.println("clear");
     }
     private void TS_REQUEST_CORE(LREvent event) {
         //get the value from the event
         event.count=event.count_value.getRecord().getValue().getInt();
+       // System.out.println(event.count);
         event.lav=event.speed_value.getRecord().getValue().getDouble();
+        System.out.println(event.lav);
     }
     protected void REQUEST_POST() throws InterruptedException {
         for (LREvent event : LREvents) {

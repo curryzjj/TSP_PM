@@ -76,6 +76,11 @@ public class AppRunner extends baseRunner {
         Thread.sleep((long) (3 * 1E3 * 1));
         submitter.getOM().join();
         submitter.getOM().getEM().exist();
+        try {
+            final_topology.db.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return 0;
     }
     public static void main(String[] args) throws UnhandledCaseException, InterruptedException {

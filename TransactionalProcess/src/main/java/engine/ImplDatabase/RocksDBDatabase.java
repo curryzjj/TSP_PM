@@ -3,6 +3,7 @@ package engine.ImplDatabase;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.storage.EventManager;
+import engine.storage.ImplStorageManager.RocksDBManager;
 import engine.storage.ImplStorageManager.StorageManager;
 import engine.table.RecordSchema;
 import engine.table.tableRecords.TableRecord;
@@ -11,9 +12,9 @@ import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
 
-public class InMemeoryDatabase extends Database {
-    public InMemeoryDatabase() {
-        storageManager = new StorageManager();
+public class RocksDBDatabase extends Database {
+    public RocksDBDatabase() {
+        storageManager = new RocksDBManager();
         eventManager = new EventManager();
     }
     @Override

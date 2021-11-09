@@ -12,6 +12,7 @@ import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import utils.SOURCE_CONTROL;
 
+import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
 
 import static UserApplications.CONTROL.combo_bid_size;
@@ -75,7 +76,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
         return false;
     }
     @Override
-    public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException;
+    public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException;
     protected void TXN_PROCESS(long _bid) throws DatabaseException, InterruptedException{};
     protected void PRE_EXECUTE(Tuple in){
         _bid = in.getBID();

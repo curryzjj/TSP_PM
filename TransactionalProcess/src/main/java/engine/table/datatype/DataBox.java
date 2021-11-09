@@ -2,11 +2,14 @@ package engine.table.datatype;
 
 import engine.Exception.DataBoxException;
 import engine.table.tableRecords.SchemaRecord;
+import utils.TransactionalProcessConstants.DataBoxTypes;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
 
-public abstract class DataBox implements Comparable,Cloneable{
+public abstract class DataBox implements Comparable,Cloneable, Serializable {
     //multi-types constructions
     public DataBox() throws DataBoxException {
     }
@@ -119,20 +122,19 @@ public abstract class DataBox implements Comparable,Cloneable{
         //wait for the multi types to implement
         throw new DataBoxException("Not Implemented");
     }
-
-    /**
-     * An enum with the current supported types.
-     */
-    public enum Types {
-        BOOL, INT, LONG, TimestampType, FLOAT, STRING, OTHERS
-    }
     /**
      * Returns the type of the DataBox.
      *
      * @return the type from the Types enum
      * @throws DataBoxException
      */
-    public Types type() throws DataBoxException {
+    public DataBoxTypes type() throws DataBoxException {
         throw new DataBoxException("No type");
+    }
+    /**
+     * Return serialize byte[]
+     */
+    public byte[] Serialize() throws DataBoxException, IOException {
+        throw new DataBoxException("No Type");
     }
 }

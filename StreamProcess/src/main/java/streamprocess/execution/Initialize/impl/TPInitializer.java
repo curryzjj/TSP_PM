@@ -14,7 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.Initialize.TableInitilizer;
+import utils.TransactionalProcessConstants.DataBoxTypes;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,10 +33,10 @@ public class TPInitializer extends TableInitilizer {
     @Override
     public void creates_Table(Configuration config) {
         RecordSchema s = SpeedScheme();
-        db.createTable(s, "segment_speed");
+        db.createTable(s, "segment_speed", DataBoxTypes.STRING);
 
         RecordSchema b = CntScheme();
-        db.createTable(b, "segment_cnt");
+        db.createTable(b, "segment_cnt",DataBoxTypes.OTHERS);
     }
 
     @Override
@@ -65,7 +67,7 @@ public class TPInitializer extends TableInitilizer {
         SchemaRecord schemaRecord = new SchemaRecord(values);
         try {
             db.InsertRecord("segment_cnt", new TableRecord(schemaRecord));
-        } catch (DatabaseException e) {
+        } catch (DatabaseException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -77,7 +79,7 @@ public class TPInitializer extends TableInitilizer {
         SchemaRecord schemaRecord = new SchemaRecord(values);
         try {
             db.InsertRecord("segment_speed", new TableRecord(schemaRecord));
-        } catch (DatabaseException e) {
+        } catch (DatabaseException | IOException e) {
             e.printStackTrace();
         }
     }

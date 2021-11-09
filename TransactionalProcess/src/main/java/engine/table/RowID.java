@@ -1,5 +1,6 @@
 package engine.table;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
@@ -7,7 +8,7 @@ import java.util.Objects;
  * Represents the ID of a partition d_record. Stores the id of a page and the slot number select this
  * d_record lives within that page.
  */
-public class RowID {
+public class RowID implements Serializable {
     private int id;
     public RowID(int id){
         this.id=id;

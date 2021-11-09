@@ -61,6 +61,6 @@ public class ShareTable extends BaseTable {
     @NotNull
     @Override
     public Iterator<TableRecord> iterator() {
-        return null;
+        return primary_index_.iterator();
     }
 }

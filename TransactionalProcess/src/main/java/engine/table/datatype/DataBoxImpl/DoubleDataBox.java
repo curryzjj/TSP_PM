@@ -2,8 +2,10 @@ package engine.table.datatype.DataBoxImpl;
 
 import engine.Exception.DataBoxException;
 import engine.table.datatype.DataBox;
+import engine.table.datatype.serialize.Serialize;
+import utils.TransactionalProcessConstants.DataBoxTypes;
 
-import java.util.Objects;
+import java.io.IOException;
 
 /**
  * Float data type which serializes to 14 bytes.
@@ -34,12 +36,12 @@ public class DoubleDataBox extends DataBox {
 
     @Override
     public void setDouble(double f) {
-        this.d=d;
+        this.d=f;
     }
 
     @Override
-    public Types type() throws DataBoxException {
-        return Types.FLOAT;
+    public DataBoxTypes type() throws DataBoxException {
+        return DataBoxTypes.FLOAT;
     }
 
     @Override
@@ -68,5 +70,10 @@ public class DoubleDataBox extends DataBox {
         }
         DoubleDataBox other = (DoubleDataBox) obj;
         return Double.compare(this.getDouble(), other.getDouble());
+    }
+
+    @Override
+    public byte[] Serialize() throws DataBoxException, IOException {
+        return Serialize.serializeObject(d);
     }
 }

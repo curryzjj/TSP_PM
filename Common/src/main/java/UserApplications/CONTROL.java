@@ -9,7 +9,7 @@ public interface CONTROL {
     int MeasureBound = 1_000;
 
     //application related.
-    int NUM_EVENTS = 300; //different input events.. TODO: It must be kept small as GC pressure increases rapidly. Fix this in future work.
+    int NUM_EVENTS = 600; //different input events.. TODO: It must be kept small as GC pressure increases rapidly. Fix this in future work.
 
     int TEST_NUM_EVENST = 1_000;//total runs per thread.
 
