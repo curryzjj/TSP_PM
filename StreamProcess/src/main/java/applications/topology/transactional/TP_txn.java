@@ -31,6 +31,7 @@ public class TP_txn extends TransactionalTopology {
     private static final Logger LOG= LoggerFactory.getLogger(TP_txn.class);
     public TP_txn(String topologyName, Configuration config) {
         super(topologyName, config);
+        config.put("tthread",config.getInt(Executor_Threads,1));
     }
     @Override
     public void initialize() {
@@ -43,7 +44,7 @@ public class TP_txn extends TransactionalTopology {
             builder.setSpout(Component.SPOUT,spout,sinkThreads);
             builder.setBolt(Component.DISPATCHER,
                     new DispatcherBolt(),
-                    2,
+                    1,
                     new ShuffleGrouping(Component.SPOUT));
             builder.setBolt(Component.EXECUTOR,
                     new TPBolt_TStream(0),

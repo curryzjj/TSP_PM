@@ -1,17 +1,16 @@
 package engine.transaction;
 
 import System.util.OsUtils;
+import engine.storage.StorageManager;
 import engine.transaction.common.MyList;
 import engine.transaction.common.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import utils.SOURCE_CONTROL;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static UserApplications.CONTROL.*;
@@ -22,6 +21,7 @@ public class TxnProcessingEngine {
     public static TxnProcessingEngine getInstance() {
         return instance;
     }
+    private StorageManager storageManager;
     //Task_process
     private Integer num_op = -1;
     private Integer first_exe;
@@ -161,7 +161,7 @@ public class TxnProcessingEngine {
         //TODO:after implement the TStreamContent
         switch (operation.accessType){
             case READ_WRITE_READ:
-                assert operation.record_ref!=null;
+
         }
     }
 
@@ -170,7 +170,8 @@ public class TxnProcessingEngine {
         for (MyList<Operation> operation_chain : holder.holder_v1.values()) {
             if (operation_chain.size() > 0) {
                 sum += operation_chain.size();
-                if (!Thread.currentThread().isInterrupted()) {
+                boolean flag=Thread.currentThread().isInterrupted();
+                if (!flag) {
                     if (enable_engine) {
                         Task task = new Task(operation_chain);
                         if (enable_debug)
@@ -195,9 +196,11 @@ public class TxnProcessingEngine {
 
     //evaluation
     public void start_evaluation(int thread_id, long mark_ID) throws InterruptedException {//each operation thread called this function
-        //TODO:implement the SOURCE_CONTROL sync for all threads to come to this line to ensure chains are constructed for the current batch.
+        //implement the SOURCE_CONTROL sync for all threads to come to this line to ensure chains are constructed for the current batch.
+        SOURCE_CONTROL.getInstance().Wait_Start(thread_id);
         int size=evaluation(thread_id,mark_ID);
-        //TODO:implement the SOURCE_CONTROL sync for all threads to come to this line.
+        //implement the SOURCE_CONTROL sync for all threads to come to this line.
+        SOURCE_CONTROL.getInstance().Wait_End(thread_id);
     }
     private int evaluation(int thread_Id,long mark_ID) throws InterruptedException{
         Collection<Callable<Object>> callables=new Vector<>();

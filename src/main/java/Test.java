@@ -4,11 +4,15 @@ import net.openhft.affinity.AffinitySupport;
 
 public class Test {
     static class A{
+        public int a;
         public A(){
-            System.out.println("a");
+            this.a=0;
         }
         public A(String a){
             System.out.println("A");
+        }
+        public void setA(int a) {
+            this.a = a;
         }
     }
     static class B extends A{
@@ -17,7 +21,6 @@ public class Test {
         }
     }
     public static void main(String[] args) {
-        A[] a=new A[1];
-        a[0]=new A();
+
     }
 }

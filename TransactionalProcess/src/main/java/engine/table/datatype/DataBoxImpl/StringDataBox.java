@@ -2,7 +2,7 @@ package engine.table.datatype.DataBoxImpl;
 
 import engine.Exception.DataBoxException;
 import engine.table.datatype.DataBox;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.nio.charset.Charset;
 

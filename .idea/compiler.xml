@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="StreamProcess" />
+        <module name="RocksDBStateBackend" />
         <module name="TransactionalProcess" />
         <module name="PMManager" />
         <module name="Common" />

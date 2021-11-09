@@ -51,10 +51,10 @@ public abstract class OutputController implements Serializable {
     public abstract void emitOnStream(MetaGroup MetaGroup, String streamId, long bid, Object data) throws InterruptedException;
     public abstract void emitOnStream(MetaGroup MetaGroup, String streamId, long bid, int deviceID, double nextDouble, double movingAvergeInstant) throws InterruptedException;
     public abstract void emitOnStream(MetaGroup MetaGroup, String streamId, char[] data) throws InterruptedException;
+    public abstract void emitOnStream(MetaGroup MetaGroup, String streamId, long bid, char[] data) throws InterruptedException;
     public abstract void emitOnStream(MetaGroup MetaGroup, String streamId, char[] data, long bid, long timestamp) throws InterruptedException;
     public abstract void emitOnStream(MetaGroup MetaGroup, String streamId, char[] key, long value) throws InterruptedException;
     public abstract void emitOnStream(MetaGroup MetaGroup, String streamId, char[] key, long value, long bid, long TimeStamp) throws InterruptedException;
-    public abstract void emitOnStream(MetaGroup MetaGroup, String streamId, long bid, char[] data) throws InterruptedException;
     public abstract void emitOnStream(MetaGroup MetaGroup, String streamId, long bid, char[] key, long value) throws InterruptedException;
     public abstract void emitOnStream(MetaGroup MetaGroup, String streamId, long bid, StreamValues data) throws InterruptedException;
 
@@ -94,7 +94,7 @@ public abstract class OutputController implements Serializable {
 
     public abstract void create_marker_boardcast(MetaGroup MetaGroup, long timestamp, long bid, int myitration) throws InterruptedException;
 
-    public abstract void create_marker_boardcast(MetaGroup meta, long boardcast_time, String streamId, long bid, int myiteration) throws InterruptedException;
+    public abstract void create_marker_boardcast(MetaGroup meta, long boardcast_time, String streamId, long bid, int myiteration,String msg) throws InterruptedException;
 
     public boolean isUnique() {
         return !shared;

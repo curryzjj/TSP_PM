@@ -54,8 +54,8 @@ public abstract class TransactionalSpout extends AbstractSpout implements Checkp
             return false;
         }
     }
-    public void forward_checkpoint(int sourceId, long bid, Marker marker) throws InterruptedException{
-        forward_checkpoint(sourceId,DEFAULT_STREAM_ID,bid,marker);
+    public void forward_checkpoint(int sourceId, long bid, Marker marker,String msg) throws InterruptedException{
+        forward_checkpoint(sourceId,DEFAULT_STREAM_ID,bid,marker,msg);
     }
     public void forward_checkpoint_single(int sourceId,long bid,Marker marker) throws InterruptedException{
         forward_checkpoint_single(sourceId,DEFAULT_STREAM_ID,bid,marker);
@@ -74,10 +74,10 @@ public abstract class TransactionalSpout extends AbstractSpout implements Checkp
         }
     }
     @Override
-    public void forward_checkpoint(int sourceTask, String streamId, long bid, Marker marker) throws InterruptedException {
+    public void forward_checkpoint(int sourceTask, String streamId, long bid, Marker marker,String msg) throws InterruptedException {
         if (clock.tick(myiteration) && success) {//emit marker tuple
             LOG.info(executor.getOP_full() + " emit marker of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + bid);
-            collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration);
+            collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration,msg);
             boardcast_time = System.nanoTime();
             myiteration++;
             success = false;

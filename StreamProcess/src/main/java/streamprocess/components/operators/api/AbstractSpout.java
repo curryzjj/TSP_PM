@@ -11,6 +11,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Scanner;//通过 Scanner 类来获取用户的输入
 
+import static System.Constants.Mac_Data_Path;
 import static UserApplications.CONTROL.NUM_EVENTS;
 
 public abstract class AbstractSpout extends Operator {
@@ -76,7 +77,6 @@ public abstract class AbstractSpout extends Operator {
         } else {
 
             if (!config.getBoolean("microbenchmark")) {//normal case..
-                //&& cnt-- > 0
                 if (OsUtils.isMac()) {
                     while (scanner.hasNextLine() && cnt-- > 0) { //dummy test purpose..
                         array.add(scanner.nextLine().toCharArray());
@@ -91,7 +91,6 @@ public abstract class AbstractSpout extends Operator {
                 int tuple_size = config.getInt("size_tuple");
                 LOG.info("Additional tuple size to emit:" + tuple_size);
                 StringStatesWrapper wrapper = new StringStatesWrapper(tuple_size);
-//                        (StateWrapper<List<StreamValues>>) ClassLoaderUtils.newInstance(parserClass, "wrapper", LOG, tuple_size);
                 if (OsUtils.isWindows()) {
                     while (scanner.hasNextLine() && cnt-- > 0) { //dummy test purpose..
                         construction(scanner, wrapper);
@@ -121,6 +120,7 @@ public abstract class AbstractSpout extends Operator {
         long start=System.nanoTime();
         String OS_prefix=null;
         String path;
+        String Data_path = "";
         if(OsUtils.isWindows()){
             OS_prefix="win.";
         }else{
@@ -128,10 +128,11 @@ public abstract class AbstractSpout extends Operator {
         }
         if(OsUtils.isMac()){
             path=config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_TEST_PATH)));
+            Data_path=Mac_Data_Path;
         }else{
             path = config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_PATH)));
         }
-        String s = System.getProperty("user.home").concat("/hair-loss/app/benchmarks/").concat(path);//why not config in the properties
+        String s = Data_path.concat(path);
         array=new ArrayList<>();
         try{
             openFile(s);

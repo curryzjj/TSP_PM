@@ -10,6 +10,7 @@ import streamprocess.checkpoint.Checkpointable;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
+import utils.SOURCE_CONTROL;
 
 import java.util.concurrent.BrokenBarrierException;
 
@@ -39,13 +40,13 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
     public void initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
         OsUtils.configLOG(LOG);
         this.thread_Id = thread_Id;
-        tthread = config.getInt("tthread", 0);
+        tthread = config.getInt("tthread", 1);
         NUM_ACCESSES = 1;
         COMPUTE_COMPLEXITY = 10;
         POST_COMPUTE_COMPLEXITY = 1;
 //        sink.configPrefix = this.getConfigPrefix();
 //        sink.prepare(config, context, collector);
-//        SOURCE_CONTROL.getInstance().config(tthread);
+        SOURCE_CONTROL.getInstance().config(tthread);
 
     }
     //checkpoint
@@ -53,11 +54,11 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
     public void forward_checkpoint_single(int sourceTask, String streamId, long bid, Marker marker) {
     }
     @Override
-    public void forward_checkpoint(int sourceId, long bid, Marker marker) throws InterruptedException {
+    public void forward_checkpoint(int sourceId, long bid, Marker marker,String msg) throws InterruptedException {
         this.collector.broadcast_marker(bid, marker);//bolt needs to broadcast_marker
     }
     @Override
-    public void forward_checkpoint(int sourceTask, String streamId, long bid, Marker marker) throws InterruptedException {
+    public void forward_checkpoint(int sourceTask, String streamId, long bid, Marker marker,String msg) throws InterruptedException {
         this.collector.broadcast_marker(streamId, bid, marker);//bolt needs to broadcast_marker
     }
     @Override

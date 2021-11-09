@@ -116,7 +116,11 @@ public class MultiStreamOutputContoller extends OutputController{
 
     @Override
     public void emitOnStream(MetaGroup MetaGroup, String streamId, long bid, char[] data) throws InterruptedException {
-
+        PartitionController[] it = collections.get(streamId);
+        for (int i = 0; i < it.length; i++) {
+            PartitionController p = it[i];
+            p.force_emit(MetaGroup.get(p.childOP), streamId, bid, data);
+        }
     }
 
     @Override
@@ -227,11 +231,11 @@ public class MultiStreamOutputContoller extends OutputController{
     }
 
     @Override
-    public void create_marker_boardcast(MetaGroup meta, long timestamp, String streamId, long bid, int myiteration) throws InterruptedException {
+    public void create_marker_boardcast(MetaGroup meta, long timestamp, String streamId, long bid, int myiteration,String msg) throws InterruptedException {
         PartitionController[] it = collections.get(streamId);
         for (int i = 0; i < it.length; i++) {
             PartitionController p = it[i];
-            p.create_marker_boardcast(meta.get(p.childOP), streamId, timestamp, bid, myiteration,"");
+            p.create_marker_boardcast(meta.get(p.childOP), streamId, timestamp, bid, myiteration,msg);
         }
     }
 

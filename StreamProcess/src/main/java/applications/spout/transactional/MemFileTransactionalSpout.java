@@ -40,12 +40,14 @@ public class MemFileTransactionalSpout extends TransactionalSpout {
     }
     @Override
     public void nextTuple() throws InterruptedException {
-        if(exe==NUM_EVENTS){
-            clock.start();
-        }
         if(exe!=1){
-            forward_checkpoint(this.taskId, bid, null);
-            collector.emit(array_array[counter]);
+            if(exe==NUM_EVENTS){
+                clock.start();
+            } else if(exe==100){
+                forward_checkpoint(this.taskId, bid, null,"finish");
+            }
+            collector.emit(array_array[counter],bid);
+            bid++;
             counter++;
             if(counter==array_array.length){
                 counter=0;
@@ -57,7 +59,7 @@ public class MemFileTransactionalSpout extends TransactionalSpout {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            collector.emit(array_array[counter]);
+            collector.emit(array_array[counter],bid);
             if (taskId == graph.getSpout().getExecutorID()) {
                 LOG.info("Thread:" + taskId + " is going to stop all threads sequentially");
                 context.stop_running();

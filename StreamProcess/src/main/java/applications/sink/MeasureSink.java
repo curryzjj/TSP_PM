@@ -10,12 +10,9 @@ import streamprocess.components.operators.base.BaseSink;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Tuple;
 
-import java.io.*;
 import java.util.ArrayDeque;
 import java.util.HashMap;
-import System.Constants;
 
-import static System.Constants.Project_Path;
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
 

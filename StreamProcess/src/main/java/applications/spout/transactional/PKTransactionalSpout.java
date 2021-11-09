@@ -78,7 +78,7 @@ public class PKTransactionalSpout extends TransactionalSpout {
             }else{
                 empty++;
             }
-            forward_checkpoint(-1,bid,null);
+            forward_checkpoint(-1,bid,null,"");
         }
     }
 }

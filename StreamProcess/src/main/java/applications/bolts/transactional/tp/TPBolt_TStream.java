@@ -42,7 +42,8 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
                 ,new AVG(event.getPOSReport().getSpeed())
         );
         transactionManager.Asy_ModifyRecord_Read(txnContext
-                ,"segment_cnt",String.valueOf(event.getPOSReport().getSegment())
+                ,"segment_cnt"
+                ,String.valueOf(event.getPOSReport().getSegment())
                 ,event.count_value
                 ,new CNT(event.getPOSReport().getVid()));
         LREvents.add(event);
@@ -50,8 +51,8 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
     @Override
     protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException {
         transactionManager.start_evaluate(thread_Id,this.fid);
-        REQUEST_REQUEST_CORE();
-        REQUEST_POST();
+        //REQUEST_REQUEST_CORE();
+        //REQUEST_POST();
     }
     protected void REQUEST_REQUEST_CORE() {
         for (LREvent event : LREvents) {

@@ -48,7 +48,7 @@ public interface CONTROL {
     //profile related.
     boolean enable_profile = true;//enable this only when we want to test for breakdown.
 
-    boolean enable_debug = false;//some critical debug section.
+    boolean enable_debug = true;//some critical debug section.
 
     //engine related.
     boolean enable_engine = true;//1. enable TP_engine. Always enabled. There's no meaning if we disable engine for T-Stream.

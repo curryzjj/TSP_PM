@@ -3,7 +3,7 @@ package streamprocess.execution.runtime.tuple;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
-public class JumboTuple implements Comparable<JumboTuple> {//batch tuple
+public class  JumboTuple implements Comparable<JumboTuple> {//batch tuple
     public final Message[] msg;
     protected final int sourceId;
     private final TopologyContext context;

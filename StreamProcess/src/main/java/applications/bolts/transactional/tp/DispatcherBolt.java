@@ -27,7 +27,7 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {
         long bid=in.getBID();
         if(in.isMarker()){
-            forward_checkpoint(in.getSourceTask(),bid,in.getMarker());
+            forward_checkpoint(in.getSourceTask(),bid,in.getMarker(),in.getMarker().getValue());
             ack_checkpoint(in.getMarker());
         }else{
             String raw = null;
@@ -59,7 +59,7 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
         declarer.declareStream(POSITION_REPORTS_STREAM_ID,PositionReport.getSchema());
     }
     @Override
-    public void forward_checkpoint(int sourceId, long bid, Marker marker) throws InterruptedException {
+    public void forward_checkpoint(int sourceId, long bid, Marker marker,String msg) throws InterruptedException {
         this.collector.broadcast_marker(bid, marker);
     }
 
@@ -72,7 +72,7 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
 
     }
     @Override
-    public void forward_checkpoint(int sourceTask, String streamId, long bid, Marker marker) throws InterruptedException {
+    public void forward_checkpoint(int sourceTask, String streamId, long bid, Marker marker,String msg) throws InterruptedException {
 
     }
     @Override
