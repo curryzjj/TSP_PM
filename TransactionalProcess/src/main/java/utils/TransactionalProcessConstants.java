@@ -11,4 +11,9 @@ public class TransactionalProcessConstants {
     public enum CheckpointType{
         FullSnapshot
     }
+    /** Determines how the write-part if snapshot should be executed. */
+    public enum SnapshotExecutionType{
+        SYNCHRONOUS,
+        ASYNCHRONOUS
+    }
 }

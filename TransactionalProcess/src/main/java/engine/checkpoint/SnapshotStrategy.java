@@ -2,7 +2,7 @@ package engine.checkpoint;
 
 import engine.checkpoint.CheckpointStream.CheckpointStreamFactory;
 import engine.checkpoint.ShapshotResources.SnapshotResources;
-import utils.CloseableRegistry;
+import utils.CloseableRegistry.CloseableRegistry;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;

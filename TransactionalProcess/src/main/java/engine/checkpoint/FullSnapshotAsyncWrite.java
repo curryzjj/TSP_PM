@@ -2,7 +2,7 @@ package engine.checkpoint;
 
 import engine.checkpoint.CheckpointStream.CheckpointStreamWithResultProvider;
 import engine.checkpoint.ShapshotResources.FullSnapshotResources;
-import utils.CloseableRegistry;
+import utils.CloseableRegistry.CloseableRegistry;
 import utils.SupplierWithException;
 import utils.TransactionalProcessConstants.CheckpointType;
 
