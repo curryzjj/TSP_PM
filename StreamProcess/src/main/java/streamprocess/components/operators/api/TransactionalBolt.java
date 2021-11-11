@@ -48,7 +48,6 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
 //        sink.configPrefix = this.getConfigPrefix();
 //        sink.prepare(config, context, collector);
         SOURCE_CONTROL.getInstance().config(tthread);
-
     }
     //checkpoint
     @Override

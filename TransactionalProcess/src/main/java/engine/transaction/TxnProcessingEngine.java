@@ -175,8 +175,7 @@ public class TxnProcessingEngine {
                     if (latestAvgSpeeds == 0) {//not initialized
                         lav = operation.function.delta_double;
                     } else{
-                        lav=latestAvgSpeeds+3;
-                        //lav = (latestAvgSpeeds + operation.function.delta_double) / 2;
+                        lav = (latestAvgSpeeds + operation.function.delta_double) / 2;
                     }
                     srcRecord.get(1).setDouble(lav);//write to state.
                     operation.record_ref.setRecord(new SchemaRecord(new DoubleDataBox(lav)));//return updated record.

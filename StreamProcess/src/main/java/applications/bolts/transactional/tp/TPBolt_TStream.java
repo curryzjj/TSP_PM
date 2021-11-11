@@ -60,12 +60,11 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
         for (LREvent event : LREvents) {
             TS_REQUEST_CORE(event);
         }
-        System.out.println("clear");
     }
     private void TS_REQUEST_CORE(LREvent event) {
         //get the value from the event
         event.count=event.count_value.getRecord().getValue().getInt();
-       // System.out.println(event.count);
+        System.out.println(event.count);
         event.lav=event.speed_value.getRecord().getValue().getDouble();
         System.out.println(event.lav);
     }

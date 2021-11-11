@@ -1,13 +1,12 @@
 package engine.storage.ImplStorageManager;
 
-import engine.Database;
 import engine.Exception.DatabaseException;
+import engine.Meta.RegisteredStateMetaInfoBase;
 import engine.storage.AbstractStorageManager;
 import engine.table.BaseTable;
 import engine.table.ImplTable.ShareTable;
 import engine.table.RecordSchema;
 import engine.table.RowID;
-import engine.table.datatype.DataBox;
 import engine.table.datatype.serialize.Deserialize;
 import engine.table.datatype.serialize.Serialize;
 import engine.table.tableRecords.SchemaRecord;
@@ -116,13 +115,18 @@ public class RocksDBManager extends AbstractStorageManager {
         }
         return true;
     }
+    public void cleanTable(String tableName) throws DatabaseException {
+        this.getTable(tableName).clean();
+    }
     /**
      * commitAllTables to the RocksDB
      */
     public void commitAllTables() throws IOException, DatabaseException {
         List<String> tableNames = new ArrayList<>(tables.keySet());
         for (String s : tableNames) {
-            commitTable(s);
+            if (commitTable(s)){
+                cleanTable(s);
+            }
         }
     }
     /**
@@ -154,6 +158,21 @@ public class RocksDBManager extends AbstractStorageManager {
             rocksDB.deleteFile(System.getProperty("user.home").concat("/hair-loss/app/RocksDB/"));
         } catch (RocksDBException e) {
             e.printStackTrace();
+        }
+    }
+    /**Rocks DB specific information about the K/V states. */
+    public static class RocksDBKvStateInfo implements AutoCloseable{
+        public final ColumnFamilyHandle columnFamilyHandle;
+        public final RegisteredStateMetaInfoBase metaInfo;
+
+        public RocksDBKvStateInfo(ColumnFamilyHandle columnFamilyHandle, RegisteredStateMetaInfoBase metaInfo) {
+            this.columnFamilyHandle = columnFamilyHandle;
+            this.metaInfo = metaInfo;
+        }
+
+        @Override
+        public void close() throws Exception {
+
         }
     }
 }

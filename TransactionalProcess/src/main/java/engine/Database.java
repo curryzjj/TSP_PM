@@ -2,10 +2,9 @@ package engine;
 
 import engine.Exception.DatabaseException;
 import engine.checkpoint.CheckpointManager;
-import engine.recovery.RecoveryManager;
+import engine.recovery.AbstractRecoveryManager;
 import engine.storage.AbstractStorageManager;
 import engine.storage.EventManager;
-import engine.storage.ImplStorageManager.StorageManager;
 import engine.table.RecordSchema;
 import engine.table.tableRecords.TableRecord;
 import utils.TransactionalProcessConstants.DataBoxTypes;
@@ -16,7 +15,7 @@ public abstract class Database {
     public int numTransactions=0;//current number of activate transactions
     protected AbstractStorageManager storageManager;
     protected EventManager eventManager;
-    protected RecoveryManager recoveryManager;
+    protected AbstractRecoveryManager recoveryManager;
     protected CheckpointManager checkpointManager;
     /**
      * Close this database.
@@ -43,7 +42,7 @@ public abstract class Database {
     public EventManager getEventManager() {
         return eventManager;
     }
-    public RecoveryManager getRecoveryManager() {
+    public AbstractRecoveryManager getRecoveryManager() {
         return recoveryManager;
     }
 }

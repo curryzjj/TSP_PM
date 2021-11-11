@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Set;
 
 public class ShareTable extends BaseTable {
 
@@ -40,7 +41,7 @@ public class ShareTable extends BaseTable {
 
     @Override
     public void clean() {
-
+        primary_index_.clean();
     }
 
     @Override

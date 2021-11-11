@@ -8,4 +8,7 @@ public class TransactionalProcessConstants {
     public enum DataBoxTypes {
         BOOL, INT, LONG, TimestampType, FLOAT, STRING, OTHERS
     }
+    public enum CheckpointType{
+        FullSnapshot
+    }
 }

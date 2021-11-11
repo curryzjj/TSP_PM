@@ -15,7 +15,7 @@ public interface TP_TxnConstants extends BaseConstants {
         String POSITION = "position";
     }
     interface  Conf extends BaseConf{
-        int NUM_SEGMENTS = 300;
+        int NUM_SEGMENTS = 900;
         String Executor_Threads ="tptxn.executor.threads";
     }
     interface Component extends BaseComponent {

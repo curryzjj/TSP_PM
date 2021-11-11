@@ -59,7 +59,7 @@ public class RocksDBTest {
         }
 
         Checkpoint checkpoint=Checkpoint.create(db);
-        checkpoint.createCheckpoint(checkpointPath+"ch-0");
+        checkpoint.createCheckpoint(checkpointPath+"ch-0");//hard-link
         List<ColumnFamilyDescriptor> columnFamilyDescriptorList = new ArrayList<>();
         columnFamilyDescriptorList.add(columnFamilyDescriptor);
         columnFamilyDescriptorList.add(db.getDefaultColumnFamily().getDescriptor());
