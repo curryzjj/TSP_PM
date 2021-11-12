@@ -1,5 +1,8 @@
 package engine.checkpoint;
 
+import engine.table.RecordSchema;
+import utils.TransactionalProcessConstants;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -7,34 +10,31 @@ import java.util.Map;
 public class StateMetaInfoSnapshot {
     /** The name of the state. */
     @Nonnull private final String name;
-
-    @Nonnull private final BackendStateType backendStateType;
+    @Nonnull private final TransactionalProcessConstants.BackendStateType backendStateType;
+    @Nonnull private final RecordSchema recordSchema;
 
     /** Map of options (encoded as strings) for the state. */
 //    @Nonnull private final Map<String, String> options;
 
     public StateMetaInfoSnapshot(@Nonnull String name,
-                                 @Nonnull BackendStateType backendStateType
+                                 @Nonnull TransactionalProcessConstants.BackendStateType backendStateType,
+                                 @Nonnull RecordSchema recordSchema
                                ) {
         this.name = name;
         this.backendStateType = backendStateType;
-//        this.options = options;
+        this.recordSchema=recordSchema;
     }
 
-    /** Enum that defines the different types of state that live in TSP backends. */
-    public enum BackendStateType {
-        KEY_VALUE,
-    }
     @Nonnull
-    public BackendStateType getBackendStateType() {
+    public TransactionalProcessConstants.BackendStateType getBackendStateType() {
         return backendStateType;
     }
     @Nonnull
     public String getName() {
         return name;
     }
-//    @Nullable
-//    public String getOption(@Nonnull String key) {
-//        return options.get(key);
-//    }
+    @Nonnull
+    public RecordSchema getRecordSchema(){
+        return recordSchema;
+    }
 }

@@ -1,6 +1,7 @@
 package engine.checkpoint.ShapshotResources;
 
 import engine.checkpoint.StateMetaInfoSnapshot;
+import engine.table.keyGroup.KeyGroupRange;
 import utils.StateIterator.KeyValueStateIterator;
 
 import java.io.IOException;
@@ -19,4 +20,6 @@ public interface FullSnapshotResources extends SnapshotResources{
      * @throws IOException
      */
     KeyValueStateIterator createKVStateIterator() throws IOException;
+    /** Returns the {@link KeyGroupRange} of this snapshot. */
+    KeyGroupRange getKeyGroupRange();
 }

@@ -13,7 +13,6 @@
         <module>Common</module>
         <module>TransactionalProcess</module>
         <module>PMManager</module>
-        <module>RocksDBStateBackend</module>
     </modules>
 
     <properties>
@@ -48,16 +47,6 @@
             <groupId>org.rocksdb</groupId>
             <artifactId>rocksdbjni</artifactId>
             <version>6.25.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-statebackend-rocksdb_2.12</artifactId>
-            <version>1.14.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-runtime_2.12</artifactId>
-            <version>1.13.3</version>
         </dependency>
         <!-- test -->
         <dependency>

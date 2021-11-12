@@ -1,6 +1,5 @@
 package utils.StateIterator;
 
-import org.apache.flink.util.FlinkRuntimeException;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.RocksIteratorInterface;
@@ -96,7 +95,7 @@ public class RocksIteratorWrapper implements RocksIteratorInterface, Closeable {
         try {
             iterator.status();
         } catch (RocksDBException ex) {
-            throw new FlinkRuntimeException("Internal exception found in RocksDB", ex);
+            throw new RocksDBException("Internal exception found in RocksDB");
         }
     }
 

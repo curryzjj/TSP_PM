@@ -41,4 +41,5 @@ public abstract class AbstractStorageManager {
      */
     public synchronized void close() throws IOException{};
     public abstract void InsertRecord(String tableName, TableRecord record) throws DatabaseException, IOException;
+    public abstract void createKeyGroupRange();
 }

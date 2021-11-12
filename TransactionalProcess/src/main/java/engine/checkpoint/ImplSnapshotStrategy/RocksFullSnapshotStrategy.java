@@ -9,6 +9,7 @@ import engine.checkpoint.ShapshotResources.FullSnapshotResources;
 import engine.checkpoint.ShapshotResources.ImplShapshotResources.RocksDBFullSnapshotResources;
 import engine.checkpoint.SnapshotResult;
 import engine.storage.ImplStorageManager.RocksDBManager;
+import engine.table.keyGroup.KeyGroupRange;
 import org.jetbrains.annotations.NotNull;
 import org.rocksdb.RocksDB;
 import org.slf4j.Logger;
@@ -29,8 +30,9 @@ public class RocksFullSnapshotStrategy extends RocksDBSnapshotStrategyBase<FullS
                                         @NotNull RocksDB db,
                                         @NotNull ResourceGuard rocksDBResourceGuard,
                                         @Nonnull LinkedHashMap<String, RocksDBManager.RocksDBKvStateInfo> kvStateInfomation,
-                                        @NotNull LocalRecoveryConfig localRecoveryConfig) {
-        super(description, db, rocksDBResourceGuard,kvStateInfomation, localRecoveryConfig);
+                                        @NotNull LocalRecoveryConfig localRecoveryConfig,
+                                        @Nonnull KeyGroupRange keyGroupRange) {
+        super(description, db, rocksDBResourceGuard,kvStateInfomation, localRecoveryConfig, keyGroupRange);
     }
 
     @Override
@@ -41,7 +43,7 @@ public class RocksFullSnapshotStrategy extends RocksDBSnapshotStrategyBase<FullS
 
     @Override
     public FullSnapshotResources syncPrepareResources(long checkpointId) throws Exception {
-        return RocksDBFullSnapshotResources.create(kvStateInformation,db,rocksDBResourceGuard);
+        return RocksDBFullSnapshotResources.create(kvStateInformation,db,rocksDBResourceGuard,keyGroupRange);
     }
 
     @Override

@@ -76,4 +76,9 @@ public class StorageManager extends AbstractStorageManager {
         BaseTable tab = getTable(tableName);
         tab.InsertRecord(record);
     }
+
+    @Override
+    public void createKeyGroupRange() {
+
+    }
 }

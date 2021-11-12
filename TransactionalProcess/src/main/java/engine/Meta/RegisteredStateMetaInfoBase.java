@@ -3,6 +3,7 @@ package engine.Meta;
 
 
 import engine.checkpoint.StateMetaInfoSnapshot;
+import utils.TransactionalProcessConstants;
 
 import javax.annotation.Nonnull;
 
@@ -26,7 +27,7 @@ public abstract class RegisteredStateMetaInfoBase {
     public static RegisteredStateMetaInfoBase fromMetaInfoSnapshot(
             @Nonnull StateMetaInfoSnapshot snapshot) {
 
-        final StateMetaInfoSnapshot.BackendStateType backendStateType =
+        final TransactionalProcessConstants.BackendStateType backendStateType =
                 snapshot.getBackendStateType();
         switch (backendStateType) {
             case KEY_VALUE:

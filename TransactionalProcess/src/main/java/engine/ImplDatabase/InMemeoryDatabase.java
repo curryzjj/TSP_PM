@@ -34,4 +34,9 @@ public class InMemeoryDatabase extends Database {
     public void Recovery() {
 
     }
+
+    @Override
+    public void createKeyGroupRange() {
+        this.storageManager.createKeyGroupRange();
+    }
 }

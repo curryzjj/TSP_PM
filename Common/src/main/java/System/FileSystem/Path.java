@@ -1,9 +1,8 @@
 package System.FileSystem;
 
-import org.apache.flink.core.io.IOReadableWritable;
-import org.apache.flink.core.memory.DataInputView;
-import org.apache.flink.core.memory.DataOutputView;
-import org.apache.flink.util.StringUtils;
+import System.FileSystem.DataIO.DataInputView;
+import System.FileSystem.DataIO.DataOutputView;
+import System.FileSystem.DataIO.IOReadableWritable;
 
 import java.io.File;
 import java.io.IOException;
@@ -370,38 +369,12 @@ public class Path implements IOReadableWritable, Serializable {
 
     @Override
     public void read(DataInputView in) throws IOException {
-        final boolean isNotNull = in.readBoolean();
-        if (isNotNull) {
-            final String scheme = StringUtils.readNullableString(in);
-            final String userInfo = StringUtils.readNullableString(in);
-            final String host = StringUtils.readNullableString(in);
-            final int port = in.readInt();
-            final String path = StringUtils.readNullableString(in);
-            final String query = StringUtils.readNullableString(in);
-            final String fragment = StringUtils.readNullableString(in);
 
-            try {
-                uri = new URI(scheme, userInfo, host, port, path, query, fragment);
-            } catch (URISyntaxException e) {
-                throw new IOException("Error reconstructing URI", e);
-            }
-        }
     }
 
     @Override
     public void write(DataOutputView out) throws IOException {
-        if (uri == null) {
-            out.writeBoolean(false);
-        } else {
-            out.writeBoolean(true);
-            StringUtils.writeNullableString(uri.getScheme(), out);
-            StringUtils.writeNullableString(uri.getUserInfo(), out);
-            StringUtils.writeNullableString(uri.getHost(), out);
-            out.writeInt(uri.getPort());
-            StringUtils.writeNullableString(uri.getPath(), out);
-            StringUtils.writeNullableString(uri.getQuery(), out);
-            StringUtils.writeNullableString(uri.getFragment(), out);
-        }
+
     }
 
     // ------------------------------------------------------------------------

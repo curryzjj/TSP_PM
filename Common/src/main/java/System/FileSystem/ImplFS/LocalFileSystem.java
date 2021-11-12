@@ -10,8 +10,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 
-import static org.apache.flink.util.Preconditions.checkNotNull;
-import static org.apache.flink.util.Preconditions.checkState;
+import static System.util.Preconditions.checkNotNull;
+import static System.util.Preconditions.checkState;
+
 
 public class LocalFileSystem extends FileSystem {
     @Override

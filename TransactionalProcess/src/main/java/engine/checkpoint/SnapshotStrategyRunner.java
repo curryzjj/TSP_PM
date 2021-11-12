@@ -17,7 +17,7 @@ import static utils.TransactionalProcessConstants.SnapshotExecutionType.SYNCHRON
  * A class to execute a {@link SnapshotStrategy}. It can execute a strategy either sync or async.
  * It takes care if common logging and resource cleaning.
  */
-public class SnapshotStrategyRunner<SR extends SnapshotResources> {
+public final class SnapshotStrategyRunner<SR extends SnapshotResources> {
     private static final Logger LOG= LoggerFactory.getLogger(SnapshotStrategyRunner.class);
     private static final String LOG_SYNC_COMPLETED_TEMPLATE =
             "{} ({}, synchronous part) in thread {} took {} ms.";
@@ -56,11 +56,17 @@ public class SnapshotStrategyRunner<SR extends SnapshotResources> {
                 new AsyncSnapshotCallable<SnapshotResult>(){
                     @Override
                     protected SnapshotResult callInternal() throws Exception {
-                        return null;
+                        return asyncSnapshot.get(snapshotCloseableRegistry);
                     }
 
                     @Override
                     protected void cleanupProvidedResources() {
+                        if (snapshotResources != null) {
+                            snapshotResources.release();
+                        }
+                    }
+                    @Override
+                    protected void logAsyncSnapshotComplete(long startTime) {
 
                     }
                 }.toAsyncSnapshotFutureTask(cancelStreamRegistry);

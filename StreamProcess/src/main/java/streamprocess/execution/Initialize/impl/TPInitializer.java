@@ -37,6 +37,7 @@ public class TPInitializer extends TableInitilizer {
 
         RecordSchema b = CntScheme();
         db.createTable(b, "segment_cnt",DataBoxTypes.OTHERS);
+        db.createKeyGroupRange();
     }
 
     @Override

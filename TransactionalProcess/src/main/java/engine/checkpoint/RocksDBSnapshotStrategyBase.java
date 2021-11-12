@@ -2,6 +2,7 @@ package engine.checkpoint;
 
 import engine.checkpoint.ShapshotResources.SnapshotResources;
 import engine.storage.ImplStorageManager.RocksDBManager;
+import engine.table.keyGroup.KeyGroupRange;
 import org.rocksdb.RocksDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,17 +23,20 @@ public abstract class RocksDBSnapshotStrategyBase<R extends SnapshotResources> i
     @Nonnull protected final LocalRecoveryConfig localRecoveryConfig;
     /** Key/Value state meta info from the backend. */
     @Nonnull protected final LinkedHashMap<String, RocksDBManager.RocksDBKvStateInfo> kvStateInformation;
+    @Nonnull protected final KeyGroupRange keyGroupRange;
 
     protected RocksDBSnapshotStrategyBase(@Nonnull String description,
                                           @Nonnull RocksDB db,
                                           @Nonnull ResourceGuard rocksDBResourceGuard,
                                           @Nonnull LinkedHashMap<String, RocksDBManager.RocksDBKvStateInfo> kvStateInformation,
-                                          @Nonnull LocalRecoveryConfig localRecoveryConfig) {
+                                          @Nonnull LocalRecoveryConfig localRecoveryConfig,
+                                          @Nonnull KeyGroupRange keyGroupRange) {
         this.description = description;
         this.rocksDBResourceGuard = rocksDBResourceGuard;
         this.localRecoveryConfig = localRecoveryConfig;
         this.kvStateInformation = kvStateInformation;
         this.db=db;
+        this.keyGroupRange = keyGroupRange;
     }
     public String getDescription(){
         return description;

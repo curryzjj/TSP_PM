@@ -16,4 +16,8 @@ public class TransactionalProcessConstants {
         SYNCHRONOUS,
         ASYNCHRONOUS
     }
+    /** Enum that defines the different types of state that live in TSP backends. */
+    public enum BackendStateType {
+        KEY_VALUE,
+    }
 }

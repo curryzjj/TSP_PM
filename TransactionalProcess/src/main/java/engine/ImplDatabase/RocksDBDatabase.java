@@ -14,7 +14,7 @@ import java.io.IOException;
 
 public class RocksDBDatabase extends Database {
     public RocksDBDatabase() {
-        storageManager = new RocksDBManager();
+        storageManager = new RocksDBManager(null,null);
         eventManager = new EventManager();
     }
     @Override
@@ -34,5 +34,8 @@ public class RocksDBDatabase extends Database {
     @Override
     public void Recovery() {
 
+    }
+    public void createKeyGroupRange(){
+        this.storageManager.createKeyGroupRange();
     }
 }

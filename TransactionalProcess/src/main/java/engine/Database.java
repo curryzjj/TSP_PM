@@ -45,4 +45,5 @@ public abstract class Database {
     public AbstractRecoveryManager getRecoveryManager() {
         return recoveryManager;
     }
+    public abstract void createKeyGroupRange();
 }
