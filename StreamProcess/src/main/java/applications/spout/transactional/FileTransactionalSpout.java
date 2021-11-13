@@ -77,6 +77,7 @@ public class FileTransactionalSpout extends TransactionalSpout {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+        clock.start();
     }
 
     @Override
@@ -91,9 +92,6 @@ public class FileTransactionalSpout extends TransactionalSpout {
     @Override
     public void nextTuple() throws InterruptedException {
         if(exe!=1){
-            if(exe==NUM_EVENTS){
-                clock.start();
-            }
             forward_checkpoint(this.taskId, bid, null,"finish");
             collector.emit(readLine(),bid);
             bid++;

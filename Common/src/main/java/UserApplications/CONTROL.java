@@ -9,9 +9,9 @@ public interface CONTROL {
     int MeasureBound = 1_000;
 
     //application related.
-    int NUM_EVENTS = 4000000; //different input events.. TODO: It must be kept small as GC pressure increases rapidly. Fix this in future work.
+    int NUM_EVENTS = 40000000; //different input events.. TODO: It must be kept small as GC pressure increases rapidly. Fix this in future work.
 
-    int TEST_NUM_EVENST = 1_000;//total runs per thread.
+    int TEST_NUM_EVENST = 1000000;//total runs per thread.
 
     //combo optimization
     boolean enable_app_combo = false;//compose all operators into one.
