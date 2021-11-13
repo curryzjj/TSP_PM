@@ -1,5 +1,6 @@
 package UserApplications;
 
+import System.util.OsUtils;
 import com.beust.jcommander.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Properties;
+
+import static System.Constants.Mac_Project_Path;
+import static System.Constants.Node22_Project_Path;
 
 public abstract class baseRunner {
     public static final Logger LOG= LoggerFactory.getLogger(baseRunner.class);
@@ -64,8 +68,12 @@ public abstract class baseRunner {
 
 
     public  baseRunner() {
-        CFG_PATH = "../TSP_PM/Common/src/main/resources/config/%s.properties";
-        metric_path = "../TSP_PM_Result/metric_output/";
+        if(OsUtils.isMac()){
+            CFG_PATH = Mac_Project_Path+"/Common/src/main/resources/config/%s.properties";
+            metric_path = "../TSP_PM_Result/metric_output/";
+        }else{
+            CFG_PATH = Node22_Project_Path+"/Common/src/main/resources/config/%s.properties";
+        }
     }
     public static Properties loadProperties(String filename) throws IOException {
         Properties properties = new Properties();

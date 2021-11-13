@@ -4,10 +4,8 @@ import System.util.OsUtils;
 
 public interface Constants {
     //System constants
-    String Project_Path=System.getProperty("user.home")
-            + OsUtils.OS_wrapper("hair-loss") + OsUtils.OS_wrapper("TSP_PM_Result");
-    String STAT_Path = System.getProperty("user.home")
-            + OsUtils.OS_wrapper("TSP_PM") + OsUtils.OS_wrapper("STAT");
+    String Mac_Project_Path=System.getProperty("user.home").concat("/hair-loss/TSP_PM");
+    String Node22_Project_Path = System.getProperty("user.home").concat("/TSP_PM");
     String Mac_Data_Path=System.getProperty("user.home").concat("/hair-loss/app/benchmarks/");
     String Node22_Data_Path=System.getProperty("user.home").concat("/app/benchmarks/");
     //PM constants
