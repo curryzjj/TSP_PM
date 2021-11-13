@@ -1,6 +1,7 @@
 package applications.topology.transactional;
 
 import System.util.Configuration;
+import UserApplications.InputDataGenerator.ImplDataGenerator.TPDataGenerator;
 import UserApplications.constants.TP_TxnConstants.Component;
 import UserApplications.constants.TP_TxnConstants.Field;
 import applications.DataTypes.util.LRTopologyControl;
@@ -41,6 +42,7 @@ public class TP_txn extends TransactionalTopology {
     public Topology buildTopology() {
         try {
             spout.setFields(new Fields(Field.TEXT));
+            spout.setInputDataGenerator(new TPDataGenerator());
             builder.setSpout(Component.SPOUT,spout,sinkThreads);
             builder.setBolt(Component.DISPATCHER,
                     new DispatcherBolt(),

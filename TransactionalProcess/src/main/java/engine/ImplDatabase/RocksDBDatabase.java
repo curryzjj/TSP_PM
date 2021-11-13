@@ -1,5 +1,6 @@
 package engine.ImplDatabase;
 
+import System.util.Configuration;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.storage.EventManager;
@@ -13,8 +14,8 @@ import utils.TransactionalProcessConstants.DataBoxTypes;
 import java.io.IOException;
 
 public class RocksDBDatabase extends Database {
-    public RocksDBDatabase() {
-        storageManager = new RocksDBManager(null,null);
+    public RocksDBDatabase(Configuration configuration) {
+        storageManager = new RocksDBManager(null,null,configuration);
         eventManager = new EventManager();
     }
     @Override

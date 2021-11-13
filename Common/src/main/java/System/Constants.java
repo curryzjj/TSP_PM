@@ -9,6 +9,7 @@ public interface Constants {
     String STAT_Path = System.getProperty("user.home")
             + OsUtils.OS_wrapper("TSP_PM") + OsUtils.OS_wrapper("STAT");
     String Mac_Data_Path=System.getProperty("user.home").concat("/hair-loss/app/benchmarks/");
+    String Node22_Data_Path=System.getProperty("user.home").concat("/app/benchmarks/");
     //PM constants
     String Default_Heap_Path="/mnt/persist-memory/pmem0/jjzhao";
     String Default_Heap_Name="/default";
@@ -17,4 +18,5 @@ public interface Constants {
     String Default_null_expression=" ";
     //DB constants
     String Mac_RocksDB_Path=System.getProperty("user.home").concat("/hair-loss/app/RocksDB/");
+    String Node22_RocksDB_Path=System.getProperty("user.home").concat("/app/RocksDB/");
 }

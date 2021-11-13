@@ -24,12 +24,12 @@ public class ZipfGenerator {
         double friquency = 0;
         double dice;
 
-        rank = rnd.nextInt(size) + 1;
+        rank = rnd.nextInt(size);
         friquency = (1.0d / Math.pow(rank, this.skew)) / this.bottom;
         dice = rnd.nextDouble();
 
         while (!(dice < friquency)) {
-            rank = rnd.nextInt(size) + 1;
+            rank = rnd.nextInt(size);
             friquency = (1.0d / Math.pow(rank, this.skew)) / this.bottom;
             dice = rnd.nextDouble();
         }

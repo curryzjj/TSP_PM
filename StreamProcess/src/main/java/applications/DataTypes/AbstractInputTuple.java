@@ -7,7 +7,7 @@ public abstract class AbstractInputTuple extends AbstractLRBTuple {
     protected AbstractInputTuple() {
         super();
     }
-    protected AbstractInputTuple(Short type, Short time, Integer vid) {
+    protected AbstractInputTuple(Short type, Long time, Integer vid) {
         super(type, time);
         assert (vid != null);
         super.add(VID_IDX, vid);

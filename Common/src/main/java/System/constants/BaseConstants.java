@@ -29,6 +29,11 @@ public interface BaseConstants {
         String SINK_FORMATTER = "%s.sink.formatter";
         String SPOUT_THREADS ="%s.spout.threads" ;
         String SINK_THREADS = "%s.sink.threads";
+        String RECORD_NUM_TEST="%s.test.recordnum";
+        String RECORD_NUM="%s.recordnum";
+        String ZIPSKEW_TEST="%s.test.zipskew";
+        String ZIPSKEW_NUM="%s.zipskew";
+
     }
     interface CCOptions{
         int CCOption_LOCK = 0;

@@ -4,6 +4,7 @@ import System.constants.BaseConstants;
 import System.spout.helper.parser.Parser;
 import System.util.DataTypes.StreamValues;
 import System.util.OsUtils;
+import UserApplications.InputDataGenerator.InputDataGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractSpout;
@@ -11,10 +12,12 @@ import streamprocess.execution.ExecutionGraph;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 
+import static System.Constants.Mac_Data_Path;
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 
 public class FileSpout extends AbstractSpout {
@@ -30,9 +33,11 @@ public class FileSpout extends AbstractSpout {
     private Scanner scanner;
     private int cnt = 10240;
     private String file_path;
+    private InputDataGenerator inputDataGenerator;
 
-    private FileSpout() {
+    public FileSpout(InputDataGenerator inputDataGenerator) {
         super(LOG);
+        this.inputDataGenerator=inputDataGenerator;
     }
 
     @Override
@@ -42,15 +47,25 @@ public class FileSpout extends AbstractSpout {
         int numTasks = config.getInt(getConfigKey(BaseConstants.BaseConf.SPOUT_THREADS));
 
         String OS_prefix = null;
-
+        String path;
+        String Data_path = "";
         if (OsUtils.isWindows()) {
             OS_prefix = "win.";
         } else {
             OS_prefix = "unix.";
         }
-        String path = config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_PATH)));
-        file_path = System.getProperty("user.home").concat("/Documents/data/app/").concat(path);
-
+        if(OsUtils.isMac()){
+            path=config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_TEST_PATH)));
+            Data_path=Mac_Data_Path;
+        }else{
+            path = config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_PATH)));
+        }
+        String s = Data_path.concat(path);
+        try {
+            this.inputDataGenerator.generateData();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         List<String> str_l = new LinkedList<>();
 
         try {

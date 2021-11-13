@@ -125,7 +125,7 @@ public class spoutThread extends executorThread{
             }
             LOG.info(this.executor.getOP_full()
                             + "\tfinished execution and exit with throughput (k input_event/s) of:\t"
-                            + actual_throughput + "(" + actual_throughput / expected_throughput + ")"
+                            + actual_throughput+ "(" + actual_throughput / expected_throughput + ")"
                             + " on node: " + node+" cnt="+cnt
             );
             try {

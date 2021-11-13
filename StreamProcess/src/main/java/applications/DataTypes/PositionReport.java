@@ -48,7 +48,7 @@ public class PositionReport extends AbstractInputTuple implements IPositionIdent
      * @param position
      *            the horizontal position on the expressway
      */
-    public PositionReport(Short time, Integer vid, Integer speed, Integer xway, Short lane, Short direction,
+    public PositionReport(Long time, Integer vid, Integer speed, Integer xway, Short lane, Short direction,
                           Short segment, Integer position) {
         super(AbstractLRBTuple.POSITION_REPORT, time, vid);
 

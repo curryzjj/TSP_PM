@@ -3,6 +3,7 @@ package streamprocess.components.operators.api;
 import System.constants.BaseConstants;
 import System.spout.helper.wrapper.StringStatesWrapper;
 import System.util.OsUtils;
+import UserApplications.InputDataGenerator.InputDataGenerator;
 import org.slf4j.Logger;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
@@ -32,7 +33,6 @@ public abstract class AbstractSpout extends Operator {
 
     protected AbstractSpout(Logger log) {
         super(log, true, -1, 1);
-        exe=NUM_EVENTS;
     }
 
     protected String getConfigKey(String template){ return String.format(template,configPrefix);}//append "application name"
@@ -170,7 +170,8 @@ public abstract class AbstractSpout extends Operator {
         LOG.info("spout prepare takes (ms):" + (end - start) / 1E6);
     }
     //end
-
+    //createInput for FileSpout
+    public void setInputDataGenerator(InputDataGenerator inputDataGenerator){}
 
     @Override
     public void callback(int callee, Marker marker) {

@@ -160,10 +160,9 @@ public class boltThread extends executorThread{
                 expected_throughput = actual_throughput;
             }
             LOG.info(this.executor.getOP_full()
-                            + "\tfinished execution and exist with throughput of:\t"
+                            + "\tfinished execution and exist with  throughput (k input_event/s) of:\t"
                             + actual_throughput + "(" + (actual_throughput / expected_throughput) + ")"
                             + " on node: " + node + " fetch miss rate:" + miss / (cnt + miss) * 100+" cnt="+cnt
-//					+ " ( " + Arrays.show(cpu) +")"
             );
             try {
                 Thread.sleep(1000);

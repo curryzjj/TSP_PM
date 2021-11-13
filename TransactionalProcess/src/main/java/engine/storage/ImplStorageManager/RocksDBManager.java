@@ -1,5 +1,8 @@
 package engine.storage.ImplStorageManager;
 
+import System.constants.BaseConstants;
+import System.util.Configuration;
+import System.util.OsUtils;
 import engine.Exception.DatabaseException;
 import engine.Meta.RegisteredKeyValueStateBackendMetaInfo;
 import engine.Meta.RegisteredStateMetaInfoBase;
@@ -23,6 +26,7 @@ import utils.CloseableRegistry.CloseableRegistry;
 import utils.TransactionalProcessConstants;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -30,10 +34,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static System.Constants.*;
 import static utils.TransactionalProcessConstants.SnapshotExecutionType.ASYNCHRONOUS;
 
 public class RocksDBManager extends AbstractStorageManager {
     private RocksDB rocksDB;
+    private String dbPath;
     private List<ColumnFamilyHandle> columnFamilyHandleList;
     public Map<String ,ColumnFamilyHandle> columnFamilyHandles;
     public Map<String,DataBoxTypes> types;
@@ -57,7 +63,9 @@ public class RocksDBManager extends AbstractStorageManager {
      */
     private final LinkedHashMap<String, RocksDBKvStateInfo> kvStateInformation;
     protected CloseableRegistry cancelStreamRegistry;
-    public RocksDBManager(RocksDBSnapshotStrategyBase<?> checkpointSnapshotStrategy, CloseableRegistry cancelStreamRegistry){
+    public RocksDBManager(RocksDBSnapshotStrategyBase<?> checkpointSnapshotStrategy,
+                          CloseableRegistry cancelStreamRegistry,
+                          Configuration config){
         RocksDB.loadLibrary();
         tables=new ConcurrentHashMap<>();
         columnFamilyHandleList=new ArrayList<>();
@@ -66,8 +74,26 @@ public class RocksDBManager extends AbstractStorageManager {
         numRecords=new HashMap<>();
         this.checkpointSnapshotStrategy=checkpointSnapshotStrategy;
         this.cancelStreamRegistry=cancelStreamRegistry;
+        String OS_prefix="";
+        String path="";
+        String RocksDB_path = "";
+        int recordNum=0;
+        double zipSkew=0;
+        if(OsUtils.isWindows()){
+            OS_prefix="win.";
+        }else{
+            OS_prefix="unix.";
+        }
+        if(OsUtils.isMac()){
+            RocksDB_path=Mac_RocksDB_Path;
+            path=config.getString(OS_prefix.concat("rocksdb.path"));
+        }else{
+            RocksDB_path=Mac_RocksDB_Path;
+            path=config.getString(OS_prefix.concat("rocksdb.path"));
+        }
+        dbPath = RocksDB_path.concat(path);
         try {
-            rocksDB=RocksDB.open(System.getProperty("user.home").concat("/hair-loss/app/RocksDB/"));
+            rocksDB=RocksDB.open(dbPath);
             columnFamilyHandleList.add(rocksDB.getDefaultColumnFamily());
         } catch (RocksDBException e) {
             e.printStackTrace();
@@ -186,7 +212,7 @@ public class RocksDBManager extends AbstractStorageManager {
     @Override
     public synchronized void close() throws IOException {
         try {
-            rocksDB.deleteFile(System.getProperty("user.home").concat("/hair-loss/app/RocksDB/"));
+            rocksDB.deleteFile(dbPath);
         } catch (RocksDBException e) {
             e.printStackTrace();
         }

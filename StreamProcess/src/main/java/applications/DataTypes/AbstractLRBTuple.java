@@ -68,7 +68,7 @@ public abstract class AbstractLRBTuple extends StreamValues {
     AbstractLRBTuple() {
     }
 
-    AbstractLRBTuple(Short type, Short time) {
+    AbstractLRBTuple(Short type, Long time) {
         assert (type != null);
         assert (time != null);
         assert (type == position_report || type == account_balance_request
