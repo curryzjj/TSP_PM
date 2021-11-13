@@ -88,7 +88,7 @@ public class RocksDBManager extends AbstractStorageManager {
             RocksDB_path=Mac_RocksDB_Path;
             path=config.getString(OS_prefix.concat("rocksdb.path"));
         }else{
-            RocksDB_path=Mac_RocksDB_Path;
+            RocksDB_path=Node22_RocksDB_Path;
             path=config.getString(OS_prefix.concat("rocksdb.path"));
         }
         dbPath = RocksDB_path.concat(path);
