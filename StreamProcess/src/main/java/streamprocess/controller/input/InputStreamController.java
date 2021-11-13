@@ -72,9 +72,6 @@ public abstract class InputStreamController implements Serializable {
             if (queue == null) {
                 continue;
             }
-//            for (int i = 0; i < batch; i++) {
-//                t[i] = fetchFromqueue((P1C1Queue) queue, stat, batch);
-
             return fetchFromqueue(queue, batch);
         }
         return null;

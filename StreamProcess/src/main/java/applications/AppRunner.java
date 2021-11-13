@@ -33,6 +33,7 @@ public class AppRunner extends baseRunner {
         //Get the running environment
         if(OsUtils.isMac()){
             LOG.info("Running on the mac");
+        }else {
         }
         // Loads the configuration file set by the user or the default
         // configuration
