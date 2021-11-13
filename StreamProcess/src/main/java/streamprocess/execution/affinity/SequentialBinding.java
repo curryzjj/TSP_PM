@@ -30,7 +30,18 @@ public class SequentialBinding {
             cpu++;
             return core;
         }else {
-            throw new UnsupportedOperationException("not supported machine");
+            if (socket == 1 && cpu == 20) {
+                throw new UnsupportedOperationException("out of cores!");
+            }
+            ArrayList[] mapping_node = Platform.getNodes(1);
+            ArrayList<Integer> list = mapping_node[socket];
+            Integer core = list.get(cpu);
+            cpu++;
+            if (cpu == 20) {
+                socket++;
+                cpu = 0;
+            }
+            return core;
         }
     }
 }
