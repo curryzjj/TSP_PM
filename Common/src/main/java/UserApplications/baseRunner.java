@@ -73,6 +73,7 @@ public abstract class baseRunner {
             metric_path = "../TSP_PM_Result/metric_output/";
         }else{
             CFG_PATH = Node22_Project_Path+"/Common/src/main/resources/config/%s.properties";
+            metric_path = System.getProperty("user.home").concat("/TSP_PM_Result/metric_output/");
         }
     }
     public static Properties loadProperties(String filename) throws IOException {
