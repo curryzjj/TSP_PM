@@ -64,7 +64,7 @@ public abstract class baseRunner {
 
 
     public  baseRunner() {
-        CFG_PATH = "../Common/src/main/resources/config/%s.properties";
+        CFG_PATH = "../TSP_PM/Common/src/main/resources/config/%s.properties";
         metric_path = "../TSP_PM_Result/metric_output/";
     }
     public static Properties loadProperties(String filename) throws IOException {
