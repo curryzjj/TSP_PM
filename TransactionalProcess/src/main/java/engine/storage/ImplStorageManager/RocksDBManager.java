@@ -1,6 +1,5 @@
 package engine.storage.ImplStorageManager;
 
-import System.constants.BaseConstants;
 import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Exception.DatabaseException;
@@ -213,6 +212,14 @@ public class RocksDBManager extends AbstractStorageManager {
     public synchronized void close() throws IOException {
         try {
             rocksDB.deleteFile(dbPath);
+            File fileToDelete=new File(dbPath);
+            File[] files=fileToDelete.listFiles();
+            if(files!=null){
+                for (File f:files){
+                    f.delete();
+                }
+            }
+            fileToDelete.delete();
         } catch (RocksDBException e) {
             e.printStackTrace();
         }

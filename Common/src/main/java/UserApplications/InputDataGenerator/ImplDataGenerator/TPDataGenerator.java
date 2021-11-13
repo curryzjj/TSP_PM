@@ -3,11 +3,14 @@ package UserApplications.InputDataGenerator.ImplDataGenerator;
 import System.tools.ZipfGenerator;
 import System.tools.randomNumberGenerator;
 import UserApplications.InputDataGenerator.InputDataGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.sql.Timestamp;
 
 public class TPDataGenerator extends InputDataGenerator {
+    private static final Logger LOG=LoggerFactory.getLogger(TPDataGenerator.class);
     private String dataPath;
     private int recordNum;
     private double zipSkew;
@@ -15,6 +18,10 @@ public class TPDataGenerator extends InputDataGenerator {
 
     public void generateData() throws IOException {
         File file=new File(dataPath);
+        if(file.exists()){
+            LOG.info("Input data is ready");
+            return;
+        }
         FileWriter Fw=new FileWriter(file,true);
         ZipfGenerator zipfGenerator=new ZipfGenerator(range, zipSkew);
         BufferedWriter bw= new BufferedWriter(Fw);
