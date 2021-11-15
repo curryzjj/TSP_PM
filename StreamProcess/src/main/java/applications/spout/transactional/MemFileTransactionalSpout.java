@@ -3,7 +3,7 @@ package applications.spout.transactional;
 import System.util.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamprocess.checkpoint.Status;
+import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.operators.api.TransactionalSpout;
 import streamprocess.execution.ExecutionGraph;
 

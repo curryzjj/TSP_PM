@@ -1,4 +1,4 @@
-package streamprocess.checkpoint;
+package streamprocess.faulttolerance.checkpoint;
 
 import System.util.OsUtils;
 import org.slf4j.Logger;

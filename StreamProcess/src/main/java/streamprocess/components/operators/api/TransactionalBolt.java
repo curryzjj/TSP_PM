@@ -6,11 +6,12 @@ import engine.transaction.TxnContext;
 import engine.transaction.TxnManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamprocess.checkpoint.Checkpointable;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
+import streamprocess.faulttolerance.Checkpointable;
 import utils.SOURCE_CONTROL;
+
 
 import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;

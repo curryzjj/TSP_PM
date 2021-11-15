@@ -8,7 +8,7 @@ import engine.transaction.function.AVG;
 import engine.transaction.function.CNT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamprocess.checkpoint.Status;
+import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
 
 import java.io.IOException;

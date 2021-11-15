@@ -7,10 +7,9 @@ import UserApplications.InputDataGenerator.InputDataGenerator;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamprocess.checkpoint.Status;
+import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.operators.api.TransactionalSpout;
 import streamprocess.execution.ExecutionGraph;
-import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -19,8 +18,6 @@ import java.util.Scanner;
 
 import static System.Constants.Mac_Data_Path;
 import static System.Constants.Node22_Data_Path;
-import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
-import static UserApplications.CONTROL.NUM_EVENTS;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
 public class FileTransactionalSpout extends TransactionalSpout {

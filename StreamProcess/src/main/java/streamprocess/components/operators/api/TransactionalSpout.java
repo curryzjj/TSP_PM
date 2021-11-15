@@ -4,7 +4,7 @@ import System.tools.FastZipfGenerator;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamprocess.checkpoint.Checkpointable;
+import streamprocess.faulttolerance.Checkpointable;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.util.ArrayList;
