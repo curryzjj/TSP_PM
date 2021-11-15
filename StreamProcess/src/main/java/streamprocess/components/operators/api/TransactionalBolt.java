@@ -49,7 +49,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
 //        sink.prepare(config, context, collector);
         SOURCE_CONTROL.getInstance().config(tthread);
     }
-    //checkpoint
+    //shapshot
     @Override
     public void forward_checkpoint_single(int sourceTask, String streamId, long bid, Marker marker) {
     }

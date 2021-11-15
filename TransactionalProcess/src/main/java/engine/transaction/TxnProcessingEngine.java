@@ -178,7 +178,7 @@ public class TxnProcessingEngine {
                         lav = (latestAvgSpeeds + operation.function.delta_double) / 2;
                     }
                     srcRecord.get(1).setDouble(lav);//write to state.
-                    operation.record_ref.setRecord(new SchemaRecord(new DoubleDataBox(lav)));//return updated record.
+                    operation.record_ref.setRecord(new SchemaRecord(new DoubleDataBox(0)));//return updated record.
                 }else{
                     HashSet cnt_segment = srcRecord.get(1).getHashSet();
                     cnt_segment.add(operation.function.delta_int);//update hashset; updated state also. TODO: be careful of this.

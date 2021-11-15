@@ -22,15 +22,8 @@ public class SchemaRecordRef {
                 throw new RejectedExecutionException();
             }
         } catch (RejectedExecutionException e) {
-            System.out.println(record.getId());
             System.out.println("The record has not being assigned yet!");
-//            e.printStackTrace();
         }
-
-//        while (record == null) {
-//            System.out.println("The record has not being assigned yet!" + cnt);
-//        }
-
         return record;
     }
 }

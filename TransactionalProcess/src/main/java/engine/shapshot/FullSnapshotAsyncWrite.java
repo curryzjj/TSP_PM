@@ -1,12 +1,12 @@
-package engine.checkpoint;
+package engine.shapshot;
 
 import System.FileSystem.DataIO.DataOutputView;
 import System.FileSystem.DataIO.DataOutputViewStreamWrapper;
 import System.util.IOUtil;
 import engine.Meta.StateMetaInfoSnapshotReadersWriters;
-import engine.checkpoint.CheckpointStream.CheckpointStreamFactory;
-import engine.checkpoint.CheckpointStream.CheckpointStreamWithResultProvider;
-import engine.checkpoint.ShapshotResources.FullSnapshotResources;
+import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
+import engine.shapshot.CheckpointStream.CheckpointStreamWithResultProvider;
+import engine.shapshot.ShapshotResources.FullSnapshotResources;
 import engine.table.datatype.serialize.Serialize;
 import engine.table.keyGroup.KeyGroupRangeOffsets;
 import utils.CloseableRegistry.CloseableRegistry;

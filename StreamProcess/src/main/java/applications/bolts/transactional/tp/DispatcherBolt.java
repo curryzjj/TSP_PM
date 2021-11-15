@@ -18,8 +18,10 @@ import static UserApplications.constants.TP_TxnConstants.Stream.POSITION_REPORTS
 
 public class DispatcherBolt extends filterBolt implements Checkpointable {
     private static final Logger LOG= LoggerFactory.getLogger(DispatcherBolt.class);
+    public int marker_num=0;
     public DispatcherBolt(){
         super(LOG,new HashMap<>());
+        /**used to ack the marker*/
         status=new Status();
         this.output_selectivity.put(POSITION_REPORTS_STREAM_ID,0.9885696197046802);//what this for???
     }
@@ -28,7 +30,7 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
         long bid=in.getBID();
         if(in.isMarker()){
             forward_checkpoint(in.getSourceTask(),bid,in.getMarker(),in.getMarker().getValue());
-            ack_checkpoint(in.getMarker());
+            this.collector.ack(in,in.getMarker());
         }else{
             String raw = null;
             try {

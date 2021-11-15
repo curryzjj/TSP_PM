@@ -5,11 +5,11 @@ import System.util.OsUtils;
 import engine.Exception.DatabaseException;
 import engine.Meta.RegisteredKeyValueStateBackendMetaInfo;
 import engine.Meta.RegisteredStateMetaInfoBase;
-import engine.checkpoint.CheckpointOptions;
-import engine.checkpoint.CheckpointStream.CheckpointStreamFactory;
-import engine.checkpoint.RocksDBSnapshotStrategyBase;
-import engine.checkpoint.SnapshotResult;
-import engine.checkpoint.SnapshotStrategyRunner;
+import engine.shapshot.CheckpointOptions;
+import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
+import engine.shapshot.RocksDBSnapshotStrategyBase;
+import engine.shapshot.SnapshotResult;
+import engine.shapshot.SnapshotStrategyRunner;
 import engine.storage.AbstractStorageManager;
 import engine.table.BaseTable;
 import engine.table.ImplTable.ShareTable;
@@ -47,7 +47,7 @@ public class RocksDBManager extends AbstractStorageManager {
     /** Shared wrapper for batch writes to the RocksDB instance. */
 //    private final RocksDBWriteBatchWrapper writeBatchWrapper;
     /**
-     * The checkpoint snapshot strategy, e.g., if we use full or incremental checkpoints, local
+     * The shapshot snapshot strategy, e.g., if we use full or incremental checkpoints, local
      * state, and so on.
      */
     private final RocksDBSnapshotStrategyBase<?> checkpointSnapshotStrategy;

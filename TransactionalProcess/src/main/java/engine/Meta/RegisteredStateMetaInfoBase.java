@@ -2,7 +2,7 @@ package engine.Meta;
 
 
 
-import engine.checkpoint.StateMetaInfoSnapshot;
+import engine.shapshot.StateMetaInfoSnapshot;
 import utils.TransactionalProcessConstants;
 
 import javax.annotation.Nonnull;

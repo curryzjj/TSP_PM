@@ -1,7 +1,7 @@
 package utils;
 /**
  * Utility methods and constants around creating and restoring full snapshots using {@link
- * engine.checkpoint.FullSnapshotAsyncWrite}.
+ * engine.shapshot.FullSnapshotAsyncWrite}.
  */
 public class FullSnapshotUtil {
     public static final int FIRST_BIT_IN_BYTE_MASK = 0x80;

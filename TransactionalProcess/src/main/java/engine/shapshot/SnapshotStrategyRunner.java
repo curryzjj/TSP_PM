@@ -1,7 +1,7 @@
-package engine.checkpoint;
+package engine.shapshot;
 
-import engine.checkpoint.CheckpointStream.CheckpointStreamFactory;
-import engine.checkpoint.ShapshotResources.SnapshotResources;
+import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
+import engine.shapshot.ShapshotResources.SnapshotResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.CloseableRegistry.CloseableRegistry;

@@ -38,11 +38,12 @@ public class MPSCController extends QueueController{
         outputQueue=new HashMap<>();
         for(int executor:downExecutor_list.keySet()){
             if(OsUtils.isWindows()||OsUtils.isMac()){
-                outputQueue.put(executor,new MpscArrayQueue(1024));//TODO:fixed the error
+                outputQueue.put(executor,new MpscArrayQueue(desired_elements_epoch_per_core));//TODO:fixed the error
             }else{
                 if(linked){
                     outputQueue.put(executor,new MpscLinkedQueue8<>());
                 }else{
+
                     outputQueue.put(executor,new MpscArrayQueue(desired_elements_epoch_per_core));
                 }
             }

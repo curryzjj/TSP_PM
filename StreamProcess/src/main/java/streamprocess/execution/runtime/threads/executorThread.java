@@ -92,7 +92,7 @@ public abstract class executorThread extends Thread {
         assign_InputQueue();
     }
     private void allocate_OutputQueue() {
-        executor.allocate_OutputQueue(conf.getBoolean("linked", false), (int) (conf.getInt("targetHz") * conf.getDouble("checkpoint")));
+        executor.allocate_OutputQueue(conf.getBoolean("linked", false), (int) (conf.getInt("targetHz") * conf.getDouble("shapshot")));
     }
     private void assign_InputQueue(){
         for (String streamId : executor.operator.getOutput_streamsIds()) {

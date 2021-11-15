@@ -73,12 +73,13 @@ public class AppRunner extends baseRunner {
             LOG.info("Program error, exist...");
             System.exit(-1);
         }
-        //TODO:implement the wait after the checkpoint
+        //TODO:implement the wait after the shapshot
         Thread.sleep((long) (3 * 1E3 * 1));
         submitter.getOM().join();
         submitter.getOM().getEM().exist();
         try {
             final_topology.db.close();
+            submitter.getOM().getEM().exit();
         } catch (IOException e) {
             e.printStackTrace();
         }

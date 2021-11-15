@@ -23,6 +23,7 @@ public abstract class TransactionalSpout extends AbstractSpout implements Checkp
     protected int element=0;
     protected ArrayList<String> array;
     protected int counter=0;
+    protected boolean startClock=false;
 
 
     boolean rt = false;

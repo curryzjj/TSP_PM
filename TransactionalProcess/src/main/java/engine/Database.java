@@ -1,7 +1,7 @@
 package engine;
 
 import engine.Exception.DatabaseException;
-import engine.checkpoint.CheckpointManager;
+import engine.shapshot.CheckpointManager;
 import engine.recovery.AbstractRecoveryManager;
 import engine.storage.AbstractStorageManager;
 import engine.storage.EventManager;

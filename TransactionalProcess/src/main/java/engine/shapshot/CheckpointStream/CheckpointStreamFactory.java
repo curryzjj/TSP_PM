@@ -1,4 +1,4 @@
-package engine.checkpoint.CheckpointStream;
+package engine.shapshot.CheckpointStream;
 
 import System.FileSystem.FSDataOutputStream;
 

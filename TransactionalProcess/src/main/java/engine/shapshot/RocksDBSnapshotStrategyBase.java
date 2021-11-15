@@ -1,6 +1,6 @@
-package engine.checkpoint;
+package engine.shapshot;
 
-import engine.checkpoint.ShapshotResources.SnapshotResources;
+import engine.shapshot.ShapshotResources.SnapshotResources;
 import engine.storage.ImplStorageManager.RocksDBManager;
 import engine.table.keyGroup.KeyGroupRange;
 import org.rocksdb.RocksDB;

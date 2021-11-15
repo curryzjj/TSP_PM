@@ -1,4 +1,4 @@
-package engine.checkpoint;
+package engine.shapshot;
 
 public interface CheckpointListener {
     void notifyCheckpointComplete(long checkpointId) throws Exception;

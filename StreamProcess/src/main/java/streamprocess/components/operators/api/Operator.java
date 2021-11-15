@@ -235,7 +235,6 @@ public abstract class Operator implements Serializable{
             if (status == null) {
                 LOG.info("The operator" + executor.getOP() + " is declared as checkpointable " +
                         "but no state is initialized");
-//				System.exit(-1);
             } else {
                     status.source_status_ini(executor);
                     status.dst_status_init(executor);

@@ -39,7 +39,7 @@ public class PKTransactionalSpout extends TransactionalSpout {
         keygenerator=new FastZipfGenerator(size,skew,0);
         ccOption=config.getInt("CCOption",0);
         tthread=config.getInt("tthread");
-        checkpoint_interval_sec = config.getDouble("checkpoint");
+        checkpoint_interval_sec = config.getDouble("shapshot");
         target_Hz = (int) config.getDouble("targetHz", 10000000);
         double ratio_of_multi_partition = config.getDouble("ratio_of_multi_partition", 1);
         bid=0;

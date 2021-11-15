@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import streamprocess.checkpoint.Status;
 import streamprocess.components.operators.api.TransactionalSpout;
 import streamprocess.execution.ExecutionGraph;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -18,6 +19,7 @@ import java.util.Scanner;
 
 import static System.Constants.Mac_Data_Path;
 import static System.Constants.Node22_Data_Path;
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.NUM_EVENTS;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
@@ -77,7 +79,6 @@ public class FileTransactionalSpout extends TransactionalSpout {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        clock.start();
     }
 
     @Override
@@ -91,21 +92,26 @@ public class FileTransactionalSpout extends TransactionalSpout {
     }
     @Override
     public void nextTuple() throws InterruptedException {
-        if(exe!=1){
-            forward_checkpoint(this.taskId, bid, null,"finish");
+        if(!startClock){
+            this.clock.start();
+            startClock=true;
+        }
+        if(readLine()!=null){
             collector.emit(readLine(),bid);
+            forward_checkpoint(this.taskId, bid, null,"marker");
             bid++;
-            exe--;
-        }else {
+        }else{
+            forward_checkpoint(this.taskId, bid, null,"marker");
             try {
                 clock.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            if (taskId == graph.getSpout().getExecutorID()) {
-                LOG.info("Thread:" + taskId + " is going to stop all threads sequentially");
-                context.stop_running();
-            }
+                if (taskId == graph.getSpout().getExecutorID()) {
+                    LOG.info("Thread:" + taskId + " is going to stop all threads sequentially");
+                    LOG.info("Spout sent marker"+myiteration);
+                    context.stop_running();
+                }
         }
     }
     /**

@@ -46,7 +46,7 @@ public class TP_txn extends TransactionalTopology {
             builder.setSpout(Component.SPOUT,spout,sinkThreads);
             builder.setBolt(Component.DISPATCHER,
                     new DispatcherBolt(),
-                    3,
+                    1,
                     new ShuffleGrouping(Component.SPOUT));
             builder.setBolt(Component.EXECUTOR,
                     new TPBolt_TStream(0),

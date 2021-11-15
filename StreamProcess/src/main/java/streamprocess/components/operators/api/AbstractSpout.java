@@ -17,7 +17,7 @@ import static UserApplications.CONTROL.NUM_EVENTS;
 
 public abstract class AbstractSpout extends Operator {
 
-    //the following are used for checkpoint(marker)
+    //the following are used for shapshot(marker)
     protected int myiteration=0;//
     protected boolean success=true;
     protected long boardcast_time;

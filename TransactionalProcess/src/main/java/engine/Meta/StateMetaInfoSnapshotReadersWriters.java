@@ -2,13 +2,12 @@ package engine.Meta;
 
 
 import System.FileSystem.DataIO.DataOutputView;
-import System.FileSystem.FSDataOutputStream;
-import engine.checkpoint.StateMetaInfoSnapshot;
+import engine.shapshot.StateMetaInfoSnapshot;
 
 import java.io.IOException;
 
 /**
- * Static factory that gives out writers and readers for different versions of {@link engine.checkpoint.StateMetaInfoSnapshot}
+ * Static factory that gives out writers and readers for different versions of {@link engine.shapshot.StateMetaInfoSnapshot}
  */
 public class StateMetaInfoSnapshotReadersWriters {
     private StateMetaInfoSnapshotReadersWriters(){};

@@ -1,4 +1,4 @@
-package engine.checkpoint.CheckpointStream;
+package engine.shapshot.CheckpointStream;
 
 import System.FileSystem.FSDataOutputStream;
 import System.FileSystem.FileSystem;
@@ -19,10 +19,10 @@ public class FsCheckpointStreamFactory implements CheckpointStreamFactory{
     /** State below this size will be stored as part of the metadata, rather than in files. */
     private final int fileStateThreshold;
 
-    /** The directory for checkpoint exclusive state data. */
+    /** The directory for shapshot exclusive state data. */
     private final Path checkpointDirectory;
 
-    /** The directory for shared checkpoint data. */
+    /** The directory for shared shapshot data. */
     private final Path sharedStateDirectory;
 
     /** Cached handle to the file system for file operations. */

@@ -27,11 +27,11 @@ public abstract class baseRunner {
     @Parameter(names = {"--config-str"}, required = false, description = "Path to the configuration file for the application")
     public String configStr;
     @Parameter(names = {"--THz", "-THz"}, description = "target input Hz")
-    public double THz =1000_000 ;
+    public double THz =2000 ;
     @Parameter(names = {"--timeslice"}, description = "time slice used in spout (ms)")
     public int timeSliceLengthMs = 100;//ms
-    @Parameter(names = {"--checkpoint"}, description = "checkpoint interval")
-    public double checkpoint = 0.001;// default checkpoint interval.
+    @Parameter(names = {"--shapshot"}, description = "shapshot interval")
+    public double checkpoint = 0.1;// default shapshot interval.
 
     @Parameter(names = {"--measure"}, description = "measure enable")
     public boolean measure = false;
@@ -87,7 +87,7 @@ public abstract class baseRunner {
     public void setConfiguration(HashMap<String,Object> config){
         config.put("targetHz", THz);
         config.put("timeSliceLengthMs", timeSliceLengthMs);
-        config.put("checkpoint", checkpoint);
+        config.put("shapshot", checkpoint);
         config.put("benchmark", benchmark);
         config.put("profile", profile);
         config.put("NAV", NAV);

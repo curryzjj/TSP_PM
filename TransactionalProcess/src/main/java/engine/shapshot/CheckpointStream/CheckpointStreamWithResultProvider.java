@@ -1,4 +1,4 @@
-package engine.checkpoint.CheckpointStream;
+package engine.shapshot.CheckpointStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

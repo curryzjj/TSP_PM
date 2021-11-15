@@ -1,6 +1,6 @@
 package engine.Meta;
 
-import engine.checkpoint.StateMetaInfoSnapshot;
+import engine.shapshot.StateMetaInfoSnapshot;
 import engine.table.RecordSchema;
 import org.jetbrains.annotations.NotNull;
 import utils.TransactionalProcessConstants;

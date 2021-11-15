@@ -12,7 +12,7 @@ public class Clock implements Closeable {
     private static final Logger LOG= LoggerFactory.getLogger(Clock.class);
     long create_time;
     long gap;
-    private int iteration=-10;
+    private int iteration=-1;
     private Timer timer;
 
     public Clock(double checkpoint_interval){
@@ -35,6 +35,5 @@ public class Clock implements Closeable {
     @Override
     public void close() throws IOException {
         timer.cancel();
-        timer=null;
     }
 }

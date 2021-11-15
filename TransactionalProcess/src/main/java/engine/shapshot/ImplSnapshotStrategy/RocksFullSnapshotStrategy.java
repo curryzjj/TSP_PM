@@ -1,13 +1,13 @@
-package engine.checkpoint.ImplSnapshotStrategy;
+package engine.shapshot.ImplSnapshotStrategy;
 
-import engine.checkpoint.CheckpointOptions;
-import engine.checkpoint.CheckpointStream.CheckpointStreamFactory;
-import engine.checkpoint.CheckpointStream.CheckpointStreamWithResultProvider;
-import engine.checkpoint.FullSnapshotAsyncWrite;
-import engine.checkpoint.RocksDBSnapshotStrategyBase;
-import engine.checkpoint.ShapshotResources.FullSnapshotResources;
-import engine.checkpoint.ShapshotResources.ImplShapshotResources.RocksDBFullSnapshotResources;
-import engine.checkpoint.SnapshotResult;
+import engine.shapshot.CheckpointOptions;
+import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
+import engine.shapshot.CheckpointStream.CheckpointStreamWithResultProvider;
+import engine.shapshot.FullSnapshotAsyncWrite;
+import engine.shapshot.RocksDBSnapshotStrategyBase;
+import engine.shapshot.ShapshotResources.FullSnapshotResources;
+import engine.shapshot.ShapshotResources.ImplShapshotResources.RocksDBFullSnapshotResources;
+import engine.shapshot.SnapshotResult;
 import engine.storage.ImplStorageManager.RocksDBManager;
 import engine.table.keyGroup.KeyGroupRange;
 import org.jetbrains.annotations.NotNull;

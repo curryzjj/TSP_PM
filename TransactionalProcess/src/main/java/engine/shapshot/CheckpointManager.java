@@ -1,4 +1,4 @@
-package engine.checkpoint;
+package engine.shapshot;
 
 public class CheckpointManager {
 }

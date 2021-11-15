@@ -45,7 +45,6 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         if(in.isMarker()){
             TXN_PROCESS();
             final Marker marker = in.getMarker();
-//            System.out.println(in.getMarker().getValue());
             this.collector.ack(in,marker);
         }else{
             execute_ts_normal(in);

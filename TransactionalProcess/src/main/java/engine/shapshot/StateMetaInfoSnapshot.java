@@ -1,11 +1,9 @@
-package engine.checkpoint;
+package engine.shapshot;
 
 import engine.table.RecordSchema;
 import utils.TransactionalProcessConstants;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.Map;
 
 public class StateMetaInfoSnapshot {
     /** The name of the state. */

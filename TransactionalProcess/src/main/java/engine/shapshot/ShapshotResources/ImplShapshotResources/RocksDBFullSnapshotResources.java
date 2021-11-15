@@ -1,8 +1,8 @@
-package engine.checkpoint.ShapshotResources.ImplShapshotResources;
+package engine.shapshot.ShapshotResources.ImplShapshotResources;
 
 import System.util.IOUtil;
-import engine.checkpoint.ShapshotResources.FullSnapshotResources;
-import engine.checkpoint.StateMetaInfoSnapshot;
+import engine.shapshot.ShapshotResources.FullSnapshotResources;
+import engine.shapshot.StateMetaInfoSnapshot;
 import engine.storage.ImplStorageManager.RocksDBManager;
 import engine.table.keyGroup.KeyGroupRange;
 import org.rocksdb.*;

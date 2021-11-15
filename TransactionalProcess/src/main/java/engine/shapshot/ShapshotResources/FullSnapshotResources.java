@@ -1,6 +1,6 @@
-package engine.checkpoint.ShapshotResources;
+package engine.shapshot.ShapshotResources;
 
-import engine.checkpoint.StateMetaInfoSnapshot;
+import engine.shapshot.StateMetaInfoSnapshot;
 import engine.table.keyGroup.KeyGroupRange;
 import utils.StateIterator.KeyValueStateIterator;
 
