@@ -19,8 +19,8 @@ public class SchemaRecord implements Serializable {
     private RowID id;
     private volatile List<DataBox> values;
     private final DataBox single_value;//only used by TSTREAM.
-    public SchemaRecord(DataBox values) {
-        this.single_value = values;
+    public SchemaRecord(DataBox value) {
+        this.single_value = value;
     }
     public SchemaRecord(List<DataBox> values) {
         this.values = values;

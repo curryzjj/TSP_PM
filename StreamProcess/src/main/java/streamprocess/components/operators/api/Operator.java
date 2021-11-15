@@ -13,7 +13,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamprocess.faulttolerance.Checkpointable;
+import streamprocess.faulttolerance.checkpoint.Checkpointable;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionGraph;

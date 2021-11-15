@@ -4,7 +4,7 @@ import applications.DataTypes.PositionReport;
 import engine.Exception.DatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamprocess.faulttolerance.Checkpointable;
+import streamprocess.faulttolerance.checkpoint.Checkpointable;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.operators.base.filterBolt;
 import streamprocess.execution.runtime.tuple.OutputFieldsDeclarer;

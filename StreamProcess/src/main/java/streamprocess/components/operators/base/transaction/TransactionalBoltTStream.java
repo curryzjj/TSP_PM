@@ -43,6 +43,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException {
         if(in.isMarker()){
+            System.out.println(in.getMarker().msgId);
             TXN_PROCESS();
             final Marker marker = in.getMarker();
             this.collector.ack(in,marker);

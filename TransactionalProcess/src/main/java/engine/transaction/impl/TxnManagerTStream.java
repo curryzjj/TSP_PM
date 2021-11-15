@@ -50,7 +50,10 @@ public class TxnManagerTStream extends TxnManagerDedicated {
 
     @Override
     public void start_evaluate(int thread_id, long mark_ID) throws InterruptedException, BrokenBarrierException, IOException, DatabaseException {
+        /** Pay attention to concurrency control */
         instance.start_evaluation(thread_id,mark_ID);
-        //storageManager.commitAllTables();
+        if(thread_id==0){
+            storageManager.commitAllTables();
+        }
     }
 }

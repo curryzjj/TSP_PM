@@ -171,19 +171,21 @@ public class TxnProcessingEngine {
                 List<DataBox> srcRecord=operation.s_record.record_.getValues();
                 if(operation.function instanceof AVG){
                     double latestAvgSpeeds = srcRecord.get(1).getDouble();
-                    double lav=0;
+                    double lav;
                     if (latestAvgSpeeds == 0) {//not initialized
                         lav = operation.function.delta_double;
                     } else{
                         lav = (latestAvgSpeeds + operation.function.delta_double) / 2;
                     }
                     srcRecord.get(1).setDouble(lav);//write to state.
-                    operation.record_ref.setRecord(new SchemaRecord(new DoubleDataBox(0)));//return updated record.
+                    operation.record_ref.setRecord(new SchemaRecord(new DoubleDataBox(lav)));//return updated record.
                 }else{
                     HashSet cnt_segment = srcRecord.get(1).getHashSet();
                     cnt_segment.add(operation.function.delta_int);//update hashset; updated state also. TODO: be careful of this.
                     operation.record_ref.setRecord(new SchemaRecord(new IntDataBox(cnt_segment.size())));//return updated record.
                 }
+            break;
+            default:throw new UnsupportedOperationException();
         }
     }
 
@@ -221,6 +223,7 @@ public class TxnProcessingEngine {
         //implement the SOURCE_CONTROL sync for all threads to come to this line to ensure chains are constructed for the current batch.
         SOURCE_CONTROL.getInstance().Wait_Start(thread_id);
         int size=evaluation(thread_id,mark_ID);
+        System.out.println(thread_id+" finished");
         //implement the SOURCE_CONTROL sync for all threads to come to this line.
         SOURCE_CONTROL.getInstance().Wait_End(thread_id);
     }

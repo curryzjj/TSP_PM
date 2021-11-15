@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
-import streamprocess.faulttolerance.Checkpointable;
+import streamprocess.faulttolerance.checkpoint.Checkpointable;
 import utils.SOURCE_CONTROL;
 
 

@@ -1,4 +1,4 @@
-package streamprocess.faulttolerance;
+package streamprocess.faulttolerance.checkpoint;
 
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 

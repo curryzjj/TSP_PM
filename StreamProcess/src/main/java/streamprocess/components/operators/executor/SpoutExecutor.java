@@ -1,7 +1,7 @@
 package streamprocess.components.operators.executor;
 
 import engine.Clock;
-import streamprocess.faulttolerance.Checkpointable;
+import streamprocess.faulttolerance.checkpoint.Checkpointable;
 import streamprocess.components.operators.api.Operator;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.tuple.msgs.Marker;

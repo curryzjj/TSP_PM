@@ -31,7 +31,7 @@ public abstract class baseRunner {
     @Parameter(names = {"--timeslice"}, description = "time slice used in spout (ms)")
     public int timeSliceLengthMs = 100;//ms
     @Parameter(names = {"--shapshot"}, description = "shapshot interval")
-    public double checkpoint = 0.1;// default shapshot interval.
+    public double checkpoint = 0.2;// default shapshot interval.
 
     @Parameter(names = {"--measure"}, description = "measure enable")
     public boolean measure = false;

@@ -44,6 +44,7 @@ public class RocksDBManager extends AbstractStorageManager {
     public Map<String,DataBoxTypes> types;
     public Map<String, AtomicInteger> numRecords;
     private KeyGroupRange keyGroupRange;
+    private int tableClock=0;
     /** Shared wrapper for batch writes to the RocksDB instance. */
 //    private final RocksDBWriteBatchWrapper writeBatchWrapper;
     /**

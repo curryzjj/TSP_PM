@@ -11,9 +11,7 @@ import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.operators.api.TransactionalSpout;
 import streamprocess.execution.ExecutionGraph;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.Scanner;
 
 import static System.Constants.Mac_Data_Path;

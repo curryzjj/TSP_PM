@@ -180,7 +180,6 @@ public abstract class PartitionController implements IPartitionController {
             }
             int timestamp_counter = SPIN_TRIES;
             applyWaitMethod(timestamp_counter);
-
         } while (!Thread.interrupted());
         return true;
     }
