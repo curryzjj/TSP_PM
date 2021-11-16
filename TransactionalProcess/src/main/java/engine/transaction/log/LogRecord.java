@@ -1,4 +1,4 @@
-package streamprocess.faulttolerance.logger;
+package engine.transaction.log;
 
 import java.io.Serializable;
 
@@ -7,7 +7,8 @@ public class LogRecord implements Serializable {
     private String operationType;
     private String key;
     private String tableName;
-    public LogRecord(long timestamp,String operationType,String key,String tableName){
-
+    public LogRecord(String key,String tableName){
+        this.key=key;
+        this.tableName=tableName;
     }
 }

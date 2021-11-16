@@ -14,6 +14,10 @@ import utils.SOURCE_CONTROL;
 
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 
 import static UserApplications.CONTROL.combo_bid_size;
@@ -28,6 +32,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
     protected int POST_COMPUTE_COMPLEXITY;
     private int i=0;
     private int NUM_ITEMS;
+    public List<Tuple> bufferedTuple=new ArrayList<>();
 
 //    public State state = null;
 //    public OrderLock lock;//used for lock_ratio-based ordering constraint.
@@ -79,6 +84,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
     public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException;
     protected void TXN_PROCESS(long _bid) throws DatabaseException, InterruptedException{};
     protected void PRE_EXECUTE(Tuple in){
+        bufferedTuple.add(in);
         _bid = in.getBID();
         input_event = in.getValue(0);
         TxnContext temp=new TxnContext(thread_Id, this.fid, _bid);
@@ -98,12 +104,12 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
     protected void POST_PROCESS(long bid, long timestamp, int i) throws InterruptedException {
     }
     //used in the T-Stream_CC
-    protected void PRE_TXN_PROCESS(long bid, long timestamp) throws DatabaseException, InterruptedException {
+    protected void PRE_TXN_PROCESS(Tuple input_event) throws DatabaseException, InterruptedException {
     }
     protected void execute_ts_normal(Tuple in) throws DatabaseException, InterruptedException {
         //pre stream processing phase..
         PRE_EXECUTE(in);
-        PRE_TXN_PROCESS(_bid, timestamp);
+        PRE_TXN_PROCESS(in);
     }
     //used in the S-Store_CC
     //used in the No_CC

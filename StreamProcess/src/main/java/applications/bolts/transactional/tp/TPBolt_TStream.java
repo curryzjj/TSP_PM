@@ -8,11 +8,13 @@ import engine.transaction.function.AVG;
 import engine.transaction.function.CNT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.Iterator;
 import java.util.concurrent.BrokenBarrierException;
 
 import static UserApplications.CONTROL.combo_bid_size;
@@ -26,13 +28,11 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
         status=new Status();
     }
     @Override
-    protected void PRE_TXN_PROCESS(long bid, long timestamp) throws DatabaseException, InterruptedException {
-        for (long i = _bid; i < _bid + combo_bid_size; i++) {
-            TxnContext txnContext = new TxnContext(thread_Id, this.fid, i);
-            LREvent event = new LREvent((PositionReport) input_event,tthread,bid);
+    protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
+            TxnContext txnContext = new TxnContext(thread_Id, this.fid, in.getBID());
+            LREvent event = new LREvent((PositionReport) in.getValue(0),tthread,in.getBID());
             (event).setTimestamp(timestamp);
             REQUEST_CONSTRUCT(event, txnContext);
-        }
     }
     protected void REQUEST_CONSTRUCT(LREvent event, TxnContext txnContext) throws DatabaseException {
         //some process used the transactionManager
@@ -55,7 +55,21 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
         REQUEST_REQUEST_CORE();
         REQUEST_POST();
         LREvents.clear();//clear stored events.
+        BUFFER_PROCESS();
+        bufferedTuple.clear();
     }
+
+    private void BUFFER_PROCESS() throws DatabaseException, InterruptedException {
+        if(bufferedTuple.isEmpty()){
+            return;
+        }else{
+            Iterator<Tuple> bufferedTuples=bufferedTuple.iterator();
+            while (bufferedTuples.hasNext()){
+                PRE_TXN_PROCESS(bufferedTuples.next());
+            }
+        }
+    }
+
     protected void REQUEST_REQUEST_CORE() {
         for (LREvent event : LREvents) {
             TS_REQUEST_CORE(event);
@@ -63,7 +77,6 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
     }
     private void TS_REQUEST_CORE(LREvent event) {
         //get the value from the event
-        //System.out.println(event.getPOSReport().getSegment());
         event.count=event.count_value.getRecord().getValue().getInt();
         event.lav=event.speed_value.getRecord().getValue().getDouble();
     }

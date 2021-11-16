@@ -9,6 +9,7 @@ public class  JumboTuple implements Comparable<JumboTuple> {//batch tuple
     private final TopologyContext context;
     public int length;
     private long bid;
+    private String streamId;
     /**
      * used in normal Tuple.
      *
@@ -59,7 +60,7 @@ public class  JumboTuple implements Comparable<JumboTuple> {//batch tuple
     }
     //get tuple and field
     public Tuple getTuple(int i) {
-        return new Tuple(bid, sourceId, context, msg[i]);
+        return new Tuple(bid, sourceId, context, msg[i],streamId);
     }
     private int fieldIndex(String field, int index_msg) {
         return context.getComponentOutputFields(getSourceComponent(), getSourceStreamId(index_msg)).fieldIndex(field);

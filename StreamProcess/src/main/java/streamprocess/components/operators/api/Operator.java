@@ -64,7 +64,7 @@ public abstract class Operator implements Serializable{
     public String configPrefix = BaseConstants.BASE_PREFIX;
     protected OutputCollector collector;
     protected Configuration config;
-    protected ExecutionNode executor;//who owns this Spout
+    protected ExecutionNode executor;//who owns this operator
     Logger LOG;
     int partition_count_;
     int partition_id_;

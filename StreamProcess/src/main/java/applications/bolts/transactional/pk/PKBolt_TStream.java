@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
 import streamprocess.execution.ExecutionGraph;
+import streamprocess.execution.runtime.tuple.Tuple;
 
 import java.util.ArrayDeque;
 import java.util.Random;
@@ -37,14 +38,15 @@ public class PKBolt_TStream extends TransactionalBoltTStream {
     }
 
     @Override
-    protected void TXN_PROCESS(long _bid) throws DatabaseException, InterruptedException {
+    protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
 
     }
 
     @Override
-    protected void PRE_TXN_PROCESS(long bid, long timestamp) throws DatabaseException, InterruptedException {
+    protected void TXN_PROCESS(long _bid) throws DatabaseException, InterruptedException {
 
     }
+
 
     @Override
     protected void TXN_PROCESS() throws DatabaseException, InterruptedException {

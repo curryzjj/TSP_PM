@@ -48,6 +48,25 @@ public class Status<E extends Serializable> implements Serializable {
             }
         }
     }
+    public synchronized boolean allMarkerArrived(int callee,ExecutionNode executor){
+        source_ready.put(callee,true);
+        if(all_src_arrived()){
+            source_status_ini(executor);
+            return true;
+        }else {
+            return false;
+        }
+    }
+    public synchronized boolean isMarkerArrived(int callee){
+        return source_ready.get(callee);
+    }
+    /**
+     * have received all marker from source
+     * @return
+     */
+    boolean all_src_arrived() {
+        return !(source_ready.containsValue(false));
+    }
     /**
      * have received all ack from consumers.
      *

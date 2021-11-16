@@ -5,28 +5,31 @@ import net.openhft.affinity.AffinitySupport;
 import java.util.HashMap;
 
 public class Test {
-    static class A{
-        public int a;
-        public A(){
-            this.a=0;
-        }
-        public A(String a){
-            System.out.println("A");
-        }
-        public void setA(int a) {
-            this.a = a;
-        }
-    }
-    static class B extends A{
-        public B(){
-            //super("a");
-        }
-    }
+
     public static void main(String[] args) {
-        HashMap<String, String> hash_index_ =new HashMap<>();
-        hash_index_.put("1","2");
-        if(hash_index_.get("2")==null){
-            System.out.println("e");
-        }
+        B b=new B();
+        System.out.println(b.a);
+    }
+}
+
+class C{
+    public int a;
+    public C(){
+        System.out.println("A");
+        this.a=0;
+    }
+    public C(String a){
+        this.a=4;
+        System.out.println("A1");
+    }
+    public void setA(int a) {
+        this.a = a;
+    }
+}
+ class B extends C{
+    public int a;
+    public B(){
+        super("a");
+        //this.a=4;
     }
 }

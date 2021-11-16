@@ -15,11 +15,13 @@ public class Tuple {
     private long bid;
     private Message message;
     private long[] partition_bid;
-    public Tuple(long bid,int sourceId,TopologyContext context,Message message){
+    private String streamId;
+    public Tuple(long bid,int sourceId,TopologyContext context,Message message,String streamId){
         this.bid=bid;
         this.context=context;
         this.message=message;
         this.sourceId=sourceId;
+        this.streamId=streamId;
     }
     public Tuple(long bid, long[] p_bid, int sourceId, TopologyContext context, Message message) {
         this.bid = bid;
@@ -35,6 +37,11 @@ public class Tuple {
     public long getBID() {
         return bid;
     }
+
+    public String getStreamId() {
+        return streamId;
+    }
+
     public long[] getPartitionBID() {
         return partition_bid;
     }

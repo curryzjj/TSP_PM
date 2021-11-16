@@ -29,7 +29,7 @@ public abstract class BoltExecutor implements IExecutor {
     public void loadDB(Configuration conf,TopologyContext context,OutputCollector collector){
         op.loadDB(conf,context,collector);
     }
-    public  void setExecutionNode(ExecutionNode e){ op.setExecutionNode(e); }
+    public void setExecutionNode(ExecutionNode e){ op.setExecutionNode(e); }
     //public void setclock(Clock clock){}
 
     @Override

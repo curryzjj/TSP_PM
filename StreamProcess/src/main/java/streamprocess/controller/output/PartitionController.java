@@ -139,7 +139,7 @@ public abstract class PartitionController implements IPartitionController {
         return new StringLongMsg(streamId, key, value);
     }
     protected Tuple create_marker(int srcId, String streamId, long timestamp, long bid, Marker marker) {
-        return (new Tuple((int) bid, srcId, context[srcId - firt_executor_Id], marker));
+        return (new Tuple((int) bid, srcId, context[srcId - firt_executor_Id], marker,streamId));
     }
     //help method
     public void updateExtendedTargetId() {
@@ -337,20 +337,20 @@ public abstract class PartitionController implements IPartitionController {
     }
     //force_offer method
     protected boolean force_offer(int srcId,int targetId,String streamId,long bid,Object... output){
-        return _offer(new Tuple(bid,srcId,context[srcId-firt_executor_Id],package_message(streamId,output)),targetId);
+        return _offer(new Tuple(bid,srcId,context[srcId-firt_executor_Id],package_message(streamId,output),streamId),targetId);
     }
     protected boolean force_offer(int srcId, int targetId, String streamId, long msg_id, long[] bid, Object... output) {
         return _offer(new Tuple(msg_id, bid, srcId, context[srcId - firt_executor_Id], package_message(streamId, output)), targetId);
     }
     protected boolean force_offer(int srcId, int targetId, String streamId, long bid, char[] output) {
-        return _offer(new Tuple(bid, srcId, context[srcId - firt_executor_Id], package_message(streamId, output)), targetId);
+        return _offer(new Tuple(bid, srcId, context[srcId - firt_executor_Id], package_message(streamId, output),streamId), targetId);
     }
     protected boolean force_offer(int srcId, int targetId, String streamId, long bid, StreamValues output) {
-        return _offer(new Tuple(bid, srcId, context[srcId - firt_executor_Id], package_message(streamId, output)), targetId);
+        return _offer(new Tuple(bid, srcId, context[srcId - firt_executor_Id], package_message(streamId, output),streamId), targetId);
     }
     //offer_marker method
     protected boolean offer_marker(int srcId, int targetId, String streamId, long bid, Marker marker) {
-        Tuple marker_tuple = (new Tuple(bid, srcId, context[srcId - firt_executor_Id], marker));
+        Tuple marker_tuple = (new Tuple(bid, srcId, context[srcId - firt_executor_Id], marker,streamId));
         return _offer_marker(marker_tuple, targetId);
     }
     protected boolean offer_create_marker(Tuple marker_tuple, int targetId) {

@@ -9,6 +9,7 @@ import engine.table.tableRecords.SchemaRecord;
 import engine.transaction.common.MyList;
 import engine.transaction.common.Operation;
 import engine.transaction.function.AVG;
+import engine.transaction.log.LogRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.SOURCE_CONTROL;
@@ -53,7 +54,7 @@ public class TxnProcessingEngine {
     //Operation_chain
     private ConcurrentHashMap<String, Holder_in_range> holder_by_stage;//multi table support. <table_name, Holder_in_range>
 
-    public class Holder{
+    public class Holder {
         public ConcurrentHashMap<String, MyList<Operation>> holder_v1=new ConcurrentHashMap<>();//multi operation support. <key, list of operations>
     }
     public class Holder_in_range{
@@ -159,10 +160,10 @@ public class TxnProcessingEngine {
         while (true){
             Operation operation=operation_chain.pollFirst();
             if(operation==null) return;
-            process(operation,mark_ID,false);
+            process(operation,mark_ID,true,operation_chain.Log);
         }
     }
-    private void process(Operation operation, long mark_id, boolean clean) {
+    private void process(Operation operation, long mark_id, boolean logged, List<LogRecord> log) {
         //TODO:after implement the TStreamContent
         switch (operation.accessType){
             case READ_WRITE_READ:
@@ -187,6 +188,10 @@ public class TxnProcessingEngine {
             break;
             default:throw new UnsupportedOperationException();
         }
+        if(logged){
+            LogRecord logRecord=new LogRecord(operation.s_record.record_.GetPrimaryKey(),operation.table_name);
+            log.add(logRecord);
+        }
     }
 
     private int submit_task(int thread_Id,Holder holder,Collection<Callable<Object>> callables,long mark_ID) {
@@ -198,8 +203,7 @@ public class TxnProcessingEngine {
                 if (!flag) {
                     if (enable_engine) {
                         Task task = new Task(operation_chain);
-                        if (enable_debug)
-                            LOG.trace("Submit operation_chain:" + OsUtils.Addresser.addressOf(operation_chain) + " with size:" + operation_chain.size());
+                       // LOG.info("Submit operation_chain:" + OsUtils.Addresser.addressOf(operation_chain) + " with size:" + operation_chain.size());
                         callables.add(task);
                     }
                 }
@@ -223,11 +227,10 @@ public class TxnProcessingEngine {
         //implement the SOURCE_CONTROL sync for all threads to come to this line to ensure chains are constructed for the current batch.
         SOURCE_CONTROL.getInstance().Wait_Start(thread_id);
         int size=evaluation(thread_id,mark_ID);
-        System.out.println(thread_id+" finished");
         //implement the SOURCE_CONTROL sync for all threads to come to this line.
         SOURCE_CONTROL.getInstance().Wait_End(thread_id);
     }
-    private int evaluation(int thread_Id,long mark_ID) throws InterruptedException{
+    public int evaluation(int thread_Id, long mark_ID) throws InterruptedException{
         Collection<Callable<Object>> callables=new Vector<>();
         int task=0;
         for (Holder_in_range holder_in_range:holder_by_stage.values()){
@@ -241,5 +244,13 @@ public class TxnProcessingEngine {
                 standalone_engine.executor.invokeAll(callables);
         }
         return task;
+    }
+    public void commitLog(int thread_id){
+        for (Holder_in_range holder_in_range:holder_by_stage.values()){
+            Holder holder = holder_in_range.rangeMap.get(thread_id);
+            for (MyList<Operation> operation_chain : holder.holder_v1.values()) {
+                List<LogRecord> logRecords=operation_chain.getLog();
+            }
+        }
     }
 }

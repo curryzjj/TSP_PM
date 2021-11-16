@@ -3,8 +3,6 @@ package engine.transaction.impl;
 import engine.Exception.DatabaseException;
 import engine.Meta.MetaTypes;
 import engine.storage.AbstractStorageManager;
-import engine.storage.ImplStorageManager.RocksDBManager;
-import engine.storage.ImplStorageManager.StorageManager;
 import engine.table.tableRecords.SchemaRecordRef;
 import engine.table.tableRecords.TableRecord;
 import engine.transaction.TxnContext;
@@ -52,8 +50,8 @@ public class TxnManagerTStream extends TxnManagerDedicated {
     public void start_evaluate(int thread_id, long mark_ID) throws InterruptedException, BrokenBarrierException, IOException, DatabaseException {
         /** Pay attention to concurrency control */
         instance.start_evaluation(thread_id,mark_ID);
-        if(thread_id==0){
-            storageManager.commitAllTables();
-        }
+//        if(thread_id==0){
+//            storageManager.commitAllTables();
+//        }
     }
 }
