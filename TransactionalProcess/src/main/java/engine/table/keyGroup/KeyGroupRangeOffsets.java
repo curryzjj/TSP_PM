@@ -79,7 +79,7 @@ public class KeyGroupRangeOffsets implements Iterable<Tuple2<Integer,Long>>{
      * @param offset Offset for the key-group.
      */
     public void setKeyGroupOffset(int keyGroup, long offset) {
-        offsets[computeKeyGroupIndex(keyGroup)] = offset;
+        offsets[keyGroup] = offset;
     }
 
     /**

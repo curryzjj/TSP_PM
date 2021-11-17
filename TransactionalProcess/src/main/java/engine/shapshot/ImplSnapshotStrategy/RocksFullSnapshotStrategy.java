@@ -26,13 +26,12 @@ import java.util.LinkedHashMap;
 public class RocksFullSnapshotStrategy extends RocksDBSnapshotStrategyBase<FullSnapshotResources> {
     private static final Logger LOG= LoggerFactory.getLogger(RocksFullSnapshotStrategy.class);
     private static final String DESCRIPTION="Asynchronous full RocksDB snapshot";
-    protected RocksFullSnapshotStrategy(@NotNull String description,
-                                        @NotNull RocksDB db,
-                                        @NotNull ResourceGuard rocksDBResourceGuard,
-                                        @Nonnull LinkedHashMap<String, RocksDBManager.RocksDBKvStateInfo> kvStateInfomation,
-                                        @NotNull LocalRecoveryConfig localRecoveryConfig,
-                                        @Nonnull KeyGroupRange keyGroupRange) {
-        super(description, db, rocksDBResourceGuard,kvStateInfomation, localRecoveryConfig, keyGroupRange);
+    public RocksFullSnapshotStrategy(
+                                     @NotNull RocksDB db,
+                                     @NotNull ResourceGuard rocksDBResourceGuard,
+                                     @Nonnull LinkedHashMap<String, RocksDBManager.RocksDBKvStateInfo> kvStateInfomation,
+                                     @Nonnull KeyGroupRange keyGroupRange) {
+        super(DESCRIPTION, db, rocksDBResourceGuard,kvStateInfomation, keyGroupRange);
     }
 
     @Override

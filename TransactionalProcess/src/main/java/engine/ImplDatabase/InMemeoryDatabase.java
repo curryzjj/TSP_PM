@@ -39,4 +39,9 @@ public class InMemeoryDatabase extends Database {
     public void createKeyGroupRange() {
         this.storageManager.createKeyGroupRange();
     }
+
+    @Override
+    public void snapshot(final long checkpointId,final long timestamp) {
+
+    }
 }

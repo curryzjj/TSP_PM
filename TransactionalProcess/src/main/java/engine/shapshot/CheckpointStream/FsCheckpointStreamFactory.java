@@ -22,21 +22,14 @@ public class FsCheckpointStreamFactory implements CheckpointStreamFactory{
     /** The directory for shapshot exclusive state data. */
     private final Path checkpointDirectory;
 
-    /** The directory for shared shapshot data. */
-    private final Path sharedStateDirectory;
-
     /** Cached handle to the file system for file operations. */
     private final FileSystem filesystem;
 
-    /** Whether the file system dynamically injects entropy into the file paths. */
-    private final boolean entropyInjecting;
 
     public FsCheckpointStreamFactory(int writeBufferSize,
                                      int fileStateSizeThreshold,
                                      Path checkpointDirectory,
-                                     Path sharedStateDirectory,
-                                     FileSystem filesystem,
-                                     boolean entropyInjecting) {
+                                     FileSystem filesystem) {
         if (fileStateSizeThreshold < 0) {
             throw new IllegalArgumentException(
                     "The threshold for file state size must be zero or larger.");
@@ -54,9 +47,7 @@ public class FsCheckpointStreamFactory implements CheckpointStreamFactory{
         this.writeBufferSize = writeBufferSize;
         this.fileStateThreshold = fileStateSizeThreshold;
         this.checkpointDirectory = checkpointDirectory;
-        this.sharedStateDirectory = sharedStateDirectory;
         this.filesystem = filesystem;
-        this.entropyInjecting = entropyInjecting;
     }
     @Override
     public String toString() {
@@ -66,9 +57,8 @@ public class FsCheckpointStreamFactory implements CheckpointStreamFactory{
     public CheckpointStateOutputStream createCheckpointStateOutputStream() throws IOException {
         Path target=checkpointDirectory;
         int bufferSize=Math.max(writeBufferSize,fileStateThreshold);
-        final boolean absolutePath=true;
         return new FsCheckpointStreamFactory.FsCheckpointStateOutputStream(
-                target, filesystem, bufferSize, fileStateThreshold, !absolutePath);
+                target, filesystem, bufferSize, fileStateThreshold);
     }
     public static class FsCheckpointStateOutputStream extends CheckpointStreamFactory.CheckpointStateOutputStream{
         private final byte[] writeBuffer;
@@ -80,17 +70,11 @@ public class FsCheckpointStreamFactory implements CheckpointStreamFactory{
         private Path statePath;
         private String relativeStatePath;
         private volatile boolean closed;
-        private final boolean allowRelativePaths;
-        public FsCheckpointStateOutputStream(
-                Path basePath, FileSystem fs, int bufferSize, int localStateThreshold) {
-            this(basePath, fs, bufferSize, localStateThreshold, false);
-        }
         public FsCheckpointStateOutputStream(
                 Path basePath,
                 FileSystem fs,
                 int bufferSize,
-                int localStateThreshold,
-                boolean allowRelativePaths) {
+                int localStateThreshold) {
 
             if (bufferSize < localStateThreshold) {
                 throw new IllegalArgumentException();
@@ -100,7 +84,6 @@ public class FsCheckpointStreamFactory implements CheckpointStreamFactory{
             this.fs = fs;
             this.writeBuffer = new byte[bufferSize];
             this.localStateThreshold = localStateThreshold;
-            this.allowRelativePaths = allowRelativePaths;
         }
 
         @Override
@@ -111,9 +94,9 @@ public class FsCheckpointStreamFactory implements CheckpointStreamFactory{
         @Override
         public void write(int b) throws IOException {
             if (pos >= writeBuffer.length) {
-                flushToFile();
             }
             writeBuffer[pos++] = (byte) b;
+            flushToFile();
         }
 
         @Override
@@ -215,8 +198,8 @@ public class FsCheckpointStreamFactory implements CheckpointStreamFactory{
             Exception latestException = null;
             for (int attempt = 0; attempt < 10; attempt++) {
                 try {
-                    this.outStream =fs.create(createStatePath());
                     this.statePath = createStatePath();
+                    this.outStream =fs.create(statePath);
                     return;
                 } catch (Exception e) {
                     latestException = e;

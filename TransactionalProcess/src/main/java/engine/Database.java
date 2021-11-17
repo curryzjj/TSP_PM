@@ -1,12 +1,16 @@
 package engine;
 
+import System.FileSystem.FileSystem;
+import System.FileSystem.Path;
 import engine.Exception.DatabaseException;
 import engine.shapshot.CheckpointManager;
 import engine.recovery.AbstractRecoveryManager;
+import engine.shapshot.CheckpointOptions;
 import engine.storage.AbstractStorageManager;
 import engine.storage.EventManager;
 import engine.table.RecordSchema;
 import engine.table.tableRecords.TableRecord;
+import utils.LocalRecoveryConfig;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
@@ -17,6 +21,9 @@ public abstract class Database {
     protected EventManager eventManager;
     protected AbstractRecoveryManager recoveryManager;
     protected CheckpointManager checkpointManager;
+    protected Path snapshotPath;
+    protected FileSystem fs;
+    protected CheckpointOptions checkpointOptions;
     /**
      * Close this database.
      */
@@ -46,4 +53,5 @@ public abstract class Database {
         return recoveryManager;
     }
     public abstract void createKeyGroupRange();
+    public abstract void snapshot(final long checkpointId,final long timestamp) throws Exception;
 }

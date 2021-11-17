@@ -19,21 +19,18 @@ public abstract class RocksDBSnapshotStrategyBase<R extends SnapshotResources> i
     @Nonnull protected RocksDB db;
     /** Resource guard for the RocksDB instance. */
     @Nonnull protected final ResourceGuard rocksDBResourceGuard;
-    /** The configuration for local recovery. */
-    @Nonnull protected final LocalRecoveryConfig localRecoveryConfig;
     /** Key/Value state meta info from the backend. */
     @Nonnull protected final LinkedHashMap<String, RocksDBManager.RocksDBKvStateInfo> kvStateInformation;
-    @Nonnull protected final KeyGroupRange keyGroupRange;
+    @Nonnull
+    public KeyGroupRange keyGroupRange;
 
     protected RocksDBSnapshotStrategyBase(@Nonnull String description,
                                           @Nonnull RocksDB db,
                                           @Nonnull ResourceGuard rocksDBResourceGuard,
                                           @Nonnull LinkedHashMap<String, RocksDBManager.RocksDBKvStateInfo> kvStateInformation,
-                                          @Nonnull LocalRecoveryConfig localRecoveryConfig,
                                           @Nonnull KeyGroupRange keyGroupRange) {
         this.description = description;
         this.rocksDBResourceGuard = rocksDBResourceGuard;
-        this.localRecoveryConfig = localRecoveryConfig;
         this.kvStateInformation = kvStateInformation;
         this.db=db;
         this.keyGroupRange = keyGroupRange;

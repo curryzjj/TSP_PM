@@ -1,6 +1,9 @@
 package engine.storage;
 
 import engine.Exception.DatabaseException;
+import engine.shapshot.CheckpointOptions;
+import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
+import engine.shapshot.SnapshotResult;
 import engine.table.BaseTable;
 import engine.table.RecordSchema;
 import engine.table.tableRecords.TableRecord;
@@ -9,6 +12,7 @@ import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.RunnableFuture;
 
 public abstract class AbstractStorageManager {
     public Map<String, BaseTable> tables = null;
@@ -42,4 +46,8 @@ public abstract class AbstractStorageManager {
     public synchronized void close() throws IOException{};
     public abstract void InsertRecord(String tableName, TableRecord record) throws DatabaseException, IOException;
     public abstract void createKeyGroupRange();
+    public abstract RunnableFuture<SnapshotResult> snapshot(final long checkpointId,
+                                                                   final long timestamp,
+                                                                   final CheckpointStreamFactory streamFactory,
+                                                                   CheckpointOptions checkpointOptions) throws Exception;
 }

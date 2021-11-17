@@ -31,4 +31,7 @@ public final class Serialize {
         target.writeInt(len);
         target.write(record);
     }
+    public static byte[] serializeKey(){
+return null;
+    }
 }

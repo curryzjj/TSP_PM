@@ -1,8 +1,7 @@
-package utils.StateIterator;
-
+import java.io.Closeable;
 import java.io.IOException;
 
-public interface KeyValueStateIterator extends AutoCloseable {
+public interface StateKvIterator extends Closeable {
     /**
      * Advances the iterator. Should only be called if {@link #isValid()} returned true. Valid flag
      * can only change after calling {@link #next()}.
@@ -43,9 +42,7 @@ public interface KeyValueStateIterator extends AutoCloseable {
      * @return True iff this iterator is valid.
      */
     boolean isValid();
-    public boolean isIteratorValid();
+
     @Override
     void close();
-
-    void switchIterator();
 }

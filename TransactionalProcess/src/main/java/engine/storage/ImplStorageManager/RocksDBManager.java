@@ -7,6 +7,7 @@ import engine.Meta.RegisteredKeyValueStateBackendMetaInfo;
 import engine.Meta.RegisteredStateMetaInfoBase;
 import engine.shapshot.CheckpointOptions;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
+import engine.shapshot.ImplSnapshotStrategy.RocksFullSnapshotStrategy;
 import engine.shapshot.RocksDBSnapshotStrategyBase;
 import engine.shapshot.SnapshotResult;
 import engine.shapshot.SnapshotStrategyRunner;
@@ -22,6 +23,7 @@ import engine.table.tableRecords.SchemaRecord;
 import engine.table.tableRecords.TableRecord;;
 import org.rocksdb.*;
 import utils.CloseableRegistry.CloseableRegistry;
+import utils.ResourceGuard;
 import utils.TransactionalProcessConstants;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
@@ -34,7 +36,7 @@ import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static System.Constants.*;
-import static utils.TransactionalProcessConstants.SnapshotExecutionType.ASYNCHRONOUS;
+import static utils.TransactionalProcessConstants.SnapshotExecutionType.SYNCHRONOUS;
 
 public class RocksDBManager extends AbstractStorageManager {
     private RocksDB rocksDB;
@@ -63,16 +65,13 @@ public class RocksDBManager extends AbstractStorageManager {
      */
     private final LinkedHashMap<String, RocksDBKvStateInfo> kvStateInformation;
     protected CloseableRegistry cancelStreamRegistry;
-    public RocksDBManager(RocksDBSnapshotStrategyBase<?> checkpointSnapshotStrategy,
-                          CloseableRegistry cancelStreamRegistry,
-                          Configuration config){
+    public RocksDBManager(CloseableRegistry cancelStreamRegistry, Configuration config){
         RocksDB.loadLibrary();
         tables=new ConcurrentHashMap<>();
         columnFamilyHandleList=new ArrayList<>();
         columnFamilyHandles=new HashMap<>();
         types=new HashMap<>();
         numRecords=new HashMap<>();
-        this.checkpointSnapshotStrategy=checkpointSnapshotStrategy;
         this.cancelStreamRegistry=cancelStreamRegistry;
         String OS_prefix="";
         String path="";
@@ -99,6 +98,7 @@ public class RocksDBManager extends AbstractStorageManager {
             e.printStackTrace();
         }
         kvStateInformation = new LinkedHashMap<>();
+        this.checkpointSnapshotStrategy=initializeCheckpointStrategies(config);
     }
 
     @Override
@@ -245,6 +245,18 @@ public class RocksDBManager extends AbstractStorageManager {
         RocksDBKvStateInfo stateInfo=new RocksDBKvStateInfo(columnFamilyHandle,MetaInfo);
         this.kvStateInformation.put(tablename,stateInfo);
     }
+
+    /**
+     * initialize the snapshot strategies
+     */
+    public RocksDBSnapshotStrategyBase initializeCheckpointStrategies(Configuration configuration){
+        ResourceGuard resourceGuard=new ResourceGuard();
+        if(configuration.getBoolean("enableIncrementalCheckpointing")){
+            return null;
+        }else{
+            return new RocksFullSnapshotStrategy(rocksDB,resourceGuard,kvStateInformation,keyGroupRange);
+        }
+    }
     public RunnableFuture<SnapshotResult> snapshot(final long checkpointId,
                                                    final long timestamp,
                                                    final CheckpointStreamFactory streamFactory,
@@ -252,11 +264,12 @@ public class RocksDBManager extends AbstractStorageManager {
         return new SnapshotStrategyRunner<>(
                 checkpointSnapshotStrategy.getDescription(),
                 checkpointSnapshotStrategy,
-                ASYNCHRONOUS,
+                SYNCHRONOUS,
                 cancelStreamRegistry
                 ).snapshot(checkpointId, timestamp, streamFactory, checkpointOptions);
     }
     public void createKeyGroupRange(){
         this.keyGroupRange=new KeyGroupRange(0,table_count-1);
+        this.checkpointSnapshotStrategy.keyGroupRange=this.keyGroupRange;
     }
 }

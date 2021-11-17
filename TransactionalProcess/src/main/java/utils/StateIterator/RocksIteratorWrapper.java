@@ -11,8 +11,9 @@ import java.nio.ByteBuffer;
 
 public class RocksIteratorWrapper implements RocksIteratorInterface, Closeable {
     private RocksIterator iterator;
-    public RocksIteratorWrapper(@Nonnull RocksIterator iterator){
-        this.iterator=iterator;
+
+    public RocksIteratorWrapper(@Nonnull RocksIterator iterator) {
+        this.iterator = iterator;
     }
 
     @Override
@@ -23,85 +24,61 @@ public class RocksIteratorWrapper implements RocksIteratorInterface, Closeable {
     @Override
     public void seekToFirst() {
         iterator.seekToFirst();
-        try {
-            status();
-        } catch (RocksDBException e) {
-            e.printStackTrace();
-        }
+        status();
     }
 
     @Override
     public void seekToLast() {
-        iterator.seekToFirst();
-        try {
-            status();
-        } catch (RocksDBException e) {
-            e.printStackTrace();
-        }
+        iterator.seekToLast();
+        status();
     }
 
     @Override
     public void seek(byte[] target) {
         iterator.seek(target);
-        try {
-            status();
-        } catch (RocksDBException e) {
-            e.printStackTrace();
-        }
+        status();
     }
 
     @Override
     public void seekForPrev(byte[] target) {
         iterator.seekForPrev(target);
-        try {
-            status();
-        } catch (RocksDBException e) {
-            e.printStackTrace();
-        }
+        status();
     }
 
     @Override
     public void seek(ByteBuffer byteBuffer) {
-
+        iterator.seek(byteBuffer);
     }
 
     @Override
     public void seekForPrev(ByteBuffer byteBuffer) {
-
+        iterator.seekForPrev(byteBuffer);
     }
 
     @Override
     public void next() {
         iterator.next();
-        try {
-            status();
-        } catch (RocksDBException e) {
-            e.printStackTrace();
-        }
+        status();
     }
 
     @Override
     public void prev() {
         iterator.prev();
+        status();
+    }
+
+    @Override
+    public void status() {
         try {
-            status();
+            iterator.status();
         } catch (RocksDBException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void status() throws RocksDBException {
-        try {
-            iterator.status();
-        } catch (RocksDBException ex) {
-            throw new RocksDBException("Internal exception found in RocksDB");
-        }
-    }
-
-    @Override
     public void refresh() throws RocksDBException {
-
+        iterator.refresh();
     }
 
     public byte[] key() {

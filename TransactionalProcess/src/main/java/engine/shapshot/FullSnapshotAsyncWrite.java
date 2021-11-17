@@ -53,10 +53,10 @@ public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSu
         final DataOutputView outputView =
                 new DataOutputViewStreamWrapper(
                         checkpointStreamWithResultProvider.getCheckpointOutputStream());
+        writeKVStateMetaData(outputView);
         try(KeyValueStateIterator keyValueStateIterator=snapshotResources.createKVStateIterator()){
             writeKVStateData(keyValueStateIterator,checkpointStreamWithResultProvider,keyGroupRangeOffsets);
         }
-        writeKVStateMetaData(outputView);
     }
     private void writeKVStateMetaData(DataOutputView outputView) throws IOException {
         outputView.writeShort(snapshotResources.getMetaInfoSnapshots().size());
@@ -73,89 +73,27 @@ public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSu
         OutputStream kgOutStream = null;
         CheckpointStreamFactory.CheckpointStateOutputStream checkpointOutputStream =
                 checkpointStreamWithResultProvider.getCheckpointOutputStream();
-
-        try {
-
-            // preamble: setup with first key-group as our lookahead
-            if (mergeIterator.isValid()) {
-                // begin first key-group by recording the offset
-                keyGroupRangeOffsets.setKeyGroupOffset(
-                        mergeIterator.keyGroup(), checkpointOutputStream.getPos());
-                // write the k/v-state id as metadata
-                kgOutStream =checkpointOutputStream;
-                kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
-                // TODO this could be aware of keyGroupPrefixBytes and write only one byte
-                // if possible
-                kgOutView.writeShort(mergeIterator.kvStateId());
-                previousKey = mergeIterator.key();
-                previousValue = mergeIterator.value();
-                mergeIterator.next();
-            }
-
-            // main loop: write k/v pairs ordered by (key-group, kv-state), thereby tracking
-            // key-group offsets.
-            while (mergeIterator.isValid()) {
-
-                assert (!hasMetaDataFollowsFlag(previousKey));
-
-                // set signal in first key byte that meta data will follow in the stream
-                // after this k/v pair
-                if (mergeIterator.isNewKeyGroup() || mergeIterator.isNewKeyValueState()) {
-
-                    // be cooperative and check for interruption from time to time in the
-                    // hot loop
-                    checkInterrupted();
-
-                    setMetaDataFollowsFlagInKey(previousKey);
-                }
-
-                writeKeyValuePair(previousKey, previousValue, kgOutView);
-
-                // write meta data if we have to
-                if (mergeIterator.isNewKeyGroup()) {
-                    // TODO this could be aware of keyGroupPrefixBytes and write only one
-                    // byte if possible
-                    kgOutView.writeShort(END_OF_KEY_GROUP_MARK);
-                    // this will just close the outer stream
-                    kgOutStream.close();
-                    // begin new key-group
-                    keyGroupRangeOffsets.setKeyGroupOffset(
-                            mergeIterator.keyGroup(), checkpointOutputStream.getPos());
-                    // write the kev-state
-                    // TODO this could be aware of keyGroupPrefixBytes and write only one
-                    // byte if possible
+        kgOutStream =checkpointOutputStream;
+        kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
+        try{
+            while(mergeIterator.isValid()){
+                if(mergeIterator.isNewKeyValueState()){
                     kgOutStream =checkpointOutputStream;
                     kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
                     kgOutView.writeShort(mergeIterator.kvStateId());
-                } else if (mergeIterator.isNewKeyValueState()) {
-                    // write the k/v-state
-                    // TODO this could be aware of keyGroupPrefixBytes and write only one
-                    // byte if possible
-                    kgOutView.writeShort(mergeIterator.kvStateId());
+                    keyGroupRangeOffsets.setKeyGroupOffset(
+                            mergeIterator.kvStateId(), checkpointOutputStream.getPos());
                 }
-
-                // request next k/v pair
-                previousKey = mergeIterator.key();
-                previousValue = mergeIterator.value();
+                writeKeyValuePair(mergeIterator.key(),mergeIterator.value(),kgOutView);
                 mergeIterator.next();
+                if(!mergeIterator.isIteratorValid()){
+                    kgOutView.writeShort(END_OF_KEY_GROUP_MARK);
+                    mergeIterator.switchIterator();
+                }
             }
-
-            // epilogue: write last key-group
-            if (previousKey != null) {
-                assert (!hasMetaDataFollowsFlag(previousKey));
-                setMetaDataFollowsFlagInKey(previousKey);
-                writeKeyValuePair(previousKey, previousValue, kgOutView);
-                // TODO this could be aware of keyGroupPrefixBytes and write only one byte if
-                // possible
-                kgOutView.writeShort(END_OF_KEY_GROUP_MARK);
-                // this will just close the outer stream
-                kgOutStream.close();
-                kgOutStream = null;
-            }
-
-        } finally {
+        }finally {
             // this will just close the outer stream
-            IOUtil.closeQuietly(kgOutStream);
+            //IOUtil.closeQuietly(kgOutStream);
         }
     }
     private void writeKeyValuePair(byte[] key, byte[] value, DataOutputView out)

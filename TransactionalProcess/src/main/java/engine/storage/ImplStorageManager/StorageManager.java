@@ -1,8 +1,9 @@
 package engine.storage.ImplStorageManager;
 
-import engine.Database;
 import engine.Exception.DatabaseException;
-import engine.ImplDatabase.InMemeoryDatabase;
+import engine.shapshot.CheckpointOptions;
+import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
+import engine.shapshot.SnapshotResult;
 import engine.storage.AbstractStorageManager;
 import engine.table.BaseTable;
 import engine.table.ImplTable.ShareTable;
@@ -13,8 +14,8 @@ import utils.TransactionalProcessConstants.DataBoxTypes;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RunnableFuture;
 
 public class StorageManager extends AbstractStorageManager {
     public StorageManager(){
@@ -80,5 +81,10 @@ public class StorageManager extends AbstractStorageManager {
     @Override
     public void createKeyGroupRange() {
 
+    }
+
+    @Override
+    public RunnableFuture<SnapshotResult> snapshot(long checkpointId, long timestamp, CheckpointStreamFactory streamFactory, CheckpointOptions checkpointOptions) throws Exception {
+        return null;
     }
 }

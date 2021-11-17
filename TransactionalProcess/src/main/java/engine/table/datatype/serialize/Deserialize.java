@@ -1,8 +1,5 @@
 package engine.table.datatype.serialize;
 
-import engine.table.tableRecords.TableRecord;
-import utils.TransactionalProcessConstants.DataBoxTypes;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;

@@ -9,7 +9,7 @@ public class RocksSingleStateIterator implements SingleStateIterator{
      * @param iterator underlying {@link RocksIteratorWrapper}
      * @param kvStateId Id of the K/V state to which this iterator belongs.
      */
-    RocksSingleStateIterator(@Nonnull RocksIteratorWrapper iterator, int kvStateId) {
+    public RocksSingleStateIterator(@Nonnull RocksIteratorWrapper iterator, int kvStateId) {
         this.iterator = iterator;
         this.currentKey = iterator.key();
         this.kvStateId = kvStateId;

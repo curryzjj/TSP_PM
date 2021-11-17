@@ -1,11 +1,14 @@
 
+import System.FileSystem.ImplFS.LocalFileSystem;
 import System.FileSystem.ImplFSDataInputStream.LocalDataInputStream;
 import System.FileSystem.ImplFSDataOutputStream.LocalDataOutputStream;
+import System.FileSystem.Path;
 
 import java.io.*;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.UUID;
 
 public class LocalFSTest {
     public static byte[] serializeObject(Object o) throws IOException{
@@ -17,21 +20,11 @@ public class LocalFSTest {
         }
     }
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        A a1=new A("name1","key1");
-        A a2=new A("name1","key1");
-        File file=new File(System.getProperty("user.home").concat("/hair-loss/app/a.log"));
-//        LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(file);
-//        ObjectOutputStream objectOutputStream=new ObjectOutputStream(localDataOutputStream);
-//        objectOutputStream.writeObject(a1);
-//        objectOutputStream.writeObject(a2);
-//        objectOutputStream.close();
-//        localDataOutputStream.close();
-        LocalDataInputStream inputStream=new LocalDataInputStream(file);
-        ObjectInputStream objectInputStream=new ObjectInputStream(inputStream);
-        int a=objectInputStream.readInt();
-        System.out.println(a);
-        A a3= (A) objectInputStream.readObject();
-        System.out.println(a3.key);
+        Path basepath=new Path(System.getProperty("user.home").concat("/hair-loss/app/txntp/snapshot"));
+        final String fileName = UUID.randomUUID().toString();
+        LocalFileSystem localFileSystem=new LocalFileSystem();
+        Path path=new Path(basepath,fileName);
+        localFileSystem.create(path);
     }
 
 }
