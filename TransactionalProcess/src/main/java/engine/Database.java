@@ -6,11 +6,11 @@ import engine.Exception.DatabaseException;
 import engine.shapshot.CheckpointManager;
 import engine.recovery.AbstractRecoveryManager;
 import engine.shapshot.CheckpointOptions;
+import engine.shapshot.SnapshotResult;
 import engine.storage.AbstractStorageManager;
 import engine.storage.EventManager;
 import engine.table.RecordSchema;
 import engine.table.tableRecords.TableRecord;
-import utils.LocalRecoveryConfig;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
@@ -53,5 +53,5 @@ public abstract class Database {
         return recoveryManager;
     }
     public abstract void createKeyGroupRange();
-    public abstract void snapshot(final long checkpointId,final long timestamp) throws Exception;
+    public abstract SnapshotResult snapshot(final long checkpointId, final long timestamp) throws Exception;
 }

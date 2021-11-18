@@ -6,7 +6,6 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
 import engine.Exception.DatabaseException;
-import engine.Meta.RegisteredStateMetaInfoBase;
 import engine.shapshot.CheckpointOptions;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.FsCheckpointStreamFactory;
@@ -15,7 +14,6 @@ import engine.storage.EventManager;
 import engine.storage.ImplStorageManager.StorageManager;
 import engine.table.RecordSchema;
 import engine.table.tableRecords.TableRecord;
-import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.RocksDBException;
 import utils.CloseableRegistry.CloseableRegistry;
 import utils.TransactionalProcessConstants.DataBoxTypes;
@@ -63,12 +61,15 @@ public class InMemeoryDatabase extends Database {
     }
 
     @Override
-    public void snapshot(final long checkpointId,final long timestamp) throws Exception {
+    public SnapshotResult snapshot(final long checkpointId, final long timestamp) throws Exception {
         CheckpointStreamFactory streamFactory=new FsCheckpointStreamFactory(16,
                 16,
                 snapshotPath,
                 fs);
         RunnableFuture<SnapshotResult> snapshot = storageManager.snapshot(checkpointId,timestamp,streamFactory,checkpointOptions);
-        SnapshotResult snapshotResult1=snapshot.get();
+        Thread asyncSnapshotThread=new Thread(snapshot);
+        asyncSnapshotThread.run();
+        SnapshotResult snapshotResult=snapshot.get();
+        return snapshotResult;
     }
 }

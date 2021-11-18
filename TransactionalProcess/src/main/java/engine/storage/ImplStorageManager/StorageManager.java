@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 
+import static utils.TransactionalProcessConstants.SnapshotExecutionType.ASYNCHRONOUS;
 import static utils.TransactionalProcessConstants.SnapshotExecutionType.SYNCHRONOUS;
 
 public class StorageManager extends AbstractStorageManager {
@@ -133,7 +134,7 @@ public class StorageManager extends AbstractStorageManager {
         return new SnapshotStrategyRunner<>(
                 checkpointSnapshotStrategy.getDescription(),
                 checkpointSnapshotStrategy,
-                SYNCHRONOUS,
+                ASYNCHRONOUS,
                 cancelStreamRegistry
         ).snapshot(checkpointId, timestamp, streamFactory, checkpointOptions);
     }

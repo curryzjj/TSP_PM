@@ -33,6 +33,8 @@ public interface CONTROL {
     boolean enable_states_partition = true;//must be enabled for PAT/SSTORE.
 
     boolean enable_TSTREAM = true;
+    // fault tolerance related.
+    boolean enable_checkpoint=true;
 
     //pre- and post -compute
 

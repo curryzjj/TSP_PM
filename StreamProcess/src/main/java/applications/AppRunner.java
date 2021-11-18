@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.Queue;
 
-public class AppRunner extends baseRunner {
+public class  AppRunner extends baseRunner {
     private static final Logger LOG= LoggerFactory.getLogger(AppRunner.class);
     private static Topology final_topology;
     private final AppDriver driver;

@@ -13,6 +13,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.faulttolerance.checkpoint.CheckpointManager;
 import streamprocess.faulttolerance.checkpoint.Checkpointable;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.topology.TopologyContext;
@@ -58,6 +59,7 @@ public abstract class Operator implements Serializable{
 //    public OrderValidate orderValidate;
 //    public transient TxnContext[] txn_context = new TxnContext[combo_bid_size];
     public transient Database db;//this is only used if the bolt is transactional bolt. DB is shared by all operators.
+    public CheckpointManager CM;
     //    public transient TxnContext txn_context;
     public boolean forceStop;
     public int fid = -1;//if fid is -1 it means it does not participate transactional process

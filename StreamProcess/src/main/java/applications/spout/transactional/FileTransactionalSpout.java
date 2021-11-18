@@ -91,8 +91,9 @@ public class FileTransactionalSpout extends TransactionalSpout {
             this.clock.start();
             startClock=true;
         }
-        if(readLine()!=null){
-            collector.emit(readLine(),bid);
+        char[] inputData=readLine();
+        if(inputData!=null){
+            collector.emit(inputData,bid);
             forward_checkpoint(this.taskId, bid, null,"marker");
             bid++;
         }else{

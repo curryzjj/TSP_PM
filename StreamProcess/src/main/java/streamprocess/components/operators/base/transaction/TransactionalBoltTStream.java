@@ -1,6 +1,7 @@
 package streamprocess.components.operators.base.transaction;
 
 import engine.Exception.DatabaseException;
+import engine.shapshot.SnapshotResult;
 import engine.transaction.impl.TxnManagerTStream;
 import org.slf4j.Logger;
 import streamprocess.components.grouping.Grouping;
@@ -55,7 +56,8 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
                 TXN_PROCESS();
                 try {
                     if(this.thread_Id==0){
-                        this.db.snapshot(10000,10000);
+                        SnapshotResult snapshotResult=this.db.snapshot(in.getBID(),10000);
+                        this.getContext().getCM().commitCurrentLog(snapshotResult);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

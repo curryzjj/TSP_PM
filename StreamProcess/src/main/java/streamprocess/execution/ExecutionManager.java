@@ -14,6 +14,7 @@ import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.runtime.threads.boltThread;
 import streamprocess.execution.runtime.threads.executorThread;
 import streamprocess.execution.runtime.threads.spoutThread;
+import streamprocess.faulttolerance.checkpoint.CheckpointManager;
 import streamprocess.optimization.OptimizationManager;
 
 import java.io.IOException;
@@ -22,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import static System.constants.BaseConstants.BaseStream.*;
+import static UserApplications.CONTROL.enable_checkpoint;
 import static UserApplications.CONTROL.enable_shared_state;
 
 public class ExecutionManager {
@@ -50,7 +52,7 @@ public class ExecutionManager {
      * All executors have to sync_ratio for OM to start, so it's safe to do initialization here. E.g., initialize database.
      */
     public void distributeTasks(Configuration conf, ExecutionPlan plan, CountDownLatch latch, boolean benchmark,
-                                boolean profile, Database db, Platform p) throws UnhandledCaseException{
+                                boolean profile, Database db, Platform p,CheckpointManager CM) throws UnhandledCaseException{
         assert plan !=null;
         loadTargetHz =(int) conf.getDouble("targetHz",10000000);
         LOG.info("Finally, targetHZ set to:" + loadTargetHz);
@@ -77,10 +79,10 @@ public class ExecutionManager {
         executorThread thread = null;
         for (ExecutionNode e : g.getExecutionNodeArrayList()) {
             switch(e.operator.type){
-                case spoutType:thread=launchSpout_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor),conf,plan.toSocket(e.getExecutorID()),latch);
+                case spoutType:thread=launchSpout_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,CM),conf,plan.toSocket(e.getExecutorID()),latch);
                 break;
                 case boltType:
-                case sinkType:thread=launchBolt_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor),conf,plan.toSocket(e.getExecutorID()),latch);
+                case sinkType:thread=launchBolt_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,CM),conf,plan.toSocket(e.getExecutorID()),latch);
                 break;
                 case virtualType:
                     LOG.info("Won't launch virtual ground");
