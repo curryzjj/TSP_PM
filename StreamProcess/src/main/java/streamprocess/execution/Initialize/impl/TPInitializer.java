@@ -57,7 +57,14 @@ public class TPInitializer extends TableInitilizer {
             insertSpeedRecord(_key, 0);
             insertCntRecord(_key);
         }
-        LOG.info("Executor("+ thread_id +") of "+context.getExecutor(context.getThisTaskId()).getOP_full() +" finished loading data from: " + "0" + " to: " + NUM_SEGMENTS);
+        try {
+            int speedSize=db.getStorageManager().getTable("segment_speed").keySize();
+            int cntSize=db.getStorageManager().getTable("segment_cnt").keySize();
+            LOG.info("Executor("+ thread_id +") of "+context.getExecutor(context.getThisTaskId()).getOP_full() +" finished loading data from: " + "0" + " to: " + NUM_SEGMENTS
+                    +" with speed keySize: "+speedSize+" cnt keySize: "+cntSize);
+        } catch (DatabaseException e) {
+            e.printStackTrace();
+        }
     }
 
     private void insertCntRecord(String key) {
