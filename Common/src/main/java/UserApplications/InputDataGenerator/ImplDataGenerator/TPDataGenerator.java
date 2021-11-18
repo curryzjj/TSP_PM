@@ -27,9 +27,9 @@ public class TPDataGenerator extends InputDataGenerator {
         BufferedWriter bw= new BufferedWriter(Fw);
         for(int i=0;i<recordNum;i++){
             Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            String str=timestamp.getTime()+" "+ randomNumberGenerator.generateRandom(0,100)+" "+randomNumberGenerator.generateRandom(60,180)+
-                    " "+randomNumberGenerator.generateRandom(0,4)+" "+randomNumberGenerator.generateRandom(0,4)+" "+ randomNumberGenerator.generateRandom(0,1)+
-                    " "+zipfGenerator.next()+" "+randomNumberGenerator.generateRandom(0,100);
+            String str=timestamp.getTime()+" "+ randomNumberGenerator.generateRandom(1,100)+" "+randomNumberGenerator.generateRandom(60,180)+
+                    " "+randomNumberGenerator.generateRandom(1,4)+" "+randomNumberGenerator.generateRandom(1,4)+" "+ randomNumberGenerator.generateRandom(1,1)+
+                    " "+zipfGenerator.next()+" "+randomNumberGenerator.generateRandom(1,100);
             bw.write(str);
             bw.newLine();
             bw.flush();

@@ -15,4 +15,5 @@ public interface SingleStateIterator extends Closeable {
 
     @Override
     void close();
+    boolean hasNext();
 }

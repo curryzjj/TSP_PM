@@ -9,9 +9,10 @@ import org.rocksdb.*;
 import scala.Tuple2;
 import utils.CloseableRegistry.CloseableRegistry;
 import utils.ResourceGuard;
-import utils.StateIterator.KeyValueStateIterator;
+import utils.StateIterator.RocksDBStateIterator;
 import utils.StateIterator.RocksIteratorWrapper;
-import utils.StateIterator.RocksStatesPerKeyGroupMerageIterator;
+import utils.StateIterator.ImplGroupIterator.RocksStatesPerKeyGroupMerageIterator;
+import utils.StateIterator.kvStateIterator;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -70,14 +71,14 @@ public class RocksDBFullSnapshotResources implements FullSnapshotResources {
     }
 
     @Override
-    public KeyValueStateIterator createKVStateIterator() throws IOException {
+    public kvStateIterator createKVStateIterator() throws IOException {
         CloseableRegistry closeableRegistry=new CloseableRegistry();
         try{
             ReadOptions readOptions=new ReadOptions();
             closeableRegistry.registerCloseable(readOptions::close);
             readOptions.setSnapshot(snapshot);
             List<Tuple2<RocksIteratorWrapper,Integer>> kvStateIterators=createKVStateIterators(closeableRegistry,readOptions);
-            return new RocksStatesPerKeyGroupMerageIterator(closeableRegistry,kvStateIterators,1);
+            return new RocksStatesPerKeyGroupMerageIterator(closeableRegistry,kvStateIterators);
         } catch (IOException e) {
             // If anything goes wrong, clean up our stuff. If things went smoothly the
             // merging iterator is now responsible for closing the resources

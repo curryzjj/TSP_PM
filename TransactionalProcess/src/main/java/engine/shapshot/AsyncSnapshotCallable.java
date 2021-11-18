@@ -77,7 +77,9 @@ public abstract class AsyncSnapshotCallable<T> implements Callable {
      * This method is invoked after completion of the snapshot and can be overridden to output a
      * logging about the duration of the async part.
      */
-    protected void logAsyncSnapshotComplete(long startTime) {}
+    protected void logAsyncSnapshotComplete(long startTime) {
+
+    }
     private void closeSnapshotIO() {
         try {
             snapshotCloseableRegistry.close();

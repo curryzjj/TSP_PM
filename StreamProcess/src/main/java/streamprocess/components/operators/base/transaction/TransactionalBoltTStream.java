@@ -53,16 +53,16 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         if(in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
                 TXN_PROCESS();
+                try {
+                    if(this.thread_Id==0){
+                        this.db.snapshot(10000,10000);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
             final Marker marker = in.getMarker();
             this.collector.ack(in,marker);
-            try {
-                if(this.thread_Id==0){
-                    this.db.snapshot(10000,10000);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }else{
             execute_ts_normal(in);
         }

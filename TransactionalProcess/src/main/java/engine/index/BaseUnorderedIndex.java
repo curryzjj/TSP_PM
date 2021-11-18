@@ -9,4 +9,5 @@ public abstract class BaseUnorderedIndex implements Iterable<TableRecord>{
     public abstract boolean InsertRecord(String key,TableRecord record);
     public abstract Set<String> getKeys();
     public abstract void clean();
+
 }

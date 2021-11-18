@@ -7,12 +7,15 @@ import engine.Exception.DatabaseException;
 import net.openhft.affinity.AffinitySupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Int;
 import streamprocess.components.operators.executor.BasicSpoutBatchExecutor;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 
@@ -90,6 +93,7 @@ public class spoutThread extends executorThread{
             binding_finish=true;
             if (enable_shared_state){
                 LOG.info("Operator:\t"+executor.getOP_full()+"is ready"+"\nlock_ratio dumps\n"+dumpLocks());
+                sp.loadDB(this.context);
             }else{
                 LOG.info("Operator:\t" + executor.getOP_full() + " is ready");
             }

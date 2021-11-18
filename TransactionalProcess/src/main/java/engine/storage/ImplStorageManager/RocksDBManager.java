@@ -133,6 +133,9 @@ public class RocksDBManager extends AbstractStorageManager {
             TableRecord tableRecord=null;
             try {
                 byte[] v=rocksDB.get(c,k);
+                if(v==null){
+                    System.out.println("here");
+                }
                 tableRecord= Deserialize.Deserialize2TableRecord(v,TableRecord.class.getClassLoader());
             } catch (RocksDBException | IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -225,7 +228,7 @@ public class RocksDBManager extends AbstractStorageManager {
             e.printStackTrace();
         }
     }
-    /**Rocks DB specific information about the K/V states. */
+    /**RocksDB specific information about the K/V states. */
     public static class RocksDBKvStateInfo implements AutoCloseable{
         public final ColumnFamilyHandle columnFamilyHandle;
         public final RegisteredStateMetaInfoBase metaInfo;

@@ -64,4 +64,19 @@ public class ShareTable extends BaseTable {
     public Iterator<TableRecord> iterator() {
         return primary_index_.iterator();
     }
+    @Override
+    public Iterator<String> keyIterator() {
+        return primary_index_.getKeys().iterator();
+    }
+
+    @Override
+    public int keySize() {
+        return primary_index_.getKeys().size();
+    }
+
+    @Override
+    public Set getKey() {
+        return primary_index_.getKeys();
+    }
+
 }

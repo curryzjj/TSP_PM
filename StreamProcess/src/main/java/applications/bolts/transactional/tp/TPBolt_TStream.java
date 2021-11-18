@@ -36,13 +36,13 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
     }
     protected void REQUEST_CONSTRUCT(LREvent event, TxnContext txnContext) throws DatabaseException {
         //some process used the transactionManager
-        transactionManager.Asy_ModifyRecord_Read(txnContext
+        boolean flag=transactionManager.Asy_ModifyRecord_Read(txnContext
                 , "segment_speed"
                 ,String.valueOf(event.getPOSReport().getSegment())
                 ,event.speed_value//holder to be filled up
                 ,new AVG(event.getPOSReport().getSpeed())
         );
-        transactionManager.Asy_ModifyRecord_Read(txnContext
+        boolean flag1=transactionManager.Asy_ModifyRecord_Read(txnContext
                 ,"segment_cnt"
                 ,String.valueOf(event.getPOSReport().getSegment())
                 ,event.count_value

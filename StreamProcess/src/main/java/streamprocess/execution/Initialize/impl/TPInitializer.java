@@ -18,6 +18,7 @@ import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
@@ -43,22 +44,20 @@ public class TPInitializer extends TableInitilizer {
     @Override
     public void loadDB(int thread_id, TopologyContext context) {
         //partition on the operator
-        int partition_interval=getPartition_interval();
-        int left_bound=thread_id*partition_interval;
-        int right_bound;
-        if(thread_id==context.getNUMTasks()-1){//last executor need to handle right-over
-            right_bound=NUM_SEGMENTS;
-        }else{
-            right_bound=(thread_id+1)*partition_interval;
-        }
-        for (int key = left_bound; key < right_bound; key++) {
-
+//        int partition_interval=getPartition_interval();
+//        int left_bound=thread_id*partition_interval;
+//        int right_bound;
+//        if(thread_id==context.getNUMTasks()-1){//last executor need to handle right-over
+//            right_bound=NUM_SEGMENTS;
+//        }else{
+//            right_bound=(thread_id+1)*partition_interval;
+//        }
+        for (int key = 0; key < NUM_SEGMENTS ; key++) {
             String _key = String.valueOf(key);
             insertSpeedRecord(_key, 0);
             insertCntRecord(_key);
         }
-
-        LOG.info("Executor("+ thread_id +") of "+context.getExecutor(context.getThisTaskId()).getOP_full() +" finished loading data from: " + left_bound + " to: " + right_bound);
+        LOG.info("Executor("+ thread_id +") of "+context.getExecutor(context.getThisTaskId()).getOP_full() +" finished loading data from: " + "0" + " to: " + NUM_SEGMENTS);
     }
 
     private void insertCntRecord(String key) {

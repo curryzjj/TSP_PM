@@ -1,3 +1,5 @@
+package utils.StateIterator.ImplGroupIterator;
+
 import System.util.IOUtil;
 import System.util.Preconditions;
 import scala.Tuple2;
@@ -11,28 +13,22 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RocksStatePerKeyGroupMerageIterator implements RocksDBStateIterator {
+public class RocksStatesPerKeyGroupMerageIterator implements RocksDBStateIterator {
     private final CloseableRegistry closeableRegistry;
     private final List<SingleStateIterator> heap;
-    private final int keyGroupPrefixByteCount;
     private boolean newKeyGroup;
     private boolean newKVState;
     private boolean valid;
     public SingleStateIterator currentSubIterator;
     private int iteratorFlag=0;
 
-    public RocksStatePerKeyGroupMerageIterator(
+    public RocksStatesPerKeyGroupMerageIterator(
             final CloseableRegistry closeableRegistry,
-            List<Tuple2<RocksIteratorWrapper, Integer>> kvStateIterators,
-            final int keyGroupPrefixByteCount)
+            List<Tuple2<RocksIteratorWrapper, Integer>> kvStateIterators)
             throws IOException {
         Preconditions.checkNotNull(closeableRegistry);
         Preconditions.checkNotNull(kvStateIterators);
-        Preconditions.checkArgument(keyGroupPrefixByteCount >= 1);
-
         this.closeableRegistry = closeableRegistry;
-        this.keyGroupPrefixByteCount = keyGroupPrefixByteCount;
-
         if (kvStateIterators.size() > 0) {
             this.heap = buildIteratorHeap(kvStateIterators);
             this.valid = !heap.isEmpty();
@@ -76,13 +72,13 @@ public class RocksStatePerKeyGroupMerageIterator implements RocksDBStateIterator
         currentSubIterator.next();
     }
     public void switchIterator(){
-            iteratorFlag++;
-            if(iteratorFlag<heap.size()){
-                currentSubIterator=heap.get(iteratorFlag);
-                newKVState=true;
-            }else{
-                valid = false;
-            }
+        iteratorFlag++;
+        if(iteratorFlag<heap.size()){
+            currentSubIterator=heap.get(iteratorFlag);
+            newKVState=true;
+        }else{
+            valid = false;
+        }
     }
 
     @Override
@@ -111,11 +107,15 @@ public class RocksStatePerKeyGroupMerageIterator implements RocksDBStateIterator
         return newKVState;
     }
 
+
     @Override
     public boolean isValid() {
         return valid;
     }
-
+    @Override
+    public boolean isIteratorValid() {
+        return this.currentSubIterator.isValid();
+    }
     @Override
     public void close() {
         IOUtil.closeQuietly(closeableRegistry);
@@ -123,8 +123,5 @@ public class RocksStatePerKeyGroupMerageIterator implements RocksDBStateIterator
         if (heap != null) {
             heap.clear();
         }
-    }
-    public boolean isIteratorValid(){
-        return false;
     }
 }

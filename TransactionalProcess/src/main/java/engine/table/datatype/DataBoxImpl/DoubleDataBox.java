@@ -76,4 +76,8 @@ public class DoubleDataBox extends DataBox {
     public byte[] Serialize() throws DataBoxException, IOException {
         return Serialize.serializeObject(d);
     }
+    @Override
+    public String toString() {
+        return "" + this.d;
+    }
 }

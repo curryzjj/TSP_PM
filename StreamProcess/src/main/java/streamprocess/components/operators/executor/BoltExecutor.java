@@ -25,10 +25,6 @@ public abstract class BoltExecutor implements IExecutor {
     public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException;
     public abstract void profile_execute(JumboTuple in) throws InterruptedException, DatabaseException, BrokenBarrierException;
     //end
-
-    public void loadDB(Configuration conf,TopologyContext context,OutputCollector collector){
-        op.loadDB(conf,context,collector);
-    }
     public void setExecutionNode(ExecutionNode e){ op.setExecutionNode(e); }
     //public void setclock(Clock clock){}
 

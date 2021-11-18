@@ -9,9 +9,9 @@ import engine.Exception.DatabaseException;
 import engine.shapshot.CheckpointOptions;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.FsCheckpointStreamFactory;
+import engine.shapshot.SnapshotResult;
 import engine.storage.EventManager;
 import engine.storage.ImplStorageManager.RocksDBManager;
-import engine.storage.ImplStorageManager.StorageManager;
 import engine.table.RecordSchema;
 import engine.table.tableRecords.TableRecord;
 import org.rocksdb.RocksDBException;
@@ -19,6 +19,7 @@ import utils.CloseableRegistry.CloseableRegistry;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
+import java.util.concurrent.RunnableFuture;
 
 public class RocksDBDatabase extends Database {
     public RocksDBDatabase(Configuration configuration) {
@@ -63,6 +64,7 @@ public class RocksDBDatabase extends Database {
                 16,
                 snapshotPath,
                 fs);
-        storageManager.snapshot(checkpointId,timestamp,streamFactory,checkpointOptions);
+        RunnableFuture<SnapshotResult> snapshot = storageManager.snapshot(checkpointId,timestamp,streamFactory,checkpointOptions);
+        SnapshotResult snapshotResult1=snapshot.get();
     }
 }

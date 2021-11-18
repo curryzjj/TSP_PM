@@ -28,7 +28,7 @@ public abstract class TransactionalTopology extends BasicTopology{
     protected void InitializeDB() {
         //switch different kinds of DB
         switch (config.getInt("DBOptions",0)){
-            case In_Memory:this.db=new InMemeoryDatabase();
+            case In_Memory:this.db=new InMemeoryDatabase(config);
             break;
             case RocksDB: this.db=new RocksDBDatabase(config);
             break;

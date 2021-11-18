@@ -180,10 +180,12 @@ public class TxnProcessingEngine {
                     }
                     srcRecord.get(1).setDouble(lav);//write to state.
                     operation.record_ref.setRecord(new SchemaRecord(new DoubleDataBox(lav)));//return updated record.
+                    operation.record_ref.getRecord().getValue().getDouble();
                 }else{
                     HashSet cnt_segment = srcRecord.get(1).getHashSet();
                     cnt_segment.add(operation.function.delta_int);//update hashset; updated state also. TODO: be careful of this.
                     operation.record_ref.setRecord(new SchemaRecord(new IntDataBox(cnt_segment.size())));//return updated record.
+                    operation.record_ref.getRecord().getValue().getInt();
                 }
             break;
             default:throw new UnsupportedOperationException();

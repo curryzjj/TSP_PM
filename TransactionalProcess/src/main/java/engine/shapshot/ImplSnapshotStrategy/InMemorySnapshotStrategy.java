@@ -4,14 +4,14 @@ import engine.shapshot.CheckpointOptions;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.CheckpointStreamWithResultProvider;
 import engine.shapshot.FullSnapshotAsyncWrite;
-import engine.shapshot.RocksDBSnapshotStrategyBase;
+import engine.shapshot.InMemorySnapshotStrategyBase;
 import engine.shapshot.ShapshotResources.FullSnapshotResources;
-import engine.shapshot.ShapshotResources.ImplShapshotResources.RocksDBFullSnapshotResources;
+import engine.shapshot.ShapshotResources.ImplShapshotResources.InMemoryFullSnapshotResources;
 import engine.shapshot.SnapshotResult;
-import engine.storage.ImplStorageManager.RocksDBManager;
+import engine.storage.ImplStorageManager.StorageManager;
+import engine.table.BaseTable;
 import engine.table.keyGroup.KeyGroupRange;
 import org.jetbrains.annotations.NotNull;
-import org.rocksdb.RocksDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.ResourceGuard;
@@ -21,27 +21,21 @@ import utils.TransactionalProcessConstants;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
-public class RocksFullSnapshotStrategy extends RocksDBSnapshotStrategyBase<FullSnapshotResources> {
-    private static final Logger LOG= LoggerFactory.getLogger(RocksFullSnapshotStrategy.class);
+public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullSnapshotResources> {
+    private static final Logger LOG= LoggerFactory.getLogger(InMemorySnapshotStrategy.class);
     private static final String DESCRIPTION="Asynchronous full RocksDB snapshot";
-    public RocksFullSnapshotStrategy(
-                                     @NotNull RocksDB db,
-                                     @NotNull ResourceGuard rocksDBResourceGuard,
-                                     @Nonnull LinkedHashMap<String, RocksDBManager.RocksDBKvStateInfo> kvStateInfomation,
-                                     @Nonnull KeyGroupRange keyGroupRange) {
-        super(DESCRIPTION, db, rocksDBResourceGuard,kvStateInfomation, keyGroupRange);
+    public InMemorySnapshotStrategy(@Nonnull Map<String, BaseTable> tables,
+                                       @NotNull ResourceGuard ResourceGuard,
+                                       @Nonnull LinkedHashMap<String, StorageManager.InMemoryKvStateInfo> kvStateInformation,
+                                       @Nonnull KeyGroupRange keyGroupRange) {
+        super(DESCRIPTION, tables, ResourceGuard, kvStateInformation, keyGroupRange);
     }
-
-    @Override
-    public void notifyCheckpointComplete(long checkpointId) throws Exception {
-
-    }
-
 
     @Override
     public FullSnapshotResources syncPrepareResources(long checkpointId) throws Exception {
-        return RocksDBFullSnapshotResources.create(kvStateInformation,db,rocksDBResourceGuard,keyGroupRange);
+        return InMemoryFullSnapshotResources.create(kvStateInformation,tables, resourceGuard,keyGroupRange);
     }
 
     @Override
@@ -52,7 +46,7 @@ public class RocksFullSnapshotStrategy extends RocksDBSnapshotStrategyBase<FullS
                                                 @NotNull CheckpointOptions checkpointOptions) throws IOException {
         if (snapshotResources.getMetaInfoSnapshots().isEmpty()){
             if(LOG.isDebugEnabled()){
-                LOG.debug("Asynchronous RocksDB snapshot performed on empty keyed state at {}. Returning null",timestamp);
+                LOG.debug("In_memory snapshot performed on empty keyed state at {}. Returning null",timestamp);
             }
             return registy-> SnapshotResult.empty();
         }
@@ -62,12 +56,18 @@ public class RocksFullSnapshotStrategy extends RocksDBSnapshotStrategyBase<FullS
                         checkpointId, streamFactory, checkpointOptions);
         return new FullSnapshotAsyncWrite(checkpointStreamSupplier,
                 snapshotResources,
-                TransactionalProcessConstants.CheckpointType.RocksDBFullSnapshot);
+                TransactionalProcessConstants.CheckpointType.InMemoryFullSnapshot);
     }
     private SupplierWithException<CheckpointStreamWithResultProvider,Exception>
     createCheckpointStreamSupplier(long checkpointId,
                                    CheckpointStreamFactory primaryStreamFactory,
                                    CheckpointOptions checkpointOptions) throws IOException {
-       return ()->CheckpointStreamWithResultProvider.createSimpleStream(primaryStreamFactory);
+        return ()->CheckpointStreamWithResultProvider.createSimpleStream(primaryStreamFactory);
     }
+
+    @Override
+    public void notifyCheckpointComplete(long checkpointId) throws Exception {
+
+    }
+
 }

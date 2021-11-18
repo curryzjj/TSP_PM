@@ -209,5 +209,9 @@ public class FsCheckpointStreamFactory implements CheckpointStreamFactory{
             throw new IOException(
                     "Could not open output stream for state backend", latestException);
         }
+
+        public Path getStatePath() {
+            return statePath;
+        }
     }
 }

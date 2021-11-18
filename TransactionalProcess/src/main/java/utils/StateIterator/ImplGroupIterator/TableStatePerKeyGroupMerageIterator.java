@@ -1,39 +1,28 @@
-package utils.StateIterator;
+package utils.StateIterator.ImplGroupIterator;
 
 import System.util.IOUtil;
-import System.util.Preconditions;
-import org.rocksdb.ReadOptions;
 import scala.Tuple2;
 import utils.CloseableRegistry.CloseableRegistry;
+import utils.StateIterator.ImplSingleStateIterator.TableSingleStateIterator;
+import utils.StateIterator.InMemoryTableIteratorWrapper;
+import utils.StateIterator.RocksDBStateIterator;
+import utils.StateIterator.SingleStateIterator;
+import utils.StateIterator.TableStateIterator;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.PriorityQueue;
 
-public class RocksStatesPerKeyGroupMerageIterator implements KeyValueStateIterator{
+public class TableStatePerKeyGroupMerageIterator implements TableStateIterator {
     private final CloseableRegistry closeableRegistry;
     private final List<SingleStateIterator> heap;
-    private final int keyGroupPrefixByteCount;
-    private boolean newKeyGroup;
     private boolean newKVState;
     private boolean valid;
     public SingleStateIterator currentSubIterator;
     private int iteratorFlag=0;
 
-    public RocksStatesPerKeyGroupMerageIterator(
-            final CloseableRegistry closeableRegistry,
-            List<Tuple2<RocksIteratorWrapper, Integer>> kvStateIterators,
-            final int keyGroupPrefixByteCount)
-            throws IOException {
-        Preconditions.checkNotNull(closeableRegistry);
-        Preconditions.checkNotNull(kvStateIterators);
-        Preconditions.checkArgument(keyGroupPrefixByteCount >= 1);
-
+    public TableStatePerKeyGroupMerageIterator(CloseableRegistry closeableRegistry,List<Tuple2<InMemoryTableIteratorWrapper, Integer>> kvStateIterators) throws IOException {
         this.closeableRegistry = closeableRegistry;
-        this.keyGroupPrefixByteCount = keyGroupPrefixByteCount;
-
         if (kvStateIterators.size() > 0) {
             this.heap = buildIteratorHeap(kvStateIterators);
             this.valid = !heap.isEmpty();
@@ -47,36 +36,30 @@ public class RocksStatesPerKeyGroupMerageIterator implements KeyValueStateIterat
         this.newKVState = true;
     }
     private List<SingleStateIterator> buildIteratorHeap(
-            List<Tuple2<RocksIteratorWrapper, Integer>> kvStateIterators)
+            List<Tuple2<InMemoryTableIteratorWrapper, Integer>> kvStateIterators)
             throws IOException{
 
 
         List<SingleStateIterator> iteratorPriorityQueue =
                 new ArrayList<>();
 
-        for (Tuple2<RocksIteratorWrapper, Integer> rocksIteratorWithKVStateId : kvStateIterators) {
-            final RocksIteratorWrapper rocksIterator = rocksIteratorWithKVStateId._1;
-            rocksIterator.seekToFirst();
-            if (rocksIterator.isValid()) {
-                RocksSingleStateIterator wrappingIterator =
-                        new RocksSingleStateIterator(rocksIterator, rocksIteratorWithKVStateId._2);
+        for (Tuple2<InMemoryTableIteratorWrapper, Integer> tableIteratorWithKVStateId : kvStateIterators) {
+            final InMemoryTableIteratorWrapper inMemoryTableIterator = tableIteratorWithKVStateId._1;
+            if (inMemoryTableIterator.isValid()) {
+                TableSingleStateIterator wrappingIterator=new TableSingleStateIterator(inMemoryTableIterator,tableIteratorWithKVStateId._2);
                 iteratorPriorityQueue.add(wrappingIterator);
                 closeableRegistry.registerCloseable(wrappingIterator);
-                closeableRegistry.unregisterCloseable(rocksIterator);
+                closeableRegistry.unregisterCloseable(inMemoryTableIterator);
             } else {
-                if (closeableRegistry.unregisterCloseable(rocksIterator)) {
-                    IOUtil.closeQuietly(rocksIterator);
+                if (closeableRegistry.unregisterCloseable(inMemoryTableIterator)) {
+                    IOUtil.closeQuietly(inMemoryTableIterator);
                 }
             }
         }
         return iteratorPriorityQueue;
     }
     @Override
-    public void next() throws IOException {
-        newKVState =false;
-        currentSubIterator.next();
-    }
-    public void switchIterator(){
+    public void switchIterator() {
         iteratorFlag++;
         if(iteratorFlag<heap.size()){
             currentSubIterator=heap.get(iteratorFlag);
@@ -87,17 +70,13 @@ public class RocksStatesPerKeyGroupMerageIterator implements KeyValueStateIterat
     }
 
     @Override
-    public int keyGroup() {
-        return 0;
-    }
-
-    @Override
-    public byte[] key() {
+    public byte[] nextkey() {
+        this.newKVState=false;
         return currentSubIterator.key();
     }
 
     @Override
-    public byte[] value() {
+    public byte[] nextvalue() {
         return currentSubIterator.value();
     }
 
@@ -106,29 +85,24 @@ public class RocksStatesPerKeyGroupMerageIterator implements KeyValueStateIterat
         return currentSubIterator.getKvStateId();
     }
 
-
     @Override
     public boolean isNewKeyValueState() {
         return newKVState;
     }
 
     @Override
-    public boolean isNewKeyGroup() {
-        return newKeyGroup;
-    }
-
-    @Override
     public boolean isValid() {
         return valid;
     }
+
     @Override
     public boolean isIteratorValid() {
-        return this.currentSubIterator.isValid();
+        return this.currentSubIterator.hasNext();
     }
+
     @Override
     public void close() {
         IOUtil.closeQuietly(closeableRegistry);
-
         if (heap != null) {
             heap.clear();
         }

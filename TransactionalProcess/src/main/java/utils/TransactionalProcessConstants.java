@@ -9,7 +9,7 @@ public class TransactionalProcessConstants {
         BOOL, INT, LONG, TimestampType, FLOAT, STRING, OTHERS
     }
     public enum CheckpointType{
-        FullSnapshot
+        RocksDBFullSnapshot,InMemoryFullSnapshot
     }
     /** Determines how the write-part if snapshot should be executed. */
     public enum SnapshotExecutionType{

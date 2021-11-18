@@ -123,11 +123,6 @@ public class boltThread extends executorThread{
                 );
             }
             binding_finished=true;
-            if (enable_shared_state){
-                if(!this.executor.isLeafNode()){
-                    bolt.loadDB(conf,context,collector);
-                }
-            }
             latch.countDown();//tells others I'm ready
             try {
                 latch.await();

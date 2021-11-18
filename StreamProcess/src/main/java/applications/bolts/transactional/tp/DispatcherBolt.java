@@ -41,7 +41,6 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
             String[] token = raw.split(" ");
             Long time = Long.parseLong(token[0]);
             Integer vid = Integer.parseInt(token[1]);
-            assert (time.longValue() == Short.parseShort(token[0]));
             this.collector.emit_single(POSITION_REPORTS_STREAM_ID,bid,new PositionReport(
                     time,
                     vid,

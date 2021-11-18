@@ -35,6 +35,7 @@ public class RocksDBTest {
             }
             value = db.get(columnFamilyHandle1,"hello".getBytes());
         }
+        System.out.println(new String(value));
        // RocksIterator rocksIterator=db.newIterator(columnFamilyHandle);
         final RocksIteratorWrapper iterator =new RocksIteratorWrapper(db.newIterator(columnFamilyHandle));
         final RocksIteratorWrapper iterator1 =new RocksIteratorWrapper(db.newIterator(columnFamilyHandle1));

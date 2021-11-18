@@ -109,6 +109,6 @@ public abstract class baseRunner {
         config.put("runtimeInSeconds", runtimeInSeconds);
         config.put("DataBase",DataBase);
         config.put("Sequential_Binding",true);
-        config.put("DBOptions",1);
+        config.put("DBOptions",0);
     }
 }

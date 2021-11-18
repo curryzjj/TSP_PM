@@ -1,10 +1,12 @@
-package utils.StateIterator;
+package utils.StateIterator.ImplSingleStateIterator;
 
 import System.util.IOUtil;
+import utils.StateIterator.RocksIteratorWrapper;
+import utils.StateIterator.SingleStateIterator;
 
 import javax.annotation.Nonnull;
 
-public class RocksSingleStateIterator implements SingleStateIterator{
+public class RocksSingleStateIterator implements SingleStateIterator {
     /**
      * @param iterator underlying {@link RocksIteratorWrapper}
      * @param kvStateId Id of the K/V state to which this iterator belongs.
@@ -50,5 +52,10 @@ public class RocksSingleStateIterator implements SingleStateIterator{
     @Override
     public void close() {
         IOUtil.closeQuietly(iterator);
+    }
+
+    @Override
+    public boolean hasNext() {
+        return false;
     }
 }

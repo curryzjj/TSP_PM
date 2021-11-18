@@ -2,7 +2,6 @@ package engine.shapshot;
 
 import System.FileSystem.DataIO.DataOutputView;
 import System.FileSystem.DataIO.DataOutputViewStreamWrapper;
-import System.util.IOUtil;
 import engine.Meta.StateMetaInfoSnapshotReadersWriters;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.CheckpointStreamWithResultProvider;
@@ -10,7 +9,8 @@ import engine.shapshot.ShapshotResources.FullSnapshotResources;
 import engine.table.datatype.serialize.Serialize;
 import engine.table.keyGroup.KeyGroupRangeOffsets;
 import utils.CloseableRegistry.CloseableRegistry;
-import utils.StateIterator.KeyValueStateIterator;
+import utils.StateIterator.ImplGroupIterator.TableStatePerKeyGroupMerageIterator;
+import utils.StateIterator.RocksDBStateIterator;
 import utils.SupplierWithException;
 import utils.TransactionalProcessConstants.CheckpointType;
 
@@ -43,7 +43,8 @@ public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSu
         snapshotCloseableRegistry.registerCloseable(checkpointStreamWithResultProvider);
         writeSnapshotToOutputStream(checkpointStreamWithResultProvider, keyGroupRangeOffsets);
         if (snapshotCloseableRegistry.unregisterCloseable(checkpointStreamWithResultProvider)) {
-         return new SnapshotResult();
+         return CheckpointStreamWithResultProvider.createSnapshotResult(checkpointStreamWithResultProvider.closeAndFinalizeCheckpointStreamResult(),
+                 keyGroupRangeOffsets);
         } else {
             throw new IOException("Stream is already unregistered/closed.");
         }
@@ -54,21 +55,60 @@ public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSu
                 new DataOutputViewStreamWrapper(
                         checkpointStreamWithResultProvider.getCheckpointOutputStream());
         writeKVStateMetaData(outputView);
-        try(KeyValueStateIterator keyValueStateIterator=snapshotResources.createKVStateIterator()){
-            writeKVStateData(keyValueStateIterator,checkpointStreamWithResultProvider,keyGroupRangeOffsets);
+        switch(checkpointType){
+            case RocksDBFullSnapshot:
+                try(RocksDBStateIterator keyValueStateIterator= (RocksDBStateIterator) snapshotResources.createKVStateIterator()){
+                    writeRocksDBKVStateData(keyValueStateIterator,checkpointStreamWithResultProvider,keyGroupRangeOffsets);
+                }
+                break;
+            case InMemoryFullSnapshot:
+                try(TableStatePerKeyGroupMerageIterator keyValueStateIterator= (TableStatePerKeyGroupMerageIterator) snapshotResources.createKVStateIterator()){
+                    writeTableKVStateData(keyValueStateIterator,checkpointStreamWithResultProvider,keyGroupRangeOffsets);
+                }
+                break;
+        }
+
+    }
+
+    private void writeTableKVStateData(TableStatePerKeyGroupMerageIterator mergeIterator,
+                                       CheckpointStreamWithResultProvider checkpointStreamWithResultProvider,
+                                       KeyGroupRangeOffsets keyGroupRangeOffsets) throws IOException {
+        DataOutputView kgOutView = null;
+        OutputStream kgOutStream = null;
+        CheckpointStreamFactory.CheckpointStateOutputStream checkpointOutputStream =
+                checkpointStreamWithResultProvider.getCheckpointOutputStream();
+        kgOutStream =checkpointOutputStream;
+        kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
+        try{
+            while(mergeIterator.isValid()){
+                if(mergeIterator.isNewKeyValueState()){
+                    kgOutStream =checkpointOutputStream;
+                    kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
+                    kgOutView.writeShort(mergeIterator.kvStateId());
+                    keyGroupRangeOffsets.setKeyGroupOffset(
+                            mergeIterator.kvStateId(), checkpointOutputStream.getPos());
+                }
+                writeKeyValuePair(mergeIterator.nextkey(),mergeIterator.nextvalue(),kgOutView);
+                if(!mergeIterator.isIteratorValid()){
+                    kgOutView.writeShort(END_OF_KEY_GROUP_MARK);
+                    mergeIterator.switchIterator();
+                }
+            }
+        }finally {
+            // this will just close the outer stream
+            //IOUtil.closeQuietly(kgOutStream);
         }
     }
+
     private void writeKVStateMetaData(DataOutputView outputView) throws IOException {
         outputView.writeShort(snapshotResources.getMetaInfoSnapshots().size());
         for (StateMetaInfoSnapshot metaInfoSnapshot : snapshotResources.getMetaInfoSnapshots()) {
             StateMetaInfoSnapshotReadersWriters.getWriter().writeStateMetaInfoSnapshot(metaInfoSnapshot,outputView);
         }
     }
-    private void writeKVStateData(final KeyValueStateIterator mergeIterator,
-                                  final CheckpointStreamWithResultProvider checkpointStreamWithResultProvider,
-                                  KeyGroupRangeOffsets keyGroupRangeOffsets) throws IOException, InterruptedException {
-        byte[] previousKey = null;
-        byte[] previousValue = null;
+    private void writeRocksDBKVStateData(final RocksDBStateIterator mergeIterator,
+                                         final CheckpointStreamWithResultProvider checkpointStreamWithResultProvider,
+                                         KeyGroupRangeOffsets keyGroupRangeOffsets) throws IOException, InterruptedException {
         DataOutputView kgOutView = null;
         OutputStream kgOutStream = null;
         CheckpointStreamFactory.CheckpointStateOutputStream checkpointOutputStream =

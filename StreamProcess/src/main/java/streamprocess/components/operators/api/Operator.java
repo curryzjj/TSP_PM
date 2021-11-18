@@ -202,7 +202,7 @@ public abstract class Operator implements Serializable{
         base_initialize(context.getThisTaskId()-context.getThisComponent().getExecutorList().get(0).getExecutorID(),context.getThisTaskId(),
                 context.getGraph());
     }
-    public void loadDB(Configuration conf, TopologyContext context, OutputCollector collector){
+    public void loadDB(TopologyContext context){
         loadDB(context.getThisTaskId() - context.getThisComponent().getExecutorList().get(0).getExecutorID(), context.getThisTaskId(), context.getGraph());
     }
     public void loadDB(int thread_Id, int thisTaskId, ExecutionGraph graph){

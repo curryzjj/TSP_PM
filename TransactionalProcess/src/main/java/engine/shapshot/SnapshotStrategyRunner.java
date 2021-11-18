@@ -67,7 +67,8 @@ public final class SnapshotStrategyRunner<SR extends SnapshotResources> {
                     }
                     @Override
                     protected void logAsyncSnapshotComplete(long startTime) {
-
+                        long duration = (System.currentTimeMillis() - startTime);
+                        LOG.info(description+" duration = "+duration+" ms");
                     }
                 }.toAsyncSnapshotFutureTask(cancelStreamRegistry);
         if (executionType == SYNCHRONOUS) {

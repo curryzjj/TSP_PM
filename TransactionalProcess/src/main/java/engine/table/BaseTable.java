@@ -6,6 +6,8 @@ import engine.table.tableRecords.TableRecord;
 import engine.table.tableRecords.TableRecords;
 
 import java.io.Closeable;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class BaseTable implements ITable {
@@ -18,10 +20,11 @@ public abstract class BaseTable implements ITable {
         secondary_count_=0;
     }
     public abstract boolean InsertRecord(TableRecord record) throws DatabaseException;
-
     /**
      * Delete all records in the table.
      */
     public abstract void clean();
-
+    public abstract Iterator<String> keyIterator();
+    public abstract int keySize();
+    public abstract Set getKey();
 }
