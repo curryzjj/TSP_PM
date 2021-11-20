@@ -56,7 +56,9 @@ public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullS
                         checkpointId, streamFactory, checkpointOptions);
         return new FullSnapshotAsyncWrite(checkpointStreamSupplier,
                 snapshotResources,
-                TransactionalProcessConstants.CheckpointType.InMemoryFullSnapshot);
+                TransactionalProcessConstants.CheckpointType.InMemoryFullSnapshot,
+                timestamp,
+                checkpointId);
     }
     private SupplierWithException<CheckpointStreamWithResultProvider,Exception>
     createCheckpointStreamSupplier(long checkpointId,

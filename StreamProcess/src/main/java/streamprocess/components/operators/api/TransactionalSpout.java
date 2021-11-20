@@ -64,7 +64,7 @@ public abstract class TransactionalSpout extends AbstractSpout implements Checkp
 
     @Override
     public void forward_checkpoint_single(int sourceTask, String streamId, long bid, Marker marker) throws InterruptedException {
-        if (clock.tick(myiteration) && success&&this.getContext().getCM().registerSnapshot(bid)) {//emit marker tuple
+        if (clock.tick(myiteration) && success&&this.getContext().getCM().spoutRegisterSnapshot(bid)) {//emit marker tuple
             collector.create_marker_single(boardcast_time, streamId, bid, myiteration);
             boardcast_time = System.nanoTime();
             myiteration++;
@@ -76,7 +76,7 @@ public abstract class TransactionalSpout extends AbstractSpout implements Checkp
     }
     @Override
     public void forward_checkpoint(int sourceTask, String streamId, long bid, Marker marker,String msg) throws InterruptedException {
-        if (clock.tick(myiteration) && success&&this.getContext().getCM().registerSnapshot(bid)) {//emit marker tuple
+        if (clock.tick(myiteration) && success&&this.getContext().getCM().spoutRegisterSnapshot(bid)) {//emit marker tuple
             LOG.info(executor.getOP_full() + " emit marker of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + bid);
             collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration,msg);
             boardcast_time = System.nanoTime();

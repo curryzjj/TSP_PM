@@ -59,13 +59,12 @@ public class RocksDBDatabase extends Database {
     }
 
     @Override
-    public SnapshotResult snapshot(final long checkpointId, final long timestamp) throws Exception {
+    public RunnableFuture<SnapshotResult> snapshot(final long checkpointId, final long timestamp) throws Exception {
         CheckpointStreamFactory streamFactory=new FsCheckpointStreamFactory(16,
                 16,
                 snapshotPath,
                 fs);
         RunnableFuture<SnapshotResult> snapshot = storageManager.snapshot(checkpointId,timestamp,streamFactory,checkpointOptions);
-        SnapshotResult snapshotResult1=snapshot.get();
-        return snapshotResult1;
+        return snapshot;
     }
 }

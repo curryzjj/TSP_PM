@@ -61,15 +61,12 @@ public class InMemeoryDatabase extends Database {
     }
 
     @Override
-    public SnapshotResult snapshot(final long checkpointId, final long timestamp) throws Exception {
+    public RunnableFuture<SnapshotResult> snapshot(final long checkpointId, final long timestamp) throws Exception {
         CheckpointStreamFactory streamFactory=new FsCheckpointStreamFactory(16,
                 16,
                 snapshotPath,
                 fs);
         RunnableFuture<SnapshotResult> snapshot = storageManager.snapshot(checkpointId,timestamp,streamFactory,checkpointOptions);
-        Thread asyncSnapshotThread=new Thread(snapshot);
-        asyncSnapshotThread.run();
-        SnapshotResult snapshotResult=snapshot.get();
-        return snapshotResult;
+        return snapshot;
     }
 }

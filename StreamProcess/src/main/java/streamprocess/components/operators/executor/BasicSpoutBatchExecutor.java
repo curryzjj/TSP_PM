@@ -88,6 +88,10 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
     }
 
     @Override
+    public void ackCheckpointCommit() {
+    }
+
+    @Override
     public void cleanup() {
 
     }

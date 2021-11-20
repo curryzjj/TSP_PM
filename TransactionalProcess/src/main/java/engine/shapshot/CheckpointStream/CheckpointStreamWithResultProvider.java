@@ -55,7 +55,7 @@ public interface CheckpointStreamWithResultProvider extends Closeable {
      * @param keyGroupRangeOffsets
      * @return
      */
-    static SnapshotResult createSnapshotResult(Path snapshotPath, KeyGroupRangeOffsets keyGroupRangeOffsets){
-        return new SnapshotResult(snapshotPath,keyGroupRangeOffsets);
+    static SnapshotResult createSnapshotResult(Path snapshotPath, KeyGroupRangeOffsets keyGroupRangeOffsets,long timestamp,long checkpointId){
+        return new SnapshotResult(snapshotPath,keyGroupRangeOffsets,timestamp,checkpointId);
     }
 }

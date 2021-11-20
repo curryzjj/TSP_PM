@@ -98,6 +98,11 @@ public abstract class BoltExecutor implements IExecutor {
     }
 
     @Override
+    public void ackCheckpointCommit() {
+        this.op.checkpointCommit=true;
+    }
+
+    @Override
     public int getStage() {
         return op.getFid();
     }

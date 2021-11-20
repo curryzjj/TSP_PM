@@ -134,7 +134,7 @@ public class StorageManager extends AbstractStorageManager {
         return new SnapshotStrategyRunner<>(
                 checkpointSnapshotStrategy.getDescription(),
                 checkpointSnapshotStrategy,
-                ASYNCHRONOUS,
+                SYNCHRONOUS,
                 cancelStreamRegistry
         ).snapshot(checkpointId, timestamp, streamFactory, checkpointOptions);
     }

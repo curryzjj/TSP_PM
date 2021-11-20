@@ -245,4 +245,7 @@ public class ExecutionNode implements Serializable {
     public void clean_status(Marker marker) {
         op.clean_status(marker);
     }
+    public void ackCheckpointCommit(){
+        op.ackCheckpointCommit();
+    }
 }

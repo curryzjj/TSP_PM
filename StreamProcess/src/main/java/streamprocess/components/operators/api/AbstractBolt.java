@@ -9,6 +9,7 @@ import streamprocess.execution.runtime.tuple.Tuple;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractBolt extends Operator {
 
@@ -23,7 +24,7 @@ public abstract class AbstractBolt extends Operator {
                            Map<String, Double> output_selectivity, boolean byP, double event_frequency, double w) {
         super(log, input_selectivity, output_selectivity, 1, 1, byP, event_frequency, w);
     }
-    public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException;//shoud be the DatabaseException
+    public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException;//shoud be the DatabaseException
     public void execute(JumboTuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {}
 
     @Override

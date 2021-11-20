@@ -3,6 +3,7 @@ package applications.bolts.transactional.tp;
 import applications.DataTypes.PositionReport;
 import applications.events.lr.LREvent;
 import engine.Exception.DatabaseException;
+import engine.shapshot.SnapshotResult;
 import engine.transaction.TxnContext;
 import engine.transaction.function.AVG;
 import engine.transaction.function.CNT;
@@ -16,8 +17,8 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.concurrent.BrokenBarrierException;
-
-import static UserApplications.CONTROL.combo_bid_size;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RunnableFuture;
 
 public class TPBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream.class);
@@ -26,6 +27,7 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
         super(LOG,fid);
         this.configPrefix="tptxn";
         status=new Status();
+        this.setStateful();
     }
     @Override
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
@@ -50,9 +52,11 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
         LREvents.add(event);
     }
     @Override
-    protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException {
+    protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         transactionManager.start_evaluate(thread_Id,this.fid);
+        this.AsyncSnapshot();
         REQUEST_REQUEST_CORE();
+        this.SyncCommitLog();
         REQUEST_POST();
         LREvents.clear();//clear stored events.
         BUFFER_PROCESS();

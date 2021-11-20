@@ -13,6 +13,7 @@ import streamprocess.execution.ExecutionManager;
 import streamprocess.execution.ExecutionPlan;
 import streamprocess.faulttolerance.checkpoint.CheckpointManager;
 
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 import static UserApplications.CONTROL.enable_checkpoint;
@@ -48,7 +49,7 @@ public class OptimizationManager extends Thread {
     public ExecutionManager getEM(){
         return EM;
     }
-    public ExecutionPlan launch(Topology topology, Platform p, Database db) throws UnhandledCaseException {
+    public ExecutionPlan launch(Topology topology, Platform p, Database db) throws UnhandledCaseException, IOException {
         this.topology=topology;
         final String initial_locks= AffinityLock.dumpLocks();
         boolean nav = conf.getBoolean("NAV", true);
@@ -59,7 +60,7 @@ public class OptimizationManager extends Thread {
         EM=new ExecutionManager(g,conf,this,db,p);
         latch = new CountDownLatch(g.getExecutionNodeArrayList().size() + 1 - 1);//+1:OM -1:virtual
         if(enable_checkpoint){
-           CM=new CheckpointManager();
+           CM=new CheckpointManager(g,conf,db);
         }
         if(nav){
             LOG.info("Native execution");
@@ -79,11 +80,12 @@ public class OptimizationManager extends Thread {
             latch.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }finally {
+            /**
+             * TODO:profile code
+             * TODO:optimize code
+             */
+            LOG.info("Optimization manager exists");
         }
-        /**
-         * TODO:profile code
-         * TODO:optimize code
-         */
-        LOG.info("Optimization manager exists");
     }
 }

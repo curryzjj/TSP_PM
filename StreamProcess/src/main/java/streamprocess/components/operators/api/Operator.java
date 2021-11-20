@@ -60,6 +60,10 @@ public abstract class Operator implements Serializable{
 //    public transient TxnContext[] txn_context = new TxnContext[combo_bid_size];
     public transient Database db;//this is only used if the bolt is transactional bolt. DB is shared by all operators.
     public CheckpointManager CM;
+    protected long checkpointId;
+    protected boolean needcheckpoint;
+    public boolean checkpointCommit;
+    protected Object lock;
     //    public transient TxnContext txn_context;
     public boolean forceStop;
     public int fid = -1;//if fid is -1 it means it does not participate transactional process
@@ -243,6 +247,7 @@ public abstract class Operator implements Serializable{
             }
         }
         db=getContext().getDb();
+        CM= context.getCM();
         initialize(thread_Id,thisTaskId,graph);
     }
     /**

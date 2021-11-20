@@ -94,6 +94,11 @@ public class VirtualExecutor implements IExecutor{
 
     }
 
+    @Override
+    public void ackCheckpointCommit() {
+
+    }
+
 
     @Override
     public int getStage() {

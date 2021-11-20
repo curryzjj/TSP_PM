@@ -33,6 +33,7 @@ public interface IExecutor extends Serializable {
     //void configureWriter(Writer writer);
     //void configureLocker(OrderLock lock, OrderValidate orderValidate);
     void clean_status(Marker marker);
+    void ackCheckpointCommit();
     int getStage();
     void earlier_clean_state(Marker marker);
     boolean IsStateful();

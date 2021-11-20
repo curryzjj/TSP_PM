@@ -2,6 +2,7 @@ package streamprocess.components.operators.api;
 
 import System.util.OsUtils;
 import engine.Exception.DatabaseException;
+import engine.shapshot.SnapshotResult;
 import engine.transaction.TxnContext;
 import engine.transaction.TxnManager;
 import org.slf4j.Logger;
@@ -19,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RunnableFuture;
 
 import static UserApplications.CONTROL.combo_bid_size;
 
@@ -81,7 +84,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
         return false;
     }
     @Override
-    public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException;
+    public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException;
     protected void TXN_PROCESS(long _bid) throws DatabaseException, InterruptedException{};
     protected void PRE_EXECUTE(Tuple in){
         bufferedTuple.add(in);
@@ -117,5 +120,22 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
         PRE_EXECUTE(in);
         TXN_PROCESS(_bid);
         POST_PROCESS(_bid,timestamp,combo_bid_size);
+    }
+    protected void AsyncSnapshot(){
+        this.lock=this.CM.getLock();
+        synchronized (lock){
+            this.CM.boltRegisterSnapshot(this.executor.getExecutorID());
+            lock.notifyAll();
+        }
+    }
+    protected void SyncCommitLog() throws InterruptedException {
+        synchronized (lock){
+            while(!checkpointCommit){
+                //wait for snapshot to commit
+                LOG.info("Wait for the snapshot to commit");
+                lock.wait();
+            }
+            this.checkpointCommit=false;
+        }
     }
 }

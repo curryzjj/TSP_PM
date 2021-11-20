@@ -29,7 +29,7 @@ public class  AppRunner extends baseRunner {
         driver.addApp("WordCount", WordCount.class);
         driver.addApp("TP_txn", TP_txn.class);
     }
-    private void run() throws UnhandledCaseException, InterruptedException {
+    private void run() throws UnhandledCaseException, InterruptedException, IOException {
         //Get the running environment
         if(OsUtils.isMac()){
             LOG.info("Running on the mac");
@@ -62,7 +62,7 @@ public class  AppRunner extends baseRunner {
         //Run the topology
         double rt=runTopologyLocally(topology,config);
     }
-    private static double runTopologyLocally(Topology topology,Configuration conf) throws UnhandledCaseException, InterruptedException {
+    private static double runTopologyLocally(Topology topology,Configuration conf) throws UnhandledCaseException, InterruptedException, IOException {
         TopologySubmitter submitter=new TopologySubmitter();
         final_topology=submitter.submitTopology(topology,conf);
         executorThread spoutThread = submitter.getOM().getEM().getSpoutThread();
@@ -76,16 +76,16 @@ public class  AppRunner extends baseRunner {
         //TODO:implement the wait after the shapshot
         Thread.sleep((long) (3 * 1E3 * 1));
         submitter.getOM().join();
-        submitter.getOM().getEM().exist();
         try {
             final_topology.db.close();
+            submitter.getOM().getEM().closeCM();
             submitter.getOM().getEM().exit();
         } catch (IOException e) {
             e.printStackTrace();
         }
         return 0;
     }
-    public static void main(String[] args) throws UnhandledCaseException, InterruptedException {
+    public static void main(String[] args) throws UnhandledCaseException, InterruptedException, IOException {
         AppRunner runner=new AppRunner();
         runner.run();
     }

@@ -62,7 +62,9 @@ public class RocksFullSnapshotStrategy extends RocksDBSnapshotStrategyBase<FullS
                         checkpointId, streamFactory, checkpointOptions);
         return new FullSnapshotAsyncWrite(checkpointStreamSupplier,
                 snapshotResources,
-                TransactionalProcessConstants.CheckpointType.RocksDBFullSnapshot);
+                TransactionalProcessConstants.CheckpointType.RocksDBFullSnapshot,
+                timestamp,
+                checkpointId);
     }
     private SupplierWithException<CheckpointStreamWithResultProvider,Exception>
     createCheckpointStreamSupplier(long checkpointId,

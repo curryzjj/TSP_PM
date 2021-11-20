@@ -17,7 +17,7 @@ public class LocalDataOutputStream extends FSDataOutputStream {
      * @throws IOException thrown if the data output stream cannot be created
      */
     public LocalDataOutputStream(final File file) throws IOException {
-        this.fos = new FileOutputStream(file);
+        this.fos = new FileOutputStream(file,true);
     }
 
     @Override

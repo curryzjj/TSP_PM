@@ -23,7 +23,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import static System.constants.BaseConstants.BaseStream.*;
-import static UserApplications.CONTROL.enable_checkpoint;
 import static UserApplications.CONTROL.enable_shared_state;
 
 public class ExecutionManager {
@@ -31,6 +30,8 @@ public class ExecutionManager {
     private final static long migration_gaps = 10000;
     public static Clock clock = null;//used in the shapshot
     TxnProcessingEngine tp_engine;
+    CheckpointManager CM;
+    private static Thread checkpointManagerThread;
     public final HashMap<Integer, executorThread> ThreadMap = new HashMap<>();
     //public final AffinityController AC;//not sure
     private final OptimizationManager optimizationManager;
@@ -52,13 +53,17 @@ public class ExecutionManager {
      * All executors have to sync_ratio for OM to start, so it's safe to do initialization here. E.g., initialize database.
      */
     public void distributeTasks(Configuration conf, ExecutionPlan plan, CountDownLatch latch, boolean benchmark,
-                                boolean profile, Database db, Platform p,CheckpointManager CM) throws UnhandledCaseException{
+                                boolean profile, Database db, Platform p,CheckpointManager CM) throws UnhandledCaseException, IOException {
         assert plan !=null;
         loadTargetHz =(int) conf.getDouble("targetHz",10000000);
         LOG.info("Finally, targetHZ set to:" + loadTargetHz);
         timeSliceLengthMs = conf.getInt("timeSliceLengthMs");
         g.build_inputSchedule();
         clock = new Clock(conf.getDouble("shapshot", 1));
+        this.CM=CM;
+        CM.initialize();
+        checkpointManagerThread=new Thread(CM);
+        CM.start();
         //TODO:support the FaultTolerance
         if (enable_shared_state){
             HashMap<Integer, List<Integer>> stage_map = new HashMap<>();
@@ -139,6 +144,9 @@ public class ExecutionManager {
         if(clock!=null){
             clock.close();
         }
+        while(checkpointManagerThread.isAlive()){
+            checkpointManagerThread.interrupt();
+        }
         this.getSinkThread().getContext().Sequential_stopAll();
         if(CONTROL.enable_shared_state/*&&tp_engine!=null*/){
             //stop the tp_engine
@@ -149,8 +157,12 @@ public class ExecutionManager {
         return ThreadMap.get(g.getSpoutThread());
     }
 
-    public void exist() {
-        LOG.info("Execution stops.");
-        this.getSinkThread().getContext().Sequential_stopAll();//Only one sink will do the measure_end
+    public void closeCM() {
+        CM.running=false;
+        Object lock=CM.getLock();
+        CM.closeCM();
+        synchronized (lock){
+            lock.notifyAll();
+        }
     }
 }

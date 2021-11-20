@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ExecutionException;
 
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
@@ -37,7 +38,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     }
     //used in the T-Stream_CC
     protected abstract void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException;
-    protected abstract void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException;
+    protected abstract void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
     protected void REQUEST_POST() throws InterruptedException{};//implement in the application
     protected void REQUEST_REQUEST_CORE() throws InterruptedException{};//implement in the application
     protected void execute_ts_normal(Tuple in) throws DatabaseException, InterruptedException {
@@ -50,18 +51,12 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     }
 
     @Override
-    public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException {
+    public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                this.needcheckpoint=true;
+                this.checkpointId=checkpointId;
                 TXN_PROCESS();
-                try {
-                    if(this.thread_Id==0){
-                        SnapshotResult snapshotResult=this.db.snapshot(in.getBID(),10000);
-                        this.getContext().getCM().commitCurrentLog(snapshotResult);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
             }
             final Marker marker = in.getMarker();
             this.collector.ack(in,marker);

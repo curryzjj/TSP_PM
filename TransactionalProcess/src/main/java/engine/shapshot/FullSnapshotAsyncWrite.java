@@ -25,13 +25,19 @@ public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSu
     private final SupplierWithException<CheckpointStreamWithResultProvider,Exception> checkpointStreamSupplier;
     private final FullSnapshotResources snapshotResources;
     private final CheckpointType checkpointType;
+    private final long timestamp;
+    private final long checkpointId;
 
     public FullSnapshotAsyncWrite(SupplierWithException<CheckpointStreamWithResultProvider, Exception> checkpointStreamSupplier,
                                   FullSnapshotResources snapshotResources,
-                                  CheckpointType checkpointType) {
+                                  CheckpointType checkpointType,
+                                  long timestamp,
+                                  long checkpointId) {
         this.checkpointStreamSupplier = checkpointStreamSupplier;
         this.snapshotResources = snapshotResources;
         this.checkpointType = checkpointType;
+        this.timestamp=timestamp;
+        this.checkpointId=checkpointId;
     }
 
     @Override
@@ -44,13 +50,12 @@ public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSu
         writeSnapshotToOutputStream(checkpointStreamWithResultProvider, keyGroupRangeOffsets);
         if (snapshotCloseableRegistry.unregisterCloseable(checkpointStreamWithResultProvider)) {
          return CheckpointStreamWithResultProvider.createSnapshotResult(checkpointStreamWithResultProvider.closeAndFinalizeCheckpointStreamResult(),
-                 keyGroupRangeOffsets);
+                 keyGroupRangeOffsets,timestamp,checkpointId);
         } else {
             throw new IOException("Stream is already unregistered/closed.");
         }
     }
     private void writeSnapshotToOutputStream(CheckpointStreamWithResultProvider checkpointStreamWithResultProvider,KeyGroupRangeOffsets keyGroupRangeOffsets) throws IOException, InterruptedException {
-        //TODO:implement after deciding what to Snapshot
         final DataOutputView outputView =
                 new DataOutputViewStreamWrapper(
                         checkpointStreamWithResultProvider.getCheckpointOutputStream());

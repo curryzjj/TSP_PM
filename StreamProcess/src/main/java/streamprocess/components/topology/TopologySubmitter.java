@@ -10,6 +10,7 @@ import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.affinity.SequentialBinding;
 import streamprocess.optimization.OptimizationManager;
 
+import java.io.IOException;
 import java.util.Collection;
 
 import static UserApplications.CONTROL.enable_shared_state;
@@ -25,7 +26,7 @@ public class TopologySubmitter {
         this.OM = OM;
     }
 
-    public Topology submitTopology(Topology topology, Configuration conf) throws UnhandledCaseException {
+    public Topology submitTopology(Topology topology, Configuration conf) throws UnhandledCaseException, IOException {
         //compile
         ExecutionGraph g=new TopologyCompiler().generateEG(topology,conf);
         g.display_ExecutionNodeList();

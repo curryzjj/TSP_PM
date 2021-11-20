@@ -104,7 +104,6 @@ public class FileTransactionalSpout extends TransactionalSpout {
                 e.printStackTrace();
             }
                 if (taskId == graph.getSpout().getExecutorID()) {
-                    LOG.info("Thread:" + taskId + " is going to stop all threads sequentially");
                     LOG.info("Spout sent marker"+myiteration);
                     context.stop_running();
                 }

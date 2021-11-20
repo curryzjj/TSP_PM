@@ -14,6 +14,7 @@ import engine.table.tableRecords.TableRecord;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
+import java.util.concurrent.RunnableFuture;
 
 public abstract class Database {
     public int numTransactions=0;//current number of activate transactions
@@ -53,5 +54,5 @@ public abstract class Database {
         return recoveryManager;
     }
     public abstract void createKeyGroupRange();
-    public abstract SnapshotResult snapshot(final long checkpointId, final long timestamp) throws Exception;
+    public abstract RunnableFuture<SnapshotResult> snapshot(final long checkpointId, final long timestamp) throws Exception;
 }
