@@ -88,7 +88,7 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
     }
 
     @Override
-    public void ackCheckpointCommit() {
+    public void ackCommit() {
     }
 
     @Override

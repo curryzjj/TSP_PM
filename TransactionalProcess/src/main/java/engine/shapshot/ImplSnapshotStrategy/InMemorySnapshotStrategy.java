@@ -25,7 +25,7 @@ import java.util.Map;
 
 public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullSnapshotResources> {
     private static final Logger LOG= LoggerFactory.getLogger(InMemorySnapshotStrategy.class);
-    private static final String DESCRIPTION="Aynchronous full In-Memory snapshot";
+    private static final String DESCRIPTION="Asynchronous full In-Memory snapshot";
     public InMemorySnapshotStrategy(@Nonnull Map<String, BaseTable> tables,
                                        @NotNull ResourceGuard ResourceGuard,
                                        @Nonnull LinkedHashMap<String, StorageManager.InMemoryKvStateInfo> kvStateInformation,

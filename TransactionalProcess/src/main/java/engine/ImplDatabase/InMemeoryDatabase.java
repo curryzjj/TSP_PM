@@ -6,14 +6,18 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
 import engine.Exception.DatabaseException;
+import engine.log.LogResult;
+import engine.log.LogStream.FsLogStreamFactory;
+import engine.log.LogStream.LogStreamFactory;
+import engine.log.logCommitRunner;
 import engine.shapshot.CheckpointOptions;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.FsCheckpointStreamFactory;
 import engine.shapshot.SnapshotResult;
-import engine.storage.EventManager;
 import engine.storage.ImplStorageManager.StorageManager;
 import engine.table.RecordSchema;
 import engine.table.tableRecords.TableRecord;
+import engine.transaction.TxnProcessingEngine;
 import org.rocksdb.RocksDBException;
 import utils.CloseableRegistry.CloseableRegistry;
 import utils.TransactionalProcessConstants.DataBoxTypes;
@@ -21,20 +25,27 @@ import utils.TransactionalProcessConstants.DataBoxTypes;
 import java.io.IOException;
 import java.util.concurrent.RunnableFuture;
 
+import static utils.TransactionalProcessConstants.CommitLogExecutionType.ASYNCHRONOUS;
+import static utils.TransactionalProcessConstants.CommitLogExecutionType.SYNCHRONOUS;
+
 public class InMemeoryDatabase extends Database {
     public InMemeoryDatabase(Configuration configuration) {
         CloseableRegistry closeableRegistry=new CloseableRegistry();
         storageManager = new StorageManager(closeableRegistry,configuration);
-        eventManager = new EventManager();
         if(OsUtils.isMac()){
             String snapshotPath=configuration.getString("snapshotTestPath");
             this.snapshotPath=new Path(System.getProperty("user.home").concat(snapshotPath));
+            String WalPath=configuration.getString("WALTestPath");
+            this.WalPath=new Path(System.getProperty("user.home").concat(WalPath));
         }else {
             String snapshotPath=configuration.getString("snapshotPath");
             this.snapshotPath=new Path(System.getProperty("user.home").concat(snapshotPath));
+            String WalPath=configuration.getString("WALPath");
+            this.WalPath=new Path(System.getProperty("user.home").concat(WalPath));
         }
         this.fs=new LocalFileSystem();
         this.checkpointOptions=new CheckpointOptions();
+        this.txnProcessingEngine= TxnProcessingEngine.getInstance();
     }
     @Override
     public void createTable(RecordSchema tableSchema, String tableName, DataBoxTypes type) {
@@ -68,5 +79,15 @@ public class InMemeoryDatabase extends Database {
                 fs);
         RunnableFuture<SnapshotResult> snapshot = storageManager.snapshot(checkpointId,timestamp,streamFactory,checkpointOptions);
         return snapshot;
+    }
+
+    @Override
+    public RunnableFuture<LogResult> commitLog(long globalLSN, long timestamp) throws IOException {
+        CloseableRegistry cancelStreamRegistry=new CloseableRegistry();
+        LogStreamFactory logStreamFactory=new FsLogStreamFactory(16,16,WalPath,fs);
+        RunnableFuture<LogResult> commitLog=new logCommitRunner(cancelStreamRegistry,
+                txnProcessingEngine.getWalManager(),SYNCHRONOUS
+        ).commitLog(globalLSN, timestamp, logStreamFactory);
+        return commitLog;
     }
 }

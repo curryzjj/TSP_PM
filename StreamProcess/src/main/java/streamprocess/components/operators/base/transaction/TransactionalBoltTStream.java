@@ -30,7 +30,6 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     @Override
     public void initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
         super.initialize(thread_Id, thisTaskId, graph);
-        //TODO:initialize the transactionManager
         transactionManager=new TxnManagerTStream(db.getStorageManager(),this.context.getThisComponentId(),thread_Id,NUM_SEGMENTS,this.context.getThisComponent().getNumTasks());
     }
     public void loadDB(Map conf, TopologyContext context, OutputCollector collector){

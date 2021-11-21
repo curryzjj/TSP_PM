@@ -9,6 +9,7 @@ import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.threads.executorThread;
 import streamprocess.execution.runtime.tuple.Fields;
 import streamprocess.execution.ExecutionPlan;
+import streamprocess.faulttolerance.FTManager;
 import streamprocess.faulttolerance.checkpoint.CheckpointManager;
 
 import java.util.*;
@@ -26,20 +27,20 @@ public class TopologyContext {
     public static OverHpc HPCMonotor;
     private static ExecutionGraph graph;
     private static Database db;
-    private static CheckpointManager CM;
+    private static FTManager FTM;
     private static HashMap<Integer, executorThread> threadMap;
     private final int _taskId;//executorID
     /**
      * Instead of Store Brisk.topology, we Store Brisk.execution graph directly!
      * This is a global access memory structure,
      */
-    public TopologyContext(ExecutionGraph g, Database db, ExecutionPlan plan, ExecutionNode executor, HashMap<Integer,executorThread> threadMap, OverHpc HPCMonotor,CheckpointManager CM){
+    public TopologyContext(ExecutionGraph g, Database db, ExecutionPlan plan, ExecutionNode executor, HashMap<Integer,executorThread> threadMap, OverHpc HPCMonotor,FTManager FTM){
         TopologyContext.plan=plan;
         TopologyContext.graph=g;
         TopologyContext.db=db;
         TopologyContext.threadMap=threadMap;
         TopologyContext.HPCMonotor=HPCMonotor;
-        TopologyContext.CM=CM;
+        TopologyContext.FTM=FTM;
         this._taskId=executor.getExecutorID();
     }
 
@@ -48,8 +49,8 @@ public class TopologyContext {
     public Database getDb() {
         return db;
     }
-    public CheckpointManager getCM(){
-        return CM;
+    public FTManager getFTM(){
+        return FTM;
     }
     public ExecutionGraph getGraph() {
         return graph;

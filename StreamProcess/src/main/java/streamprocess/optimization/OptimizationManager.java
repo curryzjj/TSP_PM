@@ -11,12 +11,15 @@ import streamprocess.components.topology.Topology;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionManager;
 import streamprocess.execution.ExecutionPlan;
+import streamprocess.faulttolerance.FTManager;
 import streamprocess.faulttolerance.checkpoint.CheckpointManager;
+import streamprocess.faulttolerance.logger.LoggerManager;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
-import static UserApplications.CONTROL.enable_checkpoint;
+import static UserApplications.CONTROL.enable_snapshot;
+import static UserApplications.CONTROL.enable_wal;
 
 public class OptimizationManager extends Thread {
     private final static Logger LOG = LoggerFactory.getLogger(OptimizationManager.class);
@@ -32,7 +35,7 @@ public class OptimizationManager extends Thread {
     //private Optimizer so;
     private ExecutionPlan executionPlan;
     private ExecutionManager EM;
-    private CheckpointManager CM;
+    private FTManager FTM;
     public CountDownLatch latch;
     private long profiling_gaps = 10000;//10 seconds.
     private int profile_start = 0;
@@ -59,14 +62,16 @@ public class OptimizationManager extends Thread {
         boolean parallelism_tune = conf.getBoolean("parallelism_tune", false);
         EM=new ExecutionManager(g,conf,this,db,p);
         latch = new CountDownLatch(g.getExecutionNodeArrayList().size() + 1 - 1);//+1:OM -1:virtual
-        if(enable_checkpoint){
-           CM=new CheckpointManager(g,conf,db);
+        if(enable_snapshot){
+           FTM=new CheckpointManager(g,conf,db);
+        }else if(enable_wal){
+            FTM=new LoggerManager(g,conf,db);
         }
         if(nav){
             LOG.info("Native execution");
             executionPlan=new ExecutionPlan(null,null);
             executionPlan.setProfile();
-            EM.distributeTasks(conf,executionPlan,latch,false,false,db,p,CM);
+            EM.distributeTasks(conf,executionPlan,latch,false,false,db,p,FTM);
         }
         final String dumpLocks = AffinityLock.dumpLocks();
         return executionPlan;

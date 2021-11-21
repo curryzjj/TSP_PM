@@ -8,12 +8,11 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
 import engine.shapshot.SnapshotResult;
-import org.checkerframework.checker.units.qual.C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
-import streamprocess.faulttolerance.logger.LoggerManager;
+import streamprocess.faulttolerance.FTManager;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -21,16 +20,15 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RunnableFuture;
 
 import static streamprocess.faulttolerance.checkpoint.CheckpointConstants.CheckpointStatus.*;
 
-public class CheckpointManager extends Thread {
+public class CheckpointManager extends FTManager {
     private final Logger LOG= LoggerFactory.getLogger(CheckpointManager.class);
     public Status status=null;
     public boolean running=true;
-    private LoggerManager LM;
     private Path Current_Path;
     private FileSystem localFS;
     private File checkpointFile;
@@ -75,23 +73,7 @@ public class CheckpointManager extends Thread {
         dataOutputStream.close();
         localDataOutputStream.close();
     }
-    public boolean commitCurrentLog() throws IOException, InterruptedException {
-        Thread.sleep(2000);
-        LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(checkpointFile);
-        ObjectOutputStream objectOutputStream=new ObjectOutputStream(localDataOutputStream);
-        objectOutputStream.writeObject(snapshotResult);
-        objectOutputStream.close();
-        LOG.info("CheckpointManager commit the checkpoint to the current.log");
-        return true;
-    }
-    public void notifyCheckpointComplete() throws Exception {
-        for(int id:callSnapshot.keySet()){
-            g.getExecutionNode(id).ackCheckpointCommit();
-        }
-        this.callSnapshot_ini();
-        isCommitted.put(currentCheckpointId,true);
-    }
-    public boolean spoutRegisterSnapshot(long checkpointId){
+    public boolean spoutRegister(long checkpointId){
         if(isCommitted.containsValue(false)){
             return false;
         }else {
@@ -101,13 +83,7 @@ public class CheckpointManager extends Thread {
             return true;
         }
     }
-    public Object getLock(){
-        return lock;
-    }
-    public void closeCM(){
-        this.close=true;
-    }
-    public void boltRegisterSnapshot(int executorId){
+    public void boltRegister(int executorId){
         callSnapshot.put(executorId, Register);
         LOG.info("executor("+executorId+")"+" register the checkpoint");
     }
@@ -131,12 +107,34 @@ public class CheckpointManager extends Thread {
                     return;
                 }
                 LOG.info("CheckpointManager received all register and start snapshot");
-                SnapshotResult snapshotResult=this.db.snapshot(this.currentCheckpointId,00000L).get();
+                RunnableFuture<SnapshotResult> snapshotResult =this.db.snapshot(this.currentCheckpointId,00000L);
+                this.snapshotResult=snapshotResult.get();
                 commitCurrentLog();
                 notifyCheckpointComplete();
                 lock.notifyAll();
             }
         }
+    }
+    public boolean commitCurrentLog() throws IOException, InterruptedException {
+        LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(checkpointFile);
+        ObjectOutputStream objectOutputStream=new ObjectOutputStream(localDataOutputStream);
+        objectOutputStream.writeObject(snapshotResult);
+        objectOutputStream.close();
+        LOG.info("CheckpointManager commit the checkpoint to the current.log");
+        return true;
+    }
+    public void notifyCheckpointComplete() throws Exception {
+        for(int id:callSnapshot.keySet()){
+            g.getExecutionNode(id).ackCommit();
+        }
+        this.callSnapshot_ini();
+        isCommitted.put(currentCheckpointId,true);
+    }
+    public Object getLock(){
+        return lock;
+    }
+    public void close(){
+        this.close=true;
     }
     @Override
     public void run() {

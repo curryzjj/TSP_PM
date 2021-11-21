@@ -78,7 +78,7 @@ public class  AppRunner extends baseRunner {
         submitter.getOM().join();
         try {
             final_topology.db.close();
-            submitter.getOM().getEM().closeCM();
+            submitter.getOM().getEM().closeFTM();
             submitter.getOM().getEM().exit();
         } catch (IOException e) {
             e.printStackTrace();

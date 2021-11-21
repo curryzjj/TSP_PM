@@ -14,6 +14,7 @@ import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.runtime.threads.boltThread;
 import streamprocess.execution.runtime.threads.executorThread;
 import streamprocess.execution.runtime.threads.spoutThread;
+import streamprocess.faulttolerance.FTManager;
 import streamprocess.faulttolerance.checkpoint.CheckpointManager;
 import streamprocess.optimization.OptimizationManager;
 
@@ -30,7 +31,7 @@ public class ExecutionManager {
     private final static long migration_gaps = 10000;
     public static Clock clock = null;//used in the shapshot
     TxnProcessingEngine tp_engine;
-    CheckpointManager CM;
+    FTManager FTM;
     private static Thread checkpointManagerThread;
     public final HashMap<Integer, executorThread> ThreadMap = new HashMap<>();
     //public final AffinityController AC;//not sure
@@ -53,17 +54,17 @@ public class ExecutionManager {
      * All executors have to sync_ratio for OM to start, so it's safe to do initialization here. E.g., initialize database.
      */
     public void distributeTasks(Configuration conf, ExecutionPlan plan, CountDownLatch latch, boolean benchmark,
-                                boolean profile, Database db, Platform p,CheckpointManager CM) throws UnhandledCaseException, IOException {
+                                boolean profile, Database db, Platform p, FTManager FTM) throws UnhandledCaseException, IOException {
         assert plan !=null;
         loadTargetHz =(int) conf.getDouble("targetHz",10000000);
         LOG.info("Finally, targetHZ set to:" + loadTargetHz);
         timeSliceLengthMs = conf.getInt("timeSliceLengthMs");
         g.build_inputSchedule();
         clock = new Clock(conf.getDouble("shapshot", 1));
-        this.CM=CM;
-        CM.initialize();
-        checkpointManagerThread=new Thread(CM);
-        CM.start();
+        this.FTM=FTM;
+        FTM.initialize();
+        checkpointManagerThread=new Thread(FTM);
+        FTM.start();
         //TODO:support the FaultTolerance
         if (enable_shared_state){
             HashMap<Integer, List<Integer>> stage_map = new HashMap<>();
@@ -84,10 +85,10 @@ public class ExecutionManager {
         executorThread thread = null;
         for (ExecutionNode e : g.getExecutionNodeArrayList()) {
             switch(e.operator.type){
-                case spoutType:thread=launchSpout_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,CM),conf,plan.toSocket(e.getExecutorID()),latch);
+                case spoutType:thread=launchSpout_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM),conf,plan.toSocket(e.getExecutorID()),latch);
                 break;
                 case boltType:
-                case sinkType:thread=launchBolt_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,CM),conf,plan.toSocket(e.getExecutorID()),latch);
+                case sinkType:thread=launchBolt_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM),conf,plan.toSocket(e.getExecutorID()),latch);
                 break;
                 case virtualType:
                     LOG.info("Won't launch virtual ground");
@@ -157,10 +158,10 @@ public class ExecutionManager {
         return ThreadMap.get(g.getSpoutThread());
     }
 
-    public void closeCM() {
-        CM.running=false;
-        Object lock=CM.getLock();
-        CM.closeCM();
+    public void closeFTM() {
+        FTM.running=false;
+        Object lock=FTM.getLock();
+        FTM.close();
         synchronized (lock){
             lock.notifyAll();
         }

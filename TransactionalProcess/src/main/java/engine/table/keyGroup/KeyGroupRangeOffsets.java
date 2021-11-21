@@ -3,12 +3,13 @@ package engine.table.keyGroup;
 import System.util.Preconditions;
 import scala.Tuple2;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 
-public class KeyGroupRangeOffsets implements Iterable<Tuple2<Integer,Long>>{
-    private static final long serialVersionUID = 6595415219136429696L;
+public class KeyGroupRangeOffsets implements Iterable<Tuple2<Integer,Long>>, Serializable {
 
+    private static final long serialVersionUID = 5742966361754314523L;
     /** the range of key-groups */
     private final KeyGroupRange keyGroupRange;
 

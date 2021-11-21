@@ -13,6 +13,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.faulttolerance.FTManager;
 import streamprocess.faulttolerance.checkpoint.CheckpointManager;
 import streamprocess.faulttolerance.checkpoint.Checkpointable;
 import streamprocess.faulttolerance.checkpoint.Status;
@@ -59,10 +60,10 @@ public abstract class Operator implements Serializable{
 //    public OrderValidate orderValidate;
 //    public transient TxnContext[] txn_context = new TxnContext[combo_bid_size];
     public transient Database db;//this is only used if the bolt is transactional bolt. DB is shared by all operators.
-    public CheckpointManager CM;
+    public FTManager FTM;
     protected long checkpointId;
     protected boolean needcheckpoint;
-    public boolean checkpointCommit;
+    public boolean isCommit;
     protected Object lock;
     //    public transient TxnContext txn_context;
     public boolean forceStop;
@@ -247,7 +248,7 @@ public abstract class Operator implements Serializable{
             }
         }
         db=getContext().getDb();
-        CM= context.getCM();
+        FTM= context.getFTM();
         initialize(thread_Id,thisTaskId,graph);
     }
     /**

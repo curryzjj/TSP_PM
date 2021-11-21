@@ -3,7 +3,6 @@ package applications.bolts.transactional.tp;
 import applications.DataTypes.PositionReport;
 import applications.events.lr.LREvent;
 import engine.Exception.DatabaseException;
-import engine.shapshot.SnapshotResult;
 import engine.transaction.TxnContext;
 import engine.transaction.function.AVG;
 import engine.transaction.function.CNT;
@@ -18,7 +17,6 @@ import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.RunnableFuture;
 
 public class TPBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream.class);
@@ -54,7 +52,7 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
     @Override
     protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         transactionManager.start_evaluate(thread_Id,this.fid);
-        this.AsyncSnapshot();
+        this.AsyncRegister();
         REQUEST_REQUEST_CORE();
         this.SyncCommitLog();
         REQUEST_POST();

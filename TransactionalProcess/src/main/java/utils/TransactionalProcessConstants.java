@@ -16,6 +16,11 @@ public class TransactionalProcessConstants {
         SYNCHRONOUS,
         ASYNCHRONOUS
     }
+    /** Determines how the write-part if commit-log should be executed. */
+    public enum CommitLogExecutionType {
+        SYNCHRONOUS,
+        ASYNCHRONOUS
+    }
     /** Enum that defines the different types of state that live in TSP backends. */
     public enum BackendStateType {
         KEY_VALUE,

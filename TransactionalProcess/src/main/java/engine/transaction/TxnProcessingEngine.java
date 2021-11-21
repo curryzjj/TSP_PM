@@ -1,7 +1,6 @@
 package engine.transaction;
 
-import System.util.OsUtils;
-import engine.storage.ImplStorageManager.StorageManager;
+import engine.log.WALManager;
 import engine.table.datatype.DataBox;
 import engine.table.datatype.DataBoxImpl.DoubleDataBox;
 import engine.table.datatype.DataBoxImpl.IntDataBox;
@@ -9,7 +8,7 @@ import engine.table.tableRecords.SchemaRecord;
 import engine.transaction.common.MyList;
 import engine.transaction.common.Operation;
 import engine.transaction.function.AVG;
-import engine.transaction.log.LogRecord;
+import engine.log.LogRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.SOURCE_CONTROL;
@@ -27,13 +26,13 @@ public class TxnProcessingEngine {
     public static TxnProcessingEngine getInstance() {
         return instance;
     }
-    private StorageManager storageManager;
     //Task_process
     private Integer num_op = -1;
     private Integer first_exe;
     private Integer last_exe;
     private CyclicBarrier barrier;
     private int TOTAL_CORES;
+    private WALManager walManager;
     private ExecutorServiceInstance standalone_engine;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
     //initialize
@@ -42,10 +41,13 @@ public class TxnProcessingEngine {
         num_op=size;
         this.app=app;
         holder_by_stage = new ConcurrentHashMap<>();
+        this.walManager=new WALManager();
         switch(app){
             case "TP_txn":
                 holder_by_stage.put("segment_speed", new Holder_in_range(num_op));
+                this.walManager.setHolder_by_tableName("segment_speed",num_op);
                 holder_by_stage.put("segment_cnt", new Holder_in_range(num_op));
+                this.walManager.setHolder_by_tableName("segment_cnt",num_op);
                 break;
             default:
                 throw new UnsupportedOperationException("app not recognized");
@@ -157,14 +159,16 @@ public class TxnProcessingEngine {
         }
     }
     private void process(MyList<Operation> operation_chain, long mark_ID){
+        if (operation_chain.size()>0){
+            this.walManager.addLogRecord(operation_chain);
+        }
         while (true){
             Operation operation=operation_chain.pollFirst();
             if(operation==null) return;
-            process(operation,mark_ID,true,operation_chain.Log);
+            process(operation,mark_ID,true, operation_chain.getLogRecord());
         }
     }
-    private void process(Operation operation, long mark_id, boolean logged, List<LogRecord> log) {
-        //TODO:after implement the TStreamContent
+    private void process(Operation operation, long mark_id, boolean logged,LogRecord logRecord) {
         switch (operation.accessType){
             case READ_WRITE_READ:
                 assert operation.record_ref!=null;
@@ -191,8 +195,7 @@ public class TxnProcessingEngine {
             default:throw new UnsupportedOperationException();
         }
         if(logged){
-            LogRecord logRecord=new LogRecord(operation.s_record.record_.GetPrimaryKey(),operation.table_name);
-            log.add(logRecord);
+            logRecord.setUpdateTableRecord(operation.s_record);
         }
     }
 
@@ -247,12 +250,7 @@ public class TxnProcessingEngine {
         }
         return task;
     }
-    public void commitLog(int thread_id){
-        for (Holder_in_range holder_in_range:holder_by_stage.values()){
-            Holder holder = holder_in_range.rangeMap.get(thread_id);
-            for (MyList<Operation> operation_chain : holder.holder_v1.values()) {
-                List<LogRecord> logRecords=operation_chain.getLog();
-            }
-        }
+    public WALManager getWalManager() {
+        return walManager;
     }
 }

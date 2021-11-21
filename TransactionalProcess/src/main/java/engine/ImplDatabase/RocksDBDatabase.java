@@ -6,6 +6,7 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
 import engine.Exception.DatabaseException;
+import engine.log.LogResult;
 import engine.shapshot.CheckpointOptions;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.FsCheckpointStreamFactory;
@@ -25,7 +26,6 @@ public class RocksDBDatabase extends Database {
     public RocksDBDatabase(Configuration configuration) {
         CloseableRegistry closeableRegistry=new CloseableRegistry();
         storageManager = new RocksDBManager(closeableRegistry,configuration);
-        eventManager = new EventManager();
         if(OsUtils.isMac()){
             String snapshotPath=configuration.getString("snapshotTestPath");
             this.snapshotPath=new Path(System.getProperty("user.home").concat(snapshotPath));
@@ -66,5 +66,10 @@ public class RocksDBDatabase extends Database {
                 fs);
         RunnableFuture<SnapshotResult> snapshot = storageManager.snapshot(checkpointId,timestamp,streamFactory,checkpointOptions);
         return snapshot;
+    }
+
+    @Override
+    public RunnableFuture<LogResult> commitLog(long checkpointId, long timestamp) throws IOException {
+        return null;
     }
 }
