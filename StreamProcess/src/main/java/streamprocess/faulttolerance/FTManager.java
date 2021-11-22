@@ -7,14 +7,16 @@ public abstract class FTManager extends Thread {
     public abstract void initialize() throws IOException;
 
     /**
-     * To register the wal(globalLSN) or the snapshot(checkpointId)
+     * To register the wal(globalLSN) or the snapshot(checkpointId), or recovery
      * @param id
      * @return
      */
-    public abstract boolean spoutRegister(long id);
+    public boolean spoutRegister(long id){
+        return true;
+    }
 
     /**
-     * To register the commit after finish the transaction group
+     * To register the commit after finish the transaction group or to notify the recoveryManager to start recovery
      * @param executorId
      */
     public abstract void boltRegister(int executorId);

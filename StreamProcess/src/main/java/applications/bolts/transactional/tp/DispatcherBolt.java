@@ -31,6 +31,17 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
         if(in.isMarker()){
             forward_checkpoint(in.getSourceTask(),bid,in.getMarker(),in.getMarker().getValue());
             this.collector.ack(in,in.getMarker());
+            if(in.getMarker().getValue()=="recovery"){
+                this.lock=this.getContext().getRM().getLock();
+                this.getContext().getRM().boltRegister(this.executor.getExecutorID());
+                while(!isCommit){
+                    synchronized (lock){
+                        LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
+                        lock.wait();
+                    }
+                }
+                isCommit=false;
+            }
         }else{
             String raw = null;
             try {

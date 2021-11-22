@@ -87,9 +87,24 @@ public abstract class TransactionalSpout extends AbstractSpout implements Checkp
             earilier_check = true;
         }
     }
-
+    public void registerRecovery() throws InterruptedException {
+        if(this.getContext().getRM().spoutRegister(this.executor.getExecutorID())){
+            System.out.println("gg");
+            Marker marker=new Marker(DEFAULT_STREAM_ID,boardcast_time,0,myiteration,"recovery");
+            this.collector.broadcast_marker(bid,marker);
+            this.lock=this.getContext().getRM().getLock();
+            while (!isCommit){
+                synchronized (lock){
+                    LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
+                    lock.wait();
+                }
+            }
+        }else{
+            isCommit=true;
+        }
+    }
     @Override
-    public void ack_checkpoint(Marker marker) {//not sure
+    public void ack_checkpoint(Marker marker) {
         success=true;
         if(enable_debug){
             //LOG.trace("task_size: " + epoch_size * NUM_ACCESSES);

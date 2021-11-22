@@ -91,6 +91,9 @@ public class FileTransactionalSpout extends TransactionalSpout {
             this.clock.start();
             startClock=true;
         }
+        if(!isCommit){
+            this.registerRecovery();
+        }
         char[] inputData=readLine();
         if(inputData!=null){
             collector.emit(inputData,bid);

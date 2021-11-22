@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.faulttolerance.FTManager;
+import streamprocess.faulttolerance.FaultToleranceConstants;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -23,7 +24,7 @@ import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 
-import static streamprocess.faulttolerance.checkpoint.CheckpointConstants.CheckpointStatus.*;
+import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
 
 public class CheckpointManager extends FTManager {
     private final Logger LOG= LoggerFactory.getLogger(CheckpointManager.class);
@@ -40,7 +41,7 @@ public class CheckpointManager extends FTManager {
     private boolean close;
     private long currentCheckpointId;
     private ConcurrentHashMap<Long,Boolean> isCommitted;
-    private ConcurrentHashMap<Integer,CheckpointConstants.CheckpointStatus> callSnapshot;
+    private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callSnapshot;
     public CheckpointManager(ExecutionGraph g, Configuration conf, Database db){
         this.isCommitted=new ConcurrentHashMap<>();
         this.callSnapshot=new ConcurrentHashMap<>();
@@ -70,6 +71,7 @@ public class CheckpointManager extends FTManager {
         Date date = new Date();
         SimpleDateFormat dateFormat= new SimpleDateFormat("yyyy-MM-dd :hh:mm:ss");
         dataOutputStream.writeUTF("System begin at "+dateFormat.format(date));
+        dataOutputStream.writeShort(0);
         dataOutputStream.close();
         localDataOutputStream.close();
     }

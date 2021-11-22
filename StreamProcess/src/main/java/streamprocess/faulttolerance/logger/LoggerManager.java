@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.faulttolerance.FTManager;
-import streamprocess.faulttolerance.checkpoint.CheckpointConstants;
+import streamprocess.faulttolerance.FaultToleranceConstants;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -24,8 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 
-import static streamprocess.faulttolerance.checkpoint.CheckpointConstants.CheckpointStatus.NULL;
-import static streamprocess.faulttolerance.checkpoint.CheckpointConstants.CheckpointStatus.Register;
+import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.NULL;
+import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.Register;
 
 public class LoggerManager extends FTManager {
     private final Logger LOG= LoggerFactory.getLogger(LoggerManager.class);
@@ -37,12 +37,11 @@ public class LoggerManager extends FTManager {
     private Database db;
     private Configuration conf;
     private Object lock;
-    //TODO:add the log result
     private LogResult logResult;
     private boolean close;
     private long currentGlobalLSN;
     private ConcurrentHashMap<Long,Boolean> isCommitted;
-    private ConcurrentHashMap<Integer, CheckpointConstants.CheckpointStatus> callLog;
+    private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callLog;
     public LoggerManager(ExecutionGraph g,Configuration conf,Database db){
         this.isCommitted=new ConcurrentHashMap<>();
         this.callLog=new ConcurrentHashMap<>();
@@ -71,6 +70,7 @@ public class LoggerManager extends FTManager {
         Date date = new Date();
         SimpleDateFormat dateFormat= new SimpleDateFormat("yyyy-MM-dd :hh:mm:ss");
         dataOutputStream.writeUTF("System begin at "+dateFormat.format(date));
+        dataOutputStream.writeShort(1);
         dataOutputStream.close();
         localDataOutputStream.close();
     }

@@ -23,6 +23,7 @@ import utils.CloseableRegistry.CloseableRegistry;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 
 import static utils.TransactionalProcessConstants.CommitLogExecutionType.ASYNCHRONOUS;

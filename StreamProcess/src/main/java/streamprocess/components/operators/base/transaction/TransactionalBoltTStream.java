@@ -53,9 +53,22 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                this.needcheckpoint=true;
-                this.checkpointId=checkpointId;
-                TXN_PROCESS();
+                if(in.getMarker().getValue()=="recovery"){
+                    forward_checkpoint(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                    this.getContext().getRM().boltRegister(this.executor.getExecutorID());
+                    this.lock=this.getContext().getRM().getLock();
+                    while(!isCommit){
+                        synchronized (lock){
+                            LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
+                            lock.wait();
+                        }
+                    }
+                    isCommit=false;
+                }else{
+                    this.needcheckpoint=true;
+                    this.checkpointId=checkpointId;
+                    TXN_PROCESS();
+                }
             }
             final Marker marker = in.getMarker();
             this.collector.ack(in,marker);

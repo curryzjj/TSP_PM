@@ -10,10 +10,13 @@ import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractBolt;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Fields;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
+import streamprocess.faulttolerance.checkpoint.Checkpointable;
 
 import java.util.Map;
+import java.util.concurrent.BrokenBarrierException;
 
-public abstract class BaseSink extends BaseOperator {
+public abstract class BaseSink extends BaseOperator implements Checkpointable {
     private static final Logger LOG= LoggerFactory.getLogger(BaseSink.class);
     protected static ExecutionGraph graph;
     protected int thisTaskId;
@@ -57,5 +60,35 @@ public abstract class BaseSink extends BaseOperator {
     }
     protected void killTopology(){
         LOG.info("Killing application");
+    }
+
+    @Override
+    public boolean checkpoint(int counter) throws InterruptedException, BrokenBarrierException {
+        return false;
+    }
+
+    @Override
+    public void forward_checkpoint(int sourceId, long bid, Marker marker, String msg) throws InterruptedException {
+
+    }
+
+    @Override
+    public void forward_checkpoint_single(int sourceTask, String streamId, long bid, Marker marker) throws InterruptedException {
+
+    }
+
+    @Override
+    public void forward_checkpoint(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
+
+    }
+
+    @Override
+    public void ack_checkpoint(Marker marker) {
+
+    }
+
+    @Override
+    public void earlier_ack_checkpoint(Marker marker) {
+
     }
 }

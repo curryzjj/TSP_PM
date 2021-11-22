@@ -14,6 +14,7 @@ import streamprocess.execution.ExecutionPlan;
 import streamprocess.faulttolerance.FTManager;
 import streamprocess.faulttolerance.checkpoint.CheckpointManager;
 import streamprocess.faulttolerance.logger.LoggerManager;
+import streamprocess.faulttolerance.recovery.RecoveryManager;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -36,6 +37,7 @@ public class OptimizationManager extends Thread {
     private ExecutionPlan executionPlan;
     private ExecutionManager EM;
     private FTManager FTM;
+    private RecoveryManager RM;
     public CountDownLatch latch;
     private long profiling_gaps = 10000;//10 seconds.
     private int profile_start = 0;
@@ -67,11 +69,12 @@ public class OptimizationManager extends Thread {
         }else if(enable_wal){
             FTM=new LoggerManager(g,conf,db);
         }
+        RM=new RecoveryManager(g,conf,db);
         if(nav){
             LOG.info("Native execution");
             executionPlan=new ExecutionPlan(null,null);
             executionPlan.setProfile();
-            EM.distributeTasks(conf,executionPlan,latch,false,false,db,p,FTM);
+            EM.distributeTasks(conf,executionPlan,latch,false,false,db,p,FTM,RM);
         }
         final String dumpLocks = AffinityLock.dumpLocks();
         return executionPlan;

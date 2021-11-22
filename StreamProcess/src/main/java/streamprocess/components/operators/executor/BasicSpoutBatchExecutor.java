@@ -89,6 +89,7 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
 
     @Override
     public void ackCommit() {
+        this._op.isCommit =true;
     }
 
     @Override

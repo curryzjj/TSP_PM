@@ -31,7 +31,6 @@ public abstract class AsyncLogCommitCallable<T> implements Callable {
 
     @Override
     public T call() throws Exception {
-        System.out.println("dddd");
         final long startTime=System.currentTimeMillis();
         if(resourceCleanupOwnershipTaken.compareAndSet(false,true)){
             try {

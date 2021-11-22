@@ -9,9 +9,13 @@ import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.base.BaseSink;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
+import streamprocess.faulttolerance.checkpoint.Checkpointable;
+import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
+import java.util.concurrent.BrokenBarrierException;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
@@ -35,6 +39,7 @@ public class MeasureSink extends BaseSink {
         super(new HashMap<>());
         this.input_selectivity.put(DEFAULT_STREAM_ID, 1.0);
         this.input_selectivity.put("tn", 1.0);
+        status=new Status();
     }
 
     public Integer default_scale(Configuration conf) {
@@ -57,7 +62,26 @@ public class MeasureSink extends BaseSink {
     long latencyCount=0;
 
     @Override
-    public void execute(Tuple input) throws InterruptedException {
+    public void execute(Tuple in) throws InterruptedException {
+        if(in.isMarker()){
+            if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                if(in.getMarker().getValue()=="recovery"){
+                    this.lock=this.getContext().getRM().getLock();
+                    synchronized (lock){
+                        this.getContext().getRM().boltRegister(this.executor.getExecutorID());
+                        lock.notifyAll();
+                    }
+                    while(!isCommit){
+                        synchronized (lock){
+                            LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
+                            lock.wait();
+                        }
+                    }
+                    isCommit=false;
+                }
+            }
+            this.collector.ack(in,in.getMarker());
+        }
         if(enable_latency_measurement){
             //this.latency_measure();
         }
@@ -97,5 +121,4 @@ public class MeasureSink extends BaseSink {
     protected Logger getLogger() {
         return LOG;
     }
-
 }
