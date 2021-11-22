@@ -93,8 +93,8 @@ public abstract class TransactionalSpout extends AbstractSpout implements Checkp
             Marker marker=new Marker(DEFAULT_STREAM_ID,boardcast_time,0,myiteration,"recovery");
             this.collector.broadcast_marker(bid,marker);
             this.lock=this.getContext().getRM().getLock();
-            while (!isCommit){
-                synchronized (lock){
+            synchronized (lock){
+                while (!isCommit){
                     LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
                     lock.wait();
                 }

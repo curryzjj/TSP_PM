@@ -65,22 +65,11 @@ public class MeasureSink extends BaseSink {
     public void execute(Tuple in) throws InterruptedException {
         if(in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                this.collector.ack(in,in.getMarker());
                 if(in.getMarker().getValue()=="recovery"){
-                    this.lock=this.getContext().getRM().getLock();
-                    synchronized (lock){
-                        this.getContext().getRM().boltRegister(this.executor.getExecutorID());
-                        lock.notifyAll();
-                    }
-                    while(!isCommit){
-                        synchronized (lock){
-                            LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
-                            lock.wait();
-                        }
-                    }
-                    isCommit=false;
+                    this.registerRecovery();
                 }
             }
-            this.collector.ack(in,in.getMarker());
         }
         if(enable_latency_measurement){
             //this.latency_measure();

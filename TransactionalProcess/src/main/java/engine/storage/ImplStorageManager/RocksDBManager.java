@@ -136,7 +136,7 @@ public class RocksDBManager extends AbstractStorageManager {
                 if(v==null){
                     System.out.println("here");
                 }
-                tableRecord= Deserialize.Deserialize2TableRecord(v,TableRecord.class.getClassLoader());
+                tableRecord= Deserialize.Deserialize2Object(v,TableRecord.class.getClassLoader());
             } catch (RocksDBException | IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }

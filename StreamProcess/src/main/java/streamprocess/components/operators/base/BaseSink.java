@@ -48,7 +48,20 @@ public abstract class BaseSink extends BaseOperator implements Checkpointable {
             isSINK=true;
         }
     }
-
+    protected void registerRecovery() throws InterruptedException {
+        this.lock=this.getContext().getRM().getLock();
+        synchronized (lock){
+            this.getContext().getRM().boltRegister(this.executor.getExecutorID());
+            lock.notifyAll();
+        }
+        synchronized (lock){
+            while(!isCommit){
+                LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
+                lock.wait();
+            }
+        }
+        isCommit=false;
+    }
     protected abstract Logger getLogger();
 
     @Override

@@ -24,6 +24,5 @@ public abstract class BaseOperator extends AbstractBolt {
     protected BaseOperator(Logger log, Map<String, Double> input_selectivity, Map<String, Double> output_selectivity,
                         double branch_selectivity, double read_selectivity) {
         super(log, input_selectivity, output_selectivity, branch_selectivity, read_selectivity, 0, 0);
-
     }
 }

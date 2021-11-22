@@ -32,15 +32,7 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
             forward_checkpoint(in.getSourceTask(),bid,in.getMarker(),in.getMarker().getValue());
             this.collector.ack(in,in.getMarker());
             if(in.getMarker().getValue()=="recovery"){
-                this.lock=this.getContext().getRM().getLock();
-                this.getContext().getRM().boltRegister(this.executor.getExecutorID());
-                while(!isCommit){
-                    synchronized (lock){
-                        LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
-                        lock.wait();
-                    }
-                }
-                isCommit=false;
+                this.registerRecovery();
             }
         }else{
             String raw = null;
@@ -94,5 +86,16 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
     @Override
     public void earlier_ack_checkpoint(Marker marker) {
 
+    }
+    protected void registerRecovery() throws InterruptedException {
+        this.lock=this.getContext().getRM().getLock();
+        this.getContext().getRM().boltRegister(this.executor.getExecutorID());
+        synchronized (lock){
+            while (!isCommit){
+                LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
+                lock.wait();
+            }
+        }
+        isCommit=false;
     }
 }

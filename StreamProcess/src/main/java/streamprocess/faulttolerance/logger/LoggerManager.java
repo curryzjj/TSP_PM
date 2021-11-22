@@ -70,7 +70,6 @@ public class LoggerManager extends FTManager {
         Date date = new Date();
         SimpleDateFormat dateFormat= new SimpleDateFormat("yyyy-MM-dd :hh:mm:ss");
         dataOutputStream.writeUTF("System begin at "+dateFormat.format(date));
-        dataOutputStream.writeShort(1);
         dataOutputStream.close();
         localDataOutputStream.close();
     }

@@ -134,4 +134,15 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
             this.isCommit =false;
         }
     }
+    protected void registerRecovery() throws InterruptedException {
+        this.lock=this.getContext().getRM().getLock();
+        this.getContext().getRM().boltRegister(this.executor.getExecutorID());
+        synchronized (lock){
+            while (!isCommit){
+                LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
+                lock.wait();
+            }
+        }
+        isCommit=false;
+    }
 }

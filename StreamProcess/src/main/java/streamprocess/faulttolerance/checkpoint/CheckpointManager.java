@@ -8,6 +8,7 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
 import engine.shapshot.SnapshotResult;
+import engine.table.datatype.serialize.Serialize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
@@ -18,7 +19,6 @@ import streamprocess.faulttolerance.FaultToleranceConstants;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
@@ -71,7 +71,6 @@ public class CheckpointManager extends FTManager {
         Date date = new Date();
         SimpleDateFormat dateFormat= new SimpleDateFormat("yyyy-MM-dd :hh:mm:ss");
         dataOutputStream.writeUTF("System begin at "+dateFormat.format(date));
-        dataOutputStream.writeShort(0);
         dataOutputStream.close();
         localDataOutputStream.close();
     }
@@ -119,9 +118,12 @@ public class CheckpointManager extends FTManager {
     }
     public boolean commitCurrentLog() throws IOException, InterruptedException {
         LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(checkpointFile);
-        ObjectOutputStream objectOutputStream=new ObjectOutputStream(localDataOutputStream);
-        objectOutputStream.writeObject(snapshotResult);
-        objectOutputStream.close();
+        DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
+        byte[] result= Serialize.serializeObject(this.snapshotResult);
+        int len=result.length;
+        dataOutputStream.writeInt(len);
+        dataOutputStream.write(result);
+        dataOutputStream.close();
         LOG.info("CheckpointManager commit the checkpoint to the current.log");
         return true;
     }

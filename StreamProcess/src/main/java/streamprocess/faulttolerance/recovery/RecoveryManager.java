@@ -2,11 +2,13 @@ package streamprocess.faulttolerance.recovery;
 
 import System.FileSystem.FileSystem;
 import System.FileSystem.ImplFS.LocalFileSystem;
+import System.FileSystem.ImplFSDataInputStream.LocalDataInputStream;
 import System.FileSystem.Path;
 import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
 import engine.shapshot.SnapshotResult;
+import engine.table.datatype.serialize.Deserialize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
@@ -14,8 +16,9 @@ import streamprocess.execution.ExecutionNode;
 import streamprocess.faulttolerance.FTManager;
 import streamprocess.faulttolerance.FaultToleranceConstants;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 
@@ -23,6 +26,7 @@ import static UserApplications.CONTROL.enable_snapshot;
 import static UserApplications.CONTROL.enable_wal;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.NULL;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.Register;
+import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastCommitSnapshotResult;
 
 public class RecoveryManager extends FTManager {
     private final Logger LOG= LoggerFactory.getLogger(RecoveryManager.class);
@@ -119,6 +123,7 @@ public class RecoveryManager extends FTManager {
                     }
                     LOG.info("RecoveryManager received all register and start recovery");
                     //TODO:add the DB recovery
+                    recovery();
                     this.completeRecovery=true;
                     this.needRecovery=false;
                     notifyRecoveryComplete();
@@ -132,6 +137,11 @@ public class RecoveryManager extends FTManager {
                 this.running=false;
             }
         }
+    }
+
+    private void recovery() throws IOException, ClassNotFoundException {
+        SnapshotResult lastSnapshotResult=getLastCommitSnapshotResult(recoveryFile);
+        System.out.println();
     }
 
     @Override
