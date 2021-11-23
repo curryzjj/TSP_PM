@@ -5,6 +5,7 @@ import System.spout.helper.parser.Parser;
 import System.util.DataTypes.StreamValues;
 import System.util.OsUtils;
 import UserApplications.InputDataGenerator.InputDataGenerator;
+import engine.shapshot.SnapshotResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractSpout;
@@ -135,5 +136,10 @@ public class FileSpout extends AbstractSpout {
      */
     private void openFile(String fileName) throws FileNotFoundException {
         scanner = new Scanner(new File(fileName), "UTF-8");
+    }
+
+    @Override
+    public void recoveryInput(long offset) {
+
     }
 }

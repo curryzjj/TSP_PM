@@ -2,6 +2,7 @@ package streamprocess.components.operators.executor;
 
 import System.util.Configuration;
 import applications.AppRunner;
+import engine.shapshot.SnapshotResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractSpout;
@@ -90,6 +91,11 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
     @Override
     public void ackCommit() {
         this._op.isCommit =true;
+    }
+
+    @Override
+    public void recoveryInput(long offset) {
+        this._op.recoveryInput(offset);
     }
 
     @Override

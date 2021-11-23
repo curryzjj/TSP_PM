@@ -23,7 +23,7 @@ public class RecoveryHelperProvider {
         LocalDataInputStream localDataInputStream=new LocalDataInputStream(recoveryFile);
         DataInputStream inputStream=new DataInputStream(localDataInputStream);
         String s=inputStream.readUTF();
-        System.out.println(s);
+        LOG.info("Last Time: "+s);
         int len=0;
         try{
             while(true){

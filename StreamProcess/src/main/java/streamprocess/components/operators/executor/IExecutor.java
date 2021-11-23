@@ -1,6 +1,7 @@
 package streamprocess.components.operators.executor;
 
 import System.util.Configuration;
+import engine.shapshot.SnapshotResult;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
@@ -34,6 +35,7 @@ public interface IExecutor extends Serializable {
     //void configureLocker(OrderLock lock, OrderValidate orderValidate);
     void clean_status(Marker marker);
     void ackCommit();
+    void recoveryInput(long offset);
     int getStage();
     void earlier_clean_state(Marker marker);
     boolean IsStateful();

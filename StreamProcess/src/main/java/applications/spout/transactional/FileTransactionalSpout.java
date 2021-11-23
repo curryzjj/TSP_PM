@@ -4,6 +4,7 @@ import System.constants.BaseConstants;
 import System.util.Configuration;
 import System.util.OsUtils;
 import UserApplications.InputDataGenerator.InputDataGenerator;
+import engine.shapshot.SnapshotResult;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,15 +125,22 @@ public class FileTransactionalSpout extends TransactionalSpout {
         else
             return null;
     }
-    /**
-     * Opens the next file from the index. If there's multiple instances of the
-     * spout, it will read only a portion of the files.
-     */
     private void openFile(String fileName) throws FileNotFoundException {
         scanner = new Scanner(new File(fileName), "UTF-8");
     }
     @Override
     public void setInputDataGenerator(InputDataGenerator inputDataGenerator) {
         this.inputDataGenerator=inputDataGenerator;
+    }
+
+    @Override
+    public void recoveryInput(long offset) {
+        long msg=offset;
+        while (offset!=0){
+            scanner.nextLine();
+            offset--;
+            bid++;
+        }
+        LOG.info("The input data have been load to the offset "+msg);
     }
 }

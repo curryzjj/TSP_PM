@@ -1,6 +1,7 @@
 package streamprocess.components.operators.executor;
 
 import System.util.Configuration;
+import engine.shapshot.SnapshotResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyBuilder;
@@ -96,6 +97,11 @@ public class VirtualExecutor implements IExecutor{
 
     @Override
     public void ackCommit() {
+
+    }
+
+    @Override
+    public void recoveryInput(long offset) {
 
     }
 

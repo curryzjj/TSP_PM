@@ -1,6 +1,7 @@
 package applications.spout;
 
 import System.util.Configuration;
+import engine.shapshot.SnapshotResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractSpout;
@@ -74,5 +75,10 @@ public class MemFileSpout extends AbstractSpout {
         if(counter==array_array.length){
             counter=0;
         }
+    }
+
+    @Override
+    public void recoveryInput(long offset) {
+
     }
 }

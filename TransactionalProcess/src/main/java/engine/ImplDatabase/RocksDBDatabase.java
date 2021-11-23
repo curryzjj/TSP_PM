@@ -51,9 +51,15 @@ public class RocksDBDatabase extends Database {
     }
 
     @Override
-    public void Recovery() {
+    public void recoveryFromSnapshot(SnapshotResult lastSnapshotResult) {
 
     }
+
+    @Override
+    public long recoveryFromWAL() throws IOException {
+        return 0;
+    }
+
     public void createKeyGroupRange(){
         this.storageManager.createKeyGroupRange();
     }

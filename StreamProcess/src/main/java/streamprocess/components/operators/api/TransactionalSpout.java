@@ -88,8 +88,8 @@ public abstract class TransactionalSpout extends AbstractSpout implements Checkp
         }
     }
     public void registerRecovery() throws InterruptedException {
-        if(this.getContext().getRM().spoutRegister(this.executor.getExecutorID())){
-            System.out.println("gg");
+        if(this.getContext().getRM().needRecovery()){
+            this.getContext().getRM().spoutRegister(this.executor.getExecutorID());
             Marker marker=new Marker(DEFAULT_STREAM_ID,boardcast_time,0,myiteration,"recovery");
             this.collector.broadcast_marker(bid,marker);
             this.lock=this.getContext().getRM().getLock();

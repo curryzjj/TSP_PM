@@ -100,8 +100,7 @@ public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSu
                 }
             }
         }finally {
-            // this will just close the outer stream
-            //IOUtil.closeQuietly(kgOutStream);
+            kgOutStream.flush();
         }
     }
 

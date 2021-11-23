@@ -16,6 +16,14 @@ public class LogRecord implements Serializable {
         this.tableName=tableName;
     }
 
+    public String getTableName() {
+        return tableName;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
     public TableRecord getUpdateTableRecord() {
         return updateTableRecord;
     }

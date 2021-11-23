@@ -73,7 +73,10 @@ public class FsLogStreamFactory implements LogStreamFactory {
         private volatile boolean closed;
         private File logFile;
 
-        public FsLogOutputStream( int bufferSize, int localThreshold, Path basePath, FileSystem fs) {
+        public FsLogOutputStream( int bufferSize,
+                                  int localThreshold,
+                                  Path basePath,
+                                  FileSystem fs) {
             if (bufferSize < localThreshold) {
                 throw new IllegalArgumentException();
             }
@@ -109,7 +112,6 @@ public class FsLogStreamFactory implements LogStreamFactory {
                     off += remaining;
                     len -= remaining;
                     pos += remaining;
-
                     // flushToFile the write buffer to make it clear again
                     flushToFile();
                 }
@@ -157,13 +159,13 @@ public class FsLogStreamFactory implements LogStreamFactory {
                     try {
                         outStream.close();
                     } catch (Throwable throwable) {
-                        LOG.warn("Could not close the state stream for {}.", logPath, throwable);
+                        LOG.warn("Could not close the log commit stream for {}.", logPath, throwable);
                     } finally {
                         try {
                             fs.delete(logPath, false);
                         } catch (Exception e) {
                             LOG.warn(
-                                    "Cannot delete closed and discarded state stream for {}.",
+                                    "Cannot delete closed and discarded log commit stream for {}.",
                                     logPath,
                                     e);
                         }

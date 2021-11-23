@@ -1,6 +1,7 @@
 package streamprocess.execution;
 
 import System.Platform.Platform;
+import engine.shapshot.SnapshotResult;
 import org.apache.commons.lang.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -247,5 +248,8 @@ public class ExecutionNode implements Serializable {
     }
     public void ackCommit(){
         op.ackCommit();
+    }
+    public void recoveryInput(long offset){
+        op.recoveryInput(offset);
     }
 }

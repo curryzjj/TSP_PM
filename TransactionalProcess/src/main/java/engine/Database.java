@@ -44,7 +44,6 @@ public abstract class Database {
      */
     public abstract void createTable(RecordSchema tableSchema, String tableName, DataBoxTypes type);
     public abstract void InsertRecord(String table, TableRecord record) throws DatabaseException, IOException;
-    public abstract void Recovery();
     public AbstractStorageManager getStorageManager() {
         return storageManager;
     }
@@ -54,6 +53,20 @@ public abstract class Database {
     public abstract void createKeyGroupRange();
 
     /**
+     * To recovery the DataBase from the snapshot
+     * @param lastSnapshotResult
+     * @throws IOException
+     * @throws ClassNotFoundException
+     * @throws DatabaseException
+     */
+    public abstract void recoveryFromSnapshot(SnapshotResult lastSnapshotResult) throws IOException, ClassNotFoundException, DatabaseException;
+
+    /**
+     * To recovery the DataBase from the WAL, and return the last committed globalLSN
+     * @return
+     */
+    public abstract long recoveryFromWAL() throws IOException, ClassNotFoundException, DatabaseException;
+    /**
      * To take a snapshot for the DataBase
      * @param checkpointId
      * @param timestamp
@@ -61,8 +74,6 @@ public abstract class Database {
      * @throws Exception
      */
     public abstract RunnableFuture<SnapshotResult> snapshot(final long checkpointId, final long timestamp) throws Exception;
-
-
     /**
      * To commit the update log for the group of transactions
      * @param globalLSN
@@ -70,4 +81,8 @@ public abstract class Database {
      * @return
      */
     public abstract RunnableFuture<LogResult> commitLog(final long globalLSN, final long timestamp) throws IOException;
+
+    public FileSystem getFs() {
+        return fs;
+    }
 }

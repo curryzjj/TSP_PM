@@ -10,6 +10,7 @@ import engine.log.LogResult;
 import engine.log.LogStream.FsLogStreamFactory;
 import engine.log.LogStream.LogStreamFactory;
 import engine.log.logCommitRunner;
+import engine.recovery.AbstractRecoveryManager;
 import engine.shapshot.CheckpointOptions;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.FsCheckpointStreamFactory;
@@ -63,8 +64,12 @@ public class InMemeoryDatabase extends Database {
     }
 
     @Override
-    public void Recovery() {
-
+    public void recoveryFromSnapshot(SnapshotResult lastSnapshotResult) throws IOException, ClassNotFoundException, DatabaseException {
+        AbstractRecoveryManager.recoveryFromSnapshot(this,lastSnapshotResult);
+    }
+    @Override
+    public long recoveryFromWAL() throws IOException, ClassNotFoundException, DatabaseException {
+        return AbstractRecoveryManager.recoveryFromWAL(this,WalPath);
     }
 
     @Override

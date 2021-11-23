@@ -1,6 +1,7 @@
 package applications.spout.transactional;
 
 import System.util.Configuration;
+import engine.shapshot.SnapshotResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.TransactionalSpout;
@@ -64,6 +65,11 @@ public class MemFileTransactionalSpout extends TransactionalSpout {
                 context.stop_running();
             }
         }
+    }
+
+    @Override
+    public void recoveryInput(long offset) {
+
     }
 
 }

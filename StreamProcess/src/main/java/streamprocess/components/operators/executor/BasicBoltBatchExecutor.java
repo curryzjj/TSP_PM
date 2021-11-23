@@ -1,6 +1,7 @@
 package streamprocess.components.operators.executor;
 
 import engine.Exception.DatabaseException;
+import engine.shapshot.SnapshotResult;
 import streamprocess.components.operators.api.AbstractBolt;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.runtime.collector.OutputCollector;
@@ -58,6 +59,9 @@ public class BasicBoltBatchExecutor extends BoltExecutor{
             e.printStackTrace();
         }
     }
+    @Override
+    public void recoveryInput(long offset) {
 
+    }
 
 }

@@ -10,6 +10,7 @@ import engine.Database;
 import engine.log.LogResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.faulttolerance.FTManager;
@@ -19,7 +20,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
@@ -39,11 +40,10 @@ public class LoggerManager extends FTManager {
     private Object lock;
     private LogResult logResult;
     private boolean close;
-    private long currentGlobalLSN;
-    private ConcurrentHashMap<Long,Boolean> isCommitted;
+    private Queue<Long> isCommitted;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callLog;
     public LoggerManager(ExecutionGraph g,Configuration conf,Database db){
-        this.isCommitted=new ConcurrentHashMap<>();
+        this.isCommitted=new ArrayDeque<>();
         this.callLog=new ConcurrentHashMap<>();
         this.lock=new Object();
         this.conf=conf;
@@ -81,7 +81,7 @@ public class LoggerManager extends FTManager {
         if(isCommitted.size()>10){
             return false;
         }
-        isCommitted.put(globalLSN,false);
+        isCommitted.add(globalLSN);
         return true;
     }
     private void callLog_ini() {
@@ -119,8 +119,10 @@ public class LoggerManager extends FTManager {
     }
 
     private boolean commitLog() throws IOException, ExecutionException, InterruptedException {
-        RunnableFuture<LogResult> commitLog=this.db.commitLog(this.currentGlobalLSN,00000L);
+        long LSN=isCommitted.poll();
+        RunnableFuture<LogResult> commitLog=this.db.commitLog(LSN, 00000L);
         commitLog.get();
+        LOG.info("Update log commit!");
         return true;
     }
     public Object getLock(){

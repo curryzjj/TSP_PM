@@ -7,6 +7,7 @@ import System.FileSystem.Path;
 import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
+import engine.Exception.DatabaseException;
 import engine.shapshot.SnapshotResult;
 import engine.table.datatype.serialize.Deserialize;
 import org.slf4j.Logger;
@@ -42,6 +43,9 @@ public class RecoveryManager extends FTManager {
     private boolean needRecovery;
     private boolean completeRecovery;
     private int inputRecoveryOffset;
+    private long startTime;
+    private long finishTime;
+    private SnapshotResult lastSnapshotResult;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callRecovery;
     public RecoveryManager(ExecutionGraph g,Configuration conf,Database db){
         this.callRecovery=new ConcurrentHashMap<>();
@@ -101,6 +105,10 @@ public class RecoveryManager extends FTManager {
     public Object getLock() {
         return lock;
     }
+
+    public boolean needRecovery(){
+        return needRecovery;
+    }
     private void notifyRecoveryComplete() {
         for(int id:callRecovery.keySet()){
             g.getExecutionNode(id).ackCommit();
@@ -122,12 +130,13 @@ public class RecoveryManager extends FTManager {
                         lock.wait();
                     }
                     LOG.info("RecoveryManager received all register and start recovery");
-                    //TODO:add the DB recovery
+                    this.startTime=System.nanoTime();
                     recovery();
+                    this.finishTime=System.nanoTime();
                     this.completeRecovery=true;
                     this.needRecovery=false;
                     notifyRecoveryComplete();
-                    LOG.info("Recovery complete");
+                    LOG.info("Recovery takes "+(finishTime - startTime) / 1E6 + " ms"+" and complete!");
                     lock.notifyAll();
                 }
             }else{
@@ -139,9 +148,15 @@ public class RecoveryManager extends FTManager {
         }
     }
 
-    private void recovery() throws IOException, ClassNotFoundException {
-        SnapshotResult lastSnapshotResult=getLastCommitSnapshotResult(recoveryFile);
-        System.out.println();
+    private void recovery() throws IOException, ClassNotFoundException, DatabaseException {
+        if(enable_snapshot){
+            this.lastSnapshotResult=getLastCommitSnapshotResult(recoveryFile);
+            this.db.recoveryFromSnapshot(lastSnapshotResult);
+            this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId());
+        }else if (enable_wal){
+            long theLastLSN=this.db.recoveryFromWAL();
+            this.g.getSpout().recoveryInput(theLastLSN);
+        }
     }
 
     @Override

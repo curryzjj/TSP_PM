@@ -2,6 +2,7 @@ package applications.spout.transactional;
 
 import System.tools.FastZipfGenerator;
 import System.util.Configuration;
+import engine.shapshot.SnapshotResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.TransactionalSpout;
@@ -80,5 +81,10 @@ public class PKTransactionalSpout extends TransactionalSpout {
             }
             forward_checkpoint(-1,bid,null,"");
         }
+    }
+
+    @Override
+    public void recoveryInput(long offset) {
+
     }
 }

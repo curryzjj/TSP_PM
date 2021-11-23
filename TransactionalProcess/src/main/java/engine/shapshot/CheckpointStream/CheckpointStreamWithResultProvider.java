@@ -33,7 +33,6 @@ public interface CheckpointStreamWithResultProvider extends Closeable {
             try{
                 outputStream.flush();
                 Path snapshotPath=outputStream.getStatePath();
-                //outputStream.close();
                 return snapshotPath;
             }catch (IOException e){
                 throw new IOException();

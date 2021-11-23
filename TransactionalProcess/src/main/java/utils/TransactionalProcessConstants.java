@@ -25,4 +25,7 @@ public class TransactionalProcessConstants {
     public enum BackendStateType {
         KEY_VALUE,
     }
+    public interface FaultTolerance{
+        int END_OF_GLOBAL_LSN_MARK = 0;
+    }
 }

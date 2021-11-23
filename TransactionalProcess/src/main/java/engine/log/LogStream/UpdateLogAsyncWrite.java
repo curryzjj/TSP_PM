@@ -13,6 +13,9 @@ import java.util.Iterator;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static utils.FullSnapshotUtil.END_OF_KEY_GROUP_MARK;
+import static utils.TransactionalProcessConstants.FaultTolerance.END_OF_GLOBAL_LSN_MARK;
+
 public class UpdateLogAsyncWrite {
     private final LogStreamWithResultProvider logStreamWithResultProvider;
     private final long timestamp;
@@ -37,21 +40,32 @@ public class UpdateLogAsyncWrite {
             }
         }
         if(logCloseableRegistry.unregisterCloseable(logStreamWithResultProvider)){
+            logStreamWithResultProvider.closeAndFinalizeLogCommitStreamResult();
             return new LogResult();
         }else{
             throw new IOException("Stream is already unregistered/closed.");
         }
     }
     private void commitLog() throws IOException {
+        int a=0;
         final DataOutputView outputView=new DataOutputViewStreamWrapper(logStreamWithResultProvider.getLogOutputStream());
-        outputView.writeLong(globalLSN);
         for(WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
             for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.values()){
                 Iterator<LogRecord> logRecordIterator=logRecords.iterator();
                 while (logRecordIterator.hasNext()){
-                   outputView.write(Serialize.serializeObject(logRecordIterator.next()));
+                    LogRecord logRecord =logRecordIterator.next();
+                    writeLogRecord(outputView,logRecord);
                 }
             }
         }
+        outputView.writeInt(END_OF_GLOBAL_LSN_MARK);
+        outputView.writeLong(globalLSN);
+        logStreamWithResultProvider.getLogOutputStream().flush();
+    }
+    private void writeLogRecord(DataOutputView outputView,LogRecord logRecord) throws IOException {
+        byte[] serializeObject=Serialize.serializeObject(logRecord);
+        int len=serializeObject.length;
+        outputView.writeInt(len);
+        outputView.write(serializeObject);
     }
 }
