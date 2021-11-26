@@ -3,13 +3,12 @@ package engine.index;
 import engine.table.tableRecords.TableRecord;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HashTableIndex extends BaseUnorderedIndex{
-    private HashMap<String, TableRecord> hash_index_ =new HashMap<>();
+    private ConcurrentHashMap<String, TableRecord> hash_index_ =new ConcurrentHashMap<>();
 
     @Override
     public TableRecord SearchRecord(String primary_key) {

@@ -73,14 +73,14 @@ public class InMemoryFullSnapshotResources implements FullSnapshotResources {
                 new ArrayList<>(Meta.size());
         int kvStateId = 0;
         for (StorageManager.InMemoryKvStateInfo stateInfo:Meta){
-            InMemoryTableIteratorWrapper IteratorWrapper=createRocksIteratorWrapper(tables,stateInfo.metaInfo.getName());
+            InMemoryTableIteratorWrapper IteratorWrapper=createInMemoryIteratorWrapper(tables,stateInfo.metaInfo.getName());
             kvStateIterators.add(new Tuple2<>(IteratorWrapper,kvStateId));
             closeableRegistry.registerCloseable(IteratorWrapper);
             ++kvStateId;
         }
         return kvStateIterators;
     }
-    private static InMemoryTableIteratorWrapper createRocksIteratorWrapper(Map<String,BaseTable> tables,
+    private static InMemoryTableIteratorWrapper createInMemoryIteratorWrapper(Map<String,BaseTable> tables,
                                                                    String tablename){
         Iterator<TableRecord> iterator=tables.get(tablename).iterator();
         Iterator<String> keyIterator=tables.get(tablename).keyIterator();

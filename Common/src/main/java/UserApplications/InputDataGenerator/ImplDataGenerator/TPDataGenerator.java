@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TPDataGenerator extends InputDataGenerator {
     private static final Logger LOG=LoggerFactory.getLogger(TPDataGenerator.class);
@@ -15,32 +17,46 @@ public class TPDataGenerator extends InputDataGenerator {
     private int recordNum;
     private double zipSkew;
     private int range;
+    private ZipfGenerator zipfGenerator;
 
-    public void generateData() throws IOException {
+    /**
+     * Generate TP data in batch and store in the input store
+     * @param batch
+     * @return
+     */
+    public List<String> generateData(int batch){
+        this.recordNum=recordNum-batch;
+        List<String> batch_input=new ArrayList<>();
+        if(recordNum==0){
+            return null;
+        }
         File file=new File(dataPath);
-        if(file.exists()){
-            LOG.info("Input data is ready");
-            return;
+        FileWriter Fw= null;
+        try {
+            Fw = new FileWriter(file,true);
+            BufferedWriter bw= new BufferedWriter(Fw);
+            for(int i=0;i<batch;i++){
+                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+                String str=timestamp.getTime()+" "+ randomNumberGenerator.generateRandom(1,100)+" "+randomNumberGenerator.generateRandom(60,180)+
+                        " "+randomNumberGenerator.generateRandom(1,4)+" "+randomNumberGenerator.generateRandom(1,4)+" "+ randomNumberGenerator.generateRandom(1,1)+
+                        " "+zipfGenerator.next()+" "+randomNumberGenerator.generateRandom(1,100);
+                batch_input.add(str);
+                bw.write(str);
+                bw.newLine();
+                bw.flush();
+            }
+            bw.close();
+            Fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        FileWriter Fw=new FileWriter(file,true);
-        ZipfGenerator zipfGenerator=new ZipfGenerator(range, zipSkew);
-        BufferedWriter bw= new BufferedWriter(Fw);
-        for(int i=0;i<recordNum;i++){
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            String str=timestamp.getTime()+" "+ randomNumberGenerator.generateRandom(1,100)+" "+randomNumberGenerator.generateRandom(60,180)+
-                    " "+randomNumberGenerator.generateRandom(1,4)+" "+randomNumberGenerator.generateRandom(1,4)+" "+ randomNumberGenerator.generateRandom(1,1)+
-                    " "+zipfGenerator.next()+" "+randomNumberGenerator.generateRandom(1,100);
-            bw.write(str);
-            bw.newLine();
-            bw.flush();
-        }
-        bw.close();
-        Fw.close();
+        return batch_input;
     }
     public void initialize(String dataPath,int recordNum,int range,double zipSkew){
         this.recordNum=recordNum;
         this.dataPath=dataPath;
         this.zipSkew=zipSkew;
         this.range=range;
+        this.zipfGenerator=new ZipfGenerator(range, zipSkew);
     }
 }

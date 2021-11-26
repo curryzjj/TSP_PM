@@ -34,8 +34,8 @@ public interface CONTROL {
 
     boolean enable_TSTREAM = true;
     // fault tolerance related.
-    boolean enable_snapshot =false;
-    boolean enable_wal=true;
+    boolean enable_snapshot =true;
+    boolean enable_wal=false;
 
     //pre- and post -compute
 
@@ -46,7 +46,7 @@ public interface CONTROL {
 
     boolean enable_latency_measurement = true;//
 
-//    boolean enable_admission_control = enable_latency_measurement;//only enable for TStream
+    //boolean enable_admission_control = enable_latency_measurement;//only enable for TStream
 
     //profile related.
     boolean enable_profile = true;//enable this only when we want to test for breakdown.

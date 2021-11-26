@@ -20,7 +20,6 @@ import java.io.OutputStream;
 import static utils.FullSnapshotUtil.*;
 
 public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSupplier{
-
     /** Supplier for the stream into which we write the snapshot. */
     private final SupplierWithException<CheckpointStreamWithResultProvider,Exception> checkpointStreamSupplier;
     private final FullSnapshotResources snapshotResources;

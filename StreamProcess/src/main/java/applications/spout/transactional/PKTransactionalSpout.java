@@ -69,7 +69,7 @@ public class PKTransactionalSpout extends TransactionalSpout {
     }
 
     @Override
-    public void nextTuple() throws InterruptedException {
+    public void nextTuple(int batch) throws InterruptedException {
         Set<Integer> keys=new LinkedHashSet<>();
         keys.addAll(input_keys[counter++%10_000]);
         if(ccOption==CCOption_TStream){

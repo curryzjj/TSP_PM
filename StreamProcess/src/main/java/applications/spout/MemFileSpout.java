@@ -49,7 +49,7 @@ public class MemFileSpout extends AbstractSpout {
     }
 
     @Override
-    public void nextTuple() throws InterruptedException {
+    public void nextTuple(int batch) throws InterruptedException {
         if(exe!=1){
             collector.emit(array_array[counter]);
             counter++;
@@ -69,7 +69,7 @@ public class MemFileSpout extends AbstractSpout {
 
 
     @Override
-    public void nextTuple_nonblocking() throws InterruptedException {
+    public void nextTuple_nonblocking(int batch) throws InterruptedException {
         collector.emit_nowait(array_array[counter]);
         counter++;
         if(counter==array_array.length){

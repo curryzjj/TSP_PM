@@ -40,7 +40,7 @@ public class MemFileTransactionalSpout extends TransactionalSpout {
         }
     }
     @Override
-    public void nextTuple() throws InterruptedException {
+    public void nextTuple(int batch) throws InterruptedException {
         if(exe!=1){
             if(exe==NUM_EVENTS){
                 clock.start();

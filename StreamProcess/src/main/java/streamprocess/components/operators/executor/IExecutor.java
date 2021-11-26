@@ -7,6 +7,7 @@ import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
+import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.util.Map;
 
@@ -35,7 +36,7 @@ public interface IExecutor extends Serializable {
     //void configureLocker(OrderLock lock, OrderValidate orderValidate);
     void clean_status(Marker marker);
     void ackCommit();
-    void recoveryInput(long offset);
+    void recoveryInput(long offset) throws FileNotFoundException, InterruptedException;
     int getStage();
     void earlier_clean_state(Marker marker);
     boolean IsStateful();

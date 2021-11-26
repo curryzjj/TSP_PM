@@ -148,7 +148,7 @@ public class RecoveryManager extends FTManager {
         }
     }
 
-    private void recovery() throws IOException, ClassNotFoundException, DatabaseException {
+    private void recovery() throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
         if(enable_snapshot){
             this.lastSnapshotResult=getLastCommitSnapshotResult(recoveryFile);
             this.db.recoveryFromSnapshot(lastSnapshotResult);

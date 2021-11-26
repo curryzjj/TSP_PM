@@ -37,8 +37,8 @@ public abstract class AbstractSpout extends Operator {
     }
 
     protected String getConfigKey(String template){ return String.format(template,configPrefix);}//append "application name"
-    public abstract void nextTuple() throws InterruptedException;
-    public void nextTuple_nonblocking() throws InterruptedException{ nextTuple();}
+    public abstract void nextTuple(int batch) throws InterruptedException;
+    public void nextTuple_nonblocking(int batch) throws InterruptedException{ nextTuple(batch);}
 
     //the following are used by the load_input
     private void construction(Scanner scanner, StringStatesWrapper wrapper){//used by build
@@ -174,7 +174,7 @@ public abstract class AbstractSpout extends Operator {
     //createInput for FileSpout
     public void setInputDataGenerator(InputDataGenerator inputDataGenerator){}
 
-    public abstract void recoveryInput(long offset);
+    public abstract void recoveryInput(long offset) throws FileNotFoundException, InterruptedException;
 
     @Override
     public void callback(int callee, Marker marker) {

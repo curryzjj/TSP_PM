@@ -11,6 +11,7 @@ import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
+import java.io.FileNotFoundException;
 import java.util.Map;
 
 public class BasicSpoutBatchExecutor extends SpoutExecutor{
@@ -94,7 +95,7 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
     }
 
     @Override
-    public void recoveryInput(long offset) {
+    public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
         this._op.recoveryInput(offset);
     }
 
@@ -109,15 +110,11 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
     }
 
     public void bulk_emit_nonblocking(int batch) throws InterruptedException {
-        for (int i = 0; i < batch; i++) {
-            _op.nextTuple_nonblocking();
-        }
+        _op.nextTuple_nonblocking(batch);
     }
 
     public void bulk_emit(int batch) throws InterruptedException {
-        for (int i = 0; i < batch; i++) {
-            _op.nextTuple();
-        }
+        _op.nextTuple(batch);
     }
 
     public void setExecutionNode(ExecutionNode executionNode) {

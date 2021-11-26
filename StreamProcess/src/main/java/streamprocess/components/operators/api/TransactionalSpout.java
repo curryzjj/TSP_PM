@@ -47,7 +47,7 @@ public abstract class TransactionalSpout extends AbstractSpout implements Checkp
         return empty;
     }
     @Override
-    public abstract void nextTuple() throws InterruptedException;
+    public abstract void nextTuple(int batch) throws InterruptedException;
     public boolean checkpoint(int counter){
         if(counter%batch_number_per_wm==0){
             return true;

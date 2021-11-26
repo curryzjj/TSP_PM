@@ -4,7 +4,6 @@ import System.constants.BaseConstants;
 import System.util.Configuration;
 import System.util.OsUtils;
 import UserApplications.InputDataGenerator.InputDataGenerator;
-import engine.shapshot.SnapshotResult;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +12,8 @@ import streamprocess.components.operators.api.TransactionalSpout;
 import streamprocess.execution.ExecutionGraph;
 
 import java.io.*;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Scanner;
 
 import static System.Constants.Mac_Data_Path;
@@ -23,6 +24,7 @@ public class FileTransactionalSpout extends TransactionalSpout {
     private static final Logger LOG= LoggerFactory.getLogger(FileTransactionalSpout.class);
     private InputDataGenerator inputDataGenerator;
     private Scanner scanner;
+    private String Data_path;
     public FileTransactionalSpout(){
         super(LOG);
         this.scalable=false;
@@ -38,7 +40,7 @@ public class FileTransactionalSpout extends TransactionalSpout {
         taskId = getContext().getThisTaskIndex();//context.getThisTaskId(); start from 0..
         String OS_prefix="";
         String path;
-        String Data_path = "";
+        Data_path = "";
         int recordNum=0;
         double zipSkew=0;
         if(OsUtils.isWindows()){
@@ -59,22 +61,8 @@ public class FileTransactionalSpout extends TransactionalSpout {
             zipSkew=config.getDouble(getConfigKey(BaseConstants.BaseConf.ZIPSKEW_NUM));
             Data_path=Node22_Data_Path;
         }
-        String s = Data_path.concat(path);
-        inputDataGenerator.initialize(s,recordNum,NUM_SEGMENTS-1,zipSkew);
-        LOG.info("Input Data Generation starts @" + DateTime.now());
-        long start = System.nanoTime();
-        try {
-            inputDataGenerator.generateData();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        long end = System.nanoTime();
-        LOG.info("Input Data Generation takes:" + (end - start) / 1E6 + " ms");
-        try {
-            openFile(s);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        Data_path = Data_path.concat(path);
+        inputDataGenerator.initialize(Data_path,recordNum,NUM_SEGMENTS-1,zipSkew);
     }
 
     @Override
@@ -87,7 +75,7 @@ public class FileTransactionalSpout extends TransactionalSpout {
         }
     }
     @Override
-    public void nextTuple() throws InterruptedException {
+    public void nextTuple(int batch) throws InterruptedException {
         if(!startClock){
             this.clock.start();
             startClock=true;
@@ -95,11 +83,14 @@ public class FileTransactionalSpout extends TransactionalSpout {
         if(!isCommit){
             this.registerRecovery();
         }
-        char[] inputData=readLine();
+        List<String> inputData=inputDataGenerator.generateData(batch);
         if(inputData!=null){
-            collector.emit(inputData,bid);
-            forward_checkpoint(this.taskId, bid, null,"marker");
-            bid++;
+            for (Iterator<String> it = inputData.iterator(); it.hasNext(); ) {
+                String input = it.next();
+                collector.emit(input.toCharArray(),bid);
+                forward_checkpoint(this.taskId, bid, null,"marker");
+                bid++;
+            }
         }else{
             forward_checkpoint(this.taskId, bid, null,"marker");
             try {
@@ -113,34 +104,37 @@ public class FileTransactionalSpout extends TransactionalSpout {
                 }
         }
     }
-    /**
-     * Read one line from the currently open file. If there's only one file, each
-     * instance of the spout will read only a portion of the file.
-     *
-     * @return The line
-     */
-    private char[] readLine() {
-        if (scanner.hasNextLine())
-            return scanner.nextLine().toCharArray();
-        else
-            return null;
-    }
-    private void openFile(String fileName) throws FileNotFoundException {
-        scanner = new Scanner(new File(fileName), "UTF-8");
-    }
     @Override
     public void setInputDataGenerator(InputDataGenerator inputDataGenerator) {
         this.inputDataGenerator=inputDataGenerator;
     }
 
+    /**
+     * Load data form input store, and replay the lost data
+     * @param offset
+     * @throws FileNotFoundException
+     * @throws InterruptedException
+     */
     @Override
-    public void recoveryInput(long offset) {
+    public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
         long msg=offset;
+        int lostdata=0;
+        openFile(Data_path);
         while (offset!=0){
             scanner.nextLine();
             offset--;
             bid++;
         }
         LOG.info("The input data have been load to the offset "+msg);
+        while (scanner.hasNextLine()){
+            collector.emit(scanner.nextLine().toCharArray(),bid);
+            bid++;
+            lostdata++;
+        }
+        LOG.info("The number of lost data is "+lostdata);
+        scanner.close();
+    }
+    private void openFile(String fileName) throws FileNotFoundException {
+        scanner = new Scanner(new File(fileName), "UTF-8");
     }
 }

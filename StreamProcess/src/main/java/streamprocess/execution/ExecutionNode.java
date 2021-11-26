@@ -13,6 +13,7 @@ import streamprocess.controller.output.OutputController;
 import streamprocess.controller.output.PartitionController;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
+import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.util.*;
 
@@ -249,7 +250,7 @@ public class ExecutionNode implements Serializable {
     public void ackCommit(){
         op.ackCommit();
     }
-    public void recoveryInput(long offset){
+    public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
         op.recoveryInput(offset);
     }
 }

@@ -56,7 +56,7 @@ public class ExecutionManager {
      * Launch threads for each executor in executionGraph
      * All executors have to sync_ratio for OM to start, so it's safe to do initialization here. E.g., initialize database.
      */
-    public void distributeTasks(Configuration conf, ExecutionPlan plan, CountDownLatch latch, boolean benchmark,
+    public void  distributeTasks(Configuration conf, ExecutionPlan plan, CountDownLatch latch, boolean benchmark,
                                 boolean profile, Database db, Platform p, FTManager FTM,RecoveryManager RM) throws UnhandledCaseException, IOException {
         assert plan !=null;
         loadTargetHz =(int) conf.getDouble("targetHz",10000000);
