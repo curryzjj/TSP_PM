@@ -19,7 +19,7 @@ public abstract class FTManager extends Thread {
      * To register the commit after finish the transaction group or to notify the recoveryManager to start recovery
      * @param executorId
      */
-    public abstract void boltRegister(int executorId);
+    public abstract void boltRegister(int executorId, FaultToleranceConstants.FaultToleranceStatus status);
     public abstract Object getLock();
     public abstract void close();
 }

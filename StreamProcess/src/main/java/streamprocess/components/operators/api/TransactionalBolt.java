@@ -1,6 +1,7 @@
 package streamprocess.components.operators.api;
 
 import System.util.OsUtils;
+import applications.events.lr.LREvent;
 import engine.Exception.DatabaseException;
 import engine.transaction.TxnContext;
 import engine.transaction.TxnManager;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
+import streamprocess.faulttolerance.FaultToleranceConstants;
 import streamprocess.faulttolerance.checkpoint.Checkpointable;
 import utils.SOURCE_CONTROL;
 
@@ -117,13 +119,22 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
         TXN_PROCESS(_bid);
         POST_PROCESS(_bid,timestamp,combo_bid_size);
     }
-    protected void AsyncRegister(){
+
+    /**
+     * To register persist when there is no transaction abort
+     */
+    protected void AsyncRegisterPersist(){
         this.lock=this.FTM.getLock();
         synchronized (lock){
-            this.FTM.boltRegister(this.executor.getExecutorID());
+            this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Persist);
             lock.notifyAll();
         }
     }
+
+    /**
+     * Wait for the log to commit then emit the result to output
+     * @throws InterruptedException
+     */
     protected void SyncCommitLog() throws InterruptedException {
         synchronized (lock){
             while(!isCommit){
@@ -134,9 +145,32 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
             this.isCommit =false;
         }
     }
+
+    /**
+     * To register undo when there is transaction abort
+     */
+    protected void SyncRegisterUndo() throws InterruptedException {
+        this.lock=this.FTM.getLock();
+        synchronized (lock){
+            this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Undo);
+            lock.notifyAll();
+        }
+        synchronized (lock){
+            while(!isCommit){
+                LOG.info("Wait for the database to undo");
+                lock.wait();
+            }
+            this.isCommit =false;
+        }
+    }
+
+    /**
+     * To register to recovery when there is a failure
+     * @throws InterruptedException
+     */
     protected void registerRecovery() throws InterruptedException {
         this.lock=this.getContext().getRM().getLock();
-        this.getContext().getRM().boltRegister(this.executor.getExecutorID());
+        this.getContext().getRM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
         synchronized (lock){
             while (!isCommit){
                 LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");

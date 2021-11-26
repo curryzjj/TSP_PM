@@ -34,6 +34,10 @@ public class TxnManagerTStream extends TxnManagerDedicated {
     }
     @Override
     protected boolean Asy_ModifyRecord_ReadCC(TxnContext txn_context, String srcTable, TableRecord tableRecord, SchemaRecordRef record_ref, Function function, MetaTypes.AccessType accessType) {
+        if(this.instance.getTransactionAbort().contains(txn_context.getBID())){
+            this.instance.getTransactionAbort().remove(txn_context.getBID());
+            return false;
+        }
         long bid=txn_context.getBID();
         operation_chain_construction_modify_read(tableRecord,srcTable,bid,accessType,record_ref,function,txn_context);
         return true;
@@ -47,11 +51,13 @@ public class TxnManagerTStream extends TxnManagerDedicated {
     }
 
     @Override
-    public void start_evaluate(int thread_id, long mark_ID) throws InterruptedException, BrokenBarrierException, IOException, DatabaseException {
+    public boolean start_evaluate(int thread_id, long mark_ID) throws InterruptedException, BrokenBarrierException, IOException, DatabaseException {
         /** Pay attention to concurrency control */
         instance.start_evaluation(thread_id,mark_ID);
-        if(thread_id==0){
-            storageManager.commitAllTables();
+        if(instance.getTransactionAbort().size()==0){
+            return false;
+        }else {
+            return true;
         }
     }
 }

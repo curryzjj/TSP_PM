@@ -60,6 +60,11 @@ public class RocksDBDatabase extends Database {
         return 0;
     }
 
+    @Override
+    public boolean undoFromWAL() throws IOException, DatabaseException {
+        return false;
+    }
+
     public void createKeyGroupRange(){
         this.storageManager.createKeyGroupRange();
     }

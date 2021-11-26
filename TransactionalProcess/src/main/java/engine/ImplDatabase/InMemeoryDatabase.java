@@ -73,6 +73,11 @@ public class InMemeoryDatabase extends Database {
     }
 
     @Override
+    public boolean undoFromWAL() throws IOException, DatabaseException {
+        return this.txnProcessingEngine.getWalManager().undoLog(this);
+    }
+
+    @Override
     public void createKeyGroupRange() {
         this.storageManager.createKeyGroupRange();
     }

@@ -3,11 +3,13 @@ package applications.sink;
 import System.sink.helper.stable_sink_helper;
 import System.util.Configuration;
 import System.util.OsUtils;
+import engine.Exception.DatabaseException;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.base.BaseSink;
 import streamprocess.execution.ExecutionGraph;
+import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.faulttolerance.checkpoint.Checkpointable;
@@ -71,8 +73,20 @@ public class MeasureSink extends BaseSink {
                 }
             }
         }
+        if(!in.isMarker()){
+            in.getValue(0);
+        }
         if(enable_latency_measurement){
             //this.latency_measure();
+        }
+    }
+    @Override
+    public void execute(JumboTuple in) throws DatabaseException, BrokenBarrierException, InterruptedException {
+        for(int i=0;i<in.length;i++){
+            boolean finish= (boolean) in.getMsg(i).getValue(0);
+            if(!finish){
+                LOG.info("The tuple ("+in.getMsg(i).getValue(1)+ ") is abort");
+            }
         }
     }
     protected void latency_measure() {

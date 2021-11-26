@@ -11,6 +11,7 @@ import streamprocess.components.operators.api.AbstractBolt;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Fields;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
+import streamprocess.faulttolerance.FaultToleranceConstants;
 import streamprocess.faulttolerance.checkpoint.Checkpointable;
 
 import java.util.Map;
@@ -51,7 +52,7 @@ public abstract class BaseSink extends BaseOperator implements Checkpointable {
     protected void registerRecovery() throws InterruptedException {
         this.lock=this.getContext().getRM().getLock();
         synchronized (lock){
-            this.getContext().getRM().boltRegister(this.executor.getExecutorID());
+            this.getContext().getRM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
             lock.notifyAll();
         }
         synchronized (lock){

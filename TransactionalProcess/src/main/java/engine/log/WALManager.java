@@ -1,4 +1,6 @@
 package engine.log;
+import engine.Database;
+import engine.Exception.DatabaseException;
 import engine.log.LogStream.LogStreamFactory;
 import engine.log.LogStream.LogStreamWithResultProvider;
 import engine.log.LogStream.UpdateLogAsyncWrite;
@@ -7,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,5 +58,22 @@ public class WALManager {
         }
         LogStreamWithResultProvider logStreamWithResultProvider=LogStreamWithResultProvider.createSimpleStream(logStreamFactory);
         return new UpdateLogAsyncWrite(holder_by_tableName,logStreamWithResultProvider,timestamp,globalLSN);
+    }
+    public boolean undoLog(Database db) throws IOException, DatabaseException {
+        for(WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
+            for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.values()){
+                Iterator<LogRecord> logRecordIterator=logRecords.iterator();
+                while (logRecordIterator.hasNext()){
+                    LogRecord logRecord =logRecordIterator.next();
+                    db.InsertRecord(logRecord.getTableName(), logRecord.getCopyTableRecord());
+                }
+            }
+        }
+        for(WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
+            for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.values()){
+                logRecords.clear();
+            }
+        }
+        return true;
     }
 }

@@ -66,6 +66,12 @@ public abstract class Database {
      * @return
      */
     public abstract long recoveryFromWAL() throws IOException, ClassNotFoundException, DatabaseException;
+
+    /**
+     * To undo the DataBase from the WAL
+     * @return
+     */
+    public abstract boolean undoFromWAL() throws IOException, DatabaseException;
     /**
      * To take a snapshot for the DataBase
      * @param checkpointId

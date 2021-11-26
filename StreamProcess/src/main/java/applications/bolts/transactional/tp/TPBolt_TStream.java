@@ -49,16 +49,44 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
                 ,new CNT(event.getPOSReport().getVid()));
         LREvents.add(event);
     }
+    protected void AsyncReConstructRequest() throws DatabaseException, InterruptedException {
+        for (Iterator<LREvent> it = LREvents.iterator(); it.hasNext(); ) {
+            LREvent event = it.next();
+            TxnContext txnContext = new TxnContext(thread_Id, this.fid, event.getBid());
+            boolean flag=transactionManager.Asy_ModifyRecord_Read(txnContext
+                    , "segment_speed"
+                    ,String.valueOf(event.getPOSReport().getSegment())
+                    ,event.speed_value//holder to be filled up
+                    ,new AVG(event.getPOSReport().getSpeed())
+            );
+            if(!flag){
+                LREvents.remove(event);
+                collector.emit(event.getBid(), false,event.getBid(), event.getTimestamp());//the tuple is abort.
+                continue;
+            }
+            boolean flag1=transactionManager.Asy_ModifyRecord_Read(txnContext
+                    ,"segment_cnt"
+                    ,String.valueOf(event.getPOSReport().getSegment())
+                    ,event.count_value
+                    ,new CNT(event.getPOSReport().getVid()));
+        }
+    }
     @Override
     protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        transactionManager.start_evaluate(thread_Id,this.fid);
-        this.AsyncRegister();
-        REQUEST_REQUEST_CORE();
-        this.SyncCommitLog();
-        REQUEST_POST();
-        LREvents.clear();//clear stored events.
-        BUFFER_PROCESS();
-        bufferedTuple.clear();
+        boolean isAbortTransaction=transactionManager.start_evaluate(thread_Id,this.fid);
+        if(isAbortTransaction){
+            this.SyncRegisterUndo();
+            this.AsyncReConstructRequest();
+            this.TXN_PROCESS();
+        }else{
+            this.AsyncRegisterPersist();
+            REQUEST_REQUEST_CORE();
+            this.SyncCommitLog();
+            REQUEST_POST();
+            LREvents.clear();//clear stored events.
+            BUFFER_PROCESS();
+            bufferedTuple.clear();
+        }
     }
 
     private void BUFFER_PROCESS() throws DatabaseException, InterruptedException {
@@ -89,7 +117,7 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
     }
     void TP_REQUEST_POST(LREvent event) throws InterruptedException {
         //TODO:some process to Post the event to the sink or emit
-        collector.emit(event.getBid(), true, event.getTimestamp());//the tuple is finished.
+        collector.emit(event.getBid(), true,event.getBid(), event.getTimestamp());//the tuple is finished.
     }
 
 }

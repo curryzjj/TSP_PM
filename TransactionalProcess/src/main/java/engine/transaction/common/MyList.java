@@ -8,11 +8,9 @@ public class MyList<O> extends ConcurrentSkipListSet<O> {
     public String getPrimaryKey() {
         return primaryKey;
     }
-
     public String getTable_name() {
         return table_name;
     }
-
     public LogRecord getLogRecord() {
         return logRecord;
     }

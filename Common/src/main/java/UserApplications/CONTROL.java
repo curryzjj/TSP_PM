@@ -34,8 +34,8 @@ public interface CONTROL {
 
     boolean enable_TSTREAM = true;
     // fault tolerance related.
-    boolean enable_snapshot =true;
-    boolean enable_wal=false;
+    boolean enable_snapshot =false;
+    boolean enable_wal=true;
 
     //pre- and post -compute
 

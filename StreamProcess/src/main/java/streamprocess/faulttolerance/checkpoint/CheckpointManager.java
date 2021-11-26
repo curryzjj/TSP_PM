@@ -84,9 +84,9 @@ public class CheckpointManager extends FTManager {
             return true;
         }
     }
-    public void boltRegister(int executorId){
-        callSnapshot.put(executorId, Register);
-        LOG.info("executor("+executorId+")"+" register the checkpoint");
+    public void boltRegister(int executorId,FaultToleranceConstants.FaultToleranceStatus status){
+        callSnapshot.put(executorId, status);
+        LOG.info("executor("+executorId+")"+" register the "+status);
     }
     private void callSnapshot_ini(){
         for (ExecutionNode e:g.getExecutionNodeArrayList()){

@@ -4,6 +4,7 @@ import applications.DataTypes.PositionReport;
 import engine.Exception.DatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.faulttolerance.FaultToleranceConstants;
 import streamprocess.faulttolerance.checkpoint.Checkpointable;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.operators.base.filterBolt;
@@ -89,7 +90,7 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
     }
     protected void registerRecovery() throws InterruptedException {
         this.lock=this.getContext().getRM().getLock();
-        this.getContext().getRM().boltRegister(this.executor.getExecutorID());
+        this.getContext().getRM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
         synchronized (lock){
             while (!isCommit){
                 LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");

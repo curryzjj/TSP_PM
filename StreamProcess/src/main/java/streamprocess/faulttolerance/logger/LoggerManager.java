@@ -10,7 +10,6 @@ import engine.Database;
 import engine.log.LogResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Tuple2;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.faulttolerance.FTManager;
@@ -25,8 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 
-import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.NULL;
-import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.Register;
+import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
 
 public class LoggerManager extends FTManager {
     private final Logger LOG= LoggerFactory.getLogger(LoggerManager.class);
@@ -73,9 +71,9 @@ public class LoggerManager extends FTManager {
         dataOutputStream.close();
         localDataOutputStream.close();
     }
-    public void boltRegister(int executorId){
-        callLog.put(executorId,Register);
-        LOG.info("executor("+executorId+")"+" register the log commit");
+    public void boltRegister(int executorId,FaultToleranceConstants.FaultToleranceStatus status){
+        callLog.put(executorId, status);
+        LOG.info("executor("+executorId+")"+" register the "+status);
     }
     public boolean spoutRegister(long globalLSN){
         if(isCommitted.size()>10){
@@ -103,15 +101,23 @@ public class LoggerManager extends FTManager {
                 if(close){
                     return;
                 }
-                LOG.info("LoggerManager received all register and start commit log");
-                commitLog();
-                notifyLogComplete();
-                lock.notifyAll();
+                if(callLog.containsValue(Undo)){
+                    LOG.info("LoggerManager received all register and start Undo");
+                    this.db.undoFromWAL();
+                    LOG.info("Undo log complete!");
+                    notifyAllComplete();
+                    lock.notifyAll();
+                }else{
+                    LOG.info("LoggerManager received all register and start commit log");
+                    commitLog();
+                    notifyAllComplete();
+                    lock.notifyAll();
+                }
             }
         }
     }
 
-    private void notifyLogComplete() {
+    private void notifyAllComplete() {
         for(int id:callLog.keySet()){
             g.getExecutionNode(id).ackCommit();
         }

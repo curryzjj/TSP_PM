@@ -5,6 +5,7 @@ import System.FileSystem.Path;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.log.LogRecord;
+import engine.log.WALManager;
 import engine.shapshot.SnapshotResult;
 import engine.table.datatype.serialize.Deserialize;
 import engine.table.tableRecords.TableRecord;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Vector;
 
 import static utils.FullSnapshotUtil.END_OF_KEY_GROUP_MARK;
 import static utils.TransactionalProcessConstants.FaultTolerance.END_OF_GLOBAL_LSN_MARK;

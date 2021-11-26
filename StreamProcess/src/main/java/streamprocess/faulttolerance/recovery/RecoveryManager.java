@@ -2,14 +2,12 @@ package streamprocess.faulttolerance.recovery;
 
 import System.FileSystem.FileSystem;
 import System.FileSystem.ImplFS.LocalFileSystem;
-import System.FileSystem.ImplFSDataInputStream.LocalDataInputStream;
 import System.FileSystem.Path;
 import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.shapshot.SnapshotResult;
-import engine.table.datatype.serialize.Deserialize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
@@ -18,15 +16,11 @@ import streamprocess.faulttolerance.FTManager;
 import streamprocess.faulttolerance.FaultToleranceConstants;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.RunnableFuture;
 
 import static UserApplications.CONTROL.enable_snapshot;
 import static UserApplications.CONTROL.enable_wal;
-import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.NULL;
-import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.Register;
+import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
 import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastCommitSnapshotResult;
 
 public class RecoveryManager extends FTManager {
@@ -89,15 +83,15 @@ public class RecoveryManager extends FTManager {
 
     public boolean spoutRegister(int executorId) {
         if(needRecovery){
-            this.callRecovery.put(executorId,Register);
+            this.callRecovery.put(executorId, Recovery);
             LOG.info("executor("+executorId+")"+" register the recovery");
         }
         return needRecovery;
     }
 
     @Override
-    public void boltRegister(int executorId) {
-        callRecovery.put(executorId, Register);
+    public void boltRegister(int executorId,FaultToleranceConstants.FaultToleranceStatus status) {
+        callRecovery.put(executorId, status);
         LOG.info("executor("+executorId+")"+" register the recovery");
     }
 

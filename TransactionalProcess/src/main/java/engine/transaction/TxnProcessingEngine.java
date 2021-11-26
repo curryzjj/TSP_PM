@@ -34,6 +34,8 @@ public class TxnProcessingEngine {
     private int TOTAL_CORES;
     private WALManager walManager;
     private ExecutorServiceInstance standalone_engine;
+    /* Abort transactions <threadId,bid> */
+    private ConcurrentSkipListSet<Long> transactionAbort;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
     //initialize
     private String app;
@@ -42,6 +44,7 @@ public class TxnProcessingEngine {
         this.app=app;
         holder_by_stage = new ConcurrentHashMap<>();
         this.walManager=new WALManager();
+        this.transactionAbort=new ConcurrentSkipListSet<>();
         switch(app){
             case "TP_txn":
                 holder_by_stage.put("segment_speed", new Holder_in_range(num_op));
@@ -161,6 +164,7 @@ public class TxnProcessingEngine {
     private void process(MyList<Operation> operation_chain, long mark_ID){
         if (operation_chain.size()>0){
             this.walManager.addLogRecord(operation_chain);
+            operation_chain.logRecord.setCopyTableRecord(operation_chain.first().s_record);
         }
         while (true){
             Operation operation=operation_chain.pollFirst();
@@ -169,6 +173,9 @@ public class TxnProcessingEngine {
         }
     }
     private void process(Operation operation, long mark_id, boolean logged,LogRecord logRecord) {
+        if(operation.bid==400){
+            this.transactionAbort.add(operation.bid);
+        }
         switch (operation.accessType){
             case READ_WRITE_READ:
                 assert operation.record_ref!=null;
@@ -252,5 +259,9 @@ public class TxnProcessingEngine {
     }
     public WALManager getWalManager() {
         return walManager;
+    }
+
+    public ConcurrentSkipListSet<Long> getTransactionAbort() {
+        return transactionAbort;
     }
 }

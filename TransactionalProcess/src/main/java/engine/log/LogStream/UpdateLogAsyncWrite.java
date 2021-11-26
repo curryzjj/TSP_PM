@@ -47,7 +47,6 @@ public class UpdateLogAsyncWrite {
         }
     }
     private void commitLog() throws IOException {
-        int a=0;
         final DataOutputView outputView=new DataOutputViewStreamWrapper(logStreamWithResultProvider.getLogOutputStream());
         for(WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
             for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.values()){

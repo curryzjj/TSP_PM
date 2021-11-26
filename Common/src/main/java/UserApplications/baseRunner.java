@@ -27,7 +27,7 @@ public abstract class baseRunner {
     @Parameter(names = {"--config-str"}, required = false, description = "Path to the configuration file for the application")
     public String configStr;
     @Parameter(names = {"--THz", "-THz"}, description = "target input Hz")
-    public double THz =20000 ;
+    public double THz =2000 ;
     @Parameter(names = {"--timeslice"}, description = "time slice used in spout (ms)")
     public int timeSliceLengthMs = 100;//ms
     @Parameter(names = {"--shapshot"}, description = "shapshot interval")
