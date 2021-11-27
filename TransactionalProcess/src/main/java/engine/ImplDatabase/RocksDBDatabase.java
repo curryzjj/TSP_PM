@@ -65,6 +65,11 @@ public class RocksDBDatabase extends Database {
         return false;
     }
 
+    @Override
+    public void reloadStateFromSnapshot(SnapshotResult snapshotResult) throws IOException, ClassNotFoundException, DatabaseException {
+
+    }
+
     public void createKeyGroupRange(){
         this.storageManager.createKeyGroupRange();
     }

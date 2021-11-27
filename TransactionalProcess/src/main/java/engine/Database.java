@@ -72,6 +72,12 @@ public abstract class Database {
      * @return
      */
     public abstract boolean undoFromWAL() throws IOException, DatabaseException;
+
+    /**
+     * Reload state from the lastSnapshot
+     * @param snapshotResult
+     */
+    public abstract void reloadStateFromSnapshot(SnapshotResult snapshotResult) throws IOException, ClassNotFoundException, DatabaseException;
     /**
      * To take a snapshot for the DataBase
      * @param checkpointId

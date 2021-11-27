@@ -38,6 +38,10 @@ public class RecoveryHelperProvider {
         }finally {
             inputStream.close();
         }
-        return SnapshotResults.get(SnapshotResults.size()-1);
+        if(SnapshotResults.size()==0){
+            return null;
+        }else{
+            return SnapshotResults.get(SnapshotResults.size()-1);
+        }
     }
 }

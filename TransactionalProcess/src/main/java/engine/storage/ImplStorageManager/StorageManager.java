@@ -64,6 +64,17 @@ public class StorageManager extends AbstractStorageManager {
         this.RegisterState(tableName,s);
         table_count++;
     }
+    public synchronized void cleanTable(String tableName) throws IOException {
+        tables.get(tableName).clean();
+    }
+    @Override
+    public synchronized void cleanAllTables() throws IOException {
+        List<String> tableNames = new ArrayList<>(tables.keySet());
+        for (String s : tableNames) {
+            cleanTable(s);
+        }
+    }
+
     /**
      * Delete a table in this database.
      *

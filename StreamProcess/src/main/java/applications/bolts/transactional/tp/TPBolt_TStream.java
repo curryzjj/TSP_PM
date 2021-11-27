@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 public class TPBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream.class);
     ArrayDeque<LREvent> LREvents = new ArrayDeque<>();
+    ArrayDeque<LREvent> abortEvents=new ArrayDeque<>();
     public TPBolt_TStream(int fid) {
         super(LOG,fid);
         this.configPrefix="tptxn";
@@ -60,7 +61,7 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
                     ,new AVG(event.getPOSReport().getSpeed())
             );
             if(!flag){
-                LREvents.remove(event);
+                abortEvents.add(event);
                 collector.emit(event.getBid(), false,event.getBid(), event.getTimestamp());//the tuple is abort.
                 continue;
             }
@@ -70,6 +71,11 @@ public class TPBolt_TStream extends TransactionalBoltTStream {
                     ,event.count_value
                     ,new CNT(event.getPOSReport().getVid()));
         }
+        for (Iterator<LREvent> it = abortEvents.iterator(); it.hasNext(); ) {
+            LREvent event = it.next();
+            LREvents.remove(event);
+        }
+        abortEvents.clear();
     }
     @Override
     protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {

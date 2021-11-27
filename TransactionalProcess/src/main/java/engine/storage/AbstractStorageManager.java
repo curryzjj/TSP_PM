@@ -30,6 +30,8 @@ public abstract class AbstractStorageManager {
      * Delete all tables from this database.
      */
     public synchronized void dropAllTables() throws IOException{};
+    public synchronized void cleanTable(String tableName) throws IOException, DatabaseException {};
+    public synchronized void cleanAllTables() throws IOException{};
     /**
      * Delete a table in this database.
      *

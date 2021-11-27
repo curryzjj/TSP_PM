@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
+import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastCommitSnapshotResult;
 
 public class CheckpointManager extends FTManager {
     private final Logger LOG= LoggerFactory.getLogger(CheckpointManager.class);
@@ -107,12 +108,21 @@ public class CheckpointManager extends FTManager {
                 if(close){
                     return;
                 }
-                LOG.info("CheckpointManager received all register and start snapshot");
-                RunnableFuture<SnapshotResult> snapshotResult =this.db.snapshot(this.currentCheckpointId,00000L);
-                this.snapshotResult=snapshotResult.get();
-                commitCurrentLog();
-                notifyCheckpointComplete();
-                lock.notifyAll();
+                if(callSnapshot.containsValue(Undo)){
+                    LOG.info("CheckpointManager received all register and start Undo");
+                    SnapshotResult lastSnapshotResult=getLastCommitSnapshotResult(checkpointFile);
+                    this.db.reloadStateFromSnapshot(lastSnapshotResult);
+                    LOG.info("Reload state complete!");
+                    notifyAllComplete();
+                    lock.notifyAll();
+                }else{
+                    LOG.info("CheckpointManager received all register and start snapshot");
+                    RunnableFuture<SnapshotResult> snapshotResult =this.db.snapshot(this.currentCheckpointId,00000L);
+                    this.snapshotResult=snapshotResult.get();
+                    commitCurrentLog();
+                    notifyAllComplete();
+                    lock.notifyAll();
+                }
             }
         }
     }
@@ -125,14 +135,14 @@ public class CheckpointManager extends FTManager {
         dataOutputStream.write(result);
         dataOutputStream.close();
         LOG.info("CheckpointManager commit the checkpoint to the current.log");
+        isCommitted.put(currentCheckpointId,true);
         return true;
     }
-    public void notifyCheckpointComplete() throws Exception {
+    public void notifyAllComplete() throws Exception {
         for(int id:callSnapshot.keySet()){
             g.getExecutionNode(id).ackCommit();
         }
         this.callSnapshot_ini();
-        isCommitted.put(currentCheckpointId,true);
     }
     public Object getLock(){
         return lock;

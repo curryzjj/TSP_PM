@@ -78,6 +78,14 @@ public class InMemeoryDatabase extends Database {
     }
 
     @Override
+    public void reloadStateFromSnapshot(SnapshotResult snapshotResult) throws IOException, ClassNotFoundException, DatabaseException {
+        this.storageManager.cleanAllTables();
+        if(snapshotResult!=null){
+            this.recoveryFromSnapshot(snapshotResult);
+        }
+    }
+
+    @Override
     public void createKeyGroupRange() {
         this.storageManager.createKeyGroupRange();
     }

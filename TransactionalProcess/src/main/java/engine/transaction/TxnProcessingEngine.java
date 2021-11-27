@@ -173,7 +173,7 @@ public class TxnProcessingEngine {
         }
     }
     private void process(Operation operation, long mark_id, boolean logged,LogRecord logRecord) {
-        if(operation.bid==400){
+        if(operation.bid==5000||operation.bid==10007){
             this.transactionAbort.add(operation.bid);
         }
         switch (operation.accessType){
