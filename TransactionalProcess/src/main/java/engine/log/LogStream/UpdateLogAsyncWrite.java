@@ -11,17 +11,16 @@ import utils.CloseableRegistry.CloseableRegistry;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static utils.FullSnapshotUtil.END_OF_KEY_GROUP_MARK;
 import static utils.TransactionalProcessConstants.FaultTolerance.END_OF_GLOBAL_LSN_MARK;
 
-public class UpdateLogAsyncWrite {
+public class UpdateLogAsyncWrite implements UpdateLogWrite {
     private final LogStreamWithResultProvider logStreamWithResultProvider;
     private final long timestamp;
     private final long globalLSN;
     private ConcurrentHashMap<String, WALManager.LogRecords_in_range> holder_by_tableName;
-
     public UpdateLogAsyncWrite(ConcurrentHashMap<String, WALManager.LogRecords_in_range> holder_by_tableName,
                                LogStreamWithResultProvider logStreamWithResultProvider,
                                long timestamp,

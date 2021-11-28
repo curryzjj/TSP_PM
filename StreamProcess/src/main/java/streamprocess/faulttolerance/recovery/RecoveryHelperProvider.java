@@ -44,4 +44,26 @@ public class RecoveryHelperProvider {
             return SnapshotResults.get(SnapshotResults.size()-1);
         }
     }
+    public static Long getLastGlobalLSN(File recoveryFile) throws IOException, ClassNotFoundException {
+        List<Long> globalLSN = new ArrayList<>();
+        LocalDataInputStream localDataInputStream=new LocalDataInputStream(recoveryFile);
+        DataInputStream inputStream=new DataInputStream(localDataInputStream);
+        String s=inputStream.readUTF();
+        LOG.info("Last Time: "+s);
+        try{
+            while(true){
+                long a=inputStream.readLong();
+                globalLSN.add(a);
+            }
+        }catch (EOFException e){
+            LOG.info("finish read the current.log");
+        }finally {
+            inputStream.close();
+        }
+        if(globalLSN.size()==0){
+            return null;
+        }else{
+            return globalLSN.get(globalLSN.size()-1);
+        }
+    }
 }

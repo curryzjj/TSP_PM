@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 
+import static UserApplications.CONTROL.enable_parallel;
 import static utils.TransactionalProcessConstants.CommitLogExecutionType.ASYNCHRONOUS;
 import static utils.TransactionalProcessConstants.CommitLogExecutionType.SYNCHRONOUS;
 
@@ -68,8 +69,12 @@ public class InMemeoryDatabase extends Database {
         AbstractRecoveryManager.recoveryFromSnapshot(this,lastSnapshotResult);
     }
     @Override
-    public long recoveryFromWAL() throws IOException, ClassNotFoundException, DatabaseException {
-        return AbstractRecoveryManager.recoveryFromWAL(this,WalPath);
+    public long recoveryFromWAL(long globalLSN) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
+        if(enable_parallel){
+            return AbstractRecoveryManager.parallelRecoveryFromWAL(this,WalPath,txnProcessingEngine.getNum_op(),globalLSN);
+        }else{
+            return AbstractRecoveryManager.recoveryFromWAL(this,WalPath,-1,globalLSN);
+        }
     }
 
     @Override

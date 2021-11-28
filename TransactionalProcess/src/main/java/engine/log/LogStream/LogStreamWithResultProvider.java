@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public interface LogStreamWithResultProvider extends Closeable {
     Logger LOG= LoggerFactory.getLogger(LogStreamWithResultProvider.class);
@@ -41,8 +43,16 @@ public interface LogStreamWithResultProvider extends Closeable {
 
     Path closeAndFinalizeLogCommitStreamResult() throws IOException;
     static LogStreamWithResultProvider createSimpleStream(LogStreamFactory LogStreamFactory) throws IOException{
-        LogStreamFactory.LogOutputStream out= LogStreamFactory.createLogOutputStream();
+        LogStreamFactory.LogOutputStream out= LogStreamFactory.createLogOutputStream(-1);
         return new PrimaryStreamOnly(out);
+    }
+    static List<LogStreamWithResultProvider> createMultipleStream(LogStreamFactory LogStreamFactory,int rangeNum)throws IOException{
+        List<LogStreamWithResultProvider> providers=new ArrayList<>();
+        for (int i=0;i<rangeNum;i++){
+            LogStreamFactory.LogOutputStream out= LogStreamFactory.createLogOutputStream(i);
+            providers.add(new PrimaryStreamOnly(out));
+        }
+        return providers;
     }
     /**
      * Create logResult to log this group DB update

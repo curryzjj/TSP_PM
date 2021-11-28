@@ -5,7 +5,6 @@ import System.FileSystem.Path;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.log.LogRecord;
-import engine.log.WALManager;
 import engine.shapshot.SnapshotResult;
 import engine.table.datatype.serialize.Deserialize;
 import engine.table.tableRecords.TableRecord;
@@ -18,13 +17,31 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
+import static engine.log.WALManager.writeExecutor;
 import static utils.FullSnapshotUtil.END_OF_KEY_GROUP_MARK;
 import static utils.TransactionalProcessConstants.FaultTolerance.END_OF_GLOBAL_LSN_MARK;
 
 public class AbstractRecoveryManager {
     private static final Logger LOG= LoggerFactory.getLogger(AbstractRecoveryManager.class);
+    private static class recoveryFromWalTask implements Callable<Long>{
+        private Database db;
+        private Path WALPath;
+        private int rangeId;
+        private long globalLSN;
+        public recoveryFromWalTask(Database db, Path walPath, int rangeId, long globalLSN){
+            this.db = db;
+            WALPath = walPath;
+            this.rangeId = rangeId;
+            this.globalLSN = globalLSN;
+        }
+        @Override
+        public Long call() throws Exception {
+            return recoveryFromWAL(db,WALPath,rangeId,globalLSN);
+        }
+    }
     public static void recoveryFromSnapshot(Database db, SnapshotResult snapshotResult) throws IOException, ClassNotFoundException, DatabaseException {
         File snapshotFile=db.getFs().pathToFile(snapshotResult.getSnapshotPath());
         LocalDataInputStream inputStream=new LocalDataInputStream(snapshotFile);
@@ -57,9 +74,16 @@ public class AbstractRecoveryManager {
         inputStream.close();
         inputViewStreamWrapper.close();
     }
-    public static long recoveryFromWAL(Database db,Path WALPath) throws IOException, ClassNotFoundException, DatabaseException {
-        Path filePath=new Path(WALPath,"WAL");
-        File walFile=db.getFs().pathToFile(filePath);
+    public static long recoveryFromWAL(Database db,Path WALPath,int rangeId,long globalLSN) throws IOException, ClassNotFoundException, DatabaseException {
+        Path filePath;
+        File walFile;
+        if(rangeId==-1){
+            filePath=new Path(WALPath,"WAL");
+            walFile=db.getFs().pathToFile(filePath);
+        }else{
+            filePath=new Path(WALPath,"WAL-"+rangeId);
+            walFile=db.getFs().pathToFile(filePath);
+        }
         LocalDataInputStream inputStream=new LocalDataInputStream(walFile);
         DataInputViewStreamWrapper inputViewStreamWrapper=new DataInputViewStreamWrapper(inputStream);
         List<LogRecord> commitLogRecords=new ArrayList<>();
@@ -71,8 +95,10 @@ public class AbstractRecoveryManager {
                     int len=inputViewStreamWrapper.readInt();
                     if(len==END_OF_GLOBAL_LSN_MARK){
                         long gLSN=inputViewStreamWrapper.readLong();
-                        theLastLSN=gLSN;
-                        isNewLSN=true;
+                        if(gLSN<=globalLSN||globalLSN==-1){
+                            theLastLSN=gLSN;
+                            isNewLSN=true;
+                        }
                     }else {
                         LogRecord value=getLogRecord(inputViewStreamWrapper,len);
                         commitLogRecords.add(value);
@@ -89,11 +115,20 @@ public class AbstractRecoveryManager {
                 }
             }
         } catch (EOFException e){
-            LOG.info("DB recovery from WAL complete");
+            LOG.info("DB recovery from WAL-"+rangeId+" complete");
         }
         inputStream.close();
         inputViewStreamWrapper.close();
         return theLastLSN;
+    }
+    public static long parallelRecoveryFromWAL(Database db,Path WALPath,int rangeNum,long globalLSN) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
+        List<recoveryFromWalTask> callables=new ArrayList<>();
+        for(int i=0;i<rangeNum;i++){
+            callables.add(new recoveryFromWalTask(db,WALPath,i, globalLSN));
+        }
+        List<Future<Long>> futures=writeExecutor.invokeAll(callables);
+
+        return 1L;
     }
     private static String getKey(DataInputViewStreamWrapper inputViewStreamWrapper) throws IOException {
         int len=inputViewStreamWrapper.readInt();

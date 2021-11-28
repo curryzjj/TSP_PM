@@ -65,7 +65,7 @@ public abstract class Database {
      * To recovery the DataBase from the WAL, and return the last committed globalLSN
      * @return
      */
-    public abstract long recoveryFromWAL() throws IOException, ClassNotFoundException, DatabaseException;
+    public abstract long recoveryFromWAL(long globalLSN) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException;
 
     /**
      * To undo the DataBase from the WAL

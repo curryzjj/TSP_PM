@@ -56,14 +56,16 @@ public class FsLogStreamFactory implements LogStreamFactory {
         return "FsLogStreamFactory @ "+LogDirectory;
     }
     @Override
-    public LogOutputStream createLogOutputStream() throws IOException {
+    public LogOutputStream createLogOutputStream(int rangeId) throws IOException {
         Path target=LogDirectory;
         int bufferSize=Math.max(writeBufferSize,fileThreshold);
-        return new FsLogOutputStream(bufferSize,fileThreshold,target,filesystem);
+        return new FsLogOutputStream(bufferSize,fileThreshold,target,filesystem,rangeId);
     }
     public static class FsLogOutputStream extends LogOutputStream{
         private final byte[] writeBuffer;
         private int pos;
+        /* if id=-1, there is only one range */
+        private int rangId;
         private FSDataOutputStream outStream;
         private final int localThreshold;
         private final Path basePath;
@@ -76,7 +78,8 @@ public class FsLogStreamFactory implements LogStreamFactory {
         public FsLogOutputStream( int bufferSize,
                                   int localThreshold,
                                   Path basePath,
-                                  FileSystem fs) {
+                                  FileSystem fs,
+                                  int rangId) {
             if (bufferSize < localThreshold) {
                 throw new IllegalArgumentException();
             }
@@ -84,6 +87,7 @@ public class FsLogStreamFactory implements LogStreamFactory {
             this.localThreshold = localThreshold;
             this.basePath = basePath;
             this.fs = fs;
+            this.rangId=rangId;
             this.logPath=createLogPath();
             this.logFile=fs.pathToFile(logPath);
         }
@@ -190,7 +194,12 @@ public class FsLogStreamFactory implements LogStreamFactory {
             }
         }
         private Path createLogPath() {
-            final String fileName = "WAL";
+            final String fileName;
+            if(this.rangId!=-1){
+                fileName = "WAL-"+this.rangId;
+            }else{
+                fileName = "WAL";
+            }
             relativeLogPath = fileName;
             return new Path(basePath, fileName);
         }

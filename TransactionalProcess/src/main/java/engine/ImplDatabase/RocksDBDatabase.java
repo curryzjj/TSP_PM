@@ -56,7 +56,7 @@ public class RocksDBDatabase extends Database {
     }
 
     @Override
-    public long recoveryFromWAL() throws IOException {
+    public long recoveryFromWAL(long globalLSN) throws IOException {
         return 0;
     }
 

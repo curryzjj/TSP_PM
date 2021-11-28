@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 
 public interface LogStreamFactory {
-    LogOutputStream createLogOutputStream() throws IOException;
+    LogOutputStream createLogOutputStream(int rangeId) throws IOException;
     @Nullable
     abstract class LogOutputStream extends FSDataOutputStream{
         public abstract Path getLogPath();

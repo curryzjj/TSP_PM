@@ -8,6 +8,7 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
 import engine.log.LogResult;
+import engine.table.datatype.serialize.Serialize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
@@ -128,7 +129,16 @@ public class LoggerManager extends FTManager {
         long LSN=isCommitted.poll();
         RunnableFuture<LogResult> commitLog=this.db.commitLog(LSN, 00000L);
         commitLog.get();
+        commitGlobalLSN(LSN);
         LOG.info("Update log commit!");
+        return true;
+    }
+    private boolean commitGlobalLSN(long globalLSN) throws IOException, InterruptedException {
+        LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(walFile);
+        DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
+        dataOutputStream.writeLong(globalLSN);
+        dataOutputStream.close();
+        LOG.info("LoggerManager commit the globalLSN to the current.log");
         return true;
     }
     public Object getLock(){

@@ -18,10 +18,10 @@ import streamprocess.faulttolerance.FaultToleranceConstants;
 import java.io.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static UserApplications.CONTROL.enable_snapshot;
-import static UserApplications.CONTROL.enable_wal;
+import static UserApplications.CONTROL.*;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
 import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastCommitSnapshotResult;
+import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastGlobalLSN;
 
 public class RecoveryManager extends FTManager {
     private final Logger LOG= LoggerFactory.getLogger(RecoveryManager.class);
@@ -50,7 +50,7 @@ public class RecoveryManager extends FTManager {
         this.close=false;
         this.completeRecovery=false;
         this.callRecovery_ini();
-        String faultTolerance;
+        String faultTolerance="";
         if(enable_snapshot){
             faultTolerance="checkpoint";
         }else if(enable_wal){
@@ -148,8 +148,14 @@ public class RecoveryManager extends FTManager {
             this.db.recoveryFromSnapshot(lastSnapshotResult);
             this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId());
         }else if (enable_wal){
-            long theLastLSN=this.db.recoveryFromWAL();
-            this.g.getSpout().recoveryInput(theLastLSN);
+            if(enable_parallel){
+                long theLastLSN=getLastGlobalLSN(recoveryFile);
+                this.db.recoveryFromWAL(theLastLSN);
+                this.g.getSpout().recoveryInput(theLastLSN);
+            }else{
+                long theLastLSN=this.db.recoveryFromWAL(-1);
+                this.g.getSpout().recoveryInput(theLastLSN);
+            }
         }
     }
 

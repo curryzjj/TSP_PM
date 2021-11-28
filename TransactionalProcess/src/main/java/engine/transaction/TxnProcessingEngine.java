@@ -43,7 +43,7 @@ public class TxnProcessingEngine {
         num_op=size;
         this.app=app;
         holder_by_stage = new ConcurrentHashMap<>();
-        this.walManager=new WALManager();
+        this.walManager=new WALManager(num_op);
         this.transactionAbort=new ConcurrentSkipListSet<>();
         switch(app){
             case "TP_txn":
@@ -210,7 +210,7 @@ public class TxnProcessingEngine {
         int sum = 0;
         for (MyList<Operation> operation_chain : holder.holder_v1.values()) {
             if (operation_chain.size() > 0) {
-                sum += operation_chain.size();
+                sum=sum+operation_chain.size();
                 boolean flag=Thread.currentThread().isInterrupted();
                 if (!flag) {
                     if (enable_engine) {
@@ -259,6 +259,10 @@ public class TxnProcessingEngine {
     }
     public WALManager getWalManager() {
         return walManager;
+    }
+
+    public Integer getNum_op() {
+        return num_op;
     }
 
     public ConcurrentSkipListSet<Long> getTransactionAbort() {

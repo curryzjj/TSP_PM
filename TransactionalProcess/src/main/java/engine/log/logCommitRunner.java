@@ -2,6 +2,7 @@ package engine.log;
 
 import engine.log.LogStream.LogStreamFactory;
 import engine.log.LogStream.UpdateLogAsyncWrite;
+import engine.log.LogStream.UpdateLogWrite;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.CloseableRegistry.CloseableRegistry;
@@ -28,11 +29,15 @@ public final class logCommitRunner {
     }
     public final RunnableFuture<LogResult> commitLog(long globalLSN, long timestamp, LogStreamFactory logStreamFactory) throws IOException {
         long startTime=System.currentTimeMillis();
-        UpdateLogAsyncWrite updateLogAsyncWrite=walManager.asyncCommitLog(globalLSN,timestamp,logStreamFactory);
+        if (walManager.isEmpty()){
+            LOG.info("There is no update log to commit");
+            return null;
+        }
+        UpdateLogWrite updateWrite=walManager.asyncCommitLog(globalLSN,timestamp,logStreamFactory);
         FutureTask<LogResult> asyncCommitLogTask= new AsyncLogCommitCallable<LogResult>() {
             @Override
             protected LogResult callInternal() throws Exception {
-                return updateLogAsyncWrite.get(cancelStreamRegistry);
+                return updateWrite.get(cancelStreamRegistry);
             }
 
             @Override
