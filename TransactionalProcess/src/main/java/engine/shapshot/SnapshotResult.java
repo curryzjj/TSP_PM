@@ -5,6 +5,7 @@ import System.FileSystem.Path;
 import engine.table.keyGroup.KeyGroupRangeOffsets;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 public class SnapshotResult implements Serializable {
     private static final long serialVersionUID = 8003076517462798444L;
@@ -15,6 +16,10 @@ public class SnapshotResult implements Serializable {
     public static <T> SnapshotResult empty() {
         return (SnapshotResult) EMPTY;
     }
+    /** Use in the parallel snapshot */
+    private HashMap<Path,KeyGroupRangeOffsets> snapshotResults;
+    private int taskId;
+
     private Path snapshotPath;
     private KeyGroupRangeOffsets keyGroupRangeOffsets;
     private long checkpointId;
@@ -24,14 +29,33 @@ public class SnapshotResult implements Serializable {
         this.keyGroupRangeOffsets = keyGroupRangeOffsets;
         this.checkpointId=checkpointId;
         this.timestamp=timestamp;
+        this.snapshotResults=new HashMap<>();
+    }
+    public SnapshotResult(HashMap<Path,KeyGroupRangeOffsets> snapshotResults,long timestamp,long checkpointId){
+        this.checkpointId=checkpointId;
+        this.timestamp=timestamp;
+        this.snapshotResults=snapshotResults;
     }
 
+    /**
+     * Used in the recovery
+     * @param path
+     * @param keyGroupRangeOffsets
+     */
+    public SnapshotResult(Path path,KeyGroupRangeOffsets keyGroupRangeOffsets){
+        this.snapshotPath=path;
+        this.keyGroupRangeOffsets=keyGroupRangeOffsets;
+    }
     public long getCheckpointId() {
         return checkpointId;
     }
 
     public long getTimestamp() {
         return timestamp;
+    }
+
+    public HashMap<Path, KeyGroupRangeOffsets> getSnapshotResults() {
+        return snapshotResults;
     }
 
     public Path getSnapshotPath() {

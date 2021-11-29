@@ -3,7 +3,6 @@ package engine;
 import System.FileSystem.FileSystem;
 import System.FileSystem.Path;
 import engine.Exception.DatabaseException;
-import engine.log.LogRecord;
 import engine.log.LogResult;
 import engine.recovery.AbstractRecoveryManager;
 import engine.shapshot.CheckpointOptions;
@@ -15,13 +14,18 @@ import engine.transaction.TxnProcessingEngine;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RunnableFuture;
+
+import static UserApplications.CONTROL.enable_parallel;
 
 public abstract class Database {
     public int numTransactions=0;//current number of activate transactions
     protected AbstractStorageManager storageManager;
     protected AbstractRecoveryManager recoveryManager;
     protected TxnProcessingEngine txnProcessingEngine;
+    /* init in the EM */
+    public static ExecutorService snapshotExecutor;
     protected Path snapshotPath;
     protected Path WalPath;
     protected FileSystem fs;
@@ -50,7 +54,7 @@ public abstract class Database {
     public AbstractRecoveryManager getRecoveryManager() {
         return recoveryManager;
     }
-    public abstract void createKeyGroupRange();
+    public abstract void createTableRange(int table_count);
 
     /**
      * To recovery the DataBase from the snapshot
@@ -59,7 +63,7 @@ public abstract class Database {
      * @throws ClassNotFoundException
      * @throws DatabaseException
      */
-    public abstract void recoveryFromSnapshot(SnapshotResult lastSnapshotResult) throws IOException, ClassNotFoundException, DatabaseException;
+    public abstract void recoveryFromSnapshot(SnapshotResult lastSnapshotResult) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException;
 
     /**
      * To recovery the DataBase from the WAL, and return the last committed globalLSN
@@ -77,7 +81,7 @@ public abstract class Database {
      * Reload state from the lastSnapshot
      * @param snapshotResult
      */
-    public abstract void reloadStateFromSnapshot(SnapshotResult snapshotResult) throws IOException, ClassNotFoundException, DatabaseException;
+    public abstract void reloadStateFromSnapshot(SnapshotResult snapshotResult) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException;
     /**
      * To take a snapshot for the DataBase
      * @param checkpointId
@@ -86,6 +90,15 @@ public abstract class Database {
      * @throws Exception
      */
     public abstract RunnableFuture<SnapshotResult> snapshot(final long checkpointId, final long timestamp) throws Exception;
+
+    /**
+     * To parallel take a snapshot
+     * @param checkpointId
+     * @param timestamp
+     * @return
+     * @throws Exception
+     */
+    public abstract SnapshotResult parallelSnapshot(final long checkpointId, final long timestamp) throws Exception;
     /**
      * To commit the update log for the group of transactions
      * @param globalLSN
@@ -96,5 +109,13 @@ public abstract class Database {
 
     public FileSystem getFs() {
         return fs;
+    }
+
+    public void setCheckpointOptions(int rangeNum,int delta) {
+        if(enable_parallel){
+            this.checkpointOptions = new CheckpointOptions(rangeNum,delta);
+        }else{
+            this.checkpointOptions=new CheckpointOptions();
+        }
     }
 }

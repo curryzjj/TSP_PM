@@ -9,7 +9,6 @@ import engine.table.datatype.serialize.Serialize;
 import utils.CloseableRegistry.CloseableRegistry;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,7 +21,6 @@ public class ParallelUpdateLogWrite implements UpdateLogWrite {
     private final List<LogStreamWithResultProvider> providers;
     private final long timestamp;
     private final long globalLSN;
-    static
     private ConcurrentHashMap<String, WALManager.LogRecords_in_range> holder_by_tableName;
     public ParallelUpdateLogWrite(ConcurrentHashMap<String, WALManager.LogRecords_in_range> holder_by_tableName,
                                   List<LogStreamWithResultProvider> providers,

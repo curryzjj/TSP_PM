@@ -8,6 +8,7 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
 import engine.shapshot.SnapshotResult;
+import engine.shapshot.SnapshotStrategy;
 import engine.table.datatype.serialize.Serialize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,8 @@ import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 
+import static UserApplications.CONTROL.enable_parallel;
+import static UserApplications.CONTROL.enable_shared_state;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
 import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastCommitSnapshotResult;
 
@@ -119,8 +122,12 @@ public class CheckpointManager extends FTManager {
                     lock.notifyAll();
                 }else{
                     LOG.info("CheckpointManager received all register and start snapshot");
-                    RunnableFuture<SnapshotResult> snapshotResult =this.db.snapshot(this.currentCheckpointId,00000L);
-                    this.snapshotResult=snapshotResult.get();
+                    if(enable_parallel){
+                        this.snapshotResult=this.db.parallelSnapshot(this.currentCheckpointId,00000L);
+                    }else{
+                        RunnableFuture<SnapshotResult> snapshotResult =this.db.snapshot(this.currentCheckpointId,00000L);
+                        this.snapshotResult=snapshotResult.get();
+                    }
                     commitCurrentLog();
                     notifyAllComplete();
                     lock.notifyAll();

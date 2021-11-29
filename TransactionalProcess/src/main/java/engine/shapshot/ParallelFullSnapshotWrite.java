@@ -2,12 +2,19 @@ package engine.shapshot;
 
 import System.FileSystem.DataIO.DataOutputView;
 import System.FileSystem.DataIO.DataOutputViewStreamWrapper;
+import System.FileSystem.Path;
 import engine.Meta.StateMetaInfoSnapshotReadersWriters;
+import engine.log.LogRecord;
+import engine.log.LogStream.ParallelUpdateLogWrite;
+import engine.log.WALManager;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.CheckpointStreamWithResultProvider;
 import engine.shapshot.ShapshotResources.FullSnapshotResources;
 import engine.table.datatype.serialize.Serialize;
 import engine.table.keyGroup.KeyGroupRangeOffsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 import utils.CloseableRegistry.CloseableRegistry;
 import utils.StateIterator.ImplGroupIterator.TableStatePerKeyGroupMerageIterator;
 import utils.StateIterator.RocksDBStateIterator;
@@ -15,47 +22,92 @@ import utils.TransactionalProcessConstants.CheckpointType;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.util.*;
 
-import static utils.FullSnapshotUtil.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
-public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSupplier{
-    /** Supplier for the stream into which we write the snapshot. */
-    private final CheckpointStreamWithResultProvider checkpointStreamWithResultProvider;
-    private final FullSnapshotResources snapshotResources;
-    private final CheckpointType checkpointType;
+import static engine.Database.snapshotExecutor;
+import static utils.FullSnapshotUtil.END_OF_KEY_GROUP_MARK;
+
+public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResultSupplier {
+    private final Logger LOG= LoggerFactory.getLogger(ParallelFullSnapshotWrite.class);
+    private final List<CheckpointStreamWithResultProvider> providers;
+    private final List<FullSnapshotResources> snapshotResources;
     private final long timestamp;
     private final long checkpointId;
+    private final CheckpointType checkpointType;
+    private final CheckpointOptions options;
 
-    public FullSnapshotAsyncWrite(CheckpointStreamWithResultProvider provider,
-                                  FullSnapshotResources snapshotResources,
-                                  CheckpointType checkpointType,
-                                  long timestamp,
-                                  long checkpointId) {
-        this.checkpointStreamWithResultProvider = provider;
-        this.snapshotResources = snapshotResources;
+    public ParallelFullSnapshotWrite(List<CheckpointStreamWithResultProvider> providers,List<FullSnapshotResources> snapshotResources, long timestamp, long checkpointId, CheckpointType checkpointType,CheckpointOptions options) {
+        this.providers = providers;
+        this.timestamp = timestamp;
+        this.checkpointId = checkpointId;
         this.checkpointType = checkpointType;
-        this.timestamp=timestamp;
-        this.checkpointId=checkpointId;
+        this.snapshotResources = snapshotResources;
+        this.options = options;
     }
 
     @Override
     public SnapshotResult get(CloseableRegistry snapshotCloseableRegistry) throws Exception {
-        final KeyGroupRangeOffsets keyGroupRangeOffsets =
-                new KeyGroupRangeOffsets(snapshotResources.getKeyGroupRange());
-        snapshotCloseableRegistry.registerCloseable(checkpointStreamWithResultProvider);
-        writeSnapshotToOutputStream(checkpointStreamWithResultProvider, keyGroupRangeOffsets);
-        if (snapshotCloseableRegistry.unregisterCloseable(checkpointStreamWithResultProvider)) {
-         return CheckpointStreamWithResultProvider.createSnapshotResult(checkpointStreamWithResultProvider.closeAndFinalizeCheckpointStreamResult(),
-                 keyGroupRangeOffsets,timestamp,checkpointId);
-        } else {
-            throw new IOException("Stream is already unregistered/closed.");
+        Collection<SnapshotTask> callables=new ArrayList<>();
+        initTasks(callables,snapshotCloseableRegistry);
+        List<Future<Tuple2<Path,KeyGroupRangeOffsets>>> snapshotPaths=snapshotExecutor.invokeAll(callables);
+        HashMap<Path,KeyGroupRangeOffsets> results=new HashMap<>();
+        for(int i=0;i<snapshotPaths.size();i++){
+            try {
+                Tuple2<Path,KeyGroupRangeOffsets> tuple=snapshotPaths.get(i).get();
+                results.put(tuple._1,tuple._2);
+            } catch (ExecutionException e) {
+                System.out.println(e.getMessage());
+            } catch (CancellationException e) {
+                System.out.println("Cance");
+            }
+        }
+        return new SnapshotResult(results,timestamp,checkpointId);
+    }
+    private void initTasks(Collection<SnapshotTask> callables,CloseableRegistry closeableRegistry) {
+        for(int i=0;i<options.rangeNum;i++){
+            callables.add(new SnapshotTask(i,snapshotResources.get(i),closeableRegistry,providers.get(i)));
         }
     }
-    private void writeSnapshotToOutputStream(CheckpointStreamWithResultProvider checkpointStreamWithResultProvider,KeyGroupRangeOffsets keyGroupRangeOffsets) throws IOException, InterruptedException {
+    private class SnapshotTask implements Callable<Tuple2<Path,KeyGroupRangeOffsets>>{
+        private CheckpointStreamWithResultProvider provider;
+        private int taskId;
+        private FullSnapshotResources snapshotResources;
+        private CloseableRegistry snapshotCloseableRegistry;
+        private SnapshotTask(int taskId,
+                             FullSnapshotResources snapshotResources,
+                             CloseableRegistry snapshotCloseableRegistry,
+                             CheckpointStreamWithResultProvider provider) {
+            this.taskId = taskId;
+            this.snapshotResources = snapshotResources;
+            this.snapshotCloseableRegistry=snapshotCloseableRegistry;
+            this.provider=provider;
+        }
+
+        @Override
+        public Tuple2<Path,KeyGroupRangeOffsets> call() throws Exception {
+            final KeyGroupRangeOffsets keyGroupRangeOffsets =
+                    new KeyGroupRangeOffsets(snapshotResources.getKeyGroupRange());
+            snapshotCloseableRegistry.registerCloseable(provider);
+            writeSnapshotToOutputStream(provider,snapshotResources, keyGroupRangeOffsets,this.taskId);
+            if (snapshotCloseableRegistry.unregisterCloseable(provider)) {
+                 Path path=provider.closeAndFinalizeCheckpointStreamResult();
+                 return new Tuple2<Path, KeyGroupRangeOffsets>(path,keyGroupRangeOffsets);
+            } else {
+                throw new IOException("Stream is already unregistered/closed.");
+            }
+        }
+    }
+    private void writeSnapshotToOutputStream(CheckpointStreamWithResultProvider checkpointStreamWithResultProvider,FullSnapshotResources snapshotResources,KeyGroupRangeOffsets keyGroupRangeOffsets,int taskId) throws IOException, InterruptedException {
         final DataOutputView outputView =
                 new DataOutputViewStreamWrapper(
                         checkpointStreamWithResultProvider.getCheckpointOutputStream());
-        writeKVStateMetaData(outputView);
+        writeKVStateMetaData(outputView,snapshotResources);
         switch(checkpointType){
             case RocksDBFullSnapshot:
                 try(RocksDBStateIterator keyValueStateIterator= (RocksDBStateIterator) snapshotResources.createKVStateIterator()){
@@ -64,16 +116,15 @@ public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSu
                 break;
             case InMemoryFullSnapshot:
                 try(TableStatePerKeyGroupMerageIterator keyValueStateIterator= (TableStatePerKeyGroupMerageIterator) snapshotResources.createKVStateIterator()){
-                    writeTableKVStateData(keyValueStateIterator,checkpointStreamWithResultProvider,keyGroupRangeOffsets);
+                    writeTableKVStateData(keyValueStateIterator,checkpointStreamWithResultProvider,keyGroupRangeOffsets,taskId);
                 }
                 break;
         }
 
     }
-
     private void writeTableKVStateData(TableStatePerKeyGroupMerageIterator mergeIterator,
                                        CheckpointStreamWithResultProvider checkpointStreamWithResultProvider,
-                                       KeyGroupRangeOffsets keyGroupRangeOffsets) throws IOException {
+                                       KeyGroupRangeOffsets keyGroupRangeOffsets,int taskId) throws IOException {
         DataOutputView kgOutView = null;
         OutputStream kgOutStream = null;
         CheckpointStreamFactory.CheckpointStateOutputStream checkpointOutputStream =
@@ -100,7 +151,7 @@ public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSu
         }
     }
 
-    private void writeKVStateMetaData(DataOutputView outputView) throws IOException {
+    private void writeKVStateMetaData(DataOutputView outputView,FullSnapshotResources snapshotResources) throws IOException {
         outputView.writeShort(snapshotResources.getMetaInfoSnapshots().size());
         for (StateMetaInfoSnapshot metaInfoSnapshot : snapshotResources.getMetaInfoSnapshots()) {
             StateMetaInfoSnapshotReadersWriters.getWriter().writeStateMetaInfoSnapshot(metaInfoSnapshot,outputView);

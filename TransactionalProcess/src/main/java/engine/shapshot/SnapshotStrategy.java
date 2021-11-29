@@ -1,11 +1,13 @@
 package engine.shapshot;
 
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
+import engine.shapshot.ShapshotResources.FullSnapshotResources;
 import engine.shapshot.ShapshotResources.SnapshotResources;
 import utils.CloseableRegistry.CloseableRegistry;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.List;
 
 public interface SnapshotStrategy<SR extends SnapshotResources>{
     /**
@@ -16,6 +18,7 @@ public interface SnapshotStrategy<SR extends SnapshotResources>{
      * @throws Exception
      */
     SR syncPrepareResources(long checkpointId) throws Exception;
+    List<SR> syncPrepareResources(long checkpointId, int partitionNum) throws IOException;
     /**
      * Operation that writes a snapshot into a stream that is provided by the given {@link CheckpointStreamFactory}
      * and returns a{@link SnapshotResultSupplier} that gives a handle to the snapshot
@@ -33,6 +36,11 @@ public interface SnapshotStrategy<SR extends SnapshotResources>{
             @Nonnull CheckpointStreamFactory streamFactory,
             @Nonnull CheckpointOptions checkpointOptions
     ) throws IOException;
+    SnapshotResultSupplier parallelSnapshot( List<SR> resources,
+                                             long checkpointId,
+                                             long timestamp,
+                                             @Nonnull CheckpointStreamFactory streamFactory,
+                                             @Nonnull CheckpointOptions checkpointOptions) throws IOException;
 
     /**
      * A supplier for a {@link SnapshotResult} with an access to a {@link CloseableRegistry} for

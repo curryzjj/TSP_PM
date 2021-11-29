@@ -25,7 +25,6 @@ public class TPDataGenerator extends InputDataGenerator {
      * @return
      */
     public List<String> generateData(int batch){
-        this.recordNum=recordNum-batch;
         List<String> batch_input=new ArrayList<>();
         if(recordNum==0){
             return null;
@@ -35,7 +34,7 @@ public class TPDataGenerator extends InputDataGenerator {
         try {
             Fw = new FileWriter(file,true);
             BufferedWriter bw= new BufferedWriter(Fw);
-            for(int i=0;i<batch;i++){
+            for(int i=0;i<Math.min(recordNum,batch);i++){
                 Timestamp timestamp = new Timestamp(System.currentTimeMillis());
                 String str=timestamp.getTime()+" "+ randomNumberGenerator.generateRandom(1,100)+" "+randomNumberGenerator.generateRandom(60,180)+
                         " "+randomNumberGenerator.generateRandom(1,4)+" "+randomNumberGenerator.generateRandom(1,4)+" "+ randomNumberGenerator.generateRandom(1,1)+
@@ -50,6 +49,7 @@ public class TPDataGenerator extends InputDataGenerator {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        recordNum=recordNum-Math.min(recordNum,batch);
         return batch_input;
     }
     public void initialize(String dataPath,int recordNum,int range,double zipSkew){

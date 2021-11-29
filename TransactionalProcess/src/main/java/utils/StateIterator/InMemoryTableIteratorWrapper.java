@@ -18,7 +18,6 @@ public class InMemoryTableIteratorWrapper implements Iterator<TableRecord>, Clos
     }
     @Override
     public void close() throws IOException {
-
     }
     public boolean isValid(){
         return true;

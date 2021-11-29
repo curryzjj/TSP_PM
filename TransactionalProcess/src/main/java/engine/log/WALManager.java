@@ -21,6 +21,7 @@ public class WALManager {
     private static final String DESCRIPTION="Asynchronous commit update log";
     private ConcurrentHashMap<String,LogRecords_in_range> holder_by_tableName;
     private int rangeNum;
+    /* init in the EM */
     public static ExecutorService writeExecutor;
     public class LogRecords_in_range{
         public ConcurrentHashMap<Integer, Vector<LogRecord>> holder_by_range=new ConcurrentHashMap<>();
@@ -34,7 +35,6 @@ public class WALManager {
     public WALManager(int num_op){
         this.rangeNum=num_op;
         this.holder_by_tableName=new ConcurrentHashMap<>();
-        writeExecutor=Executors.newFixedThreadPool(num_op);
     }
     public boolean isEmpty(){
         boolean flag=true;

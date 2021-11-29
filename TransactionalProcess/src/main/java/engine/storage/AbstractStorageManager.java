@@ -4,12 +4,14 @@ import engine.Exception.DatabaseException;
 import engine.shapshot.CheckpointOptions;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.SnapshotResult;
+import engine.shapshot.SnapshotStrategy;
 import engine.table.BaseTable;
 import engine.table.RecordSchema;
 import engine.table.tableRecords.TableRecord;
 import org.rocksdb.RocksDBException;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.RunnableFuture;
@@ -47,9 +49,13 @@ public abstract class AbstractStorageManager {
      */
     public synchronized void close() throws IOException{};
     public abstract void InsertRecord(String tableName, TableRecord record) throws DatabaseException, IOException;
-    public abstract void createKeyGroupRange();
+    public abstract void createTableRange(int table_count);
     public abstract RunnableFuture<SnapshotResult> snapshot(final long checkpointId,
                                                                    final long timestamp,
                                                                    final CheckpointStreamFactory streamFactory,
                                                                    CheckpointOptions checkpointOptions) throws Exception;
+    public abstract SnapshotStrategy.SnapshotResultSupplier parallelSnapshot(long checkpointId,
+                                                                                          long timestamp,
+                                                                                          @Nonnull CheckpointStreamFactory streamFactory,
+                                                                                          @Nonnull CheckpointOptions checkpointOptions) throws Exception;
 }

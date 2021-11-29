@@ -24,8 +24,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static System.constants.BaseConstants.BaseStream.*;
-import static UserApplications.CONTROL.enable_shared_state;
+import static UserApplications.CONTROL.*;
+import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
+import static engine.Database.snapshotExecutor;
+import static engine.log.WALManager.writeExecutor;
 
 public class ExecutionManager {
     private final static Logger LOG = LoggerFactory.getLogger(ExecutionManager.class);
@@ -80,6 +86,13 @@ public class ExecutionManager {
                     integers.get(integers.size() - 1),
                     integers.size(),
                     conf.getInt("TP",10));
+            if(enable_wal&&enable_parallel){
+                writeExecutor= Executors.newFixedThreadPool(integers.size());
+            }else if(enable_parallel&&enable_snapshot){
+                snapshotExecutor=Executors.newFixedThreadPool(integers.size());
+            }
+            int delta = (int) Math.ceil(NUM_SEGMENTS / (double)integers.size());
+            db.setCheckpointOptions(integers.size(),delta);
         }
         executorThread thread = null;
         for (ExecutionNode e : g.getExecutionNodeArrayList()) {
@@ -149,6 +162,11 @@ public class ExecutionManager {
         }
         if(CONTROL.enable_shared_state&&tp_engine!=null){
             tp_engine.engine_shutdown();
+            if(enable_parallel&&enable_wal){
+                writeExecutor.shutdown();
+            }else if(enable_parallel&&enable_snapshot){
+                snapshotExecutor.shutdown();
+            }
         }
         this.getSinkThread().getContext().Sequential_stopAll();
     }

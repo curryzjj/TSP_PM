@@ -11,10 +11,10 @@ import engine.log.LogStream.FsLogStreamFactory;
 import engine.log.LogStream.LogStreamFactory;
 import engine.log.logCommitRunner;
 import engine.recovery.AbstractRecoveryManager;
-import engine.shapshot.CheckpointOptions;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.FsCheckpointStreamFactory;
 import engine.shapshot.SnapshotResult;
+import engine.shapshot.SnapshotStrategy;
 import engine.storage.ImplStorageManager.StorageManager;
 import engine.table.RecordSchema;
 import engine.table.tableRecords.TableRecord;
@@ -24,11 +24,9 @@ import utils.CloseableRegistry.CloseableRegistry;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 
 import static UserApplications.CONTROL.enable_parallel;
-import static utils.TransactionalProcessConstants.CommitLogExecutionType.ASYNCHRONOUS;
 import static utils.TransactionalProcessConstants.CommitLogExecutionType.SYNCHRONOUS;
 
 public class InMemeoryDatabase extends Database {
@@ -47,7 +45,6 @@ public class InMemeoryDatabase extends Database {
             this.WalPath=new Path(System.getProperty("user.home").concat(WalPath));
         }
         this.fs=new LocalFileSystem();
-        this.checkpointOptions=new CheckpointOptions();
         this.txnProcessingEngine= TxnProcessingEngine.getInstance();
     }
     @Override
@@ -65,8 +62,12 @@ public class InMemeoryDatabase extends Database {
     }
 
     @Override
-    public void recoveryFromSnapshot(SnapshotResult lastSnapshotResult) throws IOException, ClassNotFoundException, DatabaseException {
-        AbstractRecoveryManager.recoveryFromSnapshot(this,lastSnapshotResult);
+    public void recoveryFromSnapshot(SnapshotResult lastSnapshotResult) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
+        if(enable_parallel){
+            AbstractRecoveryManager.parallelRecoveryFromSnapshot(this,lastSnapshotResult);
+        }else{
+            AbstractRecoveryManager.recoveryFromSnapshot(this,lastSnapshotResult);
+        }
     }
     @Override
     public long recoveryFromWAL(long globalLSN) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
@@ -83,7 +84,7 @@ public class InMemeoryDatabase extends Database {
     }
 
     @Override
-    public void reloadStateFromSnapshot(SnapshotResult snapshotResult) throws IOException, ClassNotFoundException, DatabaseException {
+    public void reloadStateFromSnapshot(SnapshotResult snapshotResult) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
         this.storageManager.cleanAllTables();
         if(snapshotResult!=null){
             this.recoveryFromSnapshot(snapshotResult);
@@ -91,8 +92,8 @@ public class InMemeoryDatabase extends Database {
     }
 
     @Override
-    public void createKeyGroupRange() {
-        this.storageManager.createKeyGroupRange();
+    public void createTableRange(int table_count) {
+        this.storageManager.createTableRange(table_count);
     }
 
     @Override
@@ -103,6 +104,17 @@ public class InMemeoryDatabase extends Database {
                 fs);
         RunnableFuture<SnapshotResult> snapshot = storageManager.snapshot(checkpointId,timestamp,streamFactory,checkpointOptions);
         return snapshot;
+    }
+
+    @Override
+    public SnapshotResult parallelSnapshot(long checkpointId, long timestamp) throws Exception {
+        CloseableRegistry cancelStreamRegistry=new CloseableRegistry();
+        CheckpointStreamFactory streamFactory=new FsCheckpointStreamFactory(16,
+                16,
+                snapshotPath,
+                fs);
+        SnapshotStrategy.SnapshotResultSupplier parallelSnapshot= storageManager.parallelSnapshot(checkpointId,timestamp,streamFactory,checkpointOptions);
+        return parallelSnapshot.get(cancelStreamRegistry);
     }
 
     @Override

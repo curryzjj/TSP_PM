@@ -21,17 +21,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TxnManagerTStream extends TxnManagerDedicated {
     private static final Logger LOG = LoggerFactory.getLogger(TxnManagerTStream.class);
     TxnProcessingEngine instance;
-    protected int delta;//range of each partition. depends on the number of op in the stage.
 
     public TxnManagerTStream(AbstractStorageManager storageManager, String thisComponentId, int thread_Id, int NUM_SEGMENTS, int num_tasks) {
         super(storageManager,thisComponentId,thread_Id,num_tasks);
         instance=TxnProcessingEngine.getInstance();
-        delta = (int) Math.ceil(NUM_SEGMENTS / (double) num_tasks);//NUM_ITEMS / tthread;
     }
-    private int getTaskId(String key) {
-        Integer _key = Integer.valueOf(key);
-        return _key / delta;
-    }
+
     @Override
     protected boolean Asy_ModifyRecord_ReadCC(TxnContext txn_context, String srcTable, TableRecord tableRecord, SchemaRecordRef record_ref, Function function, MetaTypes.AccessType accessType) {
         if(this.instance.getTransactionAbort().contains(txn_context.getBID())){

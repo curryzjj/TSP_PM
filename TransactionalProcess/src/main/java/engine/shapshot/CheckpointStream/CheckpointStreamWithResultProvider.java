@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public interface CheckpointStreamWithResultProvider extends Closeable {
     Logger LOG= LoggerFactory.getLogger(CheckpointStreamFactory.class);
@@ -46,6 +48,14 @@ public interface CheckpointStreamWithResultProvider extends Closeable {
     static CheckpointStreamWithResultProvider createSimpleStream(CheckpointStreamFactory checkpointStreamFactory) throws IOException {
         CheckpointStreamFactory.CheckpointStateOutputStream out=checkpointStreamFactory.createCheckpointStateOutputStream();
         return new PrimaryStreamOnly(out);
+    }
+    static List<CheckpointStreamWithResultProvider> createMultipleStream(CheckpointStreamFactory checkpointStreamFactory,int rangeNum) throws IOException {
+        List<CheckpointStreamWithResultProvider> providers=new ArrayList<>();
+        for (int i=0;i<rangeNum;i++){
+            CheckpointStreamFactory.CheckpointStateOutputStream out=checkpointStreamFactory.createCheckpointStateOutputStream();
+            providers.add(new PrimaryStreamOnly(out));
+        }
+        return providers;
     }
 
     /**

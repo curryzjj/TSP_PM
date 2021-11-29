@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static UserApplications.CONTROL.*;
+import static engine.log.WALManager.writeExecutor;
 
 public class TxnProcessingEngine {
     private static final Logger LOG= LoggerFactory.getLogger(TxnProcessingEngine.class);
@@ -34,7 +35,7 @@ public class TxnProcessingEngine {
     private int TOTAL_CORES;
     private WALManager walManager;
     private ExecutorServiceInstance standalone_engine;
-    /* Abort transactions <threadId,bid> */
+    /* Abort transactions <bid> */
     private ConcurrentSkipListSet<Long> transactionAbort;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
     //initialize
@@ -148,7 +149,6 @@ public class TxnProcessingEngine {
         } else {
             standalone_engine.close();
         }
-        this.walManager.close();
     }
 
     class Task implements Callable{

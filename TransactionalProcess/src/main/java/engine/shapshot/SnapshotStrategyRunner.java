@@ -8,6 +8,7 @@ import utils.CloseableRegistry.CloseableRegistry;
 import utils.TransactionalProcessConstants.SnapshotExecutionType;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 
@@ -30,6 +31,7 @@ public final class SnapshotStrategyRunner<SR extends SnapshotResources> {
     private final SnapshotStrategy<SR> snapshotStrategy;
     private final SnapshotExecutionType executionType;
     private final CloseableRegistry cancelStreamRegistry;
+    private int rangeNum;
 
     public SnapshotStrategyRunner(String description,
                                   SnapshotStrategy<SR> snapshotStrategy,
@@ -77,7 +79,20 @@ public final class SnapshotStrategyRunner<SR extends SnapshotResources> {
 
         return asyncSnapshotTask;
     }
-
+    public final SnapshotStrategy.SnapshotResultSupplier parallelSnapshot(long checkpointId,
+                                                         long timestamp,
+                                                         @Nonnull CheckpointStreamFactory streamFactory,
+                                                         @Nonnull CheckpointOptions checkpointOptions) throws Exception {
+        long startTime=System.currentTimeMillis();
+        List<SR> snapshotResources=snapshotStrategy.syncPrepareResources(checkpointId,checkpointOptions.rangeNum);
+        SnapshotStrategy.SnapshotResultSupplier parallelSnapshot=
+                snapshotStrategy.parallelSnapshot(snapshotResources,
+                        checkpointId,
+                        timestamp,
+                        streamFactory,
+                        checkpointOptions);
+        return parallelSnapshot;
+    }
     @Override
     public String toString() {
         return "SnapshotStrategy {" + description + "}";

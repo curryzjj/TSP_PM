@@ -4,18 +4,16 @@ import System.util.Configuration;
 import engine.Exception.DatabaseException;
 import engine.Meta.RegisteredKeyValueStateBackendMetaInfo;
 import engine.Meta.RegisteredStateMetaInfoBase;
-import engine.shapshot.CheckpointOptions;
+import engine.shapshot.*;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.ImplSnapshotStrategy.InMemorySnapshotStrategy;
-import engine.shapshot.InMemorySnapshotStrategyBase;
-import engine.shapshot.SnapshotResult;
-import engine.shapshot.SnapshotStrategyRunner;
 import engine.storage.AbstractStorageManager;
 import engine.table.BaseTable;
 import engine.table.ImplTable.ShareTable;
 import engine.table.RecordSchema;
 import engine.table.keyGroup.KeyGroupRange;
 import engine.table.tableRecords.TableRecord;
+import org.jetbrains.annotations.NotNull;
 import utils.CloseableRegistry.CloseableRegistry;
 import utils.ResourceGuard;
 import utils.TransactionalProcessConstants;
@@ -26,8 +24,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.RunnableFuture;
 
+import static UserApplications.CONTROL.enable_parallel;
+import static engine.log.WALManager.writeExecutor;
 import static utils.TransactionalProcessConstants.SnapshotExecutionType.ASYNCHRONOUS;
 import static utils.TransactionalProcessConstants.SnapshotExecutionType.SYNCHRONOUS;
 
@@ -129,7 +130,7 @@ public class StorageManager extends AbstractStorageManager {
         }
     }
     @Override
-    public void createKeyGroupRange() {
+    public void createTableRange(int table_count) {
         this.keyGroupRange=new KeyGroupRange(0,table_count-1);
         this.checkpointSnapshotStrategy.keyGroupRange=this.keyGroupRange;
     }
@@ -142,11 +143,22 @@ public class StorageManager extends AbstractStorageManager {
     }
     @Override
     public RunnableFuture<SnapshotResult> snapshot(long checkpointId, long timestamp, CheckpointStreamFactory streamFactory, CheckpointOptions checkpointOptions) throws Exception {
+            return new SnapshotStrategyRunner<>(
+                    checkpointSnapshotStrategy.getDescription(),
+                    checkpointSnapshotStrategy,
+                    SYNCHRONOUS,
+                    cancelStreamRegistry
+            ).snapshot(checkpointId, timestamp, streamFactory, checkpointOptions);
+    }
+
+    @Override
+    public SnapshotStrategy.SnapshotResultSupplier parallelSnapshot(long checkpointId, long timestamp, @NotNull CheckpointStreamFactory streamFactory, @NotNull CheckpointOptions checkpointOptions) throws Exception {
         return new SnapshotStrategyRunner<>(
                 checkpointSnapshotStrategy.getDescription(),
                 checkpointSnapshotStrategy,
                 SYNCHRONOUS,
                 cancelStreamRegistry
-        ).snapshot(checkpointId, timestamp, streamFactory, checkpointOptions);
+        ).parallelSnapshot(checkpointId, timestamp, streamFactory, checkpointOptions);
     }
+
 }

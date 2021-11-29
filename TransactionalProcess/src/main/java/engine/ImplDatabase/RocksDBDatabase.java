@@ -7,11 +7,9 @@ import System.util.OsUtils;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.log.LogResult;
-import engine.shapshot.CheckpointOptions;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.FsCheckpointStreamFactory;
 import engine.shapshot.SnapshotResult;
-import engine.storage.EventManager;
 import engine.storage.ImplStorageManager.RocksDBManager;
 import engine.table.RecordSchema;
 import engine.table.tableRecords.TableRecord;
@@ -34,7 +32,6 @@ public class RocksDBDatabase extends Database {
             this.snapshotPath=new Path(System.getProperty("user.home").concat(snapshotPath));
         }
         this.fs=new LocalFileSystem();
-        this.checkpointOptions=new CheckpointOptions();
     }
     @Override
     public void createTable(RecordSchema tableSchema, String tableName, DataBoxTypes type) {
@@ -70,8 +67,8 @@ public class RocksDBDatabase extends Database {
 
     }
 
-    public void createKeyGroupRange(){
-        this.storageManager.createKeyGroupRange();
+    public void createTableRange(int table_count){
+        this.storageManager.createTableRange(table_count);
     }
 
     @Override
@@ -82,6 +79,11 @@ public class RocksDBDatabase extends Database {
                 fs);
         RunnableFuture<SnapshotResult> snapshot = storageManager.snapshot(checkpointId,timestamp,streamFactory,checkpointOptions);
         return snapshot;
+    }
+
+    @Override
+    public SnapshotResult parallelSnapshot(long checkpointId, long timestamp) throws Exception {
+        return null;
     }
 
     @Override

@@ -11,6 +11,7 @@ import utils.ResourceGuard;
 import javax.annotation.Nonnull;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 public abstract class InMemorySnapshotStrategyBase<R extends SnapshotResources> implements SnapshotStrategy<R>,CheckpointListener {
     private static final Logger LOG= LoggerFactory.getLogger(InMemorySnapshotStrategyBase.class);
@@ -23,8 +24,8 @@ public abstract class InMemorySnapshotStrategyBase<R extends SnapshotResources> 
     /** Key/Value state meta info from the backend. */
     @Nonnull protected final LinkedHashMap<String, StorageManager.InMemoryKvStateInfo> kvStateInformation;
     @Nonnull
+    protected int rangNum;
     public KeyGroupRange keyGroupRange;
-
     protected InMemorySnapshotStrategyBase(@Nonnull String description,
                                           @Nonnull Map<String,BaseTable> tables,
                                           @Nonnull ResourceGuard ResourceGuard,

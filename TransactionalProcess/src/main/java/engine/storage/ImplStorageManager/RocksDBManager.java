@@ -5,12 +5,9 @@ import System.util.OsUtils;
 import engine.Exception.DatabaseException;
 import engine.Meta.RegisteredKeyValueStateBackendMetaInfo;
 import engine.Meta.RegisteredStateMetaInfoBase;
-import engine.shapshot.CheckpointOptions;
+import engine.shapshot.*;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.ImplSnapshotStrategy.RocksFullSnapshotStrategy;
-import engine.shapshot.RocksDBSnapshotStrategyBase;
-import engine.shapshot.SnapshotResult;
-import engine.shapshot.SnapshotStrategyRunner;
 import engine.storage.AbstractStorageManager;
 import engine.table.BaseTable;
 import engine.table.ImplTable.ShareTable;
@@ -21,6 +18,7 @@ import engine.table.datatype.serialize.Deserialize;
 import engine.table.datatype.serialize.Serialize;
 import engine.table.tableRecords.SchemaRecord;
 import engine.table.tableRecords.TableRecord;;
+import org.jetbrains.annotations.NotNull;
 import org.rocksdb.*;
 import utils.CloseableRegistry.CloseableRegistry;
 import utils.ResourceGuard;
@@ -271,7 +269,13 @@ public class RocksDBManager extends AbstractStorageManager {
                 cancelStreamRegistry
                 ).snapshot(checkpointId, timestamp, streamFactory, checkpointOptions);
     }
-    public void createKeyGroupRange(){
+
+    @Override
+    public SnapshotStrategy.SnapshotResultSupplier parallelSnapshot(long checkpointId, long timestamp, @NotNull CheckpointStreamFactory streamFactory, @NotNull CheckpointOptions checkpointOptions) throws Exception {
+        return null;
+    }
+
+    public void createTableRange(int table_count){
         this.keyGroupRange=new KeyGroupRange(0,table_count-1);
         this.checkpointSnapshotStrategy.keyGroupRange=this.keyGroupRange;
     }

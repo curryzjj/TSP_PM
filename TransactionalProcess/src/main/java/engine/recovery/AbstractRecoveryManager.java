@@ -7,6 +7,7 @@ import engine.Exception.DatabaseException;
 import engine.log.LogRecord;
 import engine.shapshot.SnapshotResult;
 import engine.table.datatype.serialize.Deserialize;
+import engine.table.keyGroup.KeyGroupRangeOffsets;
 import engine.table.tableRecords.TableRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +18,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import static engine.Database.snapshotExecutor;
 import static engine.log.WALManager.writeExecutor;
 import static utils.FullSnapshotUtil.END_OF_KEY_GROUP_MARK;
 import static utils.TransactionalProcessConstants.FaultTolerance.END_OF_GLOBAL_LSN_MARK;
@@ -37,9 +40,25 @@ public class AbstractRecoveryManager {
             this.rangeId = rangeId;
             this.globalLSN = globalLSN;
         }
+
         @Override
         public Long call() throws Exception {
             return recoveryFromWAL(db,WALPath,rangeId,globalLSN);
+        }
+    }
+    private static class recoveryFromSnapshot implements Callable<Boolean>{
+        private Database db;
+        private SnapshotResult snapshotResult;
+
+        private recoveryFromSnapshot(Database db, SnapshotResult snapshotResult) {
+            this.db = db;
+            this.snapshotResult = snapshotResult;
+        }
+
+        @Override
+        public Boolean call() throws Exception {
+            recoveryFromSnapshot(this.db,this.snapshotResult);
+            return true;
         }
     }
     public static void recoveryFromSnapshot(Database db, SnapshotResult snapshotResult) throws IOException, ClassNotFoundException, DatabaseException {
@@ -128,6 +147,13 @@ public class AbstractRecoveryManager {
         }
         List<Future<Long>> futures=writeExecutor.invokeAll(callables);
         return 1L;
+    }
+    public static void parallelRecoveryFromSnapshot(Database db,SnapshotResult snapshotResult) throws InterruptedException {
+        List<recoveryFromSnapshot> callables=new ArrayList<>();
+        for (Map.Entry<Path, KeyGroupRangeOffsets> entry:snapshotResult.getSnapshotResults().entrySet()){
+            callables.add(new recoveryFromSnapshot(db,new SnapshotResult(entry.getKey(),entry.getValue())));
+        }
+        snapshotExecutor.invokeAll(callables);
     }
     private static String getKey(DataInputViewStreamWrapper inputViewStreamWrapper) throws IOException {
         int len=inputViewStreamWrapper.readInt();

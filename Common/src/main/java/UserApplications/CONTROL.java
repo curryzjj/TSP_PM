@@ -30,12 +30,11 @@ public interface CONTROL {
     //db related.
     boolean enable_shared_state = true;//this is for transactional state mgmt.
 
-    boolean enable_states_partition = true;//must be enabled for PAT/SSTORE.
+    boolean enable_states_partition = true;//must be enabled for parallel snapshot
 
-    boolean enable_TSTREAM = true;
     // fault tolerance related.
-    boolean enable_snapshot =false;
-    boolean enable_wal=true;
+    boolean enable_snapshot =true;
+    boolean enable_wal=false;
     boolean enable_parallel=true;
     //pre- and post -compute
 

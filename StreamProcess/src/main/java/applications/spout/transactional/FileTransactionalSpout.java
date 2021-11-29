@@ -83,12 +83,14 @@ public class FileTransactionalSpout extends TransactionalSpout {
         if(!isCommit){
             this.registerRecovery();
         }
-        while(replay){
+        while(replay&&batch!=0){
             char[] data=replayTuple();
             if(data!=null){
-                collector.emit(scanner.nextLine().toCharArray(),bid);
+                collector.emit(data,bid);
+                forward_checkpoint(this.taskId, bid, null,"marker");
                 bid++;
                 lostData++;
+                batch--;
             }
         }
         List<String> inputData=inputDataGenerator.generateData(batch);

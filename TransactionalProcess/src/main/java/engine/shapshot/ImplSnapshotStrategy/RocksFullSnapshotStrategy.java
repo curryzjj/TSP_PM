@@ -21,6 +21,7 @@ import utils.TransactionalProcessConstants;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 public class RocksFullSnapshotStrategy extends RocksDBSnapshotStrategyBase<FullSnapshotResources> {
     private static final Logger LOG= LoggerFactory.getLogger(RocksFullSnapshotStrategy.class);
@@ -45,6 +46,11 @@ public class RocksFullSnapshotStrategy extends RocksDBSnapshotStrategyBase<FullS
     }
 
     @Override
+    public List<FullSnapshotResources> syncPrepareResources(long checkpointId, int partitionNum) throws IOException {
+        return null;
+    }
+
+    @Override
     public SnapshotResultSupplier asyncSnapshot(FullSnapshotResources snapshotResources,
                                                 long checkpointId,
                                                 long timestamp,
@@ -60,12 +66,18 @@ public class RocksFullSnapshotStrategy extends RocksDBSnapshotStrategyBase<FullS
                 checkpointStreamSupplier =
                 createCheckpointStreamSupplier(
                         checkpointId, streamFactory, checkpointOptions);
-        return new FullSnapshotAsyncWrite(checkpointStreamSupplier,
+        return new FullSnapshotAsyncWrite(CheckpointStreamWithResultProvider.createSimpleStream(streamFactory),
                 snapshotResources,
                 TransactionalProcessConstants.CheckpointType.RocksDBFullSnapshot,
                 timestamp,
                 checkpointId);
     }
+
+    @Override
+    public SnapshotResultSupplier parallelSnapshot(List<FullSnapshotResources> resources, long checkpointId, long timestamp, @NotNull CheckpointStreamFactory streamFactory, @NotNull CheckpointOptions checkpointOptions) throws IOException {
+        return null;
+    }
+
     private SupplierWithException<CheckpointStreamWithResultProvider,Exception>
     createCheckpointStreamSupplier(long checkpointId,
                                    CheckpointStreamFactory primaryStreamFactory,

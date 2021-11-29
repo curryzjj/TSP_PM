@@ -18,27 +18,35 @@ import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
+import static UserApplications.CONTROL.enable_states_partition;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
-import static utils.PartitionHelper.getPartition_interval;
 
 public class TPInitializer extends TableInitilizer {
     private static final Logger LOG = LoggerFactory.getLogger(TPInitializer.class);
-
+    protected int delta;
     public TPInitializer(Database db, double scale_factor, double theta, int tthread, Configuration config) {
         super(db, scale_factor, theta, tthread, config);
+        delta = (int) Math.ceil(NUM_SEGMENTS / (double) tthread);//NUM_ITEMS / tthread;
     }
 
     @Override
     public void creates_Table(Configuration config) {
-        RecordSchema s = SpeedScheme();
-        db.createTable(s, "segment_speed", DataBoxTypes.STRING);
-
-        RecordSchema b = CntScheme();
-        db.createTable(b, "segment_cnt",DataBoxTypes.OTHERS);
-        db.createKeyGroupRange();
+        if(enable_states_partition){
+            for(int i=0;i<tthread;i++){
+                RecordSchema s = SpeedScheme();
+                db.createTable(s, "segment_speed_"+i, DataBoxTypes.STRING);
+                RecordSchema b = CntScheme();
+                db.createTable(b, "segment_cnt_"+i,DataBoxTypes.OTHERS);
+            }
+        }else{
+            RecordSchema s = SpeedScheme();
+            db.createTable(s, "segment_speed", DataBoxTypes.STRING);
+            RecordSchema b = CntScheme();
+            db.createTable(b, "segment_cnt",DataBoxTypes.OTHERS);
+        }
+        db.createTableRange(2);
     }
 
     @Override
@@ -58,8 +66,8 @@ public class TPInitializer extends TableInitilizer {
             insertCntRecord(_key);
         }
         try {
-            int speedSize=db.getStorageManager().getTable("segment_speed").keySize();
-            int cntSize=db.getStorageManager().getTable("segment_cnt").keySize();
+            int speedSize=db.getStorageManager().getTable("segment_speed_0").keySize();
+            int cntSize=db.getStorageManager().getTable("segment_cnt_0").keySize();
             LOG.info("Executor("+ thread_id +") of "+context.getExecutor(context.getThisTaskId()).getOP_full() +" finished loading data from: " + "0" + " to: " + NUM_SEGMENTS
                     +" with speed keySize: "+speedSize+" cnt keySize: "+cntSize);
         } catch (DatabaseException e) {
@@ -73,7 +81,11 @@ public class TPInitializer extends TableInitilizer {
         values.add(new HashSetDataBox());
         SchemaRecord schemaRecord = new SchemaRecord(values);
         try {
-            db.InsertRecord("segment_cnt", new TableRecord(schemaRecord));
+            if(enable_states_partition){
+                db.InsertRecord("segment_cnt_"+getPartitionId(key), new TableRecord(schemaRecord));
+            }else{
+                db.InsertRecord("segment_cnt", new TableRecord(schemaRecord));
+            }
         } catch (DatabaseException | IOException e) {
             e.printStackTrace();
         }
@@ -85,7 +97,11 @@ public class TPInitializer extends TableInitilizer {
         values.add(new DoubleDataBox(value));
         SchemaRecord schemaRecord = new SchemaRecord(values);
         try {
-            db.InsertRecord("segment_speed", new TableRecord(schemaRecord));
+            if(enable_states_partition){
+                db.InsertRecord("segment_speed_"+getPartitionId(key), new TableRecord(schemaRecord));
+            }else {
+                db.InsertRecord("segment_speed", new TableRecord(schemaRecord));
+            }
         } catch (DatabaseException | IOException e) {
             e.printStackTrace();
         }
@@ -109,5 +125,9 @@ public class TPInitializer extends TableInitilizer {
         fieldNames.add("Key");
         fieldNames.add("Value");
         return new RecordSchema(fieldNames, dataBoxes);
+    }
+    private int getPartitionId(String key) {
+        Integer _key = Integer.valueOf(key);
+        return _key / delta;
     }
 }

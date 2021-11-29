@@ -1,13 +1,10 @@
 package engine.shapshot.ImplSnapshotStrategy;
 
-import engine.shapshot.CheckpointOptions;
+import engine.shapshot.*;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.CheckpointStreamWithResultProvider;
-import engine.shapshot.FullSnapshotAsyncWrite;
-import engine.shapshot.InMemorySnapshotStrategyBase;
 import engine.shapshot.ShapshotResources.FullSnapshotResources;
 import engine.shapshot.ShapshotResources.ImplShapshotResources.InMemoryFullSnapshotResources;
-import engine.shapshot.SnapshotResult;
 import engine.storage.ImplStorageManager.StorageManager;
 import engine.table.BaseTable;
 import engine.table.keyGroup.KeyGroupRange;
@@ -20,8 +17,9 @@ import utils.TransactionalProcessConstants;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+
+import static UserApplications.CONTROL.enable_parallel;
 
 public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullSnapshotResources> {
     private static final Logger LOG= LoggerFactory.getLogger(InMemorySnapshotStrategy.class);
@@ -36,6 +34,23 @@ public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullS
     @Override
     public FullSnapshotResources syncPrepareResources(long checkpointId) throws Exception {
         return InMemoryFullSnapshotResources.create(kvStateInformation,tables, resourceGuard,keyGroupRange);
+    }
+
+    @Override
+    public List<FullSnapshotResources> syncPrepareResources(long checkpointId, int partitionNum) throws IOException {
+        List<FullSnapshotResources> resources=new ArrayList<>();
+        for(int i=0;i<partitionNum;i++){
+            Map<String,BaseTable> tables = new HashMap<>();
+            LinkedHashMap<String,StorageManager.InMemoryKvStateInfo> kvStateInformation=new LinkedHashMap<>();
+            for (String tableName:this.tables.keySet()){
+                if(tableName.endsWith(String.valueOf(i))){
+                    tables.put(tableName,this.tables.get(tableName));
+                    kvStateInformation.put(tableName,this.kvStateInformation.get(tableName));
+                }
+            }
+            resources.add(InMemoryFullSnapshotResources.create(kvStateInformation,tables,resourceGuard,keyGroupRange));
+        }
+        return resources;
     }
 
     @Override
@@ -54,12 +69,22 @@ public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullS
                 checkpointStreamSupplier =
                 createCheckpointStreamSupplier(
                         checkpointId, streamFactory, checkpointOptions);
-        return new FullSnapshotAsyncWrite(checkpointStreamSupplier,
-                snapshotResources,
-                TransactionalProcessConstants.CheckpointType.InMemoryFullSnapshot,
-                timestamp,
-                checkpointId);
+        return new FullSnapshotAsyncWrite(CheckpointStreamWithResultProvider.createSimpleStream(streamFactory),
+                    snapshotResources,
+                    TransactionalProcessConstants.CheckpointType.InMemoryFullSnapshot,
+                    timestamp,
+                    checkpointId);
     }
+
+    @Override
+    public SnapshotResultSupplier parallelSnapshot(List<FullSnapshotResources> snapshotResources, long checkpointId, long timestamp, @NotNull CheckpointStreamFactory streamFactory, @NotNull CheckpointOptions checkpointOptions) throws IOException {
+           return new ParallelFullSnapshotWrite(CheckpointStreamWithResultProvider.createMultipleStream(streamFactory,checkpointOptions.rangeNum),
+                snapshotResources,
+                timestamp,
+                checkpointId,
+                TransactionalProcessConstants.CheckpointType.InMemoryFullSnapshot,checkpointOptions);
+    }
+
     private SupplierWithException<CheckpointStreamWithResultProvider,Exception>
     createCheckpointStreamSupplier(long checkpointId,
                                    CheckpointStreamFactory primaryStreamFactory,
