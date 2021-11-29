@@ -136,10 +136,10 @@ public class TxnProcessingEngine {
         @Override
         public void close() throws IOException {
             //TODO:implement shutdown
-            engine_shutdown();
+            executor.shutdown();
         }
     }
-    private void engine_shutdown() throws IOException {
+    public void engine_shutdown() throws IOException {
         LOG.info("Shutdown Engine!");
         if (enable_work_partition) {
             for (ExecutorServiceInstance engine : multi_engine.values()) {
@@ -148,6 +148,7 @@ public class TxnProcessingEngine {
         } else {
             standalone_engine.close();
         }
+        this.walManager.close();
     }
 
     class Task implements Callable{

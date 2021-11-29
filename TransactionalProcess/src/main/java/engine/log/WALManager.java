@@ -85,4 +85,7 @@ public class WALManager {
         }
         return true;
     }
+    public void close(){
+        writeExecutor.shutdown();
+    }
 }

@@ -147,10 +147,10 @@ public class ExecutionManager {
         while(checkpointManagerThread.isAlive()){
             checkpointManagerThread.interrupt();
         }
-        this.getSinkThread().getContext().Sequential_stopAll();
-        if(CONTROL.enable_shared_state/*&&tp_engine!=null*/){
-            //stop the tp_engine
+        if(CONTROL.enable_shared_state&&tp_engine!=null){
+            tp_engine.engine_shutdown();
         }
+        this.getSinkThread().getContext().Sequential_stopAll();
     }
     public executorThread getSinkThread(){return ThreadMap.get(g.getSinkThread());}
     public executorThread getSpoutThread(){
