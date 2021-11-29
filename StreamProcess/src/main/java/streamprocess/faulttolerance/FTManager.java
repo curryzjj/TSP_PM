@@ -4,7 +4,7 @@ import java.io.IOException;
 
 public abstract class FTManager extends Thread {
     public boolean running=true;
-    public abstract void initialize() throws IOException;
+    public abstract void initialize(boolean needRecovery) throws IOException;
 
     /**
      * To register the wal(globalLSN) or the snapshot(checkpointId), or recovery

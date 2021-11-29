@@ -127,7 +127,6 @@ public class AbstractRecoveryManager {
             callables.add(new recoveryFromWalTask(db,WALPath,i, globalLSN));
         }
         List<Future<Long>> futures=writeExecutor.invokeAll(callables);
-
         return 1L;
     }
     private static String getKey(DataInputViewStreamWrapper inputViewStreamWrapper) throws IOException {

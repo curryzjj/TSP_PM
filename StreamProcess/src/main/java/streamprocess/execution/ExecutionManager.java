@@ -158,11 +158,11 @@ public class ExecutionManager {
     }
     public void startFaultTolerance(RecoveryManager RM,FTManager FTM) throws IOException {
         this.RM=RM;
-        RM.initialize();
+        RM.initialize(false);
         recoveryManagerThread=new Thread(RM);
         RM.start();
         this.FTM=FTM;
-        FTM.initialize();
+        FTM.initialize(RM.needRecovery());
         checkpointManagerThread=new Thread(FTM);
         FTM.start();
     }

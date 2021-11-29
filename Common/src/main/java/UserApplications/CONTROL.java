@@ -36,7 +36,7 @@ public interface CONTROL {
     // fault tolerance related.
     boolean enable_snapshot =false;
     boolean enable_wal=true;
-    boolean enable_parallel=false;
+    boolean enable_parallel=true;
     //pre- and post -compute
 
     boolean enable_pre_compute = false;//not in use.

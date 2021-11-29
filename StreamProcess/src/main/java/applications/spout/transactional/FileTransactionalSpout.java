@@ -83,6 +83,14 @@ public class FileTransactionalSpout extends TransactionalSpout {
         if(!isCommit){
             this.registerRecovery();
         }
+        while(replay){
+            char[] data=replayTuple();
+            if(data!=null){
+                collector.emit(scanner.nextLine().toCharArray(),bid);
+                bid++;
+                lostData++;
+            }
+        }
         List<String> inputData=inputDataGenerator.generateData(batch);
         if(inputData!=null){
             for (Iterator<String> it = inputData.iterator(); it.hasNext(); ) {
@@ -126,13 +134,17 @@ public class FileTransactionalSpout extends TransactionalSpout {
             bid++;
         }
         LOG.info("The input data have been load to the offset "+msg);
-        while (scanner.hasNextLine()){
-            collector.emit(scanner.nextLine().toCharArray(),bid);
-            bid++;
-            lostdata++;
+        this.replay=true;
+    }
+    private char[] replayTuple(){
+        if(scanner.hasNextLine()){
+            return scanner.nextLine().toCharArray();
+        }else{
+            scanner.close();
+            LOG.info("The number of lost data is "+lostData);
+            replay=false;
+            return null;
         }
-        LOG.info("The number of lost data is "+lostdata);
-        scanner.close();
     }
     private void openFile(String fileName) throws FileNotFoundException {
         scanner = new Scanner(new File(fileName), "UTF-8");

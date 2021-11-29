@@ -72,7 +72,7 @@ public class RecoveryManager extends FTManager {
         }
     }
     @Override
-    public void initialize() throws IOException {
+    public void initialize(boolean needRecovery) throws IOException {
         recoveryFile=localFS.pathToFile(Current_Path);
         if(recoveryFile.exists()){
             this.needRecovery=true;

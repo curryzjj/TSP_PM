@@ -61,19 +61,21 @@ public class CheckpointManager extends FTManager {
         this.callSnapshot_ini();
     }
 
-    public void initialize() throws IOException {
+    public void initialize(boolean needRecovery) throws IOException {
         final Path parent = Current_Path.getParent();
         if (parent != null && !localFS.mkdirs(parent)) {
             throw new IOException("Mkdirs failed to create " + parent);
         }
         checkpointFile =localFS.pathToFile(Current_Path);
-        LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(checkpointFile);
-        DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
-        Date date = new Date();
-        SimpleDateFormat dateFormat= new SimpleDateFormat("yyyy-MM-dd :hh:mm:ss");
-        dataOutputStream.writeUTF("System begin at "+dateFormat.format(date));
-        dataOutputStream.close();
-        localDataOutputStream.close();
+        if(!needRecovery){
+            LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(checkpointFile);
+            DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
+            Date date = new Date();
+            SimpleDateFormat dateFormat= new SimpleDateFormat("yyyy-MM-dd :hh:mm:ss");
+            dataOutputStream.writeUTF("System begin at "+dateFormat.format(date));
+            dataOutputStream.close();
+            localDataOutputStream.close();
+        }
     }
     public boolean spoutRegister(long checkpointId){
         if(isCommitted.containsValue(false)){
