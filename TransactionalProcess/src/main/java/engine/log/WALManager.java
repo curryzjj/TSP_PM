@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static UserApplications.CONTROL.enable_parallel;
+import static UserApplications.CONTROL.enable_states_partition;
 
 public class WALManager {
     private static final Logger LOG= LoggerFactory.getLogger(WALManager.class);
@@ -74,7 +75,9 @@ public class WALManager {
                 Iterator<LogRecord> logRecordIterator=logRecords.iterator();
                 while (logRecordIterator.hasNext()){
                     LogRecord logRecord =logRecordIterator.next();
-                    db.InsertRecord(logRecord.getTableName(), logRecord.getCopyTableRecord());
+                    if(enable_states_partition){
+                        db.InsertRecord(logRecord.getTableName(), logRecord.getCopyTableRecord());
+                    }
                 }
             }
         }

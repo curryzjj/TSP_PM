@@ -1,0 +1,88 @@
+package applications.bolts.transactional.tp;
+
+import engine.Exception.DatabaseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.faulttolerance.checkpoint.Status;
+
+import java.io.IOException;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ExecutionException;
+
+public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
+    private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream_Snapshot.class);
+    public TPBolt_TStream_Snapshot(int fid) {
+        super(fid);
+        this.configPrefix="tptxn";
+        status=new Status();
+        this.setStateful();
+    }
+
+    @Override
+    public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
+        if(in.isMarker()){
+            if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                this.collector.ack(in,in.getMarker());
+                switch (in.getMarker().getValue()){
+                    case "recovery":
+                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        this.registerRecovery();
+                        break;
+                    case "marker":
+                        TXN_PROCESS();
+                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        break;
+                    case "snapshot":
+                        this.needcheckpoint=true;
+                        this.checkpointId=in.getBID();
+                        TXN_PROCESS_FT();
+                        /** When the snapshot is completed, the data can be consumed by the outside world */
+                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        break;
+                    case "finish":
+                        if(LREvents.size()!=0){
+                            TXN_PROCESS_FT();
+                        }
+                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        break;
+                }
+            }
+        }else{
+            execute_ts_normal(in);
+        }
+    }
+    @Override
+    protected void TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
+        boolean isAbortTransaction=transactionManager.start_evaluate(thread_Id,this.fid);
+        if(isAbortTransaction){
+            this.SyncRegisterUndo();
+            this.AsyncReConstructRequest();
+            this.TXN_PROCESS_FT();
+        }else{
+            this.AsyncRegisterPersist();
+            REQUEST_REQUEST_CORE();
+            REQUEST_POST();
+            this.SyncCommitLog();
+            LREvents.clear();//clear stored events.
+            BUFFER_PROCESS();
+            bufferedTuple.clear();
+        }
+    }
+
+    @Override
+    protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
+        boolean isAbortTransaction=transactionManager.start_evaluate(thread_Id,this.fid);
+        if(isAbortTransaction){
+            this.SyncRegisterUndo();
+            this.AsyncReConstructRequest();
+            this.TXN_PROCESS();
+        }else{
+            REQUEST_REQUEST_CORE();
+            REQUEST_POST();
+            LREvents.clear();
+            BUFFER_PROCESS();
+            bufferedTuple.clear();
+        }
+    }
+}

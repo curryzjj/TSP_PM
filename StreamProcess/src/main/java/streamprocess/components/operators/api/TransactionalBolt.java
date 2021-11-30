@@ -1,7 +1,6 @@
 package streamprocess.components.operators.api;
 
 import System.util.OsUtils;
-import applications.events.lr.LREvent;
 import engine.Exception.DatabaseException;
 import engine.transaction.TxnContext;
 import engine.transaction.TxnManager;
@@ -10,8 +9,7 @@ import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
-import streamprocess.faulttolerance.FaultToleranceConstants;
-import streamprocess.faulttolerance.checkpoint.Checkpointable;
+import streamprocess.faulttolerance.checkpoint.emitMarker;
 import utils.SOURCE_CONTROL;
 
 
@@ -23,7 +21,7 @@ import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.combo_bid_size;
 
-public abstract class TransactionalBolt extends AbstractBolt implements Checkpointable {
+public abstract class TransactionalBolt extends AbstractBolt implements emitMarker {
     protected static final Logger LOG= LoggerFactory.getLogger(TransactionalBolt.class);
     public TxnManager transactionManager;
     protected int thread_Id;
@@ -34,12 +32,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
     private int i=0;
     private int NUM_ITEMS;
     public List<Tuple> bufferedTuple=new ArrayList<>();
-
-//    public State state = null;
-//    public OrderLock lock;//used for lock_ratio-based ordering constraint.
-//    public OrderValidate orderValidate;
     public TxnContext[] txn_context = new TxnContext[combo_bid_size];
-    //public SINKCombo sink=new SINKCCombo()
 
     public TransactionalBolt(Logger log,int fid) {
         super(log, null, null, false, 0, 1);
@@ -56,34 +49,28 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
 //        sink.prepare(config, context, collector);
         SOURCE_CONTROL.getInstance().config(tthread);
     }
-    //shapshot
     @Override
-    public void forward_checkpoint_single(int sourceTask, String streamId, long bid, Marker marker) {
-    }
-    @Override
-    public void forward_checkpoint(int sourceId, long bid, Marker marker,String msg) throws InterruptedException {
+    public void forward_marker(int sourceId, long bid, Marker marker, String msg) throws InterruptedException {
         this.collector.broadcast_marker(bid, marker);//bolt needs to broadcast_marker
     }
     @Override
-    public void forward_checkpoint(int sourceTask, String streamId, long bid, Marker marker,String msg) throws InterruptedException {
+    public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
         this.collector.broadcast_marker(streamId, bid, marker);//bolt needs to broadcast_marker
     }
     @Override
-    public void ack_checkpoint(Marker marker) {
+    public void ack_marker(Marker marker) {
         this.collector.broadcast_ack(marker);//bolt needs to broadcast_ack
     }
     @Override
-    public void earlier_ack_checkpoint(Marker marker) {
+    public void earlier_ack_marker(Marker marker) {
 
     }
-
     @Override
-    public boolean checkpoint(int counter) {
+    public boolean marker() {
         return false;
     }
     @Override
     public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException;
-    protected void TXN_PROCESS(long _bid) throws DatabaseException, InterruptedException{};
     protected void PRE_EXECUTE(Tuple in){
         bufferedTuple.add(in);
         _bid = in.getBID();
@@ -96,87 +83,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements Checkpoi
     protected long _bid;
     protected Object input_event;
     int sum = 0;
-    //used in the LA_CC
-    protected void PostLAL_process(long bid) throws DatabaseException, InterruptedException {
-    }
-    //used in the LA_CC and S-Store_CC
-    protected void LAL_PROCESS(long bid) throws DatabaseException, InterruptedException {
-    }
-    protected void POST_PROCESS(long bid, long timestamp, int i) throws InterruptedException {
-    }
     //used in the T-Stream_CC
     protected void PRE_TXN_PROCESS(Tuple input_event) throws DatabaseException, InterruptedException {
-    }
-    protected void execute_ts_normal(Tuple in) throws DatabaseException, InterruptedException {
-        //pre stream processing phase..
-        PRE_EXECUTE(in);
-        PRE_TXN_PROCESS(in);
-    }
-    //used in the S-Store_CC
-    //used in the No_CC
-    protected void nocc_execute(Tuple in) throws DatabaseException, InterruptedException{
-        PRE_EXECUTE(in);
-        TXN_PROCESS(_bid);
-        POST_PROCESS(_bid,timestamp,combo_bid_size);
-    }
-
-    /**
-     * To register persist when there is no transaction abort
-     */
-    protected void AsyncRegisterPersist(){
-        this.lock=this.FTM.getLock();
-        synchronized (lock){
-            this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Persist);
-            lock.notifyAll();
-        }
-    }
-
-    /**
-     * Wait for the log to commit then emit the result to output
-     * @throws InterruptedException
-     */
-    protected void SyncCommitLog() throws InterruptedException {
-        synchronized (lock){
-            while(!isCommit){
-                //wait for log to commit
-                LOG.info("Wait for the log to commit");
-                lock.wait();
-            }
-            this.isCommit =false;
-        }
-    }
-
-    /**
-     * To register undo when there is transaction abort
-     */
-    protected void SyncRegisterUndo() throws InterruptedException {
-        this.lock=this.FTM.getLock();
-        synchronized (lock){
-            this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Undo);
-            lock.notifyAll();
-        }
-        synchronized (lock){
-            while(!isCommit){
-                LOG.info("Wait for the database to undo");
-                lock.wait();
-            }
-            this.isCommit =false;
-        }
-    }
-
-    /**
-     * To register to recovery when there is a failure
-     * @throws InterruptedException
-     */
-    protected void registerRecovery() throws InterruptedException {
-        this.lock=this.getContext().getRM().getLock();
-        this.getContext().getRM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
-        synchronized (lock){
-            while (!isCommit){
-                LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
-                lock.wait();
-            }
-        }
-        isCommit=false;
     }
 }

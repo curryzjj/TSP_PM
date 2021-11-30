@@ -37,11 +37,13 @@ public abstract class TxnManagerDedicated implements TxnManager{
     public boolean Asy_ModifyRecord_Read(TxnContext txn_context, String srcTable, String key, SchemaRecordRef record_ref, Function function) throws DatabaseException {
         MetaTypes.AccessType accessType= MetaTypes.AccessType.READ_WRITE_READ;
         TableRecord tableRecord;
+        String tableName="";
         if(enable_states_partition){
-            tableRecord=storageManager.getTableRecords(srcTable+"_"+getTaskId(key),key);
+            tableName=srcTable+"_"+getTaskId(key);
         }else{
-            tableRecord=storageManager.getTableRecords(srcTable,key);
+            tableName=srcTable;
         }
+        tableRecord=storageManager.getTableRecords(tableName,key);
         if(tableRecord!=null){
             return Asy_ModifyRecord_ReadCC(txn_context,srcTable,tableRecord,record_ref,function,accessType);
         }

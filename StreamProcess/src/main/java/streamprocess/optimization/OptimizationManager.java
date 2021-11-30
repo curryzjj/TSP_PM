@@ -69,7 +69,9 @@ public class OptimizationManager extends Thread {
         }else if(enable_wal){
             FTM=new LoggerManager(g,conf,db);
         }
-        RM=new RecoveryManager(g,conf,db);
+        if(enable_snapshot||enable_wal){
+            RM=new RecoveryManager(g,conf,db);
+        }
         if(nav){
             LOG.info("Native execution");
             executionPlan=new ExecutionPlan(null,null);

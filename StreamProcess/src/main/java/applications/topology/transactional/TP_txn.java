@@ -8,6 +8,8 @@ import applications.DataTypes.util.LRTopologyControl;
 import applications.DataTypes.util.SegmentIdentifier;
 import applications.bolts.transactional.tp.DispatcherBolt;
 import applications.bolts.transactional.tp.TPBolt_TStream;
+import applications.bolts.transactional.tp.TPBolt_TStream_Snapshot;
+import applications.bolts.transactional.tp.TPBolt_TStream_Wal;
 import engine.ImplDatabase.InMemeoryDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,8 @@ import streamprocess.execution.Initialize.impl.TPInitializer;
 import streamprocess.execution.runtime.tuple.Fields;
 import utils.SpinLock;
 
+import static UserApplications.CONTROL.enable_snapshot;
+import static UserApplications.CONTROL.enable_wal;
 import static UserApplications.constants.TP_TxnConstants.Conf.Executor_Threads;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 import static UserApplications.constants.TP_TxnConstants.PREFIX;
@@ -48,11 +52,19 @@ public class TP_txn extends TransactionalTopology {
                     new DispatcherBolt(),
                     2,
                     new ShuffleGrouping(Component.SPOUT));
-            builder.setBolt(Component.EXECUTOR,
-                    new TPBolt_TStream(0),
-                    config.getInt(Executor_Threads,1),
-                    new FieldsGrouping(Component.DISPATCHER,POSITION_REPORTS_STREAM_ID, SegmentIdentifier.getSchema())
-                    );
+            if(enable_snapshot){
+                builder.setBolt(Component.EXECUTOR,
+                        new TPBolt_TStream_Snapshot(0),
+                        config.getInt(Executor_Threads,1),
+                        new FieldsGrouping(Component.DISPATCHER,POSITION_REPORTS_STREAM_ID, SegmentIdentifier.getSchema())
+                );
+            }else if(enable_wal){
+                builder.setBolt(Component.EXECUTOR,
+                        new TPBolt_TStream_Wal(0),
+                        config.getInt(Executor_Threads,1),
+                        new FieldsGrouping(Component.DISPATCHER,POSITION_REPORTS_STREAM_ID, SegmentIdentifier.getSchema())
+                );
+            }
             builder.setSink(Component.SINK, sink, sinkThreads
                     , new ShuffleGrouping(Component.EXECUTOR)
             );

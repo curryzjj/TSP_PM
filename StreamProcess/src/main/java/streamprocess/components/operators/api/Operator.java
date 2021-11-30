@@ -14,8 +14,7 @@ import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.faulttolerance.FTManager;
-import streamprocess.faulttolerance.checkpoint.CheckpointManager;
-import streamprocess.faulttolerance.checkpoint.Checkpointable;
+import streamprocess.faulttolerance.checkpoint.emitMarker;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionGraph;
@@ -240,7 +239,7 @@ public abstract class Operator implements Serializable{
         }else {
             LogManager.getLogger(LOG.getName()).setLevel(Level.INFO);
         }
-        if(this instanceof Checkpointable){
+        if(this instanceof emitMarker){
             if (status == null) {
                 LOG.info("The operator" + executor.getOP() + " is declared as checkpointable " +
                         "but no state is initialized");

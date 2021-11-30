@@ -27,11 +27,13 @@ public abstract class baseRunner {
     @Parameter(names = {"--config-str"}, required = false, description = "Path to the configuration file for the application")
     public String configStr;
     @Parameter(names = {"--THz", "-THz"}, description = "target input Hz")
-    public double THz =200000 ;
+    public double THz =2000 ;
     @Parameter(names = {"--timeslice"}, description = "time slice used in spout (ms)")
     public int timeSliceLengthMs = 100;//ms
     @Parameter(names = {"--shapshot"}, description = "shapshot interval")
-    public double checkpoint = 100;// default shapshot interval.
+    public int checkpoint = 1;// default shapshot interval=n*TStream interval
+    @Parameter(names = {"--batch_number_per_wm"}, description = "TStream interval")
+    public int batch_number_per_wm = 1000;// default TStream interval.
 
     @Parameter(names = {"--measure"}, description = "measure enable")
     public boolean measure = false;
@@ -87,8 +89,9 @@ public abstract class baseRunner {
     public void setConfiguration(HashMap<String,Object> config){
         config.put("targetHz", THz);
         config.put("timeSliceLengthMs", timeSliceLengthMs);
-        config.put("shapshot", checkpoint);
+        config.put("snapshot", checkpoint);
         config.put("benchmark", benchmark);
+        config.put("batch_number_per_wm",batch_number_per_wm);
         config.put("profile", profile);
         config.put("NAV", NAV);
         config.put("application",application);

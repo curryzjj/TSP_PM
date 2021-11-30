@@ -9,8 +9,11 @@ import streamprocess.components.operators.base.transaction.TransactionalBoltTStr
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Tuple;
 
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Random;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ExecutionException;
 
 import static UserApplications.constants.PKConstants.Constant.SIZE_EVENT;
 import static UserApplications.constants.PKConstants.Constant.SIZE_VALUE;
@@ -38,18 +41,23 @@ public class PKBolt_TStream extends TransactionalBoltTStream {
     }
 
     @Override
+    public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
+
+    }
+
+    @Override
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
 
     }
 
     @Override
-    protected void TXN_PROCESS(long _bid) throws DatabaseException, InterruptedException {
+    protected void TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
 
     }
 
 
     @Override
-    protected void TXN_PROCESS() throws DatabaseException, InterruptedException {
+    protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
 
     }
 }

@@ -1,10 +1,9 @@
 package applications.spout.transactional;
 
 import System.util.Configuration;
-import engine.shapshot.SnapshotResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamprocess.components.operators.api.TransactionalSpout;
+import streamprocess.components.operators.api.TransactionalSpoutFT;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.faulttolerance.checkpoint.Status;
 
@@ -12,9 +11,9 @@ import java.io.IOException;
 
 import static UserApplications.CONTROL.NUM_EVENTS;
 
-public class MemFileTransactionalSpout extends TransactionalSpout {
-    private static final Logger LOG= LoggerFactory.getLogger(MemFileTransactionalSpout.class);
-    public MemFileTransactionalSpout(){
+public class MemFileTransactionalSpoutFT extends TransactionalSpoutFT {
+    private static final Logger LOG= LoggerFactory.getLogger(MemFileTransactionalSpoutFT.class);
+    public MemFileTransactionalSpoutFT(){
         super(LOG);
         this.scalable=false;
         status=new Status();
@@ -45,7 +44,7 @@ public class MemFileTransactionalSpout extends TransactionalSpout {
             if(exe==NUM_EVENTS){
                 clock.start();
             }
-            forward_checkpoint(this.taskId, bid, null,"finish");
+            forward_marker(this.taskId, bid, null,"finish");
             collector.emit(array_array[counter],bid);
             bid++;
             counter++;

@@ -2,10 +2,9 @@ package applications.spout.transactional;
 
 import System.tools.FastZipfGenerator;
 import System.util.Configuration;
-import engine.shapshot.SnapshotResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamprocess.components.operators.api.TransactionalSpout;
+import streamprocess.components.operators.api.TransactionalSpoutFT;
 import streamprocess.components.topology.TopologyComponent;
 import streamprocess.execution.ExecutionGraph;
 
@@ -15,11 +14,11 @@ import java.util.Set;
 import static System.constants.BaseConstants.CCOptions.CCOption_TStream;
 import static UserApplications.constants.PKConstants.Constant.SIZE_EVENT;
 
-public class PKTransactionalSpout extends TransactionalSpout {
-    private static final Logger LOG= LoggerFactory.getLogger(TransactionalSpout.class);
+public class PKTransactionalSpoutFT extends TransactionalSpoutFT {
+    private static final Logger LOG= LoggerFactory.getLogger(TransactionalSpoutFT.class);
     private Set[] input_keys = new Set[10_000];
     private long[] p_bid;
-    protected PKTransactionalSpout() {
+    protected PKTransactionalSpoutFT() {
         super(LOG);
         this.scalable=false;
     }
@@ -40,7 +39,7 @@ public class PKTransactionalSpout extends TransactionalSpout {
         keygenerator=new FastZipfGenerator(size,skew,0);
         ccOption=config.getInt("CCOption",0);
         tthread=config.getInt("tthread");
-        checkpoint_interval_sec = config.getDouble("shapshot");
+        checkpoint_interval = config.getInt("shapshot");
         target_Hz = (int) config.getDouble("targetHz", 10000000);
         double ratio_of_multi_partition = config.getDouble("ratio_of_multi_partition", 1);
         bid=0;
@@ -79,7 +78,7 @@ public class PKTransactionalSpout extends TransactionalSpout {
             }else{
                 empty++;
             }
-            forward_checkpoint(-1,bid,null,"");
+            forward_marker(-1,bid,null,"");
         }
     }
 

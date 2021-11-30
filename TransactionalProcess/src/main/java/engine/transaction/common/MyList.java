@@ -4,6 +4,8 @@ import engine.log.LogRecord;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 
+import static UserApplications.CONTROL.enable_states_partition;
+
 public class MyList<O> extends ConcurrentSkipListSet<O> {
     public String getPrimaryKey() {
         return primaryKey;
@@ -29,6 +31,10 @@ public class MyList<O> extends ConcurrentSkipListSet<O> {
         this.table_name = table_name;
         this.primaryKey = primaryKey;
         this.range=range;
-        this.logRecord =new LogRecord(primaryKey,table_name);
+        if(enable_states_partition){
+            this.logRecord =new LogRecord(primaryKey,table_name+"_"+range);
+        }else{
+            this.logRecord =new LogRecord(primaryKey,table_name);
+        }
     }
 }

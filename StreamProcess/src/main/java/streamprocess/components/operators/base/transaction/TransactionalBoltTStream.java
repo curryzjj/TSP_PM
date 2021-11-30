@@ -1,26 +1,22 @@
 package streamprocess.components.operators.base.transaction;
 
 import engine.Exception.DatabaseException;
-import engine.shapshot.SnapshotResult;
 import engine.transaction.impl.TxnManagerTStream;
 import org.slf4j.Logger;
-import streamprocess.components.grouping.Grouping;
 import streamprocess.components.operators.api.TransactionalBolt;
-import streamprocess.components.topology.TopologyComponent;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionGraph;
-import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.execution.runtime.tuple.msgs.Marker;
+import streamprocess.faulttolerance.FaultToleranceConstants;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
+import static UserApplications.CONTROL.enable_snapshot;
+import static UserApplications.CONTROL.enable_wal;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
 public abstract class TransactionalBoltTStream extends TransactionalBolt {
@@ -37,34 +33,74 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     }
     //used in the T-Stream_CC
     protected abstract void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException;
-    protected abstract void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
+    protected abstract void TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
+    protected abstract void TXN_PROCESS()throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
     protected void REQUEST_POST() throws InterruptedException{};//implement in the application
     protected void REQUEST_REQUEST_CORE() throws InterruptedException{};//implement in the application
     protected void execute_ts_normal(Tuple in) throws DatabaseException, InterruptedException {
-        //pre stream processing phase..
         if(status.isMarkerArrived(in.getSourceTask())){
             PRE_EXECUTE(in);
         }else{
             PRE_TXN_PROCESS(in);
         }
     }
-
-    @Override
-    public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-        if(in.isMarker()){
-            if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                forward_checkpoint(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                this.collector.ack(in,in.getMarker());
-                if(in.getMarker().getValue()=="recovery"){
-                    this.registerRecovery();
-                }else{
-                    this.needcheckpoint=true;
-                    this.checkpointId=checkpointId;
-                    TXN_PROCESS();
-                }
-            }
-        }else{
-            execute_ts_normal(in);
+    /**
+     * To register persist when there is no transaction abort
+     */
+    protected void AsyncRegisterPersist(){
+        this.lock=this.FTM.getLock();
+        synchronized (lock){
+            this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Persist);
+            lock.notifyAll();
         }
+    }
+
+    /**
+     * Wait for the log to commit then emit the result to output
+     * @throws InterruptedException
+     */
+    protected void SyncCommitLog() throws InterruptedException {
+        synchronized (lock){
+            while(!isCommit){
+                //wait for log to commit
+                LOG.info("Wait for the log to commit");
+                lock.wait();
+            }
+            this.isCommit =false;
+        }
+    }
+
+    /**
+     * To register undo when there is transaction abort
+     */
+    protected void SyncRegisterUndo() throws InterruptedException {
+        this.lock=this.FTM.getLock();
+        synchronized (lock){
+            this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Undo);
+            lock.notifyAll();
+        }
+        synchronized (lock){
+            while(!isCommit){
+                LOG.info("Wait for the database to undo");
+                lock.wait();
+            }
+            this.isCommit =false;
+        }
+    }
+
+    /**
+     * To register to recovery when there is a failure
+     * @throws InterruptedException
+     */
+    protected void registerRecovery() throws InterruptedException {
+        this.lock=this.getContext().getRM().getLock();
+        this.getContext().getRM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
+        synchronized (lock){
+            while (!isCommit){
+                LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
+                lock.wait();
+            }
+        }
+        isCommit=false;
     }
 }

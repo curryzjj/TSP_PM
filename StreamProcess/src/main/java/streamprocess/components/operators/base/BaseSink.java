@@ -7,17 +7,16 @@ import applications.sink.formatter.BasicFormatter;
 import applications.sink.formatter.Formatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamprocess.components.operators.api.AbstractBolt;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Fields;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.faulttolerance.FaultToleranceConstants;
-import streamprocess.faulttolerance.checkpoint.Checkpointable;
+import streamprocess.faulttolerance.checkpoint.emitMarker;
 
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 
-public abstract class BaseSink extends BaseOperator implements Checkpointable {
+public abstract class BaseSink extends BaseOperator implements emitMarker {
     private static final Logger LOG= LoggerFactory.getLogger(BaseSink.class);
     protected static ExecutionGraph graph;
     protected int thisTaskId;
@@ -77,32 +76,27 @@ public abstract class BaseSink extends BaseOperator implements Checkpointable {
     }
 
     @Override
-    public boolean checkpoint(int counter) throws InterruptedException, BrokenBarrierException {
+    public boolean marker() throws InterruptedException, BrokenBarrierException {
         return false;
     }
 
     @Override
-    public void forward_checkpoint(int sourceId, long bid, Marker marker, String msg) throws InterruptedException {
+    public void forward_marker(int sourceId, long bid, Marker marker, String msg) throws InterruptedException {
 
     }
 
     @Override
-    public void forward_checkpoint_single(int sourceTask, String streamId, long bid, Marker marker) throws InterruptedException {
+    public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
 
     }
 
     @Override
-    public void forward_checkpoint(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
+    public void ack_marker(Marker marker) {
 
     }
 
     @Override
-    public void ack_checkpoint(Marker marker) {
-
-    }
-
-    @Override
-    public void earlier_ack_checkpoint(Marker marker) {
+    public void earlier_ack_marker(Marker marker) {
 
     }
 }

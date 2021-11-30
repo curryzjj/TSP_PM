@@ -26,10 +26,10 @@ public abstract class AbstractSpout extends Operator {
     protected ArrayList<char[]> array;
     //	String[] array_array;
     protected char[][] array_array;
-    protected int counter = 0;
     protected int taskId;
     protected int cnt;
     protected int exe;
+    protected int counter;
     protected ExecutionGraph graph;
 
     protected AbstractSpout(Logger log) {
@@ -115,7 +115,6 @@ public abstract class AbstractSpout extends Operator {
             build(scanner);
         }
         array_array = array.toArray(new char[array.size()][]);
-        counter = 0;
     }
     protected void load_input(){
         long start=System.nanoTime();

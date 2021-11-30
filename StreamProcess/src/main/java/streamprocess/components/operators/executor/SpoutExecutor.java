@@ -2,7 +2,7 @@ package streamprocess.components.operators.executor;
 
 import engine.Clock;
 import streamprocess.components.topology.TopologyContext;
-import streamprocess.faulttolerance.checkpoint.Checkpointable;
+import streamprocess.faulttolerance.checkpoint.emitMarker;
 import streamprocess.components.operators.api.Operator;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
@@ -31,7 +31,7 @@ public abstract class SpoutExecutor implements IExecutor {
 
     @Override
     public void clean_status(Marker marker) {
-        ((Checkpointable) op).ack_checkpoint(marker);
+        ((emitMarker) op).ack_marker(marker);
     }
 
     @Override

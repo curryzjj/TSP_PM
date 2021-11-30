@@ -4,11 +4,10 @@ import System.constants.BaseConstants;
 import System.util.Configuration;
 import System.util.OsUtils;
 import UserApplications.InputDataGenerator.InputDataGenerator;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.faulttolerance.checkpoint.Status;
-import streamprocess.components.operators.api.TransactionalSpout;
+import streamprocess.components.operators.api.TransactionalSpoutFT;
 import streamprocess.execution.ExecutionGraph;
 
 import java.io.*;
@@ -18,15 +17,17 @@ import java.util.Scanner;
 
 import static System.Constants.Mac_Data_Path;
 import static System.Constants.Node22_Data_Path;
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
-public class FileTransactionalSpout extends TransactionalSpout {
-    private static final Logger LOG= LoggerFactory.getLogger(FileTransactionalSpout.class);
+public class SpoutWithFT extends TransactionalSpoutFT {
+    private static final Logger LOG= LoggerFactory.getLogger(SpoutWithFT.class);
     private InputDataGenerator inputDataGenerator;
     private Scanner scanner;
     private String Data_path;
-    public FileTransactionalSpout(){
+    public SpoutWithFT(){
         super(LOG);
+
         this.scalable=false;
         status=new Status();
     }
@@ -61,6 +62,8 @@ public class FileTransactionalSpout extends TransactionalSpout {
             zipSkew=config.getDouble(getConfigKey(BaseConstants.BaseConf.ZIPSKEW_NUM));
             Data_path=Node22_Data_Path;
         }
+        this.batch_number_per_wm=config.getInt("batch_number_per_wm");
+        this.checkpoint_interval = config.getInt("snapshot");
         Data_path = Data_path.concat(path);
         inputDataGenerator.initialize(Data_path,recordNum,NUM_SEGMENTS-1,zipSkew);
     }
@@ -87,10 +90,10 @@ public class FileTransactionalSpout extends TransactionalSpout {
             char[] data=replayTuple();
             if(data!=null){
                 collector.emit(data,bid);
-                forward_checkpoint(this.taskId, bid, null,"marker");
                 bid++;
                 lostData++;
                 batch--;
+                forward_marker(this.taskId, bid, null,"marker");
             }
         }
         List<String> inputData=inputDataGenerator.generateData(batch);
@@ -98,20 +101,20 @@ public class FileTransactionalSpout extends TransactionalSpout {
             for (Iterator<String> it = inputData.iterator(); it.hasNext(); ) {
                 String input = it.next();
                 collector.emit(input.toCharArray(),bid);
-                forward_checkpoint(this.taskId, bid, null,"marker");
                 bid++;
+                forward_marker(this.taskId, bid, null,"marker");
             }
         }else{
-            forward_checkpoint(this.taskId, bid, null,"marker");
+            this.getContext().getFTM().spoutRegister(bid);
+            collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"finish");
             try {
                 clock.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-                if (taskId == graph.getSpout().getExecutorID()) {
-                    LOG.info("Spout sent marker"+myiteration);
-                    context.stop_running();
-                }
+            LOG.info("Spout sent marker "+myiteration);
+            LOG.info("Spout sent snapshot "+checkpoint_counter);
+            context.stop_running();
         }
     }
     @Override

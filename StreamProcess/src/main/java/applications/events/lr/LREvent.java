@@ -25,6 +25,7 @@ public class LREvent {
         this.bid = bid;
         speed_value = new SchemaRecordRef();
         count_value = new SchemaRecordRef();
+        this.setTimestamp(posreport.getTime());
     }
     public PositionReport getPOSReport() {
         return posreport;

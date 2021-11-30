@@ -70,7 +70,9 @@ public class ExecutionManager {
         timeSliceLengthMs = conf.getInt("timeSliceLengthMs");
         g.build_inputSchedule();
         clock = new Clock(conf.getDouble("shapshot", 1));
-        this.startFaultTolerance(RM,FTM);
+        if(enable_snapshot||enable_wal){
+            this.startFaultTolerance(RM,FTM);
+        }
         if (enable_shared_state){
             HashMap<Integer, List<Integer>> stage_map = new HashMap<>();
             for (ExecutionNode e : g.getExecutionNodeArrayList()) {

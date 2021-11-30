@@ -97,8 +97,8 @@ public abstract class AbstractLRBTuple extends StreamValues {
      *
      * @return the timestamp of this tuple
      */
-    public final Short getTime() {
-        return (Short)super.get(TIME_IDX);
+    public final Long getTime() {
+        return (Long) super.get(TIME_IDX);
     }
     /**
      * TODO remove class Time ???

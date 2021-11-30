@@ -3,6 +3,7 @@ package applications;
 import System.Platform.Platform;
 import System.util.Configuration;
 import System.util.OsUtils;
+import UserApplications.CONTROL;
 import UserApplications.baseRunner;
 import applications.topology.WordCount;
 import applications.topology.transactional.TP_txn;
@@ -17,6 +18,8 @@ import streamprocess.execution.runtime.threads.executorThread;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.Queue;
+
+import static UserApplications.CONTROL.enable_wal;
 
 public class  AppRunner extends baseRunner {
     private static final Logger LOG= LoggerFactory.getLogger(AppRunner.class);

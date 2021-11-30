@@ -5,7 +5,7 @@ import engine.Exception.DatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.faulttolerance.FaultToleranceConstants;
-import streamprocess.faulttolerance.checkpoint.Checkpointable;
+import streamprocess.faulttolerance.checkpoint.emitMarker;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.operators.base.filterBolt;
 import streamprocess.execution.runtime.tuple.OutputFieldsDeclarer;
@@ -17,7 +17,7 @@ import java.util.concurrent.BrokenBarrierException;
 
 import static UserApplications.constants.TP_TxnConstants.Stream.POSITION_REPORTS_STREAM_ID;
 
-public class DispatcherBolt extends filterBolt implements Checkpointable {
+public class DispatcherBolt extends filterBolt implements emitMarker {
     private static final Logger LOG= LoggerFactory.getLogger(DispatcherBolt.class);
     public int marker_num=0;
     public DispatcherBolt(){
@@ -30,7 +30,7 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {
         long bid=in.getBID();
         if(in.isMarker()){
-            forward_checkpoint(in.getSourceTask(),bid,in.getMarker(),in.getMarker().getValue());
+            forward_marker(in.getSourceTask(),bid,in.getMarker(),in.getMarker().getValue());
             this.collector.ack(in,in.getMarker());
             if(in.getMarker().getValue()=="recovery"){
                 this.registerRecovery();
@@ -64,28 +64,24 @@ public class DispatcherBolt extends filterBolt implements Checkpointable {
         declarer.declareStream(POSITION_REPORTS_STREAM_ID,PositionReport.getSchema());
     }
     @Override
-    public void forward_checkpoint(int sourceId, long bid, Marker marker,String msg) throws InterruptedException {
+    public void forward_marker(int sourceId, long bid, Marker marker, String msg) throws InterruptedException {
         this.collector.broadcast_marker(bid, marker);
     }
 
     @Override
-    public boolean checkpoint(int counter) throws InterruptedException, BrokenBarrierException {
+    public boolean marker() throws InterruptedException, BrokenBarrierException {
         return false;
     }
     @Override
-    public void forward_checkpoint_single(int sourceTask, String streamId, long bid, Marker marker) throws InterruptedException {
+    public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
 
     }
     @Override
-    public void forward_checkpoint(int sourceTask, String streamId, long bid, Marker marker,String msg) throws InterruptedException {
-
-    }
-    @Override
-    public void ack_checkpoint(Marker marker) {
+    public void ack_marker(Marker marker) {
         this.collector.broadcast_ack(marker);//bolt needs to broadcast_ack
     }
     @Override
-    public void earlier_ack_checkpoint(Marker marker) {
+    public void earlier_ack_marker(Marker marker) {
 
     }
     protected void registerRecovery() throws InterruptedException {

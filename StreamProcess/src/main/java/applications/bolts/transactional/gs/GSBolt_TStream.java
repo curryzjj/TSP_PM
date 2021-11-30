@@ -17,9 +17,20 @@ public class GSBolt_TStream extends TransactionalBoltTStream {
     }
 
     @Override
+    public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
+
+    }
+
+    @Override
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
 
     }
+
+    @Override
+    protected void TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
+
+    }
+
 
     @Override
     protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {

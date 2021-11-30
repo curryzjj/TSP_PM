@@ -2,21 +2,18 @@ package applications.sink;
 
 import System.sink.helper.stable_sink_helper;
 import System.util.Configuration;
-import System.util.OsUtils;
 import engine.Exception.DatabaseException;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 import streamprocess.components.operators.base.BaseSink;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.execution.runtime.tuple.msgs.Marker;
-import streamprocess.faulttolerance.checkpoint.Checkpointable;
 import streamprocess.faulttolerance.checkpoint.Status;
 
-import java.util.ArrayDeque;
-import java.util.HashMap;
+import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
@@ -36,6 +33,10 @@ public class MeasureSink extends BaseSink {
     private int exe;
     protected final ArrayDeque<Long> latency_map = new ArrayDeque();
     public int batch_number_per_wm;
+    /** <bid,timestamp> */
+    protected List<Tuple2<Long, Long>> perCommitTuple=new ArrayList<>();
+    protected long currentCommitBid=0;
+    protected int abortTransaction=0;
 
     public MeasureSink() {
         super(new HashMap<>());
@@ -57,11 +58,6 @@ public class MeasureSink extends BaseSink {
     }
 
     protected int tthread;
-    int cnt = 0;
-    long meauseStartTime;
-    long meauseLatencyStartTime;
-    long meauseFinishTime;
-    long latencyCount=0;
 
     @Override
     public void execute(Tuple in) throws InterruptedException {
@@ -70,16 +66,48 @@ public class MeasureSink extends BaseSink {
                 this.collector.ack(in,in.getMarker());
                 if(in.getMarker().getValue()=="recovery"){
                     this.registerRecovery();
+                }else if(in.getMarker().getValue()=="snapshot"){
+                    CommitTuple(in.getBID());
+                }else if(in.getMarker().getValue()=="finish"){
+                    measure_end();
+                }else if(enable_wal){
+                    CommitTuple(in.getBID());
                 }
             }
-        }
-        if(!in.isMarker()){
-            in.getValue(0);
-        }
-        if(enable_latency_measurement){
-            //this.latency_measure();
+        }else{
+            boolean finish= (boolean) in.getValue(0);
+            if(!finish){
+                LOG.info("The tuple ("+in.getBID()+ ") is abort");
+                abortTransaction++;
+            }else{
+                perCommitTuple.add(new Tuple2(in.getBID(),in.getValue(1)));
+            }
         }
     }
+
+    private void measure_end() {
+
+    }
+
+    private void CommitTuple(long bid) {
+        if(enable_latency_measurement){
+            long totalLatency=0L;
+            long size=0;
+            Iterator<Tuple2<Long, Long>> events=perCommitTuple.iterator();
+            while(events.hasNext()){
+                Tuple2<Long,Long> event=events.next();
+                if(event._1().longValue()<bid){
+                    final long end = System.nanoTime();
+                    final long process_latency = end - event._2;//ns
+                    totalLatency=totalLatency+process_latency;
+                    size++;
+                }
+                events.remove();
+            }
+            latency_map.add(totalLatency/size);
+        }
+    }
+
     @Override
     public void execute(JumboTuple in) throws DatabaseException, BrokenBarrierException, InterruptedException {
         for(int i=0;i<in.length;i++){
@@ -87,36 +115,6 @@ public class MeasureSink extends BaseSink {
             if(!finish){
                 LOG.info("The tuple ("+in.getMsg(i).getValue(1)+ ") is abort");
             }
-        }
-    }
-    protected void latency_measure() {
-            if (cnt == 0) {
-                meauseLatencyStartTime = System.nanoTime();
-            } else {
-                if (cnt % batch_number_per_wm == 0) {
-                    latencyCount++;
-                    final long end = System.nanoTime();
-                    final long process_latency = end - meauseLatencyStartTime;//ns
-                    latency_map.add(process_latency / batch_number_per_wm);
-                    meauseLatencyStartTime = end;
-                }
-            }
-            cnt++;
-    }
-
-    protected void measure_end() {
-        long time_elapsed = meauseFinishTime - meauseStartTime;
-        double throughtResult= ((double) (cnt) * 1E6 / time_elapsed);//count/ns * 1E6 --> EVENTS/ms
-        long latencySum=0;
-        for (Long entry : latency_map) {
-            latencySum=latencySum+entry;
-        }
-        double avg_latency=((double) (latencySum)  /latencyCount );
-        LOG.info(this.executor.getOP_full()+"\tReceived:" + cnt+" events" + " Throughput(k input_event/s) of:\t" + throughtResult);
-        LOG.info(this.executor.getOP_full()+"\tAverage latency(ms) of:\t" + avg_latency);
-        if (thisTaskId == graph.getSink().getExecutorID()) {
-            LOG.info("Thread:" + thisTaskId + " is going to stop all threads sequentially");
-            context.Sequential_stopAll();
         }
     }
 

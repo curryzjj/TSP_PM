@@ -170,10 +170,10 @@ public class TxnProcessingEngine {
         while (true){
             Operation operation=operation_chain.pollFirst();
             if(operation==null) return;
-            process(operation,mark_ID,true, operation_chain.getLogRecord());
+            process(operation,mark_ID, operation_chain.getLogRecord());
         }
     }
-    private void process(Operation operation, long mark_id, boolean logged,LogRecord logRecord) {
+    private void process(Operation operation, long mark_id,LogRecord logRecord) {
         if(operation.bid==500000||operation.bid==100000){
             this.transactionAbort.add(operation.bid);
         }
@@ -202,7 +202,7 @@ public class TxnProcessingEngine {
             break;
             default:throw new UnsupportedOperationException();
         }
-        if(logged){
+        if(enable_wal){
             logRecord.setUpdateTableRecord(operation.s_record);
         }
     }
