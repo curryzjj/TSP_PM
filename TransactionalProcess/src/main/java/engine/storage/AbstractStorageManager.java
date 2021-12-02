@@ -13,6 +13,7 @@ import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.RunnableFuture;
 
@@ -33,6 +34,7 @@ public abstract class AbstractStorageManager {
      */
     public synchronized void dropAllTables() throws IOException{};
     public synchronized void cleanTable(String tableName) throws IOException, DatabaseException {};
+    public synchronized void cleanTable(List<Integer> rangeId) throws IOException, DatabaseException {};
     public synchronized void cleanAllTables() throws IOException{};
     /**
      * Delete a table in this database.

@@ -2,6 +2,7 @@ package applications.bolts.transactional.tp;
 
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.faulttolerance.FaultToleranceConstants;
 import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.IOException;
@@ -46,19 +47,27 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
 
     @Override
     protected void TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        boolean isAbortTransaction=transactionManager.start_evaluate(thread_Id,this.fid);
-        if(isAbortTransaction){
-            this.SyncRegisterUndo();
-            this.AsyncReConstructRequest();
-            this.TXN_PROCESS_FT();
-        }else{
-            this.AsyncRegisterPersist();
-            REQUEST_REQUEST_CORE();
-            REQUEST_POST();
-            this.SyncCommitLog();
-            LREvents.clear();//clear stored events.
-            BUFFER_PROCESS();
-            bufferedTuple.clear();
+        int FT=transactionManager.start_evaluate(thread_Id,this.fid);
+        switch (FT){
+            case 0:
+                this.AsyncRegisterPersist();
+                REQUEST_REQUEST_CORE();
+                REQUEST_POST();
+                this.SyncCommitLog();
+                LREvents.clear();//clear stored events.
+                BUFFER_PROCESS();
+                bufferedTuple.clear();
+                break;
+            case 1:
+                this.SyncRegisterUndo();
+                this.AsyncReConstructRequest();
+                this.TXN_PROCESS_FT();
+                break;
+            case 2:
+                this.SyncRegisterRecovery();
+                this.AsyncReConstructRequest();
+                this.TXN_PROCESS_FT();
+                break;
         }
     }
 

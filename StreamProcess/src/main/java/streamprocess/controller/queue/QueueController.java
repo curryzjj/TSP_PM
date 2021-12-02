@@ -17,4 +17,6 @@ public abstract class QueueController implements Serializable {
     public abstract Queue get_queue(int executor);
     public abstract void allocate_queue(boolean linked,int desired_elements_epoch_per_core);
     public abstract boolean isEmpty();
+
+    public abstract void clean();
 }

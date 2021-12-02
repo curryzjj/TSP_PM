@@ -109,7 +109,7 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
         _op.callback(callee, marker);
     }
 
-    public void bulk_emit_nonblocking(int batch) throws InterruptedException {
+    public void bulk_emit_nonblocking(int batch) throws InterruptedException{
         _op.nextTuple_nonblocking(batch);
     }
 

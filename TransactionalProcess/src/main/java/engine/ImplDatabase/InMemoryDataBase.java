@@ -29,8 +29,8 @@ import java.util.concurrent.RunnableFuture;
 import static UserApplications.CONTROL.enable_parallel;
 import static utils.TransactionalProcessConstants.CommitLogExecutionType.SYNCHRONOUS;
 
-public class InMemeoryDatabase extends Database {
-    public InMemeoryDatabase(Configuration configuration) {
+public class InMemoryDataBase extends Database {
+    public InMemoryDataBase(Configuration configuration) {
         CloseableRegistry closeableRegistry=new CloseableRegistry();
         storageManager = new StorageManager(closeableRegistry,configuration);
         if(OsUtils.isMac()){
@@ -72,7 +72,7 @@ public class InMemeoryDatabase extends Database {
     @Override
     public long recoveryFromWAL(long globalLSN) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
         if(enable_parallel){
-            return AbstractRecoveryManager.parallelRecoveryFromWAL(this,WalPath,txnProcessingEngine.getNum_op(),globalLSN);
+            return AbstractRecoveryManager.parallelRecoveryFromWAL(this,WalPath,txnProcessingEngine.getRecoveryRangeId(),globalLSN);
         }else{
             return AbstractRecoveryManager.recoveryFromWAL(this,WalPath,-1,globalLSN);
         }
@@ -80,7 +80,7 @@ public class InMemeoryDatabase extends Database {
 
     @Override
     public boolean undoFromWAL() throws IOException, DatabaseException {
-        return this.txnProcessingEngine.getWalManager().undoLog(this);
+        return this.txnProcessingEngine.getWalManager().undoLog(this,this.txnProcessingEngine.getRecoveryRangeId());
     }
 
     @Override

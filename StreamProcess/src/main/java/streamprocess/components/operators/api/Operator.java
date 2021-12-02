@@ -64,6 +64,7 @@ public abstract class Operator implements Serializable{
     protected boolean needcheckpoint;
     public boolean isCommit;
     public boolean replay=false;
+    public boolean needReplay;
     public int lostData=0;
     protected Object lock;
     //    public transient TxnContext txn_context;

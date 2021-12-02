@@ -83,6 +83,11 @@ public class PKTransactionalSpoutFT extends TransactionalSpoutFT {
     }
 
     @Override
+    protected void loadReplay() {
+
+    }
+
+    @Override
     public void recoveryInput(long offset) {
 
     }

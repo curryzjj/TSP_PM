@@ -10,6 +10,7 @@ import engine.Database;
 import engine.shapshot.SnapshotResult;
 import engine.shapshot.SnapshotStrategy;
 import engine.table.datatype.serialize.Serialize;
+import org.checkerframework.checker.units.qual.C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
@@ -46,9 +47,11 @@ public class CheckpointManager extends FTManager {
     private long currentCheckpointId;
     private ConcurrentHashMap<Long,Boolean> isCommitted;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callSnapshot;
+    private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callRecovery;
     public CheckpointManager(ExecutionGraph g, Configuration conf, Database db){
         this.isCommitted=new ConcurrentHashMap<>();
         this.callSnapshot=new ConcurrentHashMap<>();
+        this.callRecovery=new ConcurrentHashMap<>();
         this.lock=new Object();
         this.conf=conf;
         this.g=g;
@@ -62,6 +65,7 @@ public class CheckpointManager extends FTManager {
             this.localFS=new LocalFileSystem();
         }
         this.callSnapshot_ini();
+        this.callRecovery_ini();
     }
 
     public void initialize(boolean needRecovery) throws IOException {
@@ -91,13 +95,24 @@ public class CheckpointManager extends FTManager {
         }
     }
     public void boltRegister(int executorId,FaultToleranceConstants.FaultToleranceStatus status){
-        callSnapshot.put(executorId, status);
+        if(callSnapshot.containsKey(executorId)){
+            callSnapshot.put(executorId, status);
+        }else{
+            callRecovery.put(executorId,status);
+        }
         LOG.info("executor("+executorId+")"+" register the "+status);
     }
     private void callSnapshot_ini(){
         for (ExecutionNode e:g.getExecutionNodeArrayList()){
             if(e.op.IsStateful()){
                 this.callSnapshot.put(e.getExecutorID(),NULL);
+            }
+        }
+    }
+    private void callRecovery_ini(){
+        for (ExecutionNode e:g.getExecutionNodeArrayList()){
+            if(!e.isLeafNode()&&!e.op.IsStateful()){
+                this.callRecovery.put(e.getExecutorID(),NULL);
             }
         }
     }
@@ -113,12 +128,22 @@ public class CheckpointManager extends FTManager {
                 if(close){
                     return;
                 }
-                if(callSnapshot.containsValue(Undo)){
-                    LOG.info("CheckpointManager received all register and start Undo");
+                if(callSnapshot.containsValue(Undo)||callSnapshot.containsValue(Recovery)){
+                    LOG.info("CheckpointManager received all register and start recovery");
                     SnapshotResult lastSnapshotResult=getLastCommitSnapshotResult(checkpointFile);
+                    this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
+                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     LOG.info("Reload state complete!");
+                    synchronized (lock){
+                        while (callRecovery.containsValue(NULL)){
+                            lock.wait();
+                        }
+                    }
+                    this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                    this.isCommitted.clear();
                     notifyAllComplete();
+                    LOG.info("Recovery complete!");
                     lock.notifyAll();
                 }else{
                     LOG.info("CheckpointManager received all register and start snapshot");
@@ -129,7 +154,7 @@ public class CheckpointManager extends FTManager {
                         this.snapshotResult=snapshotResult.get();
                     }
                     commitCurrentLog();
-                    notifyAllComplete();
+                    notifySnapshotComplete();
                     lock.notifyAll();
                 }
             }
@@ -147,11 +172,21 @@ public class CheckpointManager extends FTManager {
         isCommitted.put(currentCheckpointId,true);
         return true;
     }
+    public void notifySnapshotComplete() throws Exception {
+        for(int id:callSnapshot.keySet()){
+            g.getExecutionNode(id).ackCommit();
+        }
+        this.callSnapshot_ini();
+    }
     public void notifyAllComplete() throws Exception {
         for(int id:callSnapshot.keySet()){
             g.getExecutionNode(id).ackCommit();
         }
         this.callSnapshot_ini();
+        for(int id:callRecovery.keySet()){
+            g.getExecutionNode(id).ackCommit();
+        }
+        this.callRecovery_ini();
     }
     public Object getLock(){
         return lock;

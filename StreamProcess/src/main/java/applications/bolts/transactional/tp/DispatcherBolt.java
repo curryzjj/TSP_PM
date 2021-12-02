@@ -30,10 +30,11 @@ public class DispatcherBolt extends filterBolt implements emitMarker {
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {
         long bid=in.getBID();
         if(in.isMarker()){
-            forward_marker(in.getSourceTask(),bid,in.getMarker(),in.getMarker().getValue());
             this.collector.ack(in,in.getMarker());
             if(in.getMarker().getValue()=="recovery"){
-                this.registerRecovery();
+                this.registerRecovery(in);
+            }else{
+                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
             }
         }else{
             String raw = null;
@@ -84,15 +85,20 @@ public class DispatcherBolt extends filterBolt implements emitMarker {
     public void earlier_ack_marker(Marker marker) {
 
     }
-    protected void registerRecovery() throws InterruptedException {
-        this.lock=this.getContext().getRM().getLock();
-        this.getContext().getRM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
+    protected void registerRecovery(Tuple in) throws InterruptedException {
+        this.lock=this.getContext().getFTM().getLock();
+        synchronized (lock){
+            this.getContext().getFTM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
+            this.collector.clean();
+            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+            lock.notifyAll();
+        }
         synchronized (lock){
             while (!isCommit){
                 LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
                 lock.wait();
             }
+            isCommit=false;
         }
-        isCommit=false;
     }
 }

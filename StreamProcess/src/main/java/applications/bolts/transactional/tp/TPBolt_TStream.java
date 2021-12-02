@@ -38,14 +38,18 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
             LREvent event = new LREvent((PositionReport) in.getValue(0),tthread,in.getBID());
             REQUEST_CONSTRUCT(event, txnContext);
     }
-    protected void REQUEST_CONSTRUCT(LREvent event, TxnContext txnContext) throws DatabaseException {
+    protected void REQUEST_CONSTRUCT(LREvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         //some process used the transactionManager
-       transactionManager.Asy_ModifyRecord_Read(txnContext
+        boolean flag=transactionManager.Asy_ModifyRecord_Read(txnContext
                 , "segment_speed"
                 ,String.valueOf(event.getPOSReport().getSegment())
                 ,event.speed_value//holder to be filled up
                 ,new AVG(event.getPOSReport().getSpeed())
         );
+        if(!flag){
+            collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+            return;
+        }
        transactionManager.Asy_ModifyRecord_Read(txnContext
                 ,"segment_cnt"
                 ,String.valueOf(event.getPOSReport().getSegment())

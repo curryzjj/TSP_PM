@@ -118,4 +118,8 @@ public abstract class Database {
             this.checkpointOptions=new CheckpointOptions();
         }
     }
+
+    public TxnProcessingEngine getTxnProcessingEngine() {
+        return txnProcessingEngine;
+    }
 }

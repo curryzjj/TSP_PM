@@ -8,13 +8,16 @@ import System.FileSystem.ImplFSDataOutputStream.LocalDataOutputStream;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.FileAlreadyExistsException;
 
 import static System.util.Preconditions.checkNotNull;
 import static System.util.Preconditions.checkState;
 
 
-public class LocalFileSystem extends FileSystem {
+public class LocalFileSystem extends FileSystem implements Serializable {
+    private static final long serialVersionUID = -8724546559015314893L;
+
     @Override
     public FSDataOutputStream create(Path filePath) throws IOException {
         if (exists(filePath)) {

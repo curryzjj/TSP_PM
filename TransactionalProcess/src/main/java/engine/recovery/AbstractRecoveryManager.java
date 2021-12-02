@@ -134,16 +134,16 @@ public class AbstractRecoveryManager {
                 }
             }
         } catch (EOFException e){
-            LOG.info("DB recovery from WAL-"+rangeId+" complete");
+            LOG.info("DB recovery from WAL-"+filePath+" complete");
         }
         inputStream.close();
         inputViewStreamWrapper.close();
         return theLastLSN;
     }
-    public static long parallelRecoveryFromWAL(Database db,Path WALPath,int rangeNum,long globalLSN) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
+    public static long parallelRecoveryFromWAL(Database db,Path WALPath,List<Integer> rangeIds,long globalLSN) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
         List<recoveryFromWalTask> callables=new ArrayList<>();
-        for(int i=0;i<rangeNum;i++){
-            callables.add(new recoveryFromWalTask(db,WALPath,i, globalLSN));
+        for(int id:rangeIds){
+            callables.add(new recoveryFromWalTask(db,WALPath,id, globalLSN));
         }
         List<Future<Long>> futures=writeExecutor.invokeAll(callables);
         return 1L;

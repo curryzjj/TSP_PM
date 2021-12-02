@@ -3,6 +3,7 @@ package engine.transaction;
 import engine.Exception.DatabaseException;
 import engine.table.tableRecords.SchemaRecordRef;
 import engine.transaction.function.Function;
+import scala.Int;
 
 import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
@@ -21,5 +22,5 @@ public interface TxnManager {
     boolean Asy_ModifyRecord_Read(TxnContext txn_context, String srcTable, String key, SchemaRecordRef record_ref, Function function) throws DatabaseException;
 
 
-    boolean start_evaluate(int taskId, long mark_ID) throws InterruptedException, BrokenBarrierException, IOException, DatabaseException;
+    int start_evaluate(int taskId, long mark_ID) throws InterruptedException, BrokenBarrierException, IOException, DatabaseException;
 }

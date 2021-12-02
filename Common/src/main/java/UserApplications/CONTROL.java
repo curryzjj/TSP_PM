@@ -35,6 +35,7 @@ public interface CONTROL {
     boolean enable_wal = false;
     boolean enable_parallel=true;
     boolean enable_states_partition = true;//must be enabled for parallel snapshot
+    boolean enable_transaction_abort=true;
     //pre- and post -compute
 
     boolean enable_pre_compute = false;//not in use.

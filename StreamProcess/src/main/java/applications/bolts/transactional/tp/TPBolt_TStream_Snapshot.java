@@ -26,9 +26,6 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
                 this.collector.ack(in,in.getMarker());
                 switch (in.getMarker().getValue()){
                     case "recovery":
-                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        this.registerRecovery();
-                        break;
                     case "marker":
                         TXN_PROCESS();
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
@@ -54,35 +51,42 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
     }
     @Override
     protected void TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        boolean isAbortTransaction=transactionManager.start_evaluate(thread_Id,this.fid);
-        if(isAbortTransaction){
-            this.SyncRegisterUndo();
-            this.AsyncReConstructRequest();
-            this.TXN_PROCESS_FT();
-        }else{
-            this.AsyncRegisterPersist();
-            REQUEST_REQUEST_CORE();
-            REQUEST_POST();
-            this.SyncCommitLog();
-            LREvents.clear();//clear stored events.
-            BUFFER_PROCESS();
-            bufferedTuple.clear();
+        int FT=transactionManager.start_evaluate(thread_Id,this.fid);
+        switch (FT){
+            case 0:
+                this.AsyncRegisterPersist();
+                REQUEST_REQUEST_CORE();
+                REQUEST_POST();
+                this.SyncCommitLog();
+                LREvents.clear();//clear stored events.
+                BUFFER_PROCESS();
+                bufferedTuple.clear();
+                break;
+            case 1:
+            case 2:
+                this.SyncRegisterRecovery();
+                this.collector.clean();
+                this.LREvents.clear();
+                this.bufferedTuple.clear();
+                break;
         }
     }
 
     @Override
     protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        boolean isAbortTransaction=transactionManager.start_evaluate(thread_Id,this.fid);
-        if(isAbortTransaction){
-            this.SyncRegisterUndo();
-            this.AsyncReConstructRequest();
-            this.TXN_PROCESS();
-        }else{
-            REQUEST_REQUEST_CORE();
-            REQUEST_POST();
-            LREvents.clear();
-            BUFFER_PROCESS();
-            bufferedTuple.clear();
+        int FT=transactionManager.start_evaluate(thread_Id,this.fid);
+        switch (FT){
+            case 0:
+                REQUEST_REQUEST_CORE();
+                REQUEST_POST();
+                LREvents.clear();
+                BUFFER_PROCESS();
+                bufferedTuple.clear();
+                break;
+            case 1:
+            case 2:
+                this.SyncRegisterRecovery();
+                break;
         }
     }
 }

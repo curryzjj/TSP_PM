@@ -65,13 +65,16 @@ public class TPInitializer extends TableInitilizer {
             insertSpeedRecord(_key, 0);
             insertCntRecord(_key);
         }
-        try {
-            int speedSize=db.getStorageManager().getTable("segment_speed_0").keySize();
-            int cntSize=db.getStorageManager().getTable("segment_cnt_0").keySize();
-            LOG.info("Executor("+ thread_id +") of "+context.getExecutor(context.getThisTaskId()).getOP_full() +" finished loading data from: " + "0" + " to: " + NUM_SEGMENTS
-                    +" with speed keySize: "+speedSize+" cnt keySize: "+cntSize);
-        } catch (DatabaseException e) {
-            e.printStackTrace();
+    }
+
+    @Override
+    public void reloadDB(List<Integer> rangeId) {
+        for (int key = 0; key < NUM_SEGMENTS ; key++) {
+            String _key = String.valueOf(key);
+            if(rangeId.contains(getPartitionId(_key))){
+                insertSpeedRecord(_key, 0);
+                insertCntRecord(_key);
+            }
         }
     }
 

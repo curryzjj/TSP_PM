@@ -2,7 +2,7 @@ package streamprocess.components.topology;
 
 import System.util.Configuration;
 import engine.Database;
-import engine.ImplDatabase.InMemeoryDatabase;
+import engine.ImplDatabase.InMemoryDataBase;
 import engine.ImplDatabase.RocksDBDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +28,7 @@ public abstract class TransactionalTopology extends BasicTopology{
     protected void InitializeDB() {
         //switch different kinds of DB
         switch (config.getInt("DBOptions",0)){
-            case In_Memory:this.db=new InMemeoryDatabase(config);
+            case In_Memory:this.db=new InMemoryDataBase(config);
             break;
             case RocksDB: this.db=new RocksDBDatabase(config);
             break;

@@ -87,9 +87,26 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
             this.isCommit =false;
         }
     }
-
     /**
-     * To register to recovery when there is a failure
+     * To register recovery when there is a failure(wal)
+     * @throws InterruptedException
+     */
+    protected void SyncRegisterRecovery() throws InterruptedException {
+        this.lock=this.FTM.getLock();
+        synchronized (lock){
+            this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
+            lock.notifyAll();
+        }
+        synchronized (lock){
+            while(!isCommit){
+                LOG.info("Wait for the database to recovery");
+                lock.wait();
+            }
+            this.isCommit =false;
+        }
+    }
+    /**
+     * To register recovery when there is a failure(snapshot)
      * @throws InterruptedException
      */
     protected void registerRecovery() throws InterruptedException {

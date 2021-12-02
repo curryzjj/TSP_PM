@@ -4,9 +4,11 @@ import System.tools.FastZipfGenerator;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.faulttolerance.FaultToleranceConstants;
 import streamprocess.faulttolerance.checkpoint.emitMarker;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
@@ -23,6 +25,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected int element=0;
     protected ArrayList<String> array;
     protected boolean startClock=false;
+    protected long offset;
     boolean rt = false;
     protected int total_children_tasks=0;
     protected int tthread;
@@ -71,9 +74,10 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         if (this.marker() && success) {//emit marker tuple
             if(enable_snapshot){
                 if(snapshot()){
-                    this.getContext().getFTM().spoutRegister(bid);
-                    msg1="snapshot";
-                    checkpoint_counter++;
+                    if(this.getContext().getFTM().spoutRegister(bid)){
+                        msg1="snapshot";
+                        checkpoint_counter++;
+                    }
                 }
             }else{
                 this.getContext().getFTM().spoutRegister(bid);
@@ -89,21 +93,31 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         }
     }
     public void registerRecovery() throws InterruptedException {
-        if(this.getContext().getRM().needRecovery()){
-            this.getContext().getRM().spoutRegister(this.executor.getExecutorID());
+        this.lock=this.getContext().getFTM().getLock();
+        synchronized (lock){
+            this.getContext().getFTM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
+            this.collector.clean();
             Marker marker=new Marker(DEFAULT_STREAM_ID,boardcast_time,0,myiteration,"recovery");
             this.collector.broadcast_marker(bid,marker);
-            this.lock=this.getContext().getRM().getLock();
-            synchronized (lock){
-                while (!isCommit){
-                    LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
-                    lock.wait();
-                }
+            try {
+                this.loadReplay();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
             }
-        }else{
-            isCommit=true;
+            lock.notifyAll();
+        }
+        synchronized (lock){
+            while (!isCommit){
+                LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
+                lock.wait();
+            }
+            this.isCommit =false;
+            this.needReplay=false;
         }
     }
+
+    protected abstract void loadReplay() throws FileNotFoundException;
+
     @Override
     public void ack_marker(Marker marker) {
         success=true;

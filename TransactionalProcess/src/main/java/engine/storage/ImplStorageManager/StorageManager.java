@@ -68,6 +68,18 @@ public class StorageManager extends AbstractStorageManager {
     public synchronized void cleanTable(String tableName) throws IOException {
         tables.get(tableName).clean();
     }
+
+    @Override
+    public synchronized void cleanTable(List<Integer> rangeId) throws IOException, DatabaseException {
+        List<String> tableNames = new ArrayList<>(tables.keySet());
+        for(int id:rangeId){
+            for (String s : tableNames) {
+                if(s.endsWith(String.valueOf(id)))
+                    cleanTable(s);
+            }
+        }
+    }
+
     @Override
     public synchronized void cleanAllTables() throws IOException {
         List<String> tableNames = new ArrayList<>(tables.keySet());

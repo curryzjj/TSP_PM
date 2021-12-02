@@ -17,4 +17,9 @@ public interface Constants {
     //DB constants
     String Mac_RocksDB_Path=System.getProperty("user.home").concat("/hair-loss/app/RocksDB/");
     String Node22_RocksDB_Path=System.getProperty("user.home").concat("/app/RocksDB/");
+    //Result constants
+    String Mac_Measure_Latency_Path=System.getProperty("user.home").concat("/hair-loss/app/results/");
+    String Node22_Measure_Latency_Path=System.getProperty("user.home").concat("/app/results/");
+
+
 }

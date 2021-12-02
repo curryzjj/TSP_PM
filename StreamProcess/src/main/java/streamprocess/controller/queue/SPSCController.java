@@ -58,4 +58,11 @@ public class SPSCController extends QueueController{
         }
         return true;
     }
+
+    @Override
+    public void clean() {
+        for (Queue q:this.outputQueue.values()){
+            q.clear();
+        }
+    }
 }

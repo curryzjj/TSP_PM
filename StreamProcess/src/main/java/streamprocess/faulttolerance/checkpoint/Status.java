@@ -79,7 +79,6 @@ public class Status<E extends Serializable> implements Serializable {
         consumer_ack.put(callee, true);
         if (all_dst_ack()) {
             LOG.info(executor.getOP_full() + " received ack of marker"+marker.msgId+" from all consumers.");
-            //	writer.save_state_MMIO_synchronize(executor); // enable if fault-tolerance enabled.
             dst_status_init(executor);//reset state.
             executor.clean_status(marker);
         }
@@ -87,7 +86,6 @@ public class Status<E extends Serializable> implements Serializable {
 
     public synchronized void callback_spout(int callee, Marker marker, ExecutionNode executor) {
         consumer_ack.put(callee, true);
-//        executor.earlier_clean_state(marker);
         if (all_dst_ack()) {
             if (enable_debug)
                 LOG.info(executor.getOP_full() + " received ack of marker "+marker.msgId+" from all consumers.");

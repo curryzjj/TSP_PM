@@ -47,6 +47,8 @@ public abstract class BasicTopology extends AbstractTopology {
         config.setConfigPrefix(getConfigPrefix());
         spout=loadSpout();
         sink=loadSink();
+        sink.setConfigPrefix(getConfigPrefix());
+        spout.setConfigPrefix(getConfigPrefix());
         initilize_parser();
     }
 }

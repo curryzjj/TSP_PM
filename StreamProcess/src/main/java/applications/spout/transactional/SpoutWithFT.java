@@ -25,9 +25,9 @@ public class SpoutWithFT extends TransactionalSpoutFT {
     private InputDataGenerator inputDataGenerator;
     private Scanner scanner;
     private String Data_path;
+
     public SpoutWithFT(){
         super(LOG);
-
         this.scalable=false;
         status=new Status();
     }
@@ -83,7 +83,7 @@ public class SpoutWithFT extends TransactionalSpoutFT {
             this.clock.start();
             startClock=true;
         }
-        if(!isCommit){
+        if(needReplay){
             this.registerRecovery();
         }
         while(replay&&batch!=0){
@@ -105,7 +105,7 @@ public class SpoutWithFT extends TransactionalSpoutFT {
                 forward_marker(this.taskId, bid, null,"marker");
             }
         }else{
-            this.getContext().getFTM().spoutRegister(bid);
+            if(this.getContext().getFTM().spoutRegister(bid))
             collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"finish");
             try {
                 clock.close();
@@ -117,6 +117,20 @@ public class SpoutWithFT extends TransactionalSpoutFT {
             context.stop_running();
         }
     }
+
+    @Override
+    protected void loadReplay() throws FileNotFoundException {
+        long msg=offset;
+        bid=0;
+        openFile(Data_path);
+        while (offset!=0){
+            scanner.nextLine();
+            offset--;
+            bid++;
+        }
+        LOG.info("The input data have been load to the offset "+msg);
+    }
+
     @Override
     public void setInputDataGenerator(InputDataGenerator inputDataGenerator) {
         this.inputDataGenerator=inputDataGenerator;
@@ -130,16 +144,9 @@ public class SpoutWithFT extends TransactionalSpoutFT {
      */
     @Override
     public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
-        long msg=offset;
-        int lostdata=0;
-        openFile(Data_path);
-        while (offset!=0){
-            scanner.nextLine();
-            offset--;
-            bid++;
-        }
-        LOG.info("The input data have been load to the offset "+msg);
+        this.needReplay =true;
         this.replay=true;
+        this.offset=offset;
     }
     private char[] replayTuple(){
         if(scanner.hasNextLine()){

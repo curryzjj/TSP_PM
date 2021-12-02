@@ -25,7 +25,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 
+import static UserApplications.CONTROL.enable_parallel;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
+import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastGlobalLSN;
 
 public class LoggerManager extends FTManager {
     private final Logger LOG= LoggerFactory.getLogger(LoggerManager.class);
@@ -110,7 +112,22 @@ public class LoggerManager extends FTManager {
                     LOG.info("Undo log complete!");
                     notifyAllComplete();
                     lock.notifyAll();
-                }else{
+                }else if(callLog.containsValue(Recovery)){
+                    LOG.info("LoggerManager received all register and start recovery");
+                    if(enable_parallel){
+                        this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
+                        long theLastLSN=getLastGlobalLSN(walFile);
+                        this.db.recoveryFromWAL(theLastLSN);
+                        this.db.undoFromWAL();
+                        this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                    }else{
+                        this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
+                        long theLastLSN=this.db.recoveryFromWAL(-1);
+                        this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                    }
+                    notifyAllComplete();
+                    lock.notifyAll();
+                } else if (callLog.containsValue(Persist)){
                     LOG.info("LoggerManager received all register and start commit log");
                     commitLog();
                     notifyAllComplete();

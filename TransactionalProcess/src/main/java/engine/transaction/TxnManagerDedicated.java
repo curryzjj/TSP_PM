@@ -15,7 +15,7 @@ import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
 public abstract class TxnManagerDedicated implements TxnManager{
     public static final Logger LOG= LoggerFactory.getLogger(TxnManagerDedicated.class);
-    protected final AbstractStorageManager storageManager;
+    public final AbstractStorageManager storageManager;
     private final String thisComponentId;
     private final long thread_id;
     private final long num_tasks;

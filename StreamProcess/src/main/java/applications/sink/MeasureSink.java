@@ -1,7 +1,12 @@
 package applications.sink;
 
+import System.FileSystem.FileSystem;
+import System.FileSystem.ImplFS.LocalFileSystem;
+import System.FileSystem.ImplFSDataOutputStream.LocalDataOutputStream;
+import System.FileSystem.Path;
 import System.sink.helper.stable_sink_helper;
 import System.util.Configuration;
+import System.util.OsUtils;
 import engine.Exception.DatabaseException;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
@@ -13,23 +18,26 @@ import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
 
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 
+import static System.Constants.Mac_Measure_Latency_Path;
+import static System.Constants.Node22_Measure_Latency_Path;
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
 
 public class MeasureSink extends BaseSink {
     private static final Logger LOG = LoggerFactory.getLogger(MeasureSink.class);
     private static final DescriptiveStatistics latency = new DescriptiveStatistics();
-
+    private Path result_Path;
+    private FileSystem localFS;
+    private File resultFile;
     private static final long serialVersionUID = 6249684803036342603L;
-    protected static String directory;
-    protected static String algorithm;
     protected static boolean profile = false;
     protected stable_sink_helper helper;
-    protected int ccOption;
-    private boolean LAST = false;
     private int exe;
     protected final ArrayDeque<Long> latency_map = new ArrayDeque();
     public int batch_number_per_wm;
@@ -43,6 +51,7 @@ public class MeasureSink extends BaseSink {
         this.input_selectivity.put(DEFAULT_STREAM_ID, 1.0);
         this.input_selectivity.put("tn", 1.0);
         status=new Status();
+        this.localFS=new LocalFileSystem();
     }
 
     public Integer default_scale(Configuration conf) {
@@ -55,22 +64,21 @@ public class MeasureSink extends BaseSink {
         batch_number_per_wm = 100;
         exe = NUM_EVENTS;
         LOG.info("expected last events = " + exe);
+
     }
 
     protected int tthread;
 
     @Override
-    public void execute(Tuple in) throws InterruptedException {
+    public void execute(Tuple in) throws InterruptedException, IOException {
         if(in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
                 this.collector.ack(in,in.getMarker());
                 if(in.getMarker().getValue()=="recovery"){
-                    this.registerRecovery();
-                }else if(in.getMarker().getValue()=="snapshot"){
-                    CommitTuple(in.getBID());
+                    this.abortRepeatedResults(in.getBID());
                 }else if(in.getMarker().getValue()=="finish"){
-                    measure_end();
-                }else if(enable_wal){
+                    measure_end(in.getBID());
+                }else {
                     CommitTuple(in.getBID());
                 }
             }
@@ -85,8 +93,24 @@ public class MeasureSink extends BaseSink {
         }
     }
 
-    private void measure_end() {
+    private void abortRepeatedResults(long bid) {
+        Iterator<Tuple2<Long, Long>> events=perCommitTuple.iterator();
+        while(events.hasNext()){
+            Tuple2<Long,Long> event=events.next();
+            if(event._1().longValue()<bid){
+                events.remove();
+            }
+        }
+    }
 
+    @Override
+    public void execute(JumboTuple in) throws DatabaseException, BrokenBarrierException, InterruptedException {
+        for(int i=0;i<in.length;i++){
+            boolean finish= (boolean) in.getMsg(i).getValue(0);
+            if(!finish){
+                LOG.info("The tuple ("+in.getMsg(i).getValue(1)+ ") is abort");
+            }
+        }
     }
 
     private void CommitTuple(long bid) {
@@ -107,15 +131,29 @@ public class MeasureSink extends BaseSink {
             latency_map.add(totalLatency/size);
         }
     }
-
-    @Override
-    public void execute(JumboTuple in) throws DatabaseException, BrokenBarrierException, InterruptedException {
-        for(int i=0;i<in.length;i++){
-            boolean finish= (boolean) in.getMsg(i).getValue(0);
-            if(!finish){
-                LOG.info("The tuple ("+in.getMsg(i).getValue(1)+ ") is abort");
-            }
+    private void measure_end(long bid) throws IOException {
+        if(perCommitTuple.size()!=0){
+            CommitTuple(bid);
         }
+        if(OsUtils.isMac()){
+            String s=getConfigPrefix();
+            this.result_Path=new Path(Mac_Measure_Latency_Path,getConfigPrefix());
+        }else{
+            this.result_Path=new Path(Node22_Measure_Latency_Path,getConfigPrefix());
+        }
+        Path parent=result_Path.getParent();
+        if (parent != null && !localFS.mkdirs(parent)) {
+            throw new IOException("Mkdirs failed to create " + parent);
+        }
+        resultFile=localFS.pathToFile(result_Path);
+        LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(resultFile);
+        DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
+        for (Long a:latency_map){
+            System.out.println(a.toString());
+            dataOutputStream.writeUTF(a.toString());
+        }
+        dataOutputStream.close();
+        localDataOutputStream.close();
     }
 
     @Override

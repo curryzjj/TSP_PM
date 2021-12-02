@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyContext;
 
+import java.util.List;
 import java.util.SplittableRandom;
 
 public abstract class TableInitilizer {
@@ -36,4 +37,5 @@ public abstract class TableInitilizer {
     public abstract void creates_Table(Configuration config);
 
     public abstract void loadDB(int thread_id, TopologyContext context);
+    public abstract void reloadDB(List<Integer> rangeId);
 }

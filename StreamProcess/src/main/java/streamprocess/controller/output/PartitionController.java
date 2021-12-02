@@ -375,6 +375,11 @@ public abstract class PartitionController implements IPartitionController {
         }
         return targetTasks.length;
     }
+
+    public void clean(){
+        this.controller.clean();
+    };
+
     //tuple collections
     class Collections implements Serializable {
         private static final long serialVersionUID = 29L;

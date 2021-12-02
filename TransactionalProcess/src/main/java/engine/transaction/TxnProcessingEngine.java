@@ -37,6 +37,8 @@ public class TxnProcessingEngine {
     private ExecutorServiceInstance standalone_engine;
     /* Abort transactions <bid> */
     private ConcurrentSkipListSet<Long> transactionAbort;
+    private List<Integer> dropTable;
+    public boolean drop=true;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
     //initialize
     private String app;
@@ -46,6 +48,7 @@ public class TxnProcessingEngine {
         holder_by_stage = new ConcurrentHashMap<>();
         this.walManager=new WALManager(num_op);
         this.transactionAbort=new ConcurrentSkipListSet<>();
+        this.dropTable=new ArrayList<>();
         switch(app){
             case "TP_txn":
                 holder_by_stage.put("segment_speed", new Holder_in_range(num_op));
@@ -158,14 +161,15 @@ public class TxnProcessingEngine {
         }
         @Override
         public Object call() throws Exception {
-            process((MyList<Operation>) operation_chain, -1);
+            process((MyList<Operation>) operation_chain, ((MyList<Operation>) operation_chain).getRange());
             return null;
         }
     }
-    private void process(MyList<Operation> operation_chain, long mark_ID){
+    private void process(MyList<Operation> operation_chain, int mark_ID){
         if (operation_chain.size()>0){
             this.walManager.addLogRecord(operation_chain);
             operation_chain.logRecord.setCopyTableRecord(operation_chain.first().s_record);
+
         }
         while (true){
             Operation operation=operation_chain.pollFirst();
@@ -173,9 +177,25 @@ public class TxnProcessingEngine {
             process(operation,mark_ID, operation_chain.getLogRecord());
         }
     }
-    private void process(Operation operation, long mark_id,LogRecord logRecord) {
+    private void process(Operation operation, int mark_id,LogRecord logRecord) {
         if(operation.bid==500000||operation.bid==100000){
-            this.transactionAbort.add(operation.bid);
+            if(enable_transaction_abort){
+                this.transactionAbort.add(operation.bid);
+            }else{
+                if(drop){
+                    if (enable_states_partition&&enable_parallel&&!enable_snapshot){
+                        if (!dropTable.contains(mark_id)){
+                            this.dropTable.add(mark_id);
+                            this.drop=false;
+                        }
+                    }else{
+                        for(int i=0;i<num_op;i++){
+                            this.dropTable.add(i);
+                        }
+                        this.drop=false;
+                    }
+                }
+            }
         }
         switch (operation.accessType){
             case READ_WRITE_READ:
@@ -264,6 +284,9 @@ public class TxnProcessingEngine {
 
     public Integer getNum_op() {
         return num_op;
+    }
+    public List<Integer> getRecoveryRangeId(){
+        return dropTable;
     }
 
     public ConcurrentSkipListSet<Long> getTransactionAbort() {

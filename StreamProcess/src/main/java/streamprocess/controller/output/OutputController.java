@@ -112,4 +112,5 @@ public abstract class OutputController implements Serializable {
     public abstract long getBID(String streamId);
 
 
+    public abstract void clean();
 }

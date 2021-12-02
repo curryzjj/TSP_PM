@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -69,13 +70,14 @@ public class WALManager {
             return new UpdateLogAsyncWrite(holder_by_tableName,logStreamWithResultProvider,timestamp,globalLSN);
         }
     }
-    public boolean undoLog(Database db) throws IOException, DatabaseException {
+    public boolean undoLog(Database db,List<Integer> rangeId) throws IOException, DatabaseException {
         for(WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
-            for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.values()){
-                Iterator<LogRecord> logRecordIterator=logRecords.iterator();
-                while (logRecordIterator.hasNext()){
-                    LogRecord logRecord =logRecordIterator.next();
-                    if(enable_states_partition){
+            for(Map.Entry holder_by_range:logRecordsInRange.holder_by_range.entrySet()){
+                if(!rangeId.contains(holder_by_range.getKey())){
+                    Vector<LogRecord> logRecords= (Vector<LogRecord>) holder_by_range.getValue();
+                    Iterator<LogRecord> logRecordIterator=logRecords.iterator();
+                    while (logRecordIterator.hasNext()){
+                        LogRecord logRecord =logRecordIterator.next();
                         db.InsertRecord(logRecord.getTableName(), logRecord.getCopyTableRecord());
                     }
                 }

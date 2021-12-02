@@ -60,4 +60,11 @@ public class MPSCController extends QueueController{
         }
         return true;
     }
+
+    @Override
+    public void clean() {
+        for (Queue q:this.outputQueue.values()){
+            q.clear();
+        }
+    }
 }

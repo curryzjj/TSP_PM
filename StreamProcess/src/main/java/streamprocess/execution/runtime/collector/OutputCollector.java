@@ -145,4 +145,7 @@ public class OutputCollector<T> {
             }
         }
     }
+    public void clean() {
+        sc.clean();
+    }
 }

@@ -10,6 +10,7 @@ import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.faulttolerance.checkpoint.emitMarker;
 
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
@@ -94,7 +95,7 @@ public abstract class BoltExecutor implements IExecutor {
 
     @Override
     public void clean_status(Marker marker) {
-
+        //((emitMarker) op).ack_marker(marker);
     }
 
     @Override
