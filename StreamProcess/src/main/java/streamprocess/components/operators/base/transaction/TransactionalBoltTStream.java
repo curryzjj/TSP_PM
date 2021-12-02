@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
-import static UserApplications.CONTROL.enable_snapshot;
-import static UserApplications.CONTROL.enable_wal;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
 public abstract class TransactionalBoltTStream extends TransactionalBolt {
@@ -33,8 +31,8 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     }
     //used in the T-Stream_CC
     protected abstract void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException;
-    protected abstract void TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
-    protected abstract void TXN_PROCESS()throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
+    protected abstract boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
+    protected abstract boolean TXN_PROCESS()throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
     protected void REQUEST_POST() throws InterruptedException{};//implement in the application
     protected void REQUEST_REQUEST_CORE() throws InterruptedException{};//implement in the application
     protected void execute_ts_normal(Tuple in) throws DatabaseException, InterruptedException {

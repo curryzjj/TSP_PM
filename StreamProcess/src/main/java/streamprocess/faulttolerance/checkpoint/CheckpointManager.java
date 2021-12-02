@@ -134,6 +134,7 @@ public class CheckpointManager extends FTManager {
                     this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
+                    this.db.getTxnProcessingEngine().isTransactionAbort=false;
                     LOG.info("Reload state complete!");
                     synchronized (lock){
                         while (callRecovery.containsValue(NULL)){
@@ -201,6 +202,11 @@ public class CheckpointManager extends FTManager {
         } catch (Exception e){
             e.printStackTrace();
         }finally {
+            try {
+                localFS.delete(Current_Path,true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             LOG.info("CheckpointManager stops");
         }
     }

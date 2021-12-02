@@ -37,6 +37,7 @@ public class TxnProcessingEngine {
     private ExecutorServiceInstance standalone_engine;
     /* Abort transactions <bid> */
     private ConcurrentSkipListSet<Long> transactionAbort;
+    public Boolean isTransactionAbort=false;
     private List<Integer> dropTable;
     public boolean drop=true;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
@@ -178,9 +179,10 @@ public class TxnProcessingEngine {
         }
     }
     private void process(Operation operation, int mark_id,LogRecord logRecord) {
-        if(operation.bid==500000||operation.bid==100000){
+        if(operation.bid==200000||operation.bid==100000){
             if(enable_transaction_abort){
                 this.transactionAbort.add(operation.bid);
+                this.isTransactionAbort=true;
             }else{
                 if(drop){
                     if (enable_states_partition&&enable_parallel&&!enable_snapshot){

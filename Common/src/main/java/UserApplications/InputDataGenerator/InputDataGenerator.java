@@ -12,4 +12,5 @@ public abstract class InputDataGenerator implements Serializable {
      */
     public abstract List<String> generateData(int batch);
     public abstract void initialize(String dataPath,int recordNum,int range,double zipSkew);
+    public abstract void close();
 }

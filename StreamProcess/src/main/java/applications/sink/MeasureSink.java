@@ -136,7 +136,6 @@ public class MeasureSink extends BaseSink {
             CommitTuple(bid);
         }
         if(OsUtils.isMac()){
-            String s=getConfigPrefix();
             this.result_Path=new Path(Mac_Measure_Latency_Path,getConfigPrefix());
         }else{
             this.result_Path=new Path(Node22_Measure_Latency_Path,getConfigPrefix());
@@ -148,12 +147,14 @@ public class MeasureSink extends BaseSink {
         resultFile=localFS.pathToFile(result_Path);
         LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(resultFile);
         DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
+        long totalLatency=0L;
         for (Long a:latency_map){
-            System.out.println(a.toString());
             dataOutputStream.writeUTF(a.toString());
+            totalLatency=totalLatency+a.longValue();
         }
         dataOutputStream.close();
         localDataOutputStream.close();
+        LOG.info("The Average latency is "+totalLatency/latency_map.size()/1E6+" ms");
     }
 
     @Override

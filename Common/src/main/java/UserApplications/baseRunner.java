@@ -31,7 +31,7 @@ public abstract class baseRunner {
     @Parameter(names = {"--timeslice"}, description = "time slice used in spout (ms)")
     public int timeSliceLengthMs = 100;//ms
     @Parameter(names = {"--shapshot"}, description = "shapshot interval")
-    public int checkpoint = 2;// default shapshot interval=n*TStream interval
+    public int checkpoint = 3;// default shapshot interval=n*TStream interval
     @Parameter(names = {"--batch_number_per_wm"}, description = "TStream interval")
     public int batch_number_per_wm = 1000;// default TStream interval.
 

@@ -105,10 +105,11 @@ public class SpoutWithFT extends TransactionalSpoutFT {
                 forward_marker(this.taskId, bid, null,"marker");
             }
         }else{
-            if(this.getContext().getFTM().spoutRegister(bid))
+            this.getContext().getFTM().spoutRegister(bid);
             collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"finish");
             try {
                 clock.close();
+                inputDataGenerator.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

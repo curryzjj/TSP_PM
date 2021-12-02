@@ -2,7 +2,6 @@ package applications.bolts.transactional.tp;
 
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.faulttolerance.FaultToleranceConstants;
 import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.IOException;
@@ -29,8 +28,10 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                         this.registerRecovery();
                         break;
                     case "marker":
-                        TXN_PROCESS_FT();
-                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        if(TXN_PROCESS_FT()){
+                            /* When the wal is completed, the data can be consumed by the outside world */
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        }
                         break;
                     case "finish":
                         if(LREvents.size()!=0){
@@ -46,8 +47,9 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
     }
 
     @Override
-    protected void TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
+    protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         int FT=transactionManager.start_evaluate(thread_Id,this.fid);
+        boolean transactionSuccess=FT==0;
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
@@ -66,13 +68,14 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
             case 2:
                 this.SyncRegisterRecovery();
                 this.AsyncReConstructRequest();
-                this.TXN_PROCESS_FT();
+                transactionSuccess=this.TXN_PROCESS_FT();
                 break;
         }
+        return transactionSuccess;
     }
 
     @Override
-    protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-
+    protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
+        return true;
     }
 }

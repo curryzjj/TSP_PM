@@ -83,9 +83,10 @@ public class LoggerManager extends FTManager {
     public boolean spoutRegister(long globalLSN){
         if(isCommitted.size()>10){
             return false;
+        }else{
+            isCommitted.add(globalLSN);
+            return true;
         }
-        isCommitted.add(globalLSN);
-        return true;
     }
     private void callLog_ini() {
         for (ExecutionNode e:g.getExecutionNodeArrayList()){
@@ -110,6 +111,7 @@ public class LoggerManager extends FTManager {
                     LOG.info("LoggerManager received all register and start Undo");
                     this.db.undoFromWAL();
                     LOG.info("Undo log complete!");
+                    this.db.getTxnProcessingEngine().isTransactionAbort=false;
                     notifyAllComplete();
                     lock.notifyAll();
                 }else if(callLog.containsValue(Recovery)){
@@ -174,6 +176,12 @@ public class LoggerManager extends FTManager {
         } catch (Exception e){
             e.printStackTrace();
         }finally {
+            try {
+                /* Delete the current and wal log file */
+                localFS.delete(Current_Path.getParent(),true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             LOG.info("WALManager stops");
         }
     }

@@ -59,7 +59,6 @@ public class DispatcherBolt extends filterBolt implements emitMarker {
         }
     }
 
-
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {//what this for???
         declarer.declareStream(POSITION_REPORTS_STREAM_ID,PositionReport.getSchema());

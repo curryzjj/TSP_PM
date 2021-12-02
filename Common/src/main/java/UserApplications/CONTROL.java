@@ -31,11 +31,11 @@ public interface CONTROL {
     boolean enable_shared_state = true;//this is for transactional state mgmt.
     /**Configure in the appRunner**/
     // fault tolerance related.
-    boolean enable_snapshot =true;
-    boolean enable_wal = false;
+    boolean enable_snapshot =false;
+    boolean enable_wal = true;
     boolean enable_parallel=true;
     boolean enable_states_partition = true;//must be enabled for parallel snapshot
-    boolean enable_transaction_abort=true;
+    boolean enable_transaction_abort=false;
     //pre- and post -compute
 
     boolean enable_pre_compute = false;//not in use.

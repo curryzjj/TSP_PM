@@ -1,5 +1,7 @@
 package UserApplications.InputDataGenerator.ImplDataGenerator;
 
+import System.FileSystem.ImplFS.LocalFileSystem;
+import System.FileSystem.Path;
 import System.tools.ZipfGenerator;
 import System.tools.randomNumberGenerator;
 import UserApplications.InputDataGenerator.InputDataGenerator;
@@ -58,5 +60,15 @@ public class TPDataGenerator extends InputDataGenerator {
         this.zipSkew=zipSkew;
         this.range=range;
         this.zipfGenerator=new ZipfGenerator(range, zipSkew);
+    }
+
+    @Override
+    public void close() {
+        LocalFileSystem fs=new LocalFileSystem();
+        try {
+            fs.delete(new Path(dataPath),true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

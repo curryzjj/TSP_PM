@@ -86,9 +86,6 @@ public abstract class BoltExecutor implements IExecutor {
     public Integer default_scale(Configuration conf) {
         return op.default_scale(conf);
     }
-    //public void configureWriter(Writer writer) { }
-
-    //public void configureLocker(OrderLock lock, OrderValidate orderValidate) { }
 
     @Override
     public void earlier_clean_state(Marker marker) { }

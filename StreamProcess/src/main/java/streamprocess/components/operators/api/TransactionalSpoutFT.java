@@ -80,7 +80,9 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                     }
                 }
             }else{
-                this.getContext().getFTM().spoutRegister(bid);
+                if (!this.getContext().getFTM().spoutRegister(bid)){
+                    return;
+                }
             }
             LOG.info(executor.getOP_full() + " emit marker of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + bid);
             collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration,msg1);

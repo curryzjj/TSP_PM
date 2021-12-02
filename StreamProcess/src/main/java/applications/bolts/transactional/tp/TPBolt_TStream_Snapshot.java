@@ -26,16 +26,21 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
                 this.collector.ack(in,in.getMarker());
                 switch (in.getMarker().getValue()){
                     case "recovery":
-                    case "marker":
-                        TXN_PROCESS();
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        break;
+                    case "marker":
+                        if(TXN_PROCESS()){
+                            /* When the transaction is successful, the data can be pre-commit to the outside world */
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        }
                         break;
                     case "snapshot":
                         this.needcheckpoint=true;
                         this.checkpointId=in.getBID();
-                        TXN_PROCESS_FT();
-                        /** When the snapshot is completed, the data can be consumed by the outside world */
-                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        if(TXN_PROCESS_FT()){
+                            /* When the snapshot is completed, the data can be consumed by the outside world */
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        }
                         break;
                     case "finish":
                         if(LREvents.size()!=0){
@@ -50,7 +55,7 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
         }
     }
     @Override
-    protected void TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
+    protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         int FT=transactionManager.start_evaluate(thread_Id,this.fid);
         switch (FT){
             case 0:
@@ -70,10 +75,11 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
                 this.bufferedTuple.clear();
                 break;
         }
+        return FT==0;
     }
 
     @Override
-    protected void TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
+    protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         int FT=transactionManager.start_evaluate(thread_Id,this.fid);
         switch (FT){
             case 0:
@@ -86,7 +92,11 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
             case 1:
             case 2:
                 this.SyncRegisterRecovery();
+                this.collector.clean();
+                this.LREvents.clear();
+                this.bufferedTuple.clear();
                 break;
         }
+        return FT==0;
     }
 }
