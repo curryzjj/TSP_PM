@@ -3,8 +3,7 @@ package streamprocess.components.operators.api;
 import System.constants.BaseConstants;
 import System.spout.helper.wrapper.StringStatesWrapper;
 import System.util.OsUtils;
-import UserApplications.InputDataGenerator.InputDataGenerator;
-import engine.shapshot.SnapshotResult;
+import applications.events.InputDataGenerator.InputDataGenerator;
 import org.slf4j.Logger;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
@@ -14,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Scanner;//通过 Scanner 类来获取用户的输入
 
 import static System.Constants.Mac_Data_Path;
-import static UserApplications.CONTROL.NUM_EVENTS;
 
 public abstract class AbstractSpout extends Operator {
 

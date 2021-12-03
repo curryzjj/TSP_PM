@@ -44,6 +44,29 @@ public class Operation implements Comparable<Operation>{
         this.s_record = d_record;
         this.record_ref = record_ref;//this holds events' record_ref.
     }
+    //for read only
+    public Operation(String table_name, TxnContext txn_context, long bid, MetaTypes.AccessType accessType, TableRecord record, SchemaRecordRef record_ref) {
+        this.table_name = table_name;
+        this.d_record = record;
+        this.bid = bid;
+        this.accessType = accessType;
+        this.txn_context = txn_context;
+        this.s_record = d_record;
+        this.function = null;
+        this.record_ref = record_ref;//this holds events' record_ref.
+    }
+    //for write only
+    public Operation(String table_name, TxnContext txn_context, long bid, MetaTypes.AccessType accessType, TableRecord record, List<DataBox> value_list) {
+        this.table_name = table_name;
+        this.d_record = record;
+        this.bid = bid;
+        this.accessType = accessType;
+        this.txn_context = txn_context;
+        this.value_list = value_list;
+        this.s_record = d_record;
+        this.function = null;
+        this.record_ref = null;
+    }
     @Override
     public int compareTo(@NotNull Operation operation) {
         if (this.bid == (operation.bid)) {

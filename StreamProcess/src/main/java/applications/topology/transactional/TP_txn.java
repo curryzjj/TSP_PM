@@ -1,7 +1,7 @@
 package applications.topology.transactional;
 
 import System.util.Configuration;
-import UserApplications.InputDataGenerator.ImplDataGenerator.TPDataGenerator;
+import applications.events.InputDataGenerator.ImplDataGenerator.TPDataGenerator;
 import UserApplications.constants.TP_TxnConstants.Component;
 import UserApplications.constants.TP_TxnConstants.Field;
 import applications.DataTypes.util.SegmentIdentifier;

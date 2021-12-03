@@ -1,17 +1,19 @@
 package applications.spout.transactional;
 
 import System.constants.BaseConstants;
-import System.util.Configuration;
 import System.util.OsUtils;
 import applications.events.InputDataGenerator.InputDataGenerator;
+import applications.events.MicroEvent;
 import applications.events.TxnEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.operators.api.TransactionalSpoutFT;
 import streamprocess.execution.ExecutionGraph;
+import streamprocess.faulttolerance.checkpoint.Status;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
@@ -20,15 +22,14 @@ import static System.Constants.Mac_Data_Path;
 import static System.Constants.Node22_Data_Path;
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.NUM_ITEMS;
-import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
-public class SpoutWithFT extends TransactionalSpoutFT {
+public class EventSpoutWithFT extends TransactionalSpoutFT {
     private static final Logger LOG= LoggerFactory.getLogger(SpoutWithFT.class);
     private InputDataGenerator inputDataGenerator;
     private Scanner scanner;
     private String Data_path;
 
-    public SpoutWithFT(){
+    public EventSpoutWithFT(){
         super(LOG);
         this.scalable=false;
         status=new Status();
@@ -36,11 +37,11 @@ public class SpoutWithFT extends TransactionalSpoutFT {
 
     @Override
     public void initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
-        LOG.info("SpoutWithFT initialize is being called");
-        cnt = 0;
-        counter = 0;
+        LOG.info("EventSpoutWithFT initialize is being called");
+        cnt=0;
+        counter=0;
         this.graph=graph;
-        taskId = getContext().getThisTaskIndex();//context.getThisTaskId(); start from 0..
+        taskId= getContext().getThisTaskId();
         String OS_prefix="";
         String path;
         Data_path = "";
@@ -71,38 +72,25 @@ public class SpoutWithFT extends TransactionalSpoutFT {
     }
 
     @Override
-    public Integer default_scale(Configuration conf) {
-        int numNodes = conf.getInt("num_socket", 1);
-        if (numNodes == 8) {
-            return 2;
-        } else {
-            return 1;
-        }
-    }
-    @Override
     public void nextTuple(int batch) throws InterruptedException {
-        if(!startClock){
-            this.clock.start();
-            startClock=true;
-        }
-        if(needReplay){
+        if (needReplay){
             this.registerRecovery();
         }
         while(replay&&batch!=0){
-            char[] data=replayTuple();
-            if(data!=null){
-                collector.emit(data,bid);
+            TxnEvent event=replayEvent();
+            if(event!=null){
+                collector.emit_single(DEFAULT_STREAM_ID,bid,event);
                 bid++;
                 lostData++;
                 batch--;
                 forward_marker(this.taskId, bid, null,"marker");
             }
         }
-        List<String> inputData=inputDataGenerator.generateData(batch);
-        if(inputData!=null){
-            for (Iterator<String> it = inputData.iterator(); it.hasNext(); ) {
-                String input = it.next();
-                collector.emit(input.toCharArray(),bid);
+        List<TxnEvent> events=inputDataGenerator.generateEvent(batch);
+        if(events!=null){
+            for (Iterator<TxnEvent> it = events.iterator(); it.hasNext(); ) {
+                TxnEvent input = it.next();
+                collector.emit_single(DEFAULT_STREAM_ID,bid,input);
                 bid++;
                 forward_marker(this.taskId, bid, null,"marker");
             }
@@ -119,7 +107,15 @@ public class SpoutWithFT extends TransactionalSpoutFT {
             LOG.info("Spout sent snapshot "+checkpoint_counter);
             context.stop_running();
         }
+
     }
+    @Override
+    public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
+        this.needReplay =true;
+        this.replay=true;
+        this.offset=offset;
+    }
+
 
     @Override
     protected void loadReplay() throws FileNotFoundException {
@@ -136,11 +132,25 @@ public class SpoutWithFT extends TransactionalSpoutFT {
 
     @Override
     protected TxnEvent replayEvent() {
-       return null;
-    }
-    protected char[] replayTuple() {
         if(scanner.hasNextLine()){
-            return scanner.nextLine().toCharArray();
+            TxnEvent event;
+            String read = scanner.nextLine();
+            String[] split = read.split(";");
+            switch (split[4]){
+                case "MicroEvent":
+                    event=new MicroEvent(
+                            Integer.parseInt(split[0]), //bid
+                            Integer.parseInt(split[1]), //pid
+                            split[2], //bid_array
+                            Integer.parseInt(split[3]),//num_of_partition
+                            split[5],//key_array
+                            Boolean.parseBoolean(split[6])//flag
+                    );
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + split[4]);
+            }
+            return event;
         }else{
             scanner.close();
             LOG.info("The number of lost data is "+lostData);
@@ -148,26 +158,11 @@ public class SpoutWithFT extends TransactionalSpoutFT {
             return null;
         }
     }
-
+    private void openFile(String fileName) throws FileNotFoundException {
+        scanner = new Scanner(new File(fileName), "UTF-8");
+    }
     @Override
     public void setInputDataGenerator(InputDataGenerator inputDataGenerator) {
         this.inputDataGenerator=inputDataGenerator;
-    }
-
-    /**
-     * Load data form input store, and replay the lost data
-     * @param offset
-     * @throws FileNotFoundException
-     * @throws InterruptedException
-     */
-    @Override
-    public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
-        this.needReplay =true;
-        this.replay=true;
-        this.offset=offset;
-    }
-
-    private void openFile(String fileName) throws FileNotFoundException {
-        scanner = new Scanner(new File(fileName), "UTF-8");
     }
 }

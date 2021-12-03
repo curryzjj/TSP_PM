@@ -98,9 +98,11 @@ public class ParallelUpdateLogWrite implements UpdateLogWrite {
         }
     }
     private void writeLogRecord(DataOutputView outputView,LogRecord logRecord) throws IOException {
-        byte[] serializeObject= Serialize.serializeObject(logRecord);
-        int len=serializeObject.length;
-        outputView.writeInt(len);
-        outputView.write(serializeObject);
+        if(logRecord.getUpdateTableRecord()!=null){//only commit update log
+            byte[] serializeObject= Serialize.serializeObject(logRecord);
+            int len=serializeObject.length;
+            outputView.writeInt(len);
+            outputView.write(serializeObject);
+        }
     }
 }

@@ -2,6 +2,8 @@ package UserApplications.constants;
 
 import System.constants.BaseConstants;
 
+import static UserApplications.CONTROL.NUM_ITEMS;
+
 public interface TP_TxnConstants extends BaseConstants {
     String PREFIX="tptxn";
     interface Field extends BaseField {
@@ -14,8 +16,8 @@ public interface TP_TxnConstants extends BaseConstants {
         String SEGMENT = "segment";
         String POSITION = "position";
     }
-    interface  Conf extends BaseConf{
-        int NUM_SEGMENTS = 100;
+    interface Conf extends BaseConf{
+        int NUM_SEGMENTS = NUM_ITEMS;
         String Executor_Threads ="tptxn.executor.threads";
     }
     interface Component extends BaseComponent {

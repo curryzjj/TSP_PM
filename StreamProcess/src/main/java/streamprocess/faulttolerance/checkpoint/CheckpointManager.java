@@ -131,7 +131,7 @@ public class CheckpointManager extends FTManager {
                 if(callSnapshot.containsValue(Undo)||callSnapshot.containsValue(Recovery)){
                     LOG.info("CheckpointManager received all register and start recovery");
                     SnapshotResult lastSnapshotResult=getLastCommitSnapshotResult(checkpointFile);
-                    this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
+                    //this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     this.db.getTxnProcessingEngine().isTransactionAbort=false;

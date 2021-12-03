@@ -6,8 +6,10 @@ import System.util.OsUtils;
 import UserApplications.CONTROL;
 import UserApplications.baseRunner;
 import applications.topology.WordCount;
+import applications.topology.transactional.GS_txn;
 import applications.topology.transactional.TP_txn;
-import org.jctools.queues.SpscArrayQueue;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.exception.UnhandledCaseException;
@@ -17,9 +19,8 @@ import streamprocess.execution.runtime.threads.executorThread;
 
 import java.io.IOException;
 import java.util.Properties;
-import java.util.Queue;
 
-import static UserApplications.CONTROL.enable_wal;
+import static UserApplications.CONTROL.*;
 
 public class  AppRunner extends baseRunner {
     private static final Logger LOG= LoggerFactory.getLogger(AppRunner.class);
@@ -31,6 +32,7 @@ public class  AppRunner extends baseRunner {
         driver=new AppDriver();
         driver.addApp("WordCount", WordCount.class);
         driver.addApp("TP_txn", TP_txn.class);
+        driver.addApp("GS_txn", GS_txn.class);
     }
     private void run() throws UnhandledCaseException, InterruptedException, IOException {
         //Get the running environment
@@ -53,6 +55,22 @@ public class  AppRunner extends baseRunner {
             this.metric_path=this.metric_path+application;
         }
         setConfiguration(config);
+        //Set the fault tolerance mechanisms
+        switch (config.getInt("FTOptions")){
+            case 0:
+                enable_wal=true;
+                break;
+            case 1:
+                enable_snapshot=true;
+                break;
+        }
+        //Set the parallel
+        enable_parallel=enable_states_partition=config.getBoolean("isParallel");
+        //Set the failure model
+        enable_transaction_abort=config.getBoolean("isTransactionAbort");
+        //Set the application
+        RATIO_OF_READ=config.getDouble("RATIO_OF_READ");
+        NUM_ACCESSES=config.getInt("NUM_ACCESSES");
         //Get the descriptor for thr given application
         AppDriver.AppDescriptor app=driver.getApp(application);
         // In case topology names is given, create one
@@ -90,7 +108,18 @@ public class  AppRunner extends baseRunner {
     }
     public static void main(String[] args) throws UnhandledCaseException, InterruptedException, IOException {
         AppRunner runner=new AppRunner();
-        runner.run();
+        JCommander cmd = new JCommander(runner);
+        try {
+            cmd.parse(args);
+        } catch (ParameterException ex) {
+            System.err.println("Argument error: " + ex.getMessage());
+            cmd.usage();
+        }
+        try {
+            runner.run();
+        } catch (InterruptedException ex) {
+            LOG.error("Error in running topology locally", ex);
+        }
     }
 }
 

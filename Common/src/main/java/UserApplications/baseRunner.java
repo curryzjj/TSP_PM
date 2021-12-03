@@ -18,7 +18,8 @@ public abstract class baseRunner {
     public static final Logger LOG= LoggerFactory.getLogger(baseRunner.class);
     protected static String CFG_PATH = null;
     @Parameter(names={"-a","--app"},description = "The application to be executed",required = false)
-    public String application = "TP_txn";
+    public String application = "GS_txn";
+    //public String application = "TP_txn";
     //public String application = "WordCount";
     @Parameter(names = {"-t", "--Brisk.topology-name"}, required = false, description = "The name of the Brisk.topology")
     public String topologyName;

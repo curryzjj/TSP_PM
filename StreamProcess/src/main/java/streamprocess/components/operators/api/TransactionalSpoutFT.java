@@ -1,6 +1,7 @@
 package streamprocess.components.operators.api;
 
 import System.tools.FastZipfGenerator;
+import applications.events.TxnEvent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,6 +120,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     }
 
     protected abstract void loadReplay() throws FileNotFoundException;
+    protected abstract TxnEvent replayEvent();
 
     @Override
     public void ack_marker(Marker marker) {

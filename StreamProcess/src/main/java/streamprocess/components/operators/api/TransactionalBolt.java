@@ -26,7 +26,6 @@ public abstract class TransactionalBolt extends AbstractBolt implements emitMark
     public TxnManager transactionManager;
     protected int thread_Id;
     protected int tthread;
-    protected int NUM_ACCESSES;
     protected int COMPUTE_COMPLEXITY;
     protected int POST_COMPUTE_COMPLEXITY;
     private int i=0;
@@ -42,11 +41,8 @@ public abstract class TransactionalBolt extends AbstractBolt implements emitMark
         OsUtils.configLOG(LOG);
         this.thread_Id = thread_Id;
         tthread = config.getInt("tthread", 1);
-        NUM_ACCESSES = 1;
         COMPUTE_COMPLEXITY = 10;
         POST_COMPUTE_COMPLEXITY = 1;
-//        sink.configPrefix = this.getConfigPrefix();
-//        sink.prepare(config, context, collector);
         SOURCE_CONTROL.getInstance().config(tthread);
     }
     @Override

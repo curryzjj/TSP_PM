@@ -57,6 +57,10 @@ public class TxnProcessingEngine {
                 holder_by_stage.put("segment_cnt", new Holder_in_range(num_op));
                 this.walManager.setHolder_by_tableName("segment_cnt",num_op);
                 break;
+            case "GS_txn":
+                holder_by_stage.put("MicroTable", new Holder_in_range(num_op));
+                this.walManager.setHolder_by_tableName("MicroTable",num_op);
+                break;
             default:
                 throw new UnsupportedOperationException("app not recognized");
         }
@@ -170,7 +174,6 @@ public class TxnProcessingEngine {
         if (operation_chain.size()>0){
             this.walManager.addLogRecord(operation_chain);
             operation_chain.logRecord.setCopyTableRecord(operation_chain.first().s_record);
-
         }
         while (true){
             Operation operation=operation_chain.pollFirst();
@@ -221,11 +224,25 @@ public class TxnProcessingEngine {
                     operation.record_ref.setRecord(new SchemaRecord(new IntDataBox(cnt_segment.size())));//return updated record.
                     operation.record_ref.getRecord().getValue().getInt();
                 }
+                if(enable_wal){
+                    logRecord.setUpdateTableRecord(operation.s_record);
+                }
+            break;
+            case READ_ONLY:
+                SchemaRecord schemaRecord = operation.d_record.record_;
+                operation.record_ref.setRecord(new SchemaRecord(schemaRecord.getValues()));//Note that, locking scheme allows directly modifying on original table d_record.
+            break;
+            case WRITE_ONLY:
+                if(operation.value_list!=null){
+                    operation.d_record.record_.updateValues(operation.value_list);
+                }else{
+                    operation.d_record.record_.getValues().get(operation.column_id).setLong(operation.value);
+                }
+                if(enable_wal){
+                    logRecord.setUpdateTableRecord(operation.d_record);
+                }
             break;
             default:throw new UnsupportedOperationException();
-        }
-        if(enable_wal){
-            logRecord.setUpdateTableRecord(operation.s_record);
         }
     }
 

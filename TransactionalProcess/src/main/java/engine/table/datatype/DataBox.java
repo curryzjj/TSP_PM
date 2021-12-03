@@ -1,6 +1,7 @@
 package engine.table.datatype;
 
 import engine.Exception.DataBoxException;
+import engine.table.datatype.DataBoxImpl.IntDataBox;
 import engine.table.tableRecords.SchemaRecord;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
@@ -119,7 +120,9 @@ public abstract class DataBox implements Comparable,Cloneable, Serializable {
      * @return
      */
     public String getString() {
-        //wait for the multi types to implement
+       if (this instanceof IntDataBox) {
+            return String.valueOf((this).getInt());
+        }
         throw new DataBoxException("Not Implemented");
     }
     /**

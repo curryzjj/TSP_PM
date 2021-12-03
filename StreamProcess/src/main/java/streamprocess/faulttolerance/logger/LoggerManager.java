@@ -149,7 +149,9 @@ public class LoggerManager extends FTManager {
     private boolean commitLog() throws IOException, ExecutionException, InterruptedException {
         long LSN=isCommitted.poll();
         RunnableFuture<LogResult> commitLog=this.db.commitLog(LSN, 00000L);
-        commitLog.get();
+        if(commitLog!=null){
+            commitLog.get();
+        }
         commitGlobalLSN(LSN);
         LOG.info("Update log commit!");
         return true;

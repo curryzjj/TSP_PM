@@ -36,7 +36,7 @@ public class ShareTable extends BaseTable {
             int records=numRecords.getAndIncrement();
             record.setID(new RowID(records));//which row
         }
-        return false;
+        return true;
     }
 
     @Override

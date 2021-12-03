@@ -1,15 +1,16 @@
-package UserApplications.InputDataGenerator.ImplDataGenerator;
+package applications.events.InputDataGenerator.ImplDataGenerator;
 
 import System.FileSystem.ImplFS.LocalFileSystem;
 import System.FileSystem.Path;
 import System.tools.ZipfGenerator;
 import System.tools.randomNumberGenerator;
-import UserApplications.InputDataGenerator.InputDataGenerator;
+import System.util.Configuration;
+import applications.events.InputDataGenerator.InputDataGenerator;
+import applications.events.TxnEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,12 +55,23 @@ public class TPDataGenerator extends InputDataGenerator {
         recordNum=recordNum-Math.min(recordNum,batch);
         return batch_input;
     }
-    public void initialize(String dataPath,int recordNum,int range,double zipSkew){
+
+    @Override
+    public List<TxnEvent> generateEvent(int batch) {
+        return null;
+    }
+
+    public void initialize(String dataPath, int recordNum, int range, double zipSkew, Configuration config){
         this.recordNum=recordNum;
         this.dataPath=dataPath;
         this.zipSkew=zipSkew;
         this.range=range;
         this.zipfGenerator=new ZipfGenerator(range, zipSkew);
+    }
+
+    @Override
+    public Object create_new_event(int bid) {
+        return null;
     }
 
     @Override
