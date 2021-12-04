@@ -149,7 +149,7 @@ public class MeasureSink extends BaseSink {
         DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
         long totalLatency=0L;
         for (Long a:latency_map){
-            dataOutputStream.writeUTF(a.toString());
+            dataOutputStream.writeUTF(a.toString()+"/n");
             totalLatency=totalLatency+a.longValue();
         }
         dataOutputStream.close();

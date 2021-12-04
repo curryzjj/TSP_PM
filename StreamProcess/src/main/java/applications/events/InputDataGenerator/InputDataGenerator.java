@@ -2,6 +2,7 @@ package applications.events.InputDataGenerator;
 
 import System.tools.FastZipfGenerator;
 import System.util.Configuration;
+import applications.DataTypes.AbstractInputTuple;
 import applications.events.TxnEvent;
 import applications.events.TxnParam;
 
@@ -33,7 +34,7 @@ public abstract class InputDataGenerator implements Serializable {
     protected final String split_exp = ";";
     public static FastZipfGenerator shared_store;
     public static FastZipfGenerator[] partitioned_store;
-    public abstract List<String> generateData(int batch);
+    public abstract List<AbstractInputTuple> generateData(int batch);
     public abstract List<TxnEvent> generateEvent(int batch);
     public abstract void initialize(String dataPath, int recordNum, int range, double zipSkew, Configuration config);
     public abstract Object create_new_event(int bid);

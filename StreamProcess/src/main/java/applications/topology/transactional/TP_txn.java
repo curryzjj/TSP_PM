@@ -1,6 +1,7 @@
 package applications.topology.transactional;
 
 import System.util.Configuration;
+import UserApplications.constants.GrepSumConstants;
 import applications.events.InputDataGenerator.ImplDataGenerator.TPDataGenerator;
 import UserApplications.constants.TP_TxnConstants.Component;
 import UserApplications.constants.TP_TxnConstants.Field;
@@ -45,21 +46,21 @@ public class TP_txn extends TransactionalTopology {
             spout.setFields(new Fields(Field.TEXT));
             spout.setInputDataGenerator(new TPDataGenerator());
             builder.setSpout(Component.SPOUT,spout,sinkThreads);
-            builder.setBolt(Component.DISPATCHER,
-                    new DispatcherBolt(),
-                    1,
-                    new ShuffleGrouping(Component.SPOUT));
+//            builder.setBolt(Component.DISPATCHER,
+//                    new DispatcherBolt(),
+//                    1,
+//                    new ShuffleGrouping(Component.SPOUT));
             if(enable_snapshot){
                 builder.setBolt(Component.EXECUTOR,
                         new TPBolt_TStream_Snapshot(0),
                         config.getInt(Executor_Threads,1),
-                        new FieldsGrouping(Component.DISPATCHER,POSITION_REPORTS_STREAM_ID, SegmentIdentifier.getSchema())
+                        new ShuffleGrouping(Component.SPOUT)
                 );
             }else if(enable_wal){
                 builder.setBolt(Component.EXECUTOR,
                         new TPBolt_TStream_Wal(0),
                         config.getInt(Executor_Threads,1),
-                        new FieldsGrouping(Component.DISPATCHER,POSITION_REPORTS_STREAM_ID, SegmentIdentifier.getSchema())
+                        new ShuffleGrouping(Component.SPOUT)
                 );
             }
             builder.setSink(Component.SINK, sink, sinkThreads

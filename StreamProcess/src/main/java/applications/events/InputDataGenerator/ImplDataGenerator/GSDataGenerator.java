@@ -4,6 +4,7 @@ import System.FileSystem.ImplFS.LocalFileSystem;
 import System.FileSystem.Path;
 import System.tools.FastZipfGenerator;
 import System.util.Configuration;
+import applications.DataTypes.AbstractInputTuple;
 import applications.events.InputDataGenerator.InputDataGenerator;
 import applications.events.MicroEvent;
 import applications.events.MicroParam;
@@ -22,7 +23,7 @@ import static UserApplications.CONTROL.*;
 public class GSDataGenerator extends InputDataGenerator {
     private static final Logger LOG=LoggerFactory.getLogger(GSDataGenerator.class);
     @Override
-    public List<String> generateData(int batch) {
+    public List<AbstractInputTuple> generateData(int batch) {
         return null;
     }
 

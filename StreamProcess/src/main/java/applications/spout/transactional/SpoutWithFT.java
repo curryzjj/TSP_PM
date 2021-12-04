@@ -3,6 +3,8 @@ package applications.spout.transactional;
 import System.constants.BaseConstants;
 import System.util.Configuration;
 import System.util.OsUtils;
+import applications.DataTypes.AbstractInputTuple;
+import applications.DataTypes.PositionReport;
 import applications.events.InputDataGenerator.InputDataGenerator;
 import applications.events.TxnEvent;
 import org.slf4j.Logger;
@@ -89,20 +91,20 @@ public class SpoutWithFT extends TransactionalSpoutFT {
             this.registerRecovery();
         }
         while(replay&&batch!=0){
-            char[] data=replayTuple();
-            if(data!=null){
-                collector.emit(data,bid);
+            AbstractInputTuple input=replayTuple();
+            if(input!=null){
+                collector.emit_single(DEFAULT_STREAM_ID,bid,input);
                 bid++;
                 lostData++;
                 batch--;
                 forward_marker(this.taskId, bid, null,"marker");
             }
         }
-        List<String> inputData=inputDataGenerator.generateData(batch);
+        List<AbstractInputTuple> inputData=inputDataGenerator.generateData(batch);
         if(inputData!=null){
-            for (Iterator<String> it = inputData.iterator(); it.hasNext(); ) {
-                String input = it.next();
-                collector.emit(input.toCharArray(),bid);
+            for (Iterator<AbstractInputTuple> it = inputData.iterator(); it.hasNext(); ) {
+                PositionReport input = (PositionReport) it.next();
+                collector.emit_single(DEFAULT_STREAM_ID,bid,input);
                 bid++;
                 forward_marker(this.taskId, bid, null,"marker");
             }
@@ -138,9 +140,21 @@ public class SpoutWithFT extends TransactionalSpoutFT {
     protected TxnEvent replayEvent() {
        return null;
     }
-    protected char[] replayTuple() {
+    protected AbstractInputTuple replayTuple() {
         if(scanner.hasNextLine()){
-            return scanner.nextLine().toCharArray();
+            AbstractInputTuple input;
+            String read = scanner.nextLine();
+            String[] token = read.split(";");
+            return new PositionReport(
+                     Long.parseLong(token[0]),//time
+                    Integer.parseInt(token[1]),//vid
+                    Integer.parseInt(token[2]), // speed
+                    Integer.parseInt(token[3]), // xway
+                    Short.parseShort(token[4]), // lane
+                    Short.parseShort(token[5]), // direction
+                    Short.parseShort(token[6]), // segment
+                    Integer.parseInt(token[7]//position
+                    ));
         }else{
             scanner.close();
             LOG.info("The number of lost data is "+lostData);

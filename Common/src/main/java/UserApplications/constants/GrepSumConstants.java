@@ -15,7 +15,7 @@ public interface GrepSumConstants extends BaseConstants {
     }
     interface Conf extends BaseConf{
         int NUM_SEGMENTS = NUM_ITEMS;
-        String Executor_Threads ="gs.txn.executor.threads";
+        String Executor_Threads ="executor.threads";
     }
     interface Component extends BaseComponent {
         String EXECUTOR = "executor";

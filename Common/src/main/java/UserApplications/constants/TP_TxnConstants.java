@@ -18,7 +18,7 @@ public interface TP_TxnConstants extends BaseConstants {
     }
     interface Conf extends BaseConf{
         int NUM_SEGMENTS = NUM_ITEMS;
-        String Executor_Threads ="tptxn.executor.threads";
+        String Executor_Threads ="executor.threads";
     }
     interface Component extends BaseComponent {
         String DISPATCHER = "DISPATCHER";
