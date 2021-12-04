@@ -21,7 +21,7 @@ import java.util.Scanner;
 import static System.Constants.Mac_Data_Path;
 import static System.Constants.Node22_Data_Path;
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
-import static UserApplications.CONTROL.NUM_ITEMS;
+import static UserApplications.CONTROL.*;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
 public class SpoutWithFT extends TransactionalSpoutFT {
@@ -55,13 +55,13 @@ public class SpoutWithFT extends TransactionalSpoutFT {
         }
         if(OsUtils.isMac()){
             path=config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_TEST_PATH)));
-            recordNum=config.getInt(getConfigKey(BaseConstants.BaseConf.RECORD_NUM_TEST));
+            recordNum=config.getInt(BaseConstants.BaseConf.RECORD_NUM_TEST);
             this.exe=recordNum;
             zipSkew=config.getDouble(getConfigKey(BaseConstants.BaseConf.ZIPSKEW_TEST));
             Data_path=Mac_Data_Path;
         }else{
             path = config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_PATH)));
-            recordNum=config.getInt(getConfigKey(BaseConstants.BaseConf.RECORD_NUM));
+            recordNum=config.getInt(BaseConstants.BaseConf.RECORD_NUM);
             this.exe=recordNum;
             zipSkew=config.getDouble(getConfigKey(BaseConstants.BaseConf.ZIPSKEW_NUM));
             Data_path=Node22_Data_Path;
@@ -109,7 +109,9 @@ public class SpoutWithFT extends TransactionalSpoutFT {
                 forward_marker(this.taskId, bid, null,"marker");
             }
         }else{
-            this.getContext().getFTM().spoutRegister(bid);
+            if(enable_wal||enable_snapshot){
+                this.getContext().getFTM().spoutRegister(bid);
+            }
             collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"finish");
             try {
                 clock.close();

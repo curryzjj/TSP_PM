@@ -45,29 +45,51 @@ public class  AppRunner extends baseRunner {
         // Prepared default configuration
         if (configStr==null){
             String cfg=String.format(CFG_PATH,application);
+            String ftcfg=String.format(CFG_PATH,"FTConfig");
             Properties p = null;
             try {
                 p = loadProperties(cfg);
+                config.putAll(Configuration.fromProperties(p));
+                p=loadProperties(ftcfg);
+                config.putAll(Configuration.fromProperties(p));
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            config.putAll(Configuration.fromProperties(p));
             this.metric_path=this.metric_path+application;
         }
         setConfiguration(config);
         //Set the fault tolerance mechanisms
         switch (config.getInt("FTOptions")){
             case 0:
-                enable_wal=true;
                 break;
             case 1:
+                enable_wal=true;
+                break;
+            case 2:
                 enable_snapshot=true;
                 break;
         }
         //Set the parallel
         enable_parallel=enable_states_partition=config.getBoolean("isParallel");
         //Set the failure model
-        enable_transaction_abort=config.getBoolean("isTransactionAbort");
+        switch (config.getInt("failureModel",0)){
+            case 0:
+                break;
+            case 1:
+                enable_transaction_abort=true;
+                break;
+            case 2:
+                enable_states_lost=true;
+                break;
+            case 3:
+                enable_transaction_abort=enable_states_lost=true;
+                break;
+        }
+        if(OsUtils.isMac()){
+            failureTime=(int)(config.getInt("test.recordnum")*config.getDouble("failureTime"));
+        }else {
+            failureTime=(int)(config.getInt("recordnum")*config.getDouble("failureTime"));
+        }
         //Set the application
         RATIO_OF_READ=config.getDouble("RATIO_OF_READ");
         NUM_ACCESSES=config.getInt("NUM_ACCESSES");
@@ -88,7 +110,7 @@ public class  AppRunner extends baseRunner {
         final_topology=submitter.submitTopology(topology,conf);
         executorThread spoutThread = submitter.getOM().getEM().getSpoutThread();
         long start = System.currentTimeMillis();
-        spoutThread.join((long) (3 * 1E3 * 60));//sync_ratio for sink thread to stop. Maximally sync_ratio for 10 mins
+        spoutThread.join((long) (6 * 1E3 * 60));//sync_ratio for sink thread to stop. Maximally sync_ratio for 10 mins
         long time_elapsed = (long) ((System.currentTimeMillis() - start) / 1E3 / 60);//in mins
         if (time_elapsed > 20) {
             LOG.info("Program error, exist...");
@@ -99,7 +121,9 @@ public class  AppRunner extends baseRunner {
         submitter.getOM().join();
         try {
             final_topology.db.close();
-            submitter.getOM().getEM().closeFTM();
+            if(enable_wal||enable_snapshot){
+                submitter.getOM().getEM().closeFTM();
+            }
             submitter.getOM().getEM().exit();
         } catch (IOException e) {
             e.printStackTrace();
@@ -116,6 +140,7 @@ public class  AppRunner extends baseRunner {
             cmd.usage();
         }
         try {
+            System.out.println(args[0]);
             runner.run();
         } catch (InterruptedException ex) {
             LOG.error("Error in running topology locally", ex);

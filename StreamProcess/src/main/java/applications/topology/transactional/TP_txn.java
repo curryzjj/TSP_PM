@@ -2,6 +2,7 @@ package applications.topology.transactional;
 
 import System.util.Configuration;
 import UserApplications.constants.GrepSumConstants;
+import applications.bolts.transactional.tp.TPBolt_TStream_NoFT;
 import applications.events.InputDataGenerator.ImplDataGenerator.TPDataGenerator;
 import UserApplications.constants.TP_TxnConstants.Component;
 import UserApplications.constants.TP_TxnConstants.Field;
@@ -59,6 +60,12 @@ public class TP_txn extends TransactionalTopology {
             }else if(enable_wal){
                 builder.setBolt(Component.EXECUTOR,
                         new TPBolt_TStream_Wal(0),
+                        config.getInt(Executor_Threads,1),
+                        new ShuffleGrouping(Component.SPOUT)
+                );
+            }else {
+                builder.setBolt(Component.EXECUTOR,
+                        new TPBolt_TStream_NoFT(0),
                         config.getInt(Executor_Threads,1),
                         new ShuffleGrouping(Component.SPOUT)
                 );

@@ -63,7 +63,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
             case 1:
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
-                this.TXN_PROCESS_FT();
+                transactionSuccess=this.TXN_PROCESS_FT();
                 break;
             case 2:
                 this.SyncRegisterRecovery();

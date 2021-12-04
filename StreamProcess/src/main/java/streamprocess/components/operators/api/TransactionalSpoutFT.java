@@ -13,8 +13,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
-import static UserApplications.CONTROL.enable_debug;
-import static UserApplications.CONTROL.enable_snapshot;
+import static UserApplications.CONTROL.*;
 
 public abstract class TransactionalSpoutFT extends AbstractSpout implements emitMarker {
     private static final Logger LOG= LoggerFactory.getLogger(TransactionalSpoutFT.class);
@@ -80,7 +79,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                         checkpoint_counter++;
                     }
                 }
-            }else{
+            }else if(enable_wal){
                 if (!this.getContext().getFTM().spoutRegister(bid)){
                     return;
                 }

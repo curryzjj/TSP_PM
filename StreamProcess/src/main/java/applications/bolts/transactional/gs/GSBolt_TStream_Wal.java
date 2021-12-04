@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 public class GSBolt_TStream_Wal extends GSBolt_TStream{
     public GSBolt_TStream_Wal(int fid) {
         super(fid);
-        this.configPrefix="tptxn";
+        this.configPrefix="gstxn";
         status=new Status();
         this.setStateful();
     }
@@ -62,7 +62,7 @@ public class GSBolt_TStream_Wal extends GSBolt_TStream{
             case 1:
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
-                this.TXN_PROCESS_FT();
+                transactionSuccess=this.TXN_PROCESS_FT();
                 break;
             case 2:
                 this.SyncRegisterRecovery();

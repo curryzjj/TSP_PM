@@ -15,7 +15,6 @@ import streamprocess.execution.runtime.threads.boltThread;
 import streamprocess.execution.runtime.threads.executorThread;
 import streamprocess.execution.runtime.threads.spoutThread;
 import streamprocess.faulttolerance.FTManager;
-import streamprocess.faulttolerance.checkpoint.CheckpointManager;
 import streamprocess.faulttolerance.recovery.RecoveryManager;
 import streamprocess.optimization.OptimizationManager;
 
@@ -24,7 +23,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static System.constants.BaseConstants.BaseStream.*;
@@ -40,7 +38,7 @@ public class ExecutionManager {
     TxnProcessingEngine tp_engine;
     FTManager FTM;
     RecoveryManager RM;
-    private static Thread checkpointManagerThread;
+    private static Thread FTManagerThread;
     private static Thread recoveryManagerThread;
     public final HashMap<Integer, executorThread> ThreadMap = new HashMap<>();
     //public final AffinityController AC;//not sure
@@ -159,16 +157,8 @@ public class ExecutionManager {
         if(clock!=null){
             clock.close();
         }
-        while(checkpointManagerThread.isAlive()){
-            checkpointManagerThread.interrupt();
-        }
         if(CONTROL.enable_shared_state&&tp_engine!=null){
             tp_engine.engine_shutdown();
-            if(enable_parallel&&enable_wal){
-                writeExecutor.shutdown();
-            }else if(enable_parallel&&enable_snapshot){
-                snapshotExecutor.shutdown();
-            }
         }
         this.getSinkThread().getContext().Sequential_stopAll();
     }
@@ -183,7 +173,7 @@ public class ExecutionManager {
 //        RM.start();
         this.FTM=FTM;
         FTM.initialize(false);
-        checkpointManagerThread=new Thread(FTM);
+        FTManagerThread =new Thread(FTM);
         FTM.start();
     }
     public void closeFTM() {
@@ -192,6 +182,14 @@ public class ExecutionManager {
         FTM.close();
         synchronized (lock){
             lock.notifyAll();
+        }
+        while(FTManagerThread.isAlive()){
+            FTManagerThread.interrupt();
+        }
+        if(enable_parallel&&enable_wal){
+            writeExecutor.shutdown();
+        }else if(enable_parallel&&enable_snapshot){
+            snapshotExecutor.shutdown();
         }
     }
 }

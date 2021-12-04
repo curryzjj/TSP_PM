@@ -12,9 +12,7 @@ import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
@@ -23,7 +21,7 @@ import static UserApplications.CONTROL.NUM_ACCESSES;
 
 public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG= LoggerFactory.getLogger(GSBolt_TStream.class);
-    Collection<MicroEvent> EventsHolder=new ArrayDeque<>();
+    List<MicroEvent> EventsHolder=new ArrayList<>();
     public GSBolt_TStream( int fid) {
         super(LOG, fid);
         this.configPrefix="tpgs";
@@ -87,16 +85,26 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     }
     protected void AsyncReConstructRequest() throws DatabaseException, InterruptedException {
         Iterator<MicroEvent> it=EventsHolder.iterator();
-        if (it.hasNext()){
+        while (it.hasNext()){
             MicroEvent event=it.next();
             TxnContext txnContext = new TxnContext(thread_Id, this.fid, event.getBid());
             if(event.READ_EVENT()){
-                if(!read_construct(event,txnContext)){
-                    it.remove();
+                for (int i = 0; i < NUM_ACCESSES; ++i) {
+                    //it simply construct the operations and return.
+                    if(!transactionManager.Asy_ReadRecord(txnContext, "MicroTable", String.valueOf(event.getKeys()[i]), event.getRecord_refs()[i], event.enqueue_time)){
+                        it.remove();
+                        collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                        break;
+                    }//asynchronously return.
                 }
             }else{
-                if(!write_construct(event,txnContext)){
-                    it.remove();
+                for (int i = 0; i < NUM_ACCESSES; ++i) {
+                    //it simply construct the operations and return.
+                    if(!transactionManager.Asy_WriteRecord(txnContext, "MicroTable", String.valueOf(event.getKeys()[i]), event.getValues()[i], event.enqueue_time)){
+                        it.remove();
+                        collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                        break;
+                    }//asynchronously return.
                 }
             }
         }

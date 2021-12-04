@@ -4,6 +4,7 @@ import System.util.Configuration;
 import UserApplications.constants.GrepSumConstants;
 import UserApplications.constants.GrepSumConstants.Component;
 import UserApplications.constants.TP_TxnConstants;
+import applications.bolts.transactional.gs.GSBolt_TStream_NoFT;
 import applications.bolts.transactional.gs.GSBolt_TStream_Snapshot;
 import applications.bolts.transactional.gs.GSBolt_TStream_Wal;
 import applications.events.InputDataGenerator.ImplDataGenerator.GSDataGenerator;
@@ -19,8 +20,7 @@ import streamprocess.execution.Initialize.impl.GSInitializer;
 import streamprocess.execution.runtime.tuple.Fields;
 import utils.SpinLock;
 
-import static UserApplications.CONTROL.NUM_ITEMS;
-import static UserApplications.CONTROL.enable_snapshot;
+import static UserApplications.CONTROL.*;
 import static UserApplications.constants.GrepSumConstants.Conf.Executor_Threads;
 import static UserApplications.constants.GrepSumConstants.PREFIX;
 import static utils.PartitionHelper.setPartition_interval;
@@ -49,9 +49,14 @@ public class GS_txn extends TransactionalTopology {
                         new GSBolt_TStream_Snapshot(0),
                         config.getInt(Executor_Threads),
                         new ShuffleGrouping(Component.SPOUT));
-            }else{
+            }else if(enable_wal){
                 builder.setBolt(Component.EXECUTOR,
                         new GSBolt_TStream_Wal(0),
+                        config.getInt(Executor_Threads),
+                        new ShuffleGrouping(Component.SPOUT));
+            }else {
+                builder.setBolt(Component.EXECUTOR,
+                        new GSBolt_TStream_NoFT(0),
                         config.getInt(Executor_Threads),
                         new ShuffleGrouping(Component.SPOUT));
             }

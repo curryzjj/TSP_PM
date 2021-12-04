@@ -39,7 +39,7 @@ public class GSDataGenerator extends InputDataGenerator {
             Fw = new FileWriter(file,true);
             BufferedWriter bw= new BufferedWriter(Fw);
             for(int i=0;i<Math.min(recordNum,batch);i++){
-                MicroEvent microEvent= (MicroEvent) this.create_new_event(i);
+                MicroEvent microEvent= (MicroEvent) this.create_new_event(current_bid);
                 batch_event.add(microEvent);
                 String str=microEvent.getBid()+//0--bid
                         split_exp+
@@ -114,6 +114,7 @@ public class GSDataGenerator extends InputDataGenerator {
         Set keys = new HashSet();
         randomKeys(current_pid,param,keys,access_per_partition,counter,NUM_ACCESSES);
         assert !enable_states_partition|| verify(keys,current_pid,tthread);
+        current_bid++;
         return new MicroEvent(param.getKeys(),flag,NUM_ACCESSES,bid,current_pid,p_bid,tthread);
     }
 

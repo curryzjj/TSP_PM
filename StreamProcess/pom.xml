@@ -111,12 +111,34 @@
                 <argument>-classpath</argument> <!-- 这是classpath属性，其值就是下面的<classpath/> -->
                 <classpath/> <!-- 这是exec插件最有价值的地方，工程的classpath并不需要手动指定，由exec自动计算得出 -->
                 <argument>applications.AppRunner</argument> <!-- 程序入口，主类名称 -->
+                <argument>-a</argument>
+                <a/>
             </arguments>
             </configuration>
         </plugin>
             <plugin>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.0.2</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>applications.AppRunner</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
 

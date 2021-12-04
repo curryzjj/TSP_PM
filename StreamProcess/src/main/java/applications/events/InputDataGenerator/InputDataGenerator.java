@@ -22,6 +22,7 @@ public abstract class InputDataGenerator implements Serializable {
     //just enable one of the decision array
     protected transient boolean[] read_decision;
     protected long[] p_bid;//used for partition.
+    protected int current_bid;
     protected int current_pid;
     protected int read_decision_id;
     protected String dataPath;

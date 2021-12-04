@@ -33,6 +33,8 @@ public class CONTROL {
     public static boolean enable_parallel=false;
     public static boolean enable_states_partition = false;//must be enabled for parallel snapshot
     public static boolean enable_transaction_abort=false;
+    public static boolean enable_states_lost=false;
+    public static int failureTime=0;
     //latency related.
     public static boolean enable_latency_measurement = true;//
 

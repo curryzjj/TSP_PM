@@ -182,11 +182,12 @@ public class TxnProcessingEngine {
         }
     }
     private void process(Operation operation, int mark_id,LogRecord logRecord) {
-        if(operation.bid==200000||operation.bid==100000){
+        if(operation.bid==failureTime){
             if(enable_transaction_abort){
                 this.transactionAbort.add(operation.bid);
                 this.isTransactionAbort=true;
-            }else{
+                return;
+            }else if(enable_states_lost){
                 if(drop){
                     if (enable_states_partition&&enable_parallel&&!enable_snapshot){
                         if (!dropTable.contains(mark_id)){
@@ -200,6 +201,7 @@ public class TxnProcessingEngine {
                         this.drop=false;
                     }
                 }
+                return;
             }
         }
         switch (operation.accessType){
