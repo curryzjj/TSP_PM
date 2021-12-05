@@ -95,6 +95,8 @@ public class  AppRunner extends baseRunner {
         RATIO_OF_READ=config.getDouble("RATIO_OF_READ");
         NUM_ACCESSES=config.getInt("NUM_ACCESSES");
         NUM_ITEMS=config.getInt("NUM_ITEMS");
+        NUM_EVENTS=config.getInt("NUM_EVENTS");
+        TEST_NUM_EVENTS=config.getInt("TEST_NUM_EVENTS");
         //Get the descriptor for thr given application
         AppDriver.AppDescriptor app=driver.getApp(application);
         // In case topology names is given, create one

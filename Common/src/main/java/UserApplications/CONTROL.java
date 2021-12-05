@@ -10,7 +10,7 @@ public class CONTROL {
 
     //application related.
     public static int NUM_EVENTS = 40000000; //different input events.. TODO: It must be kept small as GC pressure increases rapidly. Fix this in future work.
-    public static int TEST_NUM_EVENST = 100000;//different input events..
+    public static int TEST_NUM_EVENTS = 100000;//different input events..
     public static int NUM_ACCESSES=5;//10 as default setting. 2 for short transaction, 10 for long transaction.? --> this is the setting used in YingJun's work. 16 is the default value_list used in 1000core machine.
     public static int NUM_ITEMS = 10000;//1. 1_000_000; 2. ? ; 3. 1_000  //1_000_000 YCSB has 16 million records, Ledger use 200 million records.
     public static double RATIO_OF_READ=0.75;
