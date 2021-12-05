@@ -65,6 +65,7 @@ public class TPInitializer extends TableInitilizer {
             insertSpeedRecord(_key, 0);
             insertCntRecord(_key);
         }
+        System.out.println();
     }
 
     @Override

@@ -3,7 +3,7 @@ package applications.DataTypes.util;
 public interface ISegmentIdentifier {
     Integer getXWay();
 
-    Short getSegment();
+    int getSegment();
 
     Short getDirection();
 }

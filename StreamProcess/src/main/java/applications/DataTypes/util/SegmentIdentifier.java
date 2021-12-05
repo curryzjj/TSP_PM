@@ -13,7 +13,7 @@ public class SegmentIdentifier implements ISegmentIdentifier{
     /**
      * Seg (0...99) identifies the mile-long segment from which the position report is emitted.
      */
-    private Short segment;
+    private Integer segment;
 
     /**
      * Dir (0,1) indicates the direction (0 for Eastbound and 1 for Westbound).
@@ -31,7 +31,7 @@ public class SegmentIdentifier implements ISegmentIdentifier{
      * @param segment   the segment id
      * @param direction the direction
      */
-    public SegmentIdentifier(Integer xWay, Short segment, Short direction) {
+    public SegmentIdentifier(Integer xWay, Integer segment, Short direction) {
         assert (xWay != null);
         assert (segment != null);
         assert (direction != null);
@@ -89,14 +89,14 @@ public class SegmentIdentifier implements ISegmentIdentifier{
      * @return the segment number
      */
     @Override
-    public Short getSegment() {
+    public int getSegment() {
         return this.segment;
     }
 
     /**
      * Sets the segment number.
      */
-    public void setSegment(Short segment) {
+    public void setSegment(Integer segment) {
         this.segment = segment;
     }
 

@@ -49,14 +49,13 @@ public class PositionReport extends AbstractInputTuple implements IPositionIdent
      *            the horizontal position on the expressway
      */
     public PositionReport(Long time, Integer vid, Integer speed, Integer xway, Short lane, Short direction,
-                          Short segment, Integer position) {
+                          int segment, Integer position) {
         super(AbstractLRBTuple.POSITION_REPORT, time, vid);
 
         assert (speed != null);
         assert (xway != null);
         assert (lane != null);
         assert (direction != null);
-        assert (segment != null);
         assert (position != null);
 
         super.add(SPD_IDX, speed);
@@ -113,8 +112,8 @@ public class PositionReport extends AbstractInputTuple implements IPositionIdent
      * @return the VID of this position report
      */
     @Override
-    public final Short getSegment() {
-        return (Short)super.get(SEG_IDX);
+    public final int getSegment() {
+        return (int) super.get(SEG_IDX);
     }
 
     /**

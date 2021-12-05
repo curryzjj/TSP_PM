@@ -154,7 +154,7 @@ public class SpoutWithFT extends TransactionalSpoutFT {
                     Integer.parseInt(token[3]), // xway
                     Short.parseShort(token[4]), // lane
                     Short.parseShort(token[5]), // direction
-                    Short.parseShort(token[6]), // segment
+                    Integer.parseInt(token[6]), // segment
                     Integer.parseInt(token[7]//position
                     ));
         }else{

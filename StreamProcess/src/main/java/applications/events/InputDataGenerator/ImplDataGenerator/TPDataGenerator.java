@@ -116,7 +116,7 @@ public class TPDataGenerator extends InputDataGenerator {
                 randomNumberGenerator.generateRandom(1,4),
                 (short)randomNumberGenerator.generateRandom(1,4),
                 (short)randomNumberGenerator.generateRandom(1,1),
-                (short)generator.next(),
+                generator.next(),
                 randomNumberGenerator.generateRandom(1,100));
     }
 
