@@ -21,9 +21,7 @@ public class TPBolt_TStream_NoFT extends TPBolt_TStream{
         if (in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
                 this.collector.ack(in,in.getMarker());
-                if(LREvents.size()!=0){
-                    TXN_PROCESS();
-                }
+                TXN_PROCESS();
                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
             }
         }else{
