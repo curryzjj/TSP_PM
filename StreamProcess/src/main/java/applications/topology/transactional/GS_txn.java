@@ -43,7 +43,7 @@ public class GS_txn extends TransactionalTopology {
         try {
             spout.setFields(new Fields(GrepSumConstants.Field.TEXT));
             spout.setInputDataGenerator(new GSDataGenerator());
-            builder.setSpout(Component.SPOUT,spout,sinkThreads);
+            builder.setSpout(Component.SPOUT,spout,spoutThreads);
             if (enable_snapshot){
                 builder.setBolt(Component.EXECUTOR,
                         new GSBolt_TStream_Snapshot(0),

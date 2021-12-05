@@ -63,20 +63,23 @@ public class boltThread extends executorThread{
     @Override
     protected void _execute_noControl() throws InterruptedException, DatabaseException, BrokenBarrierException {
         Object tuple=fetchResult();
-        if(tuple instanceof Tuple){
-            if(tuple!=null){
-                bolt.execute((Tuple) tuple);
-                cnt+=1;
-            }else{
-                miss++;
-            }
-        }else{
+        if(tuple==null){
             miss++;
-            if(tuple!=null){
-                bolt.execute((JumboTuple) tuple);
-                cnt+=batch;
+        }else{
+            if(tuple instanceof Tuple){
+                if(tuple!=null){
+                    bolt.execute((Tuple) tuple);
+                    cnt+=1;
+                }else{
+                    miss++;
+                }
             }else{
-                miss=miss+batch;
+                if(tuple!=null){
+                    bolt.execute((JumboTuple) tuple);
+                    cnt+=batch;
+                }else{
+                    miss=miss+batch;
+                }
             }
         }
     }

@@ -62,7 +62,7 @@ public abstract class baseRunner {
     public int runtimeInSeconds = 30;
 
     @Parameter(names = {"-bt"}, description = "fixed batch", required = false)
-    public int batch = 100;
+    public int batch = 1000;
 
     @Parameter(names = {"-tt"}, description = "parallelism", required = false)
     public int tthread = 1;

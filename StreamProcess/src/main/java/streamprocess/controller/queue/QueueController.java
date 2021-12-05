@@ -10,6 +10,7 @@ import java.util.Queue;
 
 public abstract class QueueController implements Serializable {
     private static final Logger LOG = LoggerFactory.getLogger(QueueController.class);
+    private static final long serialVersionUID = -6212701358133777285L;
     final HashMap<Integer, ExecutionNode> downExecutor_list;
     QueueController(HashMap<Integer,ExecutionNode> downExecutor_list){
         this.downExecutor_list=downExecutor_list;

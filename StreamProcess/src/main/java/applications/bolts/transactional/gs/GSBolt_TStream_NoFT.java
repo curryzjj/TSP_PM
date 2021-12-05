@@ -21,9 +21,7 @@ public class GSBolt_TStream_NoFT extends GSBolt_TStream{
         if(in.isMarker()){
             if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
                 this.collector.ack(in,in.getMarker());
-                if(EventsHolder.size()!=0){
-                    TXN_PROCESS();
-                }
+                TXN_PROCESS();
                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
             }
         }else {

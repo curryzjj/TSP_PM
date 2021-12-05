@@ -17,10 +17,10 @@ import java.util.Queue;
  */
 public class MPSCController extends QueueController{
     private static final Logger LOG= LoggerFactory.getLogger(MPSCController.class);
-    private Map<Integer,Queue> outputQueue;//<Downstream executor Id, corresponding output queue>
+    private Map<Integer,Queue> outputQueue=new HashMap<>();//<Downstream executor Id, corresponding output queue>
     public MPSCController(HashMap<Integer, ExecutionNode> downExecutor_list) {
         super(downExecutor_list);
-        Queue temp1=new MpscArrayQueue(1024);//Don't why need this
+        //Queue temp1=new MpscArrayQueue(1024);//Don't why need this
     }
 
     @Override
@@ -35,7 +35,7 @@ public class MPSCController extends QueueController{
      */
     @Override
     public void allocate_queue(boolean linked, int desired_elements_epoch_per_core) {
-        outputQueue=new HashMap<>();
+        Queue temp1=new MpscArrayQueue(1024);//Don't why need this
         for(int executor:downExecutor_list.keySet()){
             if(OsUtils.isWindows()||OsUtils.isMac()){
                 outputQueue.put(executor,new MpscArrayQueue(desired_elements_epoch_per_core));//TODO:fixed the error
@@ -43,7 +43,6 @@ public class MPSCController extends QueueController{
                 if(linked){
                     outputQueue.put(executor,new MpscLinkedQueue8<>());
                 }else{
-
                     outputQueue.put(executor,new MpscArrayQueue(desired_elements_epoch_per_core));
                 }
             }

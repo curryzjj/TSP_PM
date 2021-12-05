@@ -41,22 +41,11 @@ public class GSDataGenerator extends InputDataGenerator {
             for(int i=0;i<Math.min(recordNum,batch);i++){
                 MicroEvent microEvent= (MicroEvent) this.create_new_event(current_bid);
                 batch_event.add(microEvent);
-                String str=microEvent.getBid()+//0--bid
-                        split_exp+
-                        microEvent.getPid()+//1
-                        split_exp+
-                        Arrays.toString(microEvent.getBid_array())+//2
-                        split_exp+
-                        microEvent.num_p() +//3 num of p
-                        split_exp +
-                        "MicroEvent"+//4 input_event type
-                        split_exp+
-                        Arrays.toString(microEvent.getKeys())+//5 keys
-                        split_exp+
-                        microEvent.READ_EVENT();//6 is read_event
-                bw.write(str+"\n");
-                bw.flush();
+                if(enable_snapshot||enable_wal){
+                    storeInput(microEvent,bw);
+                }
             }
+            bw.flush();
             bw.close();
             Fw.close();
         } catch (IOException e) {
@@ -64,6 +53,25 @@ public class GSDataGenerator extends InputDataGenerator {
         }
         recordNum=recordNum-Math.min(recordNum,batch);
         return batch_event;
+    }
+
+    @Override
+    public void storeInput(Object input, BufferedWriter bw) throws IOException {
+        MicroEvent microEvent= (MicroEvent) input;
+        String str=microEvent.getBid()+//0--bid
+                split_exp+
+                microEvent.getPid()+//1
+                split_exp+
+                Arrays.toString(microEvent.getBid_array())+//2
+                split_exp+
+                microEvent.num_p() +//3 num of p
+                split_exp +
+                "MicroEvent"+//4 input_event type
+                split_exp+
+                Arrays.toString(microEvent.getKeys())+//5 keys
+                split_exp+
+                microEvent.READ_EVENT();//6 is read_event
+        bw.write(str+"\n");
     }
 
     @Override

@@ -85,7 +85,7 @@ public class ExecutionManager {
                     integers.get(0),
                     integers.get(integers.size() - 1),
                     integers.size(),
-                    conf.getInt("TP",10));
+                    conf.getInt("tthread"));
             if(enable_wal&&enable_parallel){
                 writeExecutor= Executors.newFixedThreadPool(integers.size());
             }else if(enable_parallel&&enable_snapshot){

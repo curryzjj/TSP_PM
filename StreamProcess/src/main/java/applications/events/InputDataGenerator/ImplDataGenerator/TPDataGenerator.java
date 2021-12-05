@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static UserApplications.CONTROL.NUM_ITEMS;
-import static UserApplications.CONTROL.enable_states_partition;
+import static UserApplications.CONTROL.*;
+import static UserApplications.CONTROL.enable_wal;
 
 public class TPDataGenerator extends InputDataGenerator {
     private static final Logger LOG=LoggerFactory.getLogger(TPDataGenerator.class);
@@ -33,33 +33,21 @@ public class TPDataGenerator extends InputDataGenerator {
      * @return
      */
     public List<TxnEvent> generateEvent(int batch){
-//        List<String> batch_input=new ArrayList<>();
-//        if(recordNum==0){
-//            return null;
-//        }
-//        File file=new File(dataPath);
-//        FileWriter Fw= null;
-//        try {
-//            Fw = new FileWriter(file,true);
-//            BufferedWriter bw= new BufferedWriter(Fw);
-//            for(int i=0;i<Math.min(recordNum,batch);i++){
-//                long timestamp = System.nanoTime();
-//                String str=timestamp+" "+ randomNumberGenerator.generateRandom(1,100)+" "+randomNumberGenerator.generateRandom(60,180)+
-//                        " "+randomNumberGenerator.generateRandom(1,4)+" "+randomNumberGenerator.generateRandom(1,4)+" "+ randomNumberGenerator.generateRandom(1,1)+
-//                        " "+zipfGenerator.next()+" "+randomNumberGenerator.generateRandom(1,100);
-//                batch_input.add(str);
-//                bw.write(str);
-//                bw.newLine();
-//                bw.flush();
-//            }
-//            bw.close();
-//            Fw.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        recordNum=recordNum-Math.min(recordNum,batch);
-//        return batch_input;
         return null;
+    }
+
+    @Override
+    public void storeInput(Object input, BufferedWriter bw) throws IOException {
+        PositionReport report=(PositionReport) input;
+        String str=report.getTime()
+                +split_exp+report.getVid()
+                +split_exp+report.getSpeed()
+                +split_exp+report.getXWay()
+                +split_exp+report.getLane()
+                +split_exp+report.getDirection()
+                +split_exp+report.getSegment()
+                +split_exp+report.getPosition();
+        bw.write(str+"\n");
     }
 
     @Override
@@ -74,19 +62,13 @@ public class TPDataGenerator extends InputDataGenerator {
             Fw = new FileWriter(file,true);
             BufferedWriter bw= new BufferedWriter(Fw);
             for(int i=0;i<Math.min(recordNum,batch);i++){
-                PositionReport report= (PositionReport) this.create_new_event(i);
+                PositionReport report= (PositionReport) this.create_new_event(current_bid);
                 batch_event.add(report);
-                String str=report.getTime()
-                        +split_exp+report.getVid()
-                        +split_exp+report.getSpeed()
-                        +split_exp+report.getXWay()
-                        +split_exp+report.getLane()
-                        +split_exp+report.getDirection()
-                        +split_exp+report.getSegment()
-                        +split_exp+report.getPosition();
-                bw.write(str+"\n");
-                bw.flush();
+                if (enable_snapshot||enable_wal){
+                    storeInput(report,bw);
+                }
             }
+            bw.flush();
             bw.close();
             Fw.close();
         } catch (IOException e) {

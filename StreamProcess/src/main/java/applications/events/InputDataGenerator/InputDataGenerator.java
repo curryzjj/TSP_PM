@@ -6,6 +6,8 @@ import applications.DataTypes.AbstractInputTuple;
 import applications.events.TxnEvent;
 import applications.events.TxnParam;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
@@ -37,6 +39,7 @@ public abstract class InputDataGenerator implements Serializable {
     public static FastZipfGenerator[] partitioned_store;
     public abstract List<AbstractInputTuple> generateData(int batch);
     public abstract List<TxnEvent> generateEvent(int batch);
+    public abstract void storeInput(Object input, BufferedWriter bw) throws IOException;
     public abstract void initialize(String dataPath, int recordNum, int range, double zipSkew, Configuration config);
     public abstract Object create_new_event(int bid);
     public abstract void close();

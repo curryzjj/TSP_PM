@@ -24,7 +24,6 @@ import static UserApplications.CONTROL.enable_snapshot;
 public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream.class);
     ArrayDeque<LREvent> LREvents = new ArrayDeque<>();
-    ArrayDeque<LREvent> abortEvents=new ArrayDeque<>();
     public TPBolt_TStream(int fid) {
         super(LOG,fid);
         this.configPrefix="tptxn";
@@ -68,7 +67,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                     ,new AVG(event.getPOSReport().getSpeed())
             );
             if(!flag){
-                abortEvents.add(event);
+                it.remove();
                 collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
                 continue;
             }
@@ -78,11 +77,6 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                     ,event.count_value
                     ,new CNT(event.getPOSReport().getVid()));
         }
-        for (Iterator<LREvent> it = abortEvents.iterator(); it.hasNext(); ) {
-            LREvent event = it.next();
-            LREvents.remove(event);
-        }
-        abortEvents.clear();
     }
     public void BUFFER_PROCESS() throws DatabaseException, InterruptedException {
         if(bufferedTuple.isEmpty()){

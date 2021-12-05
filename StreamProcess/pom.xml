@@ -111,8 +111,7 @@
                 <argument>-classpath</argument> <!-- 这是classpath属性，其值就是下面的<classpath/> -->
                 <classpath/> <!-- 这是exec插件最有价值的地方，工程的classpath并不需要手动指定，由exec自动计算得出 -->
                 <argument>applications.AppRunner</argument> <!-- 程序入口，主类名称 -->
-                <argument>-a</argument>
-                <a/>
+                <commandlineArgs>GS_txn</commandlineArgs>
             </arguments>
             </configuration>
         </plugin>

@@ -148,13 +148,21 @@ public class MeasureSink extends BaseSink {
         LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(resultFile);
         DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
         long totalLatency=0L;
+        StringBuilder sb = new StringBuilder();
         for (Long a:latency_map){
-            dataOutputStream.writeUTF(a.toString()+"/n");
+            latency.addValue(a/1E6);
+            long str=a.longValue();
+            dataOutputStream.writeUTF(String.valueOf(str/1E6));
+            dataOutputStream.write(new byte[]{13,10});
             totalLatency=totalLatency+a.longValue();
         }
+        sb.append("=======Details=======");
+        sb.append("\n" + latency.toString() + "\n");
+        sb.append("===99th===" + "\n");
+        sb.append(latency.getPercentile(99) + "\n");
         dataOutputStream.close();
         localDataOutputStream.close();
-        LOG.info("The Average latency is "+totalLatency/latency_map.size()/1E6+" ms");
+        LOG.info(sb.toString());
     }
 
     @Override

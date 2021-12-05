@@ -200,8 +200,8 @@ public class TxnProcessingEngine {
                         }
                         this.drop=false;
                     }
+                    return;
                 }
-                return;
             }
         }
         switch (operation.accessType){

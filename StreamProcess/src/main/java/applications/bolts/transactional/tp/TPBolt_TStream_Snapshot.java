@@ -29,6 +29,7 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "marker":
+                    case "finish":
                         if(TXN_PROCESS()){
                             /* When the transaction is successful, the data can be pre-commit to the outside world */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
@@ -41,12 +42,6 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
                             /* When the snapshot is completed, the data can be consumed by the outside world */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         }
-                        break;
-                    case "finish":
-                        if(LREvents.size()!=0){
-                            TXN_PROCESS_FT();
-                        }
-                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                 }
             }

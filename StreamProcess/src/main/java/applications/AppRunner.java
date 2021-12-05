@@ -37,8 +37,9 @@ public class  AppRunner extends baseRunner {
     private void run() throws UnhandledCaseException, InterruptedException, IOException {
         //Get the running environment
         if(OsUtils.isMac()){
-            LOG.info("Running on the mac");
+            LOG.info(application+"running on the mac");
         }else {
+            LOG.info(application+" running on the Node22");
         }
         // Loads the configuration file set by the user or the default
         // configuration
@@ -132,15 +133,7 @@ public class  AppRunner extends baseRunner {
     }
     public static void main(String[] args) throws UnhandledCaseException, InterruptedException, IOException {
         AppRunner runner=new AppRunner();
-        JCommander cmd = new JCommander(runner);
         try {
-            cmd.parse(args);
-        } catch (ParameterException ex) {
-            System.err.println("Argument error: " + ex.getMessage());
-            cmd.usage();
-        }
-        try {
-            System.out.println(args[0]);
             runner.run();
         } catch (InterruptedException ex) {
             LOG.error("Error in running topology locally", ex);
