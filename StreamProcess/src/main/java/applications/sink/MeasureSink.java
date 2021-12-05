@@ -151,8 +151,7 @@ public class MeasureSink extends BaseSink {
         StringBuilder sb = new StringBuilder();
         for (Long a:latency_map){
             latency.addValue(a/1E6);
-            long str=a.longValue();
-            dataOutputStream.writeUTF(String.valueOf(str/1E6));
+            dataOutputStream.writeUTF(String.valueOf(a/1E6));
             dataOutputStream.write(new byte[]{13,10});
             totalLatency=totalLatency+a.longValue();
         }

@@ -112,7 +112,7 @@ public class  AppRunner extends baseRunner {
         final_topology=submitter.submitTopology(topology,conf);
         executorThread spoutThread = submitter.getOM().getEM().getSpoutThread();
         long start = System.currentTimeMillis();
-        spoutThread.join((long) (6 * 1E3 * 60));//sync_ratio for sink thread to stop. Maximally sync_ratio for 10 mins
+        spoutThread.join((long) (12 * 1E3 * 60));//sync_ratio for sink thread to stop. Maximally sync_ratio for 10 mins
         long time_elapsed = (long) ((System.currentTimeMillis() - start) / 1E3 / 60);//in mins
         if (time_elapsed > 20) {
             LOG.info("Program error, exist...");
