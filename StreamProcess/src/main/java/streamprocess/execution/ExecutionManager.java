@@ -108,6 +108,13 @@ public class ExecutionManager {
                 default:
                     throw new UnhandledCaseException("type not recognized");
             }
+            assert thread != null;
+            while (!thread.isReady()) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ex) {
+                }
+            }
         }
     }
     private executorThread launchSpout_InCore(ExecutionNode e, TopologyContext context,Configuration conf,int node,long[] cores,CountDownLatch latch){

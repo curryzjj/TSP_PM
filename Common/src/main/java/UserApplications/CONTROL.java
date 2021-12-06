@@ -14,6 +14,7 @@ public class CONTROL {
     public static int NUM_ACCESSES=5;//10 as default setting. 2 for short transaction, 10 for long transaction.? --> this is the setting used in YingJun's work. 16 is the default value_list used in 1000core machine.
     public static int NUM_ITEMS = 10000;//1. 1_000_000; 2. ? ; 3. 1_000  //1_000_000 YCSB has 16 million records, Ledger use 200 million records.
     public static double RATIO_OF_READ=0.75;
+    public static double ZIP_SKEW=0.4;
 
     //combo optimization
     public static boolean enable_app_combo = false;//compose all operators into one.

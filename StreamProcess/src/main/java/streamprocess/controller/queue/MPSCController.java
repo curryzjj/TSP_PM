@@ -35,7 +35,6 @@ public class MPSCController extends QueueController{
      */
     @Override
     public void allocate_queue(boolean linked, int desired_elements_epoch_per_core) {
-        Queue temp1=new MpscArrayQueue(1024);//Don't why need this
         for(int executor:downExecutor_list.keySet()){
             if(OsUtils.isWindows()||OsUtils.isMac()){
                 outputQueue.put(executor,new MpscArrayQueue(desired_elements_epoch_per_core));//TODO:fixed the error

@@ -93,7 +93,6 @@ public abstract class PartitionController implements IPartitionController,Serial
         int queue_size_per_core;
         queue_size_per_core = (int) (conf.getInt("targetHz") * conf.getInt("snapshot"));
         threashold = queue_size_per_core - 1;//leave one space for watermark filling!
-        Queue temp1=new MpscArrayQueue(1024);//Don't why need this
     }
     //use the method of the controller
     public void allocate_queue(boolean linked, int desired_elements_epoch_per_core) {

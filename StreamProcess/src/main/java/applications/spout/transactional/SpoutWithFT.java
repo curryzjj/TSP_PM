@@ -46,8 +46,6 @@ public class SpoutWithFT extends TransactionalSpoutFT {
         String OS_prefix="";
         String path;
         Data_path = "";
-        int recordNum=0;
-        double zipSkew=0;
         if(OsUtils.isWindows()){
             OS_prefix="win.";
         }else{
@@ -55,21 +53,17 @@ public class SpoutWithFT extends TransactionalSpoutFT {
         }
         if(OsUtils.isMac()){
             path=config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_TEST_PATH)));
-            recordNum=config.getInt(BaseConstants.BaseConf.RECORD_NUM_TEST);
-            this.exe=recordNum;
-            zipSkew=config.getDouble(getConfigKey(BaseConstants.BaseConf.ZIPSKEW_TEST));
+            this.exe=TEST_NUM_EVENTS;
             Data_path=Mac_Data_Path;
         }else{
             path = config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_PATH)));
-            recordNum=config.getInt(BaseConstants.BaseConf.RECORD_NUM);
-            this.exe=recordNum;
-            zipSkew=config.getDouble(getConfigKey(BaseConstants.BaseConf.ZIPSKEW_NUM));
+            this.exe=NUM_EVENTS;
             Data_path=Node22_Data_Path;
         }
         this.batch_number_per_wm=config.getInt("batch_number_per_wm");
         this.checkpoint_interval = config.getInt("snapshot");
         Data_path = Data_path.concat(path);
-        inputDataGenerator.initialize(Data_path,recordNum,NUM_ITEMS-1,zipSkew,config);
+        inputDataGenerator.initialize(Data_path,this.exe,NUM_ITEMS-1,ZIP_SKEW,config);
     }
 
     @Override

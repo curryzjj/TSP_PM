@@ -87,9 +87,9 @@ public class  AppRunner extends baseRunner {
                 break;
         }
         if(OsUtils.isMac()){
-            failureTime=(int)(config.getInt("test.recordnum")*config.getDouble("failureTime"));
+            failureTime=(int)(config.getInt("NUM_EVENTS")*config.getDouble("failureTime"));
         }else {
-            failureTime=(int)(config.getInt("recordnum")*config.getDouble("failureTime"));
+            failureTime=(int)(config.getInt("TEST_NUM_EVENTS")*config.getDouble("failureTime"));
         }
         //Set the application
         RATIO_OF_READ=config.getDouble("RATIO_OF_READ");
@@ -97,6 +97,7 @@ public class  AppRunner extends baseRunner {
         NUM_ITEMS=config.getInt("NUM_ITEMS");
         NUM_EVENTS=config.getInt("NUM_EVENTS");
         TEST_NUM_EVENTS=config.getInt("TEST_NUM_EVENTS");
+        ZIP_SKEW=config.getDouble("ZIP_SKEW");
         //Get the descriptor for thr given application
         AppDriver.AppDescriptor app=driver.getApp(application);
         // In case topology names is given, create one
