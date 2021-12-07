@@ -73,7 +73,6 @@ public class MeasureSink extends BaseSink {
     public void execute(Tuple in) throws InterruptedException, IOException {
         if(in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                //this.collector.ack(in,in.getMarker());
                 if(in.getMarker().getValue()=="recovery"){
                     this.abortRepeatedResults(in.getBID());
                 }else if(in.getMarker().getValue()=="finish"){
@@ -115,7 +114,7 @@ public class MeasureSink extends BaseSink {
     }
 
     private void CommitTuple(long bid) {
-        if(enable_latency_measurement){
+        if(enable_latency_measurement&&perCommitTuple.size()!=0){
             long totalLatency=0L;
             long size=0;
             Iterator<Tuple2<Long, Long>> events=perCommitTuple.iterator();

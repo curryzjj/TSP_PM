@@ -1,19 +1,15 @@
 package applications.topology.transactional;
 
 import System.util.Configuration;
-import UserApplications.constants.GrepSumConstants;
 import applications.bolts.transactional.tp.TPBolt_TStream_NoFT;
 import applications.events.InputDataGenerator.ImplDataGenerator.TPDataGenerator;
 import UserApplications.constants.TP_TxnConstants.Component;
 import UserApplications.constants.TP_TxnConstants.Field;
-import applications.DataTypes.util.SegmentIdentifier;
-import applications.bolts.transactional.tp.DispatcherBolt;
 import applications.bolts.transactional.tp.TPBolt_TStream_Snapshot;
 import applications.bolts.transactional.tp.TPBolt_TStream_Wal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.exception.InvalidIDException;
-import streamprocess.components.grouping.FieldsGrouping;
 import streamprocess.components.grouping.ShuffleGrouping;
 import streamprocess.components.topology.Topology;
 import streamprocess.components.topology.TransactionalTopology;
@@ -28,7 +24,6 @@ import static UserApplications.CONTROL.enable_wal;
 import static UserApplications.constants.TP_TxnConstants.Conf.Executor_Threads;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 import static UserApplications.constants.TP_TxnConstants.PREFIX;
-import static UserApplications.constants.TP_TxnConstants.Stream.POSITION_REPORTS_STREAM_ID;
 import static utils.PartitionHelper.setPartition_interval;
 
 public class TP_txn extends TransactionalTopology {
@@ -46,7 +41,7 @@ public class TP_txn extends TransactionalTopology {
         try {
             spout.setFields(new Fields(Field.TEXT));
             spout.setInputDataGenerator(new TPDataGenerator());
-            builder.setSpout(Component.SPOUT,spout,sinkThreads);
+            builder.setSpout(Component.SPOUT,spout,spoutThreads);
 //            builder.setBolt(Component.DISPATCHER,
 //                    new DispatcherBolt(),
 //                    1,

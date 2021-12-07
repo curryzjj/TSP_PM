@@ -138,6 +138,9 @@ public abstract class executorThread extends Thread {
     public boolean isReady(){ return ready;}
     public int getExecutorID(){return executor.getExecutorID();}
     public String getOP(){return executor.getOP();}
+    public double getCnt(){
+        return cnt;
+    }
     //end
 
 }

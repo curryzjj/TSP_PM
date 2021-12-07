@@ -20,7 +20,6 @@ public class GSBolt_TStream_NoFT extends GSBolt_TStream{
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
             if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                this.collector.ack(in,in.getMarker());
                 TXN_PROCESS();
                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                 if(in.getMarker().getValue()=="finish"){
