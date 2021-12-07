@@ -1,6 +1,7 @@
 package streamprocess.components.operators.api;
 
 import System.tools.FastZipfGenerator;
+import applications.events.InputDataGenerator.InputDataGenerator;
 import applications.events.TxnEvent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -10,6 +11,7 @@ import streamprocess.faulttolerance.checkpoint.emitMarker;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
@@ -17,7 +19,7 @@ import static UserApplications.CONTROL.*;
 
 public abstract class TransactionalSpoutFT extends AbstractSpout implements emitMarker {
     private static final Logger LOG= LoggerFactory.getLogger(TransactionalSpoutFT.class);
-    protected transient FastZipfGenerator keygenerator;
+    protected InputDataGenerator inputDataGenerator;
     protected long previous_bid=-1;
     protected long epoch_size=0;
     protected double target_Hz;
@@ -71,7 +73,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
         String msg1=msg;
-        if (this.marker() && success) {//emit marker tuple
+        if (this.marker()) {//emit marker tuple
             if(enable_snapshot){
                 if(snapshot()){
                     if(this.getContext().getFTM().spoutRegister(bid)){
@@ -124,10 +126,23 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public void ack_marker(Marker marker) {
         success=true;
-        if(enable_debug){
-        }
         long elapsed_time = System.nanoTime() - boardcast_time;//the time elapsed for the system to handle the previous epoch.
         double actual_system_throughput = epoch_size * 1E9 / elapsed_time;//events/ s
+    }
+    public void stopRunning() throws InterruptedException {
+        if(enable_wal||enable_snapshot){
+            this.getContext().getFTM().spoutRegister(bid);
+        }
+        collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"finish");
+        try {
+            clock.close();
+            inputDataGenerator.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        LOG.info("Spout sent marker "+myiteration);
+        LOG.info("Spout sent snapshot "+checkpoint_counter);
+        context.stop_running();
     }
 
     @Override

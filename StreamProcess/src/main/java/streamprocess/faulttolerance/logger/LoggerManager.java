@@ -81,12 +81,9 @@ public class LoggerManager extends FTManager {
         LOG.info("executor("+executorId+")"+" register the "+status);
     }
     public boolean spoutRegister(long globalLSN){
-        if(isCommitted.size()>10){
-            return false;
-        }else{
-            isCommitted.add(globalLSN);
-            return true;
-        }
+        isCommitted.add(globalLSN);
+        LOG.info("Spout register the wal with the globalLSN= "+globalLSN);
+        return true;
     }
     private void callLog_ini() {
         for (ExecutionNode e:g.getExecutionNodeArrayList()){

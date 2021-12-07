@@ -25,11 +25,17 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "marker":
+                        if(TXN_PROCESS()){
+                            /* When the transaction is successful, the data can be pre-commit to the outside world */
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        }
+                        break;
                     case "finish":
                         if(TXN_PROCESS()){
                             /* When the transaction is successful, the data can be pre-commit to the outside world */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         }
+                        this.context.stop_running();
                         break;
                     case "snapshot":
                         this.needcheckpoint=true;

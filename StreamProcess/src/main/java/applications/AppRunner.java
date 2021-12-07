@@ -92,6 +92,7 @@ public class  AppRunner extends baseRunner {
             failureTime=(int)(config.getInt("TEST_NUM_EVENTS")*config.getDouble("failureTime"));
         }
         //Set the application
+        Arrival_Control=config.getBoolean("Arrival_Control");
         RATIO_OF_READ=config.getDouble("RATIO_OF_READ");
         NUM_ACCESSES=config.getInt("NUM_ACCESSES");
         NUM_ITEMS=config.getInt("NUM_ITEMS");
@@ -113,9 +114,9 @@ public class  AppRunner extends baseRunner {
     private static double runTopologyLocally(Topology topology,Configuration conf) throws UnhandledCaseException, InterruptedException, IOException {
         TopologySubmitter submitter=new TopologySubmitter();
         final_topology=submitter.submitTopology(topology,conf);
-        executorThread spoutThread = submitter.getOM().getEM().getSpoutThread();
+        executorThread sinkThread = submitter.getOM().getEM().getSinkThread();
         long start = System.currentTimeMillis();
-        spoutThread.join((long) (12 * 1E3 * 60));//sync_ratio for sink thread to stop. Maximally sync_ratio for 10 mins
+        sinkThread.join((long) (12 * 1E3 * 60));//sync_ratio for sink thread to stop. Maximally sync_ratio for 10 mins
         long time_elapsed = (long) ((System.currentTimeMillis() - start) / 1E3 / 60);//in mins
         if (time_elapsed > 20) {
             LOG.info("Program error, exist...");

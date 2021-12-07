@@ -28,11 +28,17 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                         this.registerRecovery();
                         break;
                     case "marker":
+                        if(TXN_PROCESS_FT()){
+                            /* When the wal is completed, the data can be consumed by the outside world */
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        }
+                        break;
                     case "finish":
                         if(TXN_PROCESS_FT()){
                             /* When the wal is completed, the data can be consumed by the outside world */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         }
+                        this.context.stop_running();
                         break;
                 }
             }

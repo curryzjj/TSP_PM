@@ -174,10 +174,6 @@ public class ExecutionManager {
         return ThreadMap.get(g.getSpoutThread());
     }
     public void startFaultTolerance(RecoveryManager RM,FTManager FTM) throws IOException {
-//        this.RM=RM;
-//        RM.initialize(false);
-//        recoveryManagerThread=new Thread(RM);
-//        RM.start();
         this.FTM=FTM;
         FTM.initialize(false);
         FTManagerThread =new Thread(FTM);

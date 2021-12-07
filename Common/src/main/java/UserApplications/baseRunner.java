@@ -18,8 +18,8 @@ public abstract class baseRunner {
     public static final Logger LOG= LoggerFactory.getLogger(baseRunner.class);
     protected static String CFG_PATH = null;
     @Parameter(names={"-a","--app"},description = "The application to be executed",required = false)
-    //public String application = "GS_txn";
-    public String application = "TP_txn";
+    public String application = "GS_txn";
+    //public String application = "TP_txn";
     //public String application = "WordCount";
     @Parameter(names = {"-t", "--Brisk.topology-name"}, required = false, description = "The name of the Brisk.topology")
     public String topologyName;
@@ -89,7 +89,6 @@ public abstract class baseRunner {
         return properties;
     }
     public void setConfiguration(HashMap<String,Object> config){
-        config.put("timeSliceLengthMs", timeSliceLengthMs);
         config.put("benchmark", benchmark);
         config.put("profile", profile);
         config.put("NAV", NAV);
@@ -101,9 +100,6 @@ public abstract class baseRunner {
         config.put("shared",shared);
         config.put("common",common);
 
-        if (batch != -1) {
-            config.put("batch", batch);
-        }
 
         config.put("microbenchmark", microbenchmark);
         config.put("metrics.output", metric_path);

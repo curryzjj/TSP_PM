@@ -25,7 +25,6 @@ import static UserApplications.CONTROL.*;
 
 public class EventSpoutWithFT extends TransactionalSpoutFT {
     private static final Logger LOG= LoggerFactory.getLogger(SpoutWithFT.class);
-    private InputDataGenerator inputDataGenerator;
     private Scanner scanner;
     private String Data_path;
 
@@ -52,11 +51,11 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         }
         if(OsUtils.isMac()){
             path=config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_TEST_PATH)));
-            this.exe=NUM_EVENTS;
+            this.exe=TEST_NUM_EVENTS;
             Data_path=Mac_Data_Path;
         }else{
             path = config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_PATH)));
-            this.exe=TEST_NUM_EVENTS;
+            this.exe=NUM_EVENTS;
             Data_path=Node22_Data_Path;
         }
         this.batch_number_per_wm=config.getInt("batch_number_per_wm");
@@ -80,30 +79,20 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 forward_marker(this.taskId, bid, null,"marker");
             }
         }
-        List<TxnEvent> events=inputDataGenerator.generateEvent(batch);
-        if(events!=null){
-            for (Iterator<TxnEvent> it = events.iterator(); it.hasNext(); ) {
-                TxnEvent input = it.next();
-                collector.emit_single(DEFAULT_STREAM_ID,bid,input);
-                bid++;
-                forward_marker(this.taskId, bid, null,"marker");
+        while (batch>0){
+            List<TxnEvent> events=inputDataGenerator.generateEvent(batch_number_per_wm);
+            if(events!=null){
+                batch=batch-events.size();
+                for (TxnEvent input : events) {
+                    collector.emit_single(DEFAULT_STREAM_ID, bid, input);
+                    bid++;
+                    forward_marker(this.taskId, bid, null, "marker");
+                }
+            }else{
+                stopRunning();
+                batch=0;
             }
-        }else{
-            if(enable_wal||enable_snapshot){
-                this.getContext().getFTM().spoutRegister(bid);
-            }
-            collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"finish");
-            try {
-                clock.close();
-                inputDataGenerator.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            LOG.info("Spout sent marker "+myiteration);
-            LOG.info("Spout sent snapshot "+checkpoint_counter);
-            context.stop_running();
         }
-
     }
     @Override
     public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {

@@ -22,7 +22,9 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.Date;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 
@@ -44,12 +46,11 @@ public class CheckpointManager extends FTManager {
     private Object lock;
     private SnapshotResult snapshotResult;
     private boolean close;
-    private long currentCheckpointId;
-    private ConcurrentHashMap<Long,Boolean> isCommitted;
+    private Queue<Long> isCommitted;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callSnapshot;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callRecovery;
     public CheckpointManager(ExecutionGraph g, Configuration conf, Database db){
-        this.isCommitted=new ConcurrentHashMap<>();
+        this.isCommitted=new ArrayDeque<>();
         this.callSnapshot=new ConcurrentHashMap<>();
         this.callRecovery=new ConcurrentHashMap<>();
         this.lock=new Object();
@@ -85,14 +86,9 @@ public class CheckpointManager extends FTManager {
         }
     }
     public boolean spoutRegister(long checkpointId){
-        if(isCommitted.containsValue(false)){
-            return false;
-        }else {
-            this.currentCheckpointId=checkpointId;
-            isCommitted.put(checkpointId,false);
-            LOG.info("Spout register the checkpoint with the checkpointId= "+checkpointId);
-            return true;
-        }
+        this.isCommitted.add(checkpointId);
+        LOG.info("Spout register the checkpoint with the checkpointId= "+checkpointId);
+        return true;
     }
     public void boltRegister(int executorId,FaultToleranceConstants.FaultToleranceStatus status){
         if(callSnapshot.containsKey(executorId)){
@@ -149,9 +145,9 @@ public class CheckpointManager extends FTManager {
                 }else{
                     LOG.info("CheckpointManager received all register and start snapshot");
                     if(enable_parallel){
-                        this.snapshotResult=this.db.parallelSnapshot(this.currentCheckpointId,00000L);
+                        this.snapshotResult=this.db.parallelSnapshot(isCommitted.poll(),00000L);
                     }else{
-                        RunnableFuture<SnapshotResult> snapshotResult =this.db.snapshot(this.currentCheckpointId,00000L);
+                        RunnableFuture<SnapshotResult> snapshotResult =this.db.snapshot(isCommitted.poll(),00000L);
                         this.snapshotResult=snapshotResult.get();
                     }
                     commitCurrentLog();
@@ -170,7 +166,6 @@ public class CheckpointManager extends FTManager {
         dataOutputStream.write(result);
         dataOutputStream.close();
         LOG.info("CheckpointManager commit the checkpoint to the current.log");
-        isCommitted.put(currentCheckpointId,true);
         return true;
     }
     public void notifySnapshotComplete() throws Exception {

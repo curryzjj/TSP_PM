@@ -43,7 +43,7 @@ public class spoutThread extends executorThread{
         super(e, conf, context, cpu, node, latch, HPCMonotor, threadMap);
         this.sp=(BasicSpoutBatchExecutor) e.op;
         this.collector = new OutputCollector(e,context);
-        batch = conf.getInt("batch", 1);
+        batch = conf.getInt("batch_number_per_wm", 1);
         this.loadTargetHz = loadTargetHz;
         this.timeSliceLengthMs = timeSliceLengthMs;
         sp.setExecutionNode(e);
@@ -54,16 +54,40 @@ public class spoutThread extends executorThread{
 
     @Override
     protected void _execute_noControl() throws InterruptedException {
-    }
-
-    @Override
-    protected void _execute() throws InterruptedException {
         sp.bulk_emit(batch);
         if(enable_app_combo){
-            cnt+=batch*_combo_bid_size;
+            cnt+=batch;
         }else{
             cnt+=batch;
         }
+    }
+
+    /**
+     * Only spout need to control
+     */
+    protected void _execute_withControl() throws InterruptedException {
+        long emitStartTime = System.currentTimeMillis();
+        sp.bulk_emit(elements);
+        cnt += elements;
+        // Sleep for the rest of timeslice if needed
+        long emitTime = System.currentTimeMillis() - emitStartTime;
+        if (emitTime < timeSliceLengthMs) {// in terms of milliseconds.
+            try {
+                Thread.sleep(timeSliceLengthMs - emitTime);
+            } catch (InterruptedException ignored) {
+                //  e.printStackTrace();
+            }
+            sleep_time++;
+        } else
+            busy_time++;
+    }
+    @Override
+    protected void _execute() throws InterruptedException {
+      if(Arrival_Control){
+          _execute_withControl();
+      }else{
+          _execute_noControl();
+      }
     }
 
     @Override

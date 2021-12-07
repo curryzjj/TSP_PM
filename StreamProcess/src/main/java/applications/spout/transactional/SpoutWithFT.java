@@ -26,7 +26,6 @@ import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
 public class SpoutWithFT extends TransactionalSpoutFT {
     private static final Logger LOG= LoggerFactory.getLogger(SpoutWithFT.class);
-    private InputDataGenerator inputDataGenerator;
     private Scanner scanner;
     private String Data_path;
 
@@ -94,28 +93,20 @@ public class SpoutWithFT extends TransactionalSpoutFT {
                 forward_marker(this.taskId, bid, null,"marker");
             }
         }
-        List<AbstractInputTuple> inputData=inputDataGenerator.generateData(batch);
-        if(inputData!=null){
-            for (Iterator<AbstractInputTuple> it = inputData.iterator(); it.hasNext(); ) {
-                PositionReport input = (PositionReport) it.next();
-                collector.emit_single(DEFAULT_STREAM_ID,bid,input);
-                bid++;
-                forward_marker(this.taskId, bid, null,"marker");
+        while(batch>0){
+            List<AbstractInputTuple> inputData=inputDataGenerator.generateData(batch_number_per_wm);
+            if(inputData!=null) {
+                batch=batch-inputData.size();
+                for (AbstractInputTuple inputDatum : inputData) {
+                    PositionReport input = (PositionReport) inputDatum;
+                    collector.emit_single(DEFAULT_STREAM_ID, bid, input);
+                    bid++;
+                    forward_marker(this.taskId, bid, null, "marker");
+                }
+            }else{
+                stopRunning();
+                batch=0;
             }
-        }else{
-            if(enable_wal||enable_snapshot){
-                this.getContext().getFTM().spoutRegister(bid);
-            }
-            collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"finish");
-            try {
-                clock.close();
-                inputDataGenerator.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            LOG.info("Spout sent marker "+myiteration);
-            LOG.info("Spout sent snapshot "+checkpoint_counter);
-            context.stop_running();
         }
     }
 

@@ -9,6 +9,7 @@ public class CONTROL {
     int MeasureBound = 1_000;
 
     //application related.
+    public static boolean Arrival_Control=false;
     public static int NUM_EVENTS = 40000000; //different input events.. TODO: It must be kept small as GC pressure increases rapidly. Fix this in future work.
     public static int TEST_NUM_EVENTS = 100000;//different input events..
     public static int NUM_ACCESSES=5;//10 as default setting. 2 for short transaction, 10 for long transaction.? --> this is the setting used in YingJun's work. 16 is the default value_list used in 1000core machine.
