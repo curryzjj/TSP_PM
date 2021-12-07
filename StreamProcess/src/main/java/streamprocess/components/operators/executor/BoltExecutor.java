@@ -33,6 +33,9 @@ public abstract class BoltExecutor implements IExecutor {
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         op.prepare(stormConf,context,collector);
     }
+    public void loadDB(Configuration conf, TopologyContext context, OutputCollector collector){
+        op.loadDB(context);
+    }
     @Override
     public int getID() { return op.getId(); }
     @Override
@@ -123,4 +126,5 @@ public abstract class BoltExecutor implements IExecutor {
     public void setclock(Clock clock) {
         this.op.clock=clock;
     }
+
 }

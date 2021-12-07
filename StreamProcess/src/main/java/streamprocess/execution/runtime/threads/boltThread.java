@@ -112,6 +112,8 @@ public class boltThread extends executorThread{
             }
             this.Ready(LOG);
             if (enable_shared_state){
+                if (!this.executor.isLeafNode())//TODO: remove such hard code in future.
+                    bolt.loadDB(conf, context, collector);
                 LOG.info("Operator:\t"+executor.getOP_full()+"is ready"+"\nlock_ratio dumps\n"+dumpLocks());
             }else{
                 if(conf.getBoolean("NAV",true)){

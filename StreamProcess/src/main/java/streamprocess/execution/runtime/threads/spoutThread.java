@@ -116,12 +116,8 @@ public class spoutThread extends executorThread{
                         ""+node+"binding:"+Long.toBinaryString(0x1000000000000000L| binding[0]).substring(1));
             }
             binding_finish=true;
-            if (enable_shared_state){
+            if (enable_shared_state)
                 LOG.info("Operator:\t"+executor.getOP_full()+"is ready"+"\nlock_ratio dumps\n"+dumpLocks());
-                sp.loadDB(this.context);
-            }else{
-                LOG.info("Operator:\t" + executor.getOP_full() + " is ready");
-            }
             this.Ready(LOG);
             System.gc();
             latch.countDown();//tells others I'm really ready.

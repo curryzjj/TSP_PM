@@ -9,6 +9,8 @@ import engine.table.datatype.DataBoxImpl.IntDataBox;
 import engine.table.datatype.DataBoxImpl.StringDataBox;
 import engine.table.tableRecords.SchemaRecord;
 import engine.table.tableRecords.TableRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.Initialize.TableInitilizer;
 import utils.TransactionalProcessConstants;
@@ -20,9 +22,12 @@ import java.util.List;
 import static UserApplications.CONTROL.NUM_ITEMS;
 import static UserApplications.CONTROL.enable_states_partition;
 import static UserApplications.constants.GrepSumConstants.Constant.VALUE_LEN;
+import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 import static applications.events.MicroEvent.GenerateValue;
+import static utils.PartitionHelper.getPartition_interval;
 
 public class GSInitializer extends TableInitilizer{
+    private static final Logger LOG = LoggerFactory.getLogger(GSInitializer.class);
     protected int partition_interval;
     public GSInitializer(Database db, double scale_factor, double theta, int tthread, Configuration config) {
         super(db, scale_factor, theta, tthread, config);
@@ -71,12 +76,20 @@ public class GSInitializer extends TableInitilizer{
     }
     @Override
     public void loadDB(int thread_id, TopologyContext context) {
-        for (int key = 0; key < NUM_ITEMS; key++) {
+        int partition_interval=getPartition_interval();
+        int left_bound=thread_id*partition_interval;
+        int right_bound;
+        if(thread_id==context.getNUMTasks()-1){//last executor need to handle right-over
+            right_bound=NUM_ITEMS;
+        }else{
+            right_bound=(thread_id+1)*partition_interval;
+        }
+        for (int key = left_bound; key < right_bound; key++) {
             String value = GenerateValue(key);
             assert value.length() == VALUE_LEN;
             insertMicroRecord(key, value);
         }
-        System.out.println();
+        LOG.info("Thread:" + thread_id + " finished loading data from: " + left_bound + " to: " + right_bound);
     }
 
     @Override
