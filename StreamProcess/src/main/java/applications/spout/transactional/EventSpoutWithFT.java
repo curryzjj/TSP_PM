@@ -3,8 +3,11 @@ package applications.spout.transactional;
 import System.constants.BaseConstants;
 import System.util.OsUtils;
 import applications.events.InputDataGenerator.InputDataGenerator;
-import applications.events.MicroEvent;
+import applications.events.gs.MicroEvent;
 import applications.events.TxnEvent;
+import applications.events.ob.AlertEvent;
+import applications.events.ob.BuyingEvent;
+import applications.events.ob.ToppingEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.TransactionalSpoutFT;
@@ -13,8 +16,6 @@ import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -130,6 +131,39 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             Integer.parseInt(split[3]),//num_of_partition
                             split[5],//key_array
                             Boolean.parseBoolean(split[6])//flag
+                    );
+                    break;
+                case "BuyingEvent":
+                    event=new BuyingEvent(
+                            Integer.parseInt(split[0]), //bid
+                            split[2], //bid_array
+                            Integer.parseInt(split[1]),//pid
+                            Integer.parseInt(split[3]),//num_of_partition
+                            split[5],//key_array
+                            split[6],//price_array
+                            split[7]  //qty_array
+                    );
+                    break;
+                case "AlertEvent":
+                    event = new AlertEvent(
+                            Integer.parseInt(split[0]), //bid
+                            split[2], // bid_array
+                            Integer.parseInt(split[1]),//pid
+                            Integer.parseInt(split[3]),//num_of_partition
+                            Integer.parseInt(split[5]), //num_access
+                            split[6],//key_array
+                            split[7]//price_array
+                    );
+                    break;
+                case "ToppingEvent":
+                    event = new ToppingEvent(
+                            Integer.parseInt(split[0]), //bid
+                            split[2], Integer.parseInt(split[1]), //pid
+                            //bid_array
+                            Integer.parseInt(split[3]),//num_of_partition
+                            Integer.parseInt(split[5]), //num_access
+                            split[6],//key_array
+                            split[7]  //top_array
                     );
                     break;
                 default:

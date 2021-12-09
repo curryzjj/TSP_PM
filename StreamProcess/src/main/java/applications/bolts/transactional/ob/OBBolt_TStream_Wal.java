@@ -1,24 +1,22 @@
-package applications.bolts.transactional.tp;
+package applications.bolts.transactional.ob;
 
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
-public class TPBolt_TStream_Wal extends TPBolt_TStream{
-    public TPBolt_TStream_Wal(int fid) {
+public class OBBolt_TStream_Wal extends OBBolt_TStream{
+    public OBBolt_TStream_Wal(int fid) {
         super(fid);
     }
 
-
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-        if (in.isMarker()){
-            if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                this.collector.ack(in,in.getMarker());
+        if(in.isMarker()){
+            if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                //this.collector.ack(in,in.getMarker());
                 switch (in.getMarker().getValue()){
                     case "recovery":
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
@@ -39,7 +37,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                         break;
                 }
             }
-        }else{
+        }else {
             execute_ts_normal(in);
         }
     }
@@ -54,7 +52,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 REQUEST_REQUEST_CORE();
                 REQUEST_POST();
                 this.SyncCommitLog();
-                LREvents.clear();//clear stored events.
+                EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
                 bufferedTuple.clear();
                 break;

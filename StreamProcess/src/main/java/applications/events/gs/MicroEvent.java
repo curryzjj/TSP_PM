@@ -1,5 +1,6 @@
-package applications.events;
+package applications.events.gs;
 
+import applications.events.TxnEvent;
 import engine.table.datatype.DataBox;
 import engine.table.datatype.DataBoxImpl.IntDataBox;
 import engine.table.datatype.DataBoxImpl.StringDataBox;
@@ -14,7 +15,7 @@ import java.util.List;
 import static UserApplications.CONTROL.NUM_ACCESSES;
 import static UserApplications.constants.GrepSumConstants.Constant.VALUE_LEN;
 
-public class MicroEvent extends TxnEvent{
+public class MicroEvent extends TxnEvent {
     private final SchemaRecordRef[] recordRefs;
     private final int[] keys;
     private final boolean flag;

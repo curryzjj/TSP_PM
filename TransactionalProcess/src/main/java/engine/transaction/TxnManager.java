@@ -3,6 +3,7 @@ package engine.transaction;
 import engine.Exception.DatabaseException;
 import engine.table.datatype.DataBox;
 import engine.table.tableRecords.SchemaRecordRef;
+import engine.transaction.function.Condition;
 import engine.transaction.function.Function;
 import scala.Int;
 
@@ -25,6 +26,7 @@ public interface TxnManager {
      * @throws DatabaseException
      */
     boolean Asy_WriteRecord(TxnContext txn_context, String srcTable, String key, List<DataBox> value, double[] enqueue_time) throws DatabaseException;
+    boolean Asy_WriteRecord(TxnContext txn_context, String table, String id, long value, int column_id) throws DatabaseException;
     /**
      * Read-Modify_Write w/ read.
      *
@@ -36,6 +38,8 @@ public interface TxnManager {
      * @throws DatabaseException
      */
     boolean Asy_ModifyRecord_Read(TxnContext txn_context, String srcTable, String key, SchemaRecordRef record_ref, Function function) throws DatabaseException;
+    boolean Asy_ModifyRecord(TxnContext txn_context, String srcTable, String source_key, Function function, int column_id) throws DatabaseException;
+    boolean Asy_ModifyRecord(TxnContext txn_context, String srcTable, String key, Function function, Condition condition, boolean[] success) throws DatabaseException;
     /**
      * Read-only
      * This API pushes a place-holder to the shared-store.

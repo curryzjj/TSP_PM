@@ -13,16 +13,14 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static UserApplications.CONTROL.enable_parallel;
-import static UserApplications.CONTROL.enable_states_partition;
 
 public class WALManager {
     private static final Logger LOG= LoggerFactory.getLogger(WALManager.class);
     private static final String DESCRIPTION="Asynchronous commit update log";
     private ConcurrentHashMap<String,LogRecords_in_range> holder_by_tableName;
-    private int rangeNum;
+    private int partitionNum;
     /* init in the EM */
     public static ExecutorService writeExecutor;
     public class LogRecords_in_range{
@@ -34,8 +32,8 @@ public class WALManager {
             }
         }
     }
-    public WALManager(int num_op){
-        this.rangeNum=num_op;
+    public WALManager(int partitionNum){
+        this.partitionNum =partitionNum;
         this.holder_by_tableName=new ConcurrentHashMap<>();
     }
     public boolean isEmpty(){
@@ -59,11 +57,11 @@ public class WALManager {
      * @param myList
      */
     public void addLogRecord(MyList myList){
-        holder_by_tableName.get(myList.getTable_name()).holder_by_range.get(myList.getRange()).add(myList.getLogRecord());
+        holder_by_tableName.get(myList.getTable_name()).holder_by_range.get(myList.getPartitionId()).add(myList.getLogRecord());
     }
     public UpdateLogWrite asyncCommitLog(long globalLSN, long timestamp, LogStreamFactory logStreamFactory) throws IOException {
         if(enable_parallel){
-            List<LogStreamWithResultProvider> providers=LogStreamWithResultProvider.createMultipleStream(logStreamFactory,rangeNum);
+            List<LogStreamWithResultProvider> providers=LogStreamWithResultProvider.createMultipleStream(logStreamFactory, partitionNum);
             return new ParallelUpdateLogWrite(holder_by_tableName,providers,timestamp,globalLSN);
         }else{
             LogStreamWithResultProvider logStreamWithResultProvider=LogStreamWithResultProvider.createSimpleStream(logStreamFactory);

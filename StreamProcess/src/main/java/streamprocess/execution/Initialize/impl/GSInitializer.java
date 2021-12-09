@@ -22,22 +22,21 @@ import java.util.List;
 import static UserApplications.CONTROL.NUM_ITEMS;
 import static UserApplications.CONTROL.enable_states_partition;
 import static UserApplications.constants.GrepSumConstants.Constant.VALUE_LEN;
-import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
-import static applications.events.MicroEvent.GenerateValue;
+import static applications.events.gs.MicroEvent.GenerateValue;
 import static utils.PartitionHelper.getPartition_interval;
 
 public class GSInitializer extends TableInitilizer{
     private static final Logger LOG = LoggerFactory.getLogger(GSInitializer.class);
     protected int partition_interval;
-    public GSInitializer(Database db, double scale_factor, double theta, int tthread, Configuration config) {
-        super(db, scale_factor, theta, tthread, config);
-        partition_interval = (int) Math.ceil(NUM_ITEMS / (double) tthread);//NUM_ITEMS / tthread;
+    public GSInitializer(Database db, double scale_factor, double theta, int partition_id, Configuration config) {
+        super(db, scale_factor, theta, partition_id, config);
+        partition_interval = (int) Math.ceil(NUM_ITEMS / (double) partition_id);//NUM_ITEMS / tthread;
     }
 
     @Override
     public void creates_Table(Configuration config) {
         if(enable_states_partition){
-            for(int i=0;i<tthread;i++){
+            for(int i = 0; i< partition_id; i++){
                 RecordSchema s = MicroTableSchema();
                 db.createTable(s, "MicroTable_"+i, TransactionalProcessConstants.DataBoxTypes.STRING);
             }

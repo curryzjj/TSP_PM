@@ -8,12 +8,9 @@ import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
-public class GSBolt_TStream_Wal extends GSBolt_TStream{
+public class  GSBolt_TStream_Wal extends GSBolt_TStream{
     public GSBolt_TStream_Wal(int fid) {
         super(fid);
-        this.configPrefix="gstxn";
-        status=new Status();
-        this.setStateful();
     }
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {

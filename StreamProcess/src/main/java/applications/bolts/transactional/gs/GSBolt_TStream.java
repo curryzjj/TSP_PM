@@ -1,6 +1,6 @@
 package applications.bolts.transactional.gs;
 
-import applications.events.MicroEvent;
+import applications.events.gs.MicroEvent;
 import engine.Exception.DatabaseException;
 import engine.table.datatype.DataBox;
 import engine.table.tableRecords.SchemaRecordRef;
@@ -11,10 +11,7 @@ import streamprocess.components.operators.base.transaction.TransactionalBoltTStr
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
 
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.ExecutionException;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.NUM_ACCESSES;

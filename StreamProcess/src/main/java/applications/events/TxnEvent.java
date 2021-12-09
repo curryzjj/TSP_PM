@@ -14,6 +14,8 @@ public class TxnEvent {
         this.pid = pid;
         this.bid_array = bid_array;
         this.number_of_partitions = number_of_partitions;
+        success = new boolean[1];
+        success[0] = false;
     }
     public TxnEvent(long bid, int partition_id, String bid_array, int number_of_partitions) {
         this.bid = bid;
@@ -26,7 +28,6 @@ public class TxnEvent {
         }
         this.number_of_partitions = number_of_partitions;
         success = new boolean[1];
-
         success[0] = false;
     }
     public long getBid() {

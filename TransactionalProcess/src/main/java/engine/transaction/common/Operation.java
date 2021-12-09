@@ -67,6 +67,76 @@ public class Operation implements Comparable<Operation>{
         this.function = null;
         this.record_ref = null;
     }
+    /**
+     * @param table_name
+     * @param s_record
+     * @param d_record
+     * @param record_ref
+     * @param bid
+     * @param accessType
+     * @param function
+     * @param condition_records
+     * @param condition
+     * @param txn_context
+     * @param success
+     */
+    public Operation(String table_name, TableRecord s_record, TableRecord d_record, SchemaRecordRef record_ref, long bid, MetaTypes.AccessType accessType, Function function, TableRecord[] condition_records, Condition condition, TxnContext txn_context, boolean[] success) {
+        this.table_name = table_name;
+        this.s_record = s_record;
+        this.d_record = d_record;
+
+        this.bid = bid;
+        this.accessType = accessType;
+        this.txn_context = txn_context;
+
+        this.condition_records = condition_records;
+        this.function = function;
+        this.condition = condition;
+
+        this.success = success;
+        this.record_ref = record_ref;
+    }
+    public Operation(String table_name, TxnContext txn_context, long bid, MetaTypes.AccessType accessType, TableRecord record, long value, int column_id) {
+        this.table_name = table_name;
+        this.d_record = record;
+        this.bid = bid;
+        this.accessType = accessType;
+        this.txn_context = txn_context;
+
+        this.value = value;
+
+        this.column_id = column_id;
+
+        this.s_record = d_record;
+        this.function = null;
+
+        this.record_ref = null;
+    }
+    /**
+     * Update dest d_record by applying function of s_record.. It relys on MVCC to guarantee correctness.
+     *
+     * @param table_name
+     * @param s_record
+     * @param d_record
+     * @param bid
+     * @param accessType
+     * @param function
+     * @param txn_context
+     * @param column_id
+     */
+    public Operation(String table_name, TableRecord s_record, TableRecord d_record, long bid, MetaTypes.AccessType accessType, Function function, TxnContext txn_context, int column_id) {
+        this.table_name = table_name;
+        this.d_record = d_record;
+        this.bid = bid;
+        this.accessType = accessType;
+        this.txn_context = txn_context;
+
+        this.s_record = s_record;
+        this.function = function;
+
+        this.record_ref = null;
+        this.column_id = column_id;
+    }
     @Override
     public int compareTo(@NotNull Operation operation) {
         if (this.bid == (operation.bid)) {

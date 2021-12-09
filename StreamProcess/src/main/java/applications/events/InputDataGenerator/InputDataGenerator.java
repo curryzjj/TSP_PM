@@ -6,7 +6,6 @@ import applications.DataTypes.AbstractInputTuple;
 import applications.events.TxnEvent;
 import applications.events.TxnParam;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
@@ -33,17 +32,18 @@ public abstract class InputDataGenerator implements Serializable {
     protected int range;
     protected int access_per_partition;
     protected int floor_interval;
-    protected int tthread;
+    protected int partition_num;
     protected final String split_exp = ";";
     public static FastZipfGenerator shared_store;
     public static FastZipfGenerator[] partitioned_store;
     public abstract List<AbstractInputTuple> generateData(int batch);
     public abstract List<TxnEvent> generateEvent(int batch);
-    public abstract void storeInput(Object input, BufferedWriter bw) throws IOException;
+    public abstract void storeInput(Object input) throws IOException;
     public abstract void initialize(String dataPath, int recordNum, int range, double zipSkew, Configuration config);
     public abstract Object create_new_event(int bid);
     public abstract void close();
-    protected void randomKeys(int pid, TxnParam param, Set keys,int access_per_partition,int counter,int numAccessesPerEvent){
+    protected void randomKeys(int p, TxnParam param, Set keys,int access_per_partition,int counter,int numAccessesPerEvent){
+        int pid=p;
         for (int access_id=0;access_id<numAccessesPerEvent;++access_id){
             FastZipfGenerator generator;
             if(enable_states_partition){
@@ -60,7 +60,7 @@ public abstract class InputDataGenerator implements Serializable {
             counter++;
             if (counter==access_per_partition){
                 pid++;
-                if(pid==tthread){
+                if(pid== partition_num){
                     pid=0;
                 }
                 counter++;
@@ -81,7 +81,7 @@ public abstract class InputDataGenerator implements Serializable {
             int pid = i / (floor_interval);
 
             boolean case1 = pid >= partition_id && pid <= partition_id + number_of_partitions;
-            boolean case2 = pid >= 0 && pid <= (partition_id + number_of_partitions) % tthread;
+            boolean case2 = pid >= 0 && pid <= (partition_id + number_of_partitions) % partition_num;
 
             if (!(case1 || case2)) {
                 return false;

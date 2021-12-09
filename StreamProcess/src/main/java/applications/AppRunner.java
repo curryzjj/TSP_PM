@@ -7,6 +7,7 @@ import UserApplications.CONTROL;
 import UserApplications.baseRunner;
 import applications.topology.WordCount;
 import applications.topology.transactional.GS_txn;
+import applications.topology.transactional.OB_txn;
 import applications.topology.transactional.TP_txn;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
@@ -33,11 +34,12 @@ public class  AppRunner extends baseRunner {
         driver.addApp("WordCount", WordCount.class);
         driver.addApp("TP_txn", TP_txn.class);
         driver.addApp("GS_txn", GS_txn.class);
+        driver.addApp("OB_txn", OB_txn.class);
     }
     private void run() throws UnhandledCaseException, InterruptedException, IOException {
         //Get the running environment
         if(OsUtils.isMac()){
-            LOG.info(application+"running on the mac");
+            LOG.info(application+" running on the mac");
         }else {
             LOG.info(application+" running on the Node22");
         }
@@ -87,9 +89,9 @@ public class  AppRunner extends baseRunner {
                 break;
         }
         if(OsUtils.isMac()){
-            failureTime=(int)(config.getInt("NUM_EVENTS")*config.getDouble("failureTime"));
-        }else {
             failureTime=(int)(config.getInt("TEST_NUM_EVENTS")*config.getDouble("failureTime"));
+        }else {
+            failureTime=(int)(config.getInt("NUM_EVENTS")*config.getDouble("failureTime"));
         }
         //Set the application
         Arrival_Control=config.getBoolean("Arrival_Control");
@@ -99,6 +101,7 @@ public class  AppRunner extends baseRunner {
         NUM_EVENTS=config.getInt("NUM_EVENTS");
         TEST_NUM_EVENTS=config.getInt("TEST_NUM_EVENTS");
         ZIP_SKEW=config.getDouble("ZIP_SKEW");
+        partition_num=config.getInt("partition_num");
         //Get the descriptor for thr given application
         AppDriver.AppDescriptor app=driver.getApp(application);
         // In case topology names is given, create one

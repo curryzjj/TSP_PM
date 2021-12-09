@@ -17,22 +17,22 @@ public class MyList<O> extends ConcurrentSkipListSet<O> {
         return logRecord;
     }
 
-    public int getRange() {
-        return range;
+    public int getPartitionId() {
+        return partitionId;
     }
 
     private final String table_name;
     private final String primaryKey;
-    private final int range;
+    private final int partitionId;
     public LogRecord logRecord;
 
 
-    public MyList(String table_name, String primaryKey,int range) {
+    public MyList(String table_name, String primaryKey,int partitionId) {
         this.table_name = table_name;
         this.primaryKey = primaryKey;
-        this.range=range;
+        this.partitionId = partitionId;
         if(enable_states_partition){
-            this.logRecord =new LogRecord(primaryKey,table_name+"_"+range);
+            this.logRecord =new LogRecord(primaryKey,table_name+"_"+ partitionId);
         }else{
             this.logRecord =new LogRecord(primaryKey,table_name);
         }

@@ -6,12 +6,12 @@ import engine.storage.AbstractStorageManager;
 import engine.table.datatype.DataBox;
 import engine.table.tableRecords.SchemaRecordRef;
 import engine.table.tableRecords.TableRecord;
-import engine.table.tableRecords.TableRecordRef;
 import engine.transaction.TxnContext;
 import engine.transaction.TxnManagerDedicated;
 import engine.transaction.TxnProcessingEngine;
 import engine.transaction.common.MyList;
 import engine.transaction.common.Operation;
+import engine.transaction.function.Condition;
 import engine.transaction.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,27 +64,75 @@ public class TxnManagerTStream extends TxnManagerDedicated {
         operation_chain_construction_write_only(t_record, primary_key, table_name, bid, access_type, value, txn_context);
         return true;//it should be always success.
     }
+    @Override
+    protected boolean Asy_WriteRecordCC(TxnContext txn_context, String primary_key, String table_name, TableRecord t_record, long value, int column_id, MetaTypes.AccessType access_type) {
+        if(this.instance.getTransactionAbort().contains(txn_context.getBID())){
+            this.instance.getTransactionAbort().remove(txn_context.getBID());
+            return false;
+        }
+        long bid = txn_context.getBID();
+        operation_chain_construction_write_only(t_record, primary_key, table_name, bid, access_type, value, column_id, txn_context);
+
+        return true;//it should be always success.
+    }
+    @Override
+    protected boolean Asy_ModifyRecordCC(TxnContext txn_context, String srcTable, TableRecord t_record, TableRecord d_record, Function function, MetaTypes.AccessType accessType, int column_id) {
+        if(this.instance.getTransactionAbort().contains(txn_context.getBID())){
+            this.instance.getTransactionAbort().remove(txn_context.getBID());
+            return false;
+        }
+        long bid = txn_context.getBID();
+        operation_chain_construction_modify_only(t_record, srcTable, bid, accessType, d_record, function, txn_context, column_id);//TODO: this is for sure READ_WRITE... think about how to further optimize.
+        return true;
+    }
+    @Override
+    protected boolean Asy_ModifyRecordCC(TxnContext txn_context, String srcTable, TableRecord s_record, TableRecord d_record, Function function, TableRecord[] condition_source, Condition condition, MetaTypes.AccessType accessType, boolean[] success) {
+        if(this.instance.getTransactionAbort().contains(txn_context.getBID())){
+            this.instance.getTransactionAbort().remove(txn_context.getBID());
+            return false;
+        }
+        long bid = txn_context.getBID();
+        operation_chain_construction_modify_only(srcTable, bid, accessType, s_record, d_record, function, condition_source, condition, txn_context, success);//TODO: this is for sure READ_WRITE... think about how to further optimize.
+        return true;
+    }
+
+    private void operation_chain_construction_modify_only(TableRecord s_record, String srcTable, long bid, MetaTypes.AccessType accessType, TableRecord d_record, Function function, TxnContext txn_context, int column_id) {
+        String primaryKey = d_record.record_.GetPrimaryKey();
+        ConcurrentHashMap<String, MyList<Operation>> holder = instance.getHolder(srcTable).rangeMap.get(getTaskId(primaryKey)).holder_v1;
+        holder.putIfAbsent(primaryKey, new MyList(srcTable, primaryKey, getPartitionId(primaryKey)));
+        holder.get(primaryKey).add(new Operation(srcTable, s_record, d_record, bid, accessType, function, txn_context, column_id));
+    }
+    private void operation_chain_construction_modify_only(String table_name, long bid, MetaTypes.AccessType accessType, TableRecord s_record, TableRecord d_record, Function function, TableRecord[] condition_records, Condition condition, TxnContext txn_context, boolean[] success) {
+        String primaryKey = d_record.record_.GetPrimaryKey();
+        ConcurrentHashMap<String, MyList<Operation>> holder = instance.getHolder(table_name).rangeMap.get(getTaskId(primaryKey)).holder_v1;
+        holder.putIfAbsent(primaryKey, new MyList(table_name, primaryKey, getPartitionId(primaryKey)));
+        holder.get(primaryKey).add(new Operation(table_name, s_record, d_record, null, bid, accessType, function, condition_records, condition, txn_context, success));
+    }
 
     //operation_chain_construction
     private void operation_chain_construction_modify_read(TableRecord tableRecord, String srcTable, long bid, MetaTypes.AccessType accessType, SchemaRecordRef record_ref, Function function, TxnContext txn_context) {
         String primaryKey=tableRecord.record_.GetPrimaryKey();
         ConcurrentHashMap<String, MyList<Operation>> holder=instance.getHolder(srcTable).rangeMap.get(getTaskId(primaryKey)).holder_v1;
-        holder.putIfAbsent(primaryKey,new MyList<>(srcTable,primaryKey,getTaskId(primaryKey)));
+        holder.putIfAbsent(primaryKey,new MyList<>(srcTable,primaryKey, getPartitionId(primaryKey)));
         holder.get(primaryKey).add(new Operation(srcTable,txn_context,bid,accessType,tableRecord,record_ref,function));
     }
 
     public void operation_chain_construction_read_only(TableRecord record, String primaryKey, String table_name, long bid, MetaTypes.AccessType accessType, SchemaRecordRef record_ref, TxnContext txn_context) {
         ConcurrentHashMap<String, MyList<Operation>> holder = instance.getHolder(table_name).rangeMap.get(getTaskId(primaryKey)).holder_v1;
-        holder.putIfAbsent(primaryKey, new MyList(table_name, primaryKey,getTaskId(primaryKey)));
+        holder.putIfAbsent(primaryKey, new MyList(table_name, primaryKey, getPartitionId(primaryKey)));
         MyList<Operation> myList = holder.get(primaryKey);
         myList.add(new Operation(table_name, txn_context, bid, accessType, record, record_ref));
     }
     private void operation_chain_construction_write_only(TableRecord record, String primaryKey, String table_name, long bid, MetaTypes.AccessType accessType, List<DataBox> value, TxnContext txn_context) {
         ConcurrentHashMap<String, MyList<Operation>> holder = instance.getHolder(table_name).rangeMap.get(getTaskId(primaryKey)).holder_v1;
-        holder.putIfAbsent(primaryKey, new MyList(table_name, primaryKey,getTaskId(primaryKey)));
+        holder.putIfAbsent(primaryKey, new MyList(table_name, primaryKey, getPartitionId(primaryKey)));
         holder.get(primaryKey).add(new Operation(table_name, txn_context, bid, accessType, record, value));
     }
-
+    private void operation_chain_construction_write_only(TableRecord record, String primaryKey, String table_name, long bid, MetaTypes.AccessType accessType, long value, int column_id, TxnContext txn_context) {
+        ConcurrentHashMap<String, MyList<Operation>> holder = instance.getHolder(table_name).rangeMap.get(getTaskId(primaryKey)).holder_v1;
+        holder.putIfAbsent(primaryKey, new MyList(table_name, primaryKey, getPartitionId(primaryKey)));
+        holder.get(primaryKey).add(new Operation(table_name, txn_context, bid, accessType, record, value, column_id));
+    }
     @Override
     public int start_evaluate(int thread_id, long mark_ID) throws InterruptedException, BrokenBarrierException, IOException, DatabaseException {
         /** Pay attention to concurrency control */

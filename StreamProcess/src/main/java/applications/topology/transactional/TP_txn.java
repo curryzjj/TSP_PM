@@ -19,8 +19,7 @@ import streamprocess.execution.Initialize.impl.TPInitializer;
 import streamprocess.execution.runtime.tuple.Fields;
 import utils.SpinLock;
 
-import static UserApplications.CONTROL.enable_snapshot;
-import static UserApplications.CONTROL.enable_wal;
+import static UserApplications.CONTROL.*;
 import static UserApplications.constants.TP_TxnConstants.Conf.Executor_Threads;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 import static UserApplications.constants.TP_TxnConstants.PREFIX;
@@ -89,9 +88,8 @@ public class TP_txn extends TransactionalTopology {
     public TableInitilizer createDB(SpinLock[] spinlock) {
         double scale_factor = config.getDouble("scale_factor", 1);
         double theta = config.getDouble("theta", 1);
-        int tthread = config.getInt(Executor_Threads,1);
-        setPartition_interval((int) (Math.ceil(NUM_SEGMENTS / (double) tthread)), tthread);
-        TableInitilizer ini = new TPInitializer(db, scale_factor, theta, tthread, config);
+        setPartition_interval((int) (Math.ceil(NUM_SEGMENTS / (double) partition_num)), partition_num);
+        TableInitilizer ini = new TPInitializer(db, scale_factor, theta, partition_num, config);
         ini.creates_Table(config);
         return ini;
     }

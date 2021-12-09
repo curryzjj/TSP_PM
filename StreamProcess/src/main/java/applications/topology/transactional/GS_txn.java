@@ -83,9 +83,8 @@ public class GS_txn extends TransactionalTopology {
     public TableInitilizer createDB(SpinLock[] spinlock) {
         double scale_factor = config.getDouble("scale_factor", 1);
         double theta = config.getDouble("theta", 1);
-        int tthread = config.getInt(Executor_Threads,1);
-        setPartition_interval((int) (Math.ceil(NUM_ITEMS / (double) tthread)), tthread);
-        TableInitilizer ini = new GSInitializer(db, scale_factor, theta, tthread, config);
+        setPartition_interval((int) (Math.ceil(NUM_ITEMS / (double) partition_num)), partition_num);
+        TableInitilizer ini = new GSInitializer(db, scale_factor, theta, partition_num, config);
         ini.creates_Table(config);
         return ini;
     }

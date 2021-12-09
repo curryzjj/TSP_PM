@@ -1,5 +1,7 @@
 package UserApplications;
 
+import java.util.SplittableRandom;
+
 public class CONTROL {
     //global settings.
     int kMaxThreadNum = 40;
@@ -34,6 +36,7 @@ public class CONTROL {
     public static boolean enable_wal = false;
     public static boolean enable_parallel=false;
     public static boolean enable_states_partition = false;//must be enabled for parallel snapshot
+    public static int partition_num=1;
     public static boolean enable_transaction_abort=false;
     public static boolean enable_states_lost=false;
     public static int failureTime=0;
@@ -52,7 +55,7 @@ public class CONTROL {
     public static boolean enable_numa_placement = true;//thread placement. always on.
 
     //used for NUMA-aware partition engine
-    public static boolean enable_work_partition = false; // 2. this is a sub-option, only useful when engine is enabled.
+    public static boolean enable_work_partition = true; // 2. this is a sub-option, only useful when engine is enabled.
     public static int island = -1;//-1 stands for one engine per core; -2 stands for one engine per socket.
 
     public static int CORE_PER_SOCKET = 2;//configure this for NUMA placement please.
@@ -63,5 +66,7 @@ public class CONTROL {
 
 
 //    boolean enable_pushdown = false;//enabled by default.
+    public static SplittableRandom rnd = new SplittableRandom(1234);
+
 
 }

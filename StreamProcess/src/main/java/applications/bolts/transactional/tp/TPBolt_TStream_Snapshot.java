@@ -14,9 +14,6 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
     private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream_Snapshot.class);
     public TPBolt_TStream_Snapshot(int fid) {
         super(fid);
-        this.configPrefix="tptxn";
-        status=new Status();
-        this.setStateful();
     }
 
     @Override

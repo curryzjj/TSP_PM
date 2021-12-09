@@ -9,14 +9,12 @@ import System.util.Configuration;
 import applications.DataTypes.AbstractInputTuple;
 import applications.DataTypes.PositionReport;
 import applications.events.InputDataGenerator.InputDataGenerator;
-import applications.events.MicroEvent;
 import applications.events.TxnEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static UserApplications.CONTROL.*;
@@ -37,17 +35,27 @@ public class TPDataGenerator extends InputDataGenerator {
     }
 
     @Override
-    public void storeInput(Object input, BufferedWriter bw) throws IOException {
-        PositionReport report=(PositionReport) input;
-        String str=report.getTime()
-                +split_exp+report.getVid()
-                +split_exp+report.getSpeed()
-                +split_exp+report.getXWay()
-                +split_exp+report.getLane()
-                +split_exp+report.getDirection()
-                +split_exp+report.getSegment()
-                +split_exp+report.getPosition();
-        bw.write(str+"\n");
+    public void storeInput(Object input) throws IOException {
+        List<AbstractInputTuple> inputTuples= (List<AbstractInputTuple>) input;
+        File file=new File(dataPath);
+        FileWriter Fw= null;
+        Fw = new FileWriter(file,true);
+        BufferedWriter bw= new BufferedWriter(Fw);
+        for (AbstractInputTuple tuple:inputTuples){
+            PositionReport report=(PositionReport) tuple;
+            String str=report.getTime()
+                    +split_exp+report.getVid()
+                    +split_exp+report.getSpeed()
+                    +split_exp+report.getXWay()
+                    +split_exp+report.getLane()
+                    +split_exp+report.getDirection()
+                    +split_exp+report.getSegment()
+                    +split_exp+report.getPosition();
+            bw.write(str+"\n");
+        }
+        bw.flush();
+        bw.close();
+        Fw.close();
     }
 
     @Override
@@ -56,23 +64,16 @@ public class TPDataGenerator extends InputDataGenerator {
         if(recordNum==0){
             return null;
         }
-        File file=new File(dataPath);
-        FileWriter Fw= null;
-        try {
-            Fw = new FileWriter(file,true);
-            BufferedWriter bw= new BufferedWriter(Fw);
-            for(int i=0;i<Math.min(recordNum,batch);i++){
-                PositionReport report= (PositionReport) this.create_new_event(current_bid);
-                batch_event.add(report);
-                if (enable_snapshot||enable_wal){
-                    storeInput(report,bw);
-                }
+        for(int i=0;i<Math.min(recordNum,batch);i++){
+            PositionReport report= (PositionReport) this.create_new_event(current_bid);
+            batch_event.add(report);
+        }
+        if (enable_snapshot||enable_wal){
+            try {
+                storeInput(batch_event);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            bw.flush();
-            bw.close();
-            Fw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         recordNum=recordNum-Math.min(recordNum,batch);
         return batch_event;
@@ -83,13 +84,13 @@ public class TPDataGenerator extends InputDataGenerator {
         this.dataPath=dataPath;
         this.zipSkew=zipSkew;
         this.range=range;
-        this.tthread=config.getInt("tthread");
+        this.partition_num =config.getInt("partition_num");
         this.zipfGenerator=new ZipfGenerator(range, zipSkew);
         this.current_pid=0;
         if(enable_states_partition){
-            floor_interval= (int) Math.floor(NUM_ITEMS / (double) tthread);//NUM_ITEMS / tthread;
-            partitioned_store =new FastZipfGenerator[tthread];
-            for (int i = 0; i < tthread; i++) {
+            floor_interval= (int) Math.floor(NUM_ITEMS / (double) partition_num);//NUM_ITEMS / partition_num;
+            partitioned_store =new FastZipfGenerator[partition_num];
+            for (int i = 0; i < partition_num; i++) {
                 partitioned_store[i] = new FastZipfGenerator((int) floor_interval, zipSkew, i * floor_interval);
             }
         }else{
@@ -107,7 +108,7 @@ public class TPDataGenerator extends InputDataGenerator {
         }
         long timestamp = System.nanoTime();
         current_pid++;
-        if(current_pid==tthread){
+        if(current_pid== partition_num){
             current_pid=0;
         }
         return new PositionReport(timestamp,

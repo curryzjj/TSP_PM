@@ -3,19 +3,17 @@ package engine.transaction;
 import engine.Exception.DatabaseException;
 import engine.Meta.MetaTypes;
 import engine.storage.AbstractStorageManager;
-import engine.storage.ImplStorageManager.StorageManager;
 import engine.table.datatype.DataBox;
 import engine.table.tableRecords.SchemaRecordRef;
 import engine.table.tableRecords.TableRecord;
+import engine.transaction.function.Condition;
 import engine.transaction.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static UserApplications.CONTROL.NUM_ITEMS;
-import static UserApplications.CONTROL.enable_states_partition;
-import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
+import static UserApplications.CONTROL.*;
 
 public abstract class TxnManagerDedicated implements TxnManager{
     public static final Logger LOG= LoggerFactory.getLogger(TxnManagerDedicated.class);
@@ -24,6 +22,11 @@ public abstract class TxnManagerDedicated implements TxnManager{
     private final long thread_id;
     private final long num_tasks;
     protected int delta;//range of each partition. depends on the number of op in the stage.
+    protected int partition_delta;
+    protected int getPartitionId(String key) {
+        Integer _key = Integer.valueOf(key);
+        return _key / partition_delta;
+    }
     protected int getTaskId(String key) {
         Integer _key = Integer.valueOf(key);
         return _key / delta;
@@ -36,6 +39,7 @@ public abstract class TxnManagerDedicated implements TxnManager{
         this.thread_id = thread_Id;
         this.num_tasks = num_tasks;
         delta = (int) Math.ceil(NUM_ITEMS / (double) num_tasks);//NUM_ITEMS / tthread;
+        partition_delta=(int) Math.ceil(NUM_ITEMS / (double) partition_num);//NUM_ITEMS / partition_num;
     }
     @Override
     public boolean Asy_ModifyRecord_Read(TxnContext txn_context, String srcTable, String key, SchemaRecordRef record_ref, Function function) throws DatabaseException {
@@ -43,7 +47,7 @@ public abstract class TxnManagerDedicated implements TxnManager{
         TableRecord tableRecord;
         String tableName="";
         if(enable_states_partition){
-            tableName=srcTable+"_"+getTaskId(key);
+            tableName=srcTable+"_"+ getPartitionId(key);
         }else{
             tableName=srcTable;
         }
@@ -57,7 +61,7 @@ public abstract class TxnManagerDedicated implements TxnManager{
         MetaTypes.AccessType accessType = MetaTypes.AccessType.READ_ONLY;
         String tableName="";
         if(enable_states_partition){
-            tableName=srcTable+"_"+getTaskId(primary_key);
+            tableName=srcTable+"_"+ getPartitionId(primary_key);
         }else{
             tableName=srcTable;
         }
@@ -73,7 +77,7 @@ public abstract class TxnManagerDedicated implements TxnManager{
         MetaTypes.AccessType accessType = MetaTypes.AccessType.WRITE_ONLY;
         String tableName="";
         if(enable_states_partition){
-            tableName=srcTable+"_"+getTaskId(primary_key);
+            tableName=srcTable+"_"+ getPartitionId(primary_key);
         }else{
             tableName=srcTable;
         }
@@ -81,8 +85,77 @@ public abstract class TxnManagerDedicated implements TxnManager{
         if (t_record != null) {
             return Asy_WriteRecordCC(txn_context, srcTable, t_record, primary_key, value, enqueue_time, accessType);
         } else {
+            LOG.info("No record is found:" + primary_key);
+            return false;
+        }
+    }
+    @Override
+    public boolean Asy_WriteRecord(TxnContext txn_context, String srcTable, String primary_key, long value, int column_id) throws DatabaseException {
+        MetaTypes.AccessType accessType = MetaTypes.AccessType.WRITE_ONLY;
+        String tableName="";
+        if(enable_states_partition){
+            tableName=srcTable+"_"+ getPartitionId(primary_key);
+        }else{
+            tableName=srcTable;
+        }
+        TableRecord t_record = storageManager.getTable(tableName).SelectKeyRecord(primary_key);
+        if (t_record != null) {
+            return Asy_WriteRecordCC(txn_context, primary_key, srcTable, t_record, value, column_id, accessType);//TxnContext txn_context, String srcTable, String primary_key, long value_list, int column_id
+        } else {
             // if no record_ is found, then a "virtual record_" should be inserted as the placeholder so that we can lock_ratio it.
             LOG.info("No record is found:" + primary_key);
+            return false;
+        }
+
+    }
+    @Override
+    public boolean Asy_ModifyRecord(TxnContext txn_context, String srcTable, String source_key, Function function, int column_id) throws DatabaseException {
+        MetaTypes.AccessType accessType = MetaTypes.AccessType.READ_WRITE;
+        String tableName="";
+        if(enable_states_partition){
+            tableName=srcTable+"_"+ getPartitionId(source_key);
+        }else{
+            tableName=srcTable;
+        }
+        TableRecord t_record = storageManager.getTable(tableName).SelectKeyRecord(source_key);
+
+        if (t_record != null) {
+            return Asy_ModifyRecordCC(txn_context, srcTable, t_record, t_record, function, accessType, column_id);
+        } else {
+            // if no record_ is found, then a "virtual record_" should be inserted as the placeholder so that we can lock_ratio it.
+            LOG.info("No record is found:" + source_key);
+            return false;
+        }
+    }
+    /**
+     * condition on itself.
+     *
+     * @param txn_context
+     * @param srcTable
+     * @param key
+     * @param function
+     * @param condition
+     * @param success
+     * @return
+     * @throws DatabaseException
+     */
+    @Override
+    public boolean Asy_ModifyRecord(TxnContext txn_context, String srcTable, String key, Function function, Condition condition, boolean[] success) throws DatabaseException {
+        MetaTypes.AccessType accessType = MetaTypes.AccessType.READ_WRITE_COND;
+        TableRecord[] condition_records = new TableRecord[1];
+        String tableName="";
+        if(enable_states_partition){
+            tableName=srcTable+"_"+ getPartitionId(key);
+        }else{
+            tableName=srcTable;
+        }
+        TableRecord s_record = storageManager.getTable(tableName).SelectKeyRecord(key);
+        condition_records[0] = s_record;
+        if (s_record != null) {
+            return Asy_ModifyRecordCC(txn_context, srcTable, s_record, function, condition_records, condition, accessType, success);
+        } else {
+            LOG.info("No record is found:" + key);
+            // if no record_ is found, then a "virtual record_" should be inserted as the placeholder so that we can lock_ratio it.
             return false;
         }
     }
@@ -90,4 +163,10 @@ public abstract class TxnManagerDedicated implements TxnManager{
     protected abstract boolean Asy_ModifyRecord_ReadCC(TxnContext txn_context, String srcTable, TableRecord tableRecord, SchemaRecordRef record_ref, Function function, MetaTypes.AccessType accessType);
     protected abstract boolean Asy_ReadRecordCC(TxnContext txn_context, String primary_key, String table_name, TableRecord t_record, SchemaRecordRef record_ref, double[] enqueue_time, MetaTypes.AccessType access_type);
     protected abstract boolean Asy_WriteRecordCC(TxnContext txn_context, String table_name, TableRecord t_record, String primary_key, List<DataBox> value, double[] enqueue_time, MetaTypes.AccessType access_type);
+    protected abstract boolean Asy_WriteRecordCC(TxnContext txn_context, String primary_key, String table_name, TableRecord t_record, long value, int column_id, MetaTypes.AccessType access_type);
+    protected abstract boolean Asy_ModifyRecordCC(TxnContext txn_context, String srcTable, TableRecord t_record, TableRecord d_record, Function function, MetaTypes.AccessType accessType, int column_id);
+    protected abstract boolean Asy_ModifyRecordCC(TxnContext txn_context, String srcTable, TableRecord s_record, TableRecord d_record, Function function, TableRecord[] condition_source, Condition condition, MetaTypes.AccessType accessType, boolean[] success);
+    protected boolean Asy_ModifyRecordCC(TxnContext txn_context, String srcTable, TableRecord s_record, Function function, TableRecord[] condition_source, Condition condition, MetaTypes.AccessType accessType, boolean[] success) {
+        return Asy_ModifyRecordCC(txn_context, srcTable, s_record, s_record, function, condition_source, condition, accessType, success);
+    }
 }

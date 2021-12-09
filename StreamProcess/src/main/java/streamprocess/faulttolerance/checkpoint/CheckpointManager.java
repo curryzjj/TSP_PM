@@ -35,7 +35,6 @@ import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLa
 
 public class CheckpointManager extends FTManager {
     private final Logger LOG= LoggerFactory.getLogger(CheckpointManager.class);
-    public Status status=null;
     public boolean running=true;
     private Path Current_Path;
     private FileSystem localFS;

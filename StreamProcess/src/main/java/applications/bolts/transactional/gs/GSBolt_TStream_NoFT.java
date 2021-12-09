@@ -11,9 +11,6 @@ import java.util.concurrent.ExecutionException;
 public class GSBolt_TStream_NoFT extends GSBolt_TStream{
     public GSBolt_TStream_NoFT(int fid) {
         super(fid);
-        this.configPrefix="gstxn";
-        status=new Status();
-        this.setStateful();
     }
 
     @Override

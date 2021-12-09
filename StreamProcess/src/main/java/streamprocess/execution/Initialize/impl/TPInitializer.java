@@ -27,15 +27,15 @@ import static utils.PartitionHelper.getPartition_interval;
 public class TPInitializer extends TableInitilizer {
     private static final Logger LOG = LoggerFactory.getLogger(TPInitializer.class);
     protected int delta;
-    public TPInitializer(Database db, double scale_factor, double theta, int tthread, Configuration config) {
-        super(db, scale_factor, theta, tthread, config);
-        delta = (int) Math.ceil(NUM_SEGMENTS / (double) tthread);//NUM_ITEMS / tthread;
+    public TPInitializer(Database db, double scale_factor, double theta, int partition_num, Configuration config) {
+        super(db, scale_factor, theta, partition_num, config);
+        delta = (int) Math.ceil(NUM_SEGMENTS / (double) partition_num);//NUM_ITEMS / tthread;
     }
 
     @Override
     public void creates_Table(Configuration config) {
         if(enable_states_partition){
-            for(int i=0;i<tthread;i++){
+            for(int i = 0; i< partition_id; i++){
                 RecordSchema s = SpeedScheme();
                 db.createTable(s, "segment_speed_"+i, DataBoxTypes.STRING);
                 RecordSchema b = CntScheme();

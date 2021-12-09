@@ -1,6 +1,7 @@
-package applications.bolts.transactional.tp;
+package applications.bolts.transactional.ob;
 
 import engine.Exception.DatabaseException;
+import org.slf4j.Logger;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
 
@@ -8,8 +9,8 @@ import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
-public class TPBolt_TStream_NoFT extends TPBolt_TStream{
-    public TPBolt_TStream_NoFT(int fid) {
+public class OBBolt_TStream_NoFT extends OBBolt_TStream{
+    public OBBolt_TStream_NoFT(int fid) {
         super(fid);
     }
 
@@ -38,7 +39,7 @@ public class TPBolt_TStream_NoFT extends TPBolt_TStream{
         transactionManager.start_evaluate(thread_Id,this.fid);
         REQUEST_REQUEST_CORE();
         REQUEST_POST();
-        LREvents.clear();//clear stored events.
+        EventsHolder.clear();
         BUFFER_PROCESS();
         bufferedTuple.clear();
         return true;

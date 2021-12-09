@@ -9,6 +9,7 @@ import engine.transaction.common.MyList;
 import engine.transaction.common.Operation;
 import engine.transaction.function.AVG;
 import engine.log.LogRecord;
+import engine.transaction.function.INC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utils.SOURCE_CONTROL;
@@ -19,7 +20,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static UserApplications.CONTROL.*;
-import static engine.log.WALManager.writeExecutor;
 
 public class TxnProcessingEngine {
     private static final Logger LOG= LoggerFactory.getLogger(TxnProcessingEngine.class);
@@ -47,7 +47,7 @@ public class TxnProcessingEngine {
         num_op=size;
         this.app=app;
         holder_by_stage = new ConcurrentHashMap<>();
-        this.walManager=new WALManager(num_op);
+        this.walManager=new WALManager(partition_num);
         this.transactionAbort=new ConcurrentSkipListSet<>();
         this.dropTable=new ArrayList<>();
         switch(app){
@@ -60,6 +60,10 @@ public class TxnProcessingEngine {
             case "GS_txn":
                 holder_by_stage.put("MicroTable", new Holder_in_range(num_op));
                 this.walManager.setHolder_by_tableName("MicroTable",num_op);
+                break;
+            case "OB_txn":
+                holder_by_stage.put("goods", new Holder_in_range(num_op));
+                this.walManager.setHolder_by_tableName("goods",num_op);
                 break;
             default:
                 throw new UnsupportedOperationException("app not recognized");
@@ -166,7 +170,7 @@ public class TxnProcessingEngine {
         }
         @Override
         public Object call() throws Exception {
-            process((MyList<Operation>) operation_chain, ((MyList<Operation>) operation_chain).getRange());
+            process((MyList<Operation>) operation_chain, ((MyList<Operation>) operation_chain).getPartitionId());
             return null;
         }
     }
@@ -235,10 +239,45 @@ public class TxnProcessingEngine {
                 operation.record_ref.setRecord(new SchemaRecord(schemaRecord.getValues()));//Note that, locking scheme allows directly modifying on original table d_record.
             break;
             case WRITE_ONLY:
-                if(operation.value_list!=null){
+                if(operation.value_list!=null){//directly replace value_list--only used in the GS
                     operation.d_record.record_.updateValues(operation.value_list);
-                }else{
+                }else{//update by the column id
                     operation.d_record.record_.getValues().get(operation.column_id).setLong(operation.value);
+                }
+                if(enable_wal){
+                    logRecord.setUpdateTableRecord(operation.d_record);
+                }
+            break;
+            case READ_WRITE://read, modify, write
+                if(app=="SL_txn"){
+
+                }else{
+                    SchemaRecord src_record=operation.s_record.record_;
+                    List<DataBox> values=src_record.getValues();
+                    if(operation.function instanceof INC){
+                        values.get(operation.column_id).setLong(values.get(operation.column_id).getLong()+operation.function.delta_long);
+                    }
+                }
+                if(enable_wal){
+                    logRecord.setUpdateTableRecord(operation.d_record);
+                }
+            break;
+            case READ_WRITE_COND://read, modify(depends on the condition), write(depend on the condition)
+                if(app=="SL_txn"){
+
+                }else{
+                    List<DataBox> d_record=operation.condition_records[0].record_.getValues();
+                    long askPrice = d_record.get(1).getLong();//price
+                    long left_qty = d_record.get(2).getLong();//available qty;
+                    long bidPrice = operation.condition.arg1;
+                    long bid_qty = operation.condition.arg2;
+                    // check the preconditions
+                    if (bidPrice < askPrice || bid_qty > left_qty) {
+                        operation.success[0] = false;
+                    } else {
+                        d_record.get(2).setLong(left_qty - operation.function.delta_long);//new quantity.
+                        operation.success[0] = true;
+                    }
                 }
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.d_record);

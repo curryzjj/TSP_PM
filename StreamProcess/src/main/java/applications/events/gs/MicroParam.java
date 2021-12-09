@@ -1,6 +1,8 @@
-package applications.events;
+package applications.events.gs;
 
-public class MicroParam extends TxnParam{
+import applications.events.TxnParam;
+
+public class MicroParam extends TxnParam {
     /* It should be arraylist instead of linkedlist as there is no add/remove later */
     int[] keys;
     public MicroParam(int numItems){
