@@ -3,6 +3,8 @@ package applications.spout.transactional;
 import System.constants.BaseConstants;
 import System.util.OsUtils;
 import applications.events.InputDataGenerator.InputDataGenerator;
+import applications.events.SL.DepositEvent;
+import applications.events.SL.TransactionEvent;
 import applications.events.gs.MicroEvent;
 import applications.events.TxnEvent;
 import applications.events.ob.AlertEvent;
@@ -164,6 +166,32 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             Integer.parseInt(split[5]), //num_access
                             split[6],//key_array
                             split[7]  //top_array
+                    );
+                    break;
+                case "DepositEvent":
+                    event = new DepositEvent(
+                            Integer.parseInt(split[0]), //bid
+                            Integer.parseInt(split[1]), //pid
+                            split[2], //bid_array
+                            Integer.parseInt(split[3]),//num_of_partition
+                            split[5],//getAccountId
+                            split[6],//getBookEntryId
+                            Integer.parseInt(split[7]),  //getAccountTransfer
+                            Integer.parseInt(split[8])  //getBookEntryTransfer
+                    );
+                    break;
+                case "TransactionEvent":
+                    event = new TransactionEvent(
+                            Integer.parseInt(split[0]), //bid
+                            Integer.parseInt(split[1]), //pid
+                            split[2], //bid_array
+                            Integer.parseInt(split[3]),//num_of_partition
+                            split[5],//getSourceAccountId
+                            split[6],//getSourceBookEntryId
+                            split[7],//getTargetAccountId
+                            split[8],//getTargetBookEntryId
+                            Integer.parseInt(split[9]),  //getAccountTransfer
+                            Integer.parseInt(split[10])  //getBookEntryTransfer
                     );
                     break;
                 default:

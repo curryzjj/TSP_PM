@@ -53,18 +53,24 @@ public class TxnProcessingEngine {
         switch(app){
             case "TP_txn":
                 holder_by_stage.put("segment_speed", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("segment_speed",num_op);
+                this.walManager.setHolder_by_tableName("segment_speed",partition_num);
                 holder_by_stage.put("segment_cnt", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("segment_cnt",num_op);
+                this.walManager.setHolder_by_tableName("segment_cnt",partition_num);
                 break;
             case "GS_txn":
                 holder_by_stage.put("MicroTable", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("MicroTable",num_op);
+                this.walManager.setHolder_by_tableName("MicroTable",partition_num);
                 break;
             case "OB_txn":
                 holder_by_stage.put("goods", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("goods",num_op);
+                this.walManager.setHolder_by_tableName("goods",partition_num);
                 break;
+            case "SL_txn":
+                holder_by_stage.put("accounts", new Holder_in_range(num_op));
+                this.walManager.setHolder_by_tableName("accounts",partition_num);
+                holder_by_stage.put("bookEntries", new Holder_in_range(num_op));
+                this.walManager.setHolder_by_tableName("bookEntries",partition_num);
+
             default:
                 throw new UnsupportedOperationException("app not recognized");
         }

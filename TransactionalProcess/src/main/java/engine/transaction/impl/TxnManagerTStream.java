@@ -42,6 +42,18 @@ public class TxnManagerTStream extends TxnManagerDedicated {
         operation_chain_construction_modify_read(tableRecord,srcTable,bid,accessType,record_ref,function,txn_context);
         return true;
     }
+    protected boolean Asy_ModifyRecord_ReadCC(TxnContext txn_context, String srcTable, TableRecord s_record, SchemaRecordRef record_ref, Function function,
+                                              TableRecord[] condition_source, Condition condition, MetaTypes.AccessType accessType, boolean[] success) {
+        if(this.instance.getTransactionAbort().contains(txn_context.getBID())){
+            this.instance.getTransactionAbort().remove(txn_context.getBID());
+            return false;
+        }
+        long bid = txn_context.getBID();
+        operation_chain_construction_modify_read(srcTable, bid, accessType, s_record, record_ref, function, condition_source, condition, txn_context, success);//TODO: this is for sure READ_WRITE... think about how to further optimize.
+
+        return true;
+
+    }
 
     protected boolean Asy_ReadRecordCC(TxnContext txn_context, String primary_key, String table_name, TableRecord t_record, SchemaRecordRef record_ref, double[] enqueue_time, MetaTypes.AccessType accessType) {
         if(this.instance.getTransactionAbort().contains(txn_context.getBID())){
@@ -115,6 +127,13 @@ public class TxnManagerTStream extends TxnManagerDedicated {
         ConcurrentHashMap<String, MyList<Operation>> holder=instance.getHolder(srcTable).rangeMap.get(getTaskId(primaryKey)).holder_v1;
         holder.putIfAbsent(primaryKey,new MyList<>(srcTable,primaryKey, getPartitionId(primaryKey)));
         holder.get(primaryKey).add(new Operation(srcTable,txn_context,bid,accessType,tableRecord,record_ref,function));
+    }
+    private void operation_chain_construction_modify_read(String table_name, long bid, MetaTypes.AccessType accessType, TableRecord d_record, SchemaRecordRef record_ref, Function function
+            , TableRecord[] condition_records, Condition condition, TxnContext txn_context, boolean[] success) {
+        String primaryKey = d_record.record_.GetPrimaryKey();
+        ConcurrentHashMap<String, MyList<Operation>> holder = instance.getHolder(table_name).rangeMap.get(getTaskId(primaryKey)).holder_v1;
+        holder.putIfAbsent(primaryKey, new MyList(table_name, primaryKey,getPartitionId(primaryKey)));
+        holder.get(primaryKey).add(new Operation(table_name, d_record, d_record, record_ref, bid, accessType, function, condition_records, condition, txn_context, success));
     }
 
     public void operation_chain_construction_read_only(TableRecord record, String primaryKey, String table_name, long bid, MetaTypes.AccessType accessType, SchemaRecordRef record_ref, TxnContext txn_context) {

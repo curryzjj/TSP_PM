@@ -7,12 +7,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import static utils.TransactionalProcessConstants.content_type;
 
 public class TableRecord implements Comparable<TableRecord>, Serializable {
     private static final Logger LOG= LoggerFactory.getLogger(TableRecord.class);
     public Content content_;
+    public ConcurrentSkipListMap<Long, SchemaRecord> versions = new ConcurrentSkipListMap<>();//TODO: In fact... there can be at most only one write to the d_record concurrently. It is safe to just use sorted hashmap.
     public SchemaRecord record_;
     public TableRecord(SchemaRecord record){
 //        switch(content_type){

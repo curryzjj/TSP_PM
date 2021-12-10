@@ -57,6 +57,38 @@ public abstract class TxnManagerDedicated implements TxnManager{
         }
         return false;
     }
+    @Override
+    public boolean Asy_ModifyRecord_Read(TxnContext txn_context, String srcTable, String key, SchemaRecordRef record_ref, Function function, String[] condition_sourceTable, String[] condition_source, Condition condition, boolean[] success) throws DatabaseException {
+        MetaTypes.AccessType accessType = MetaTypes.AccessType.READ_WRITE_COND_READ;
+        TableRecord[] condition_records = new TableRecord[condition_source.length];
+        for (int i = 0; i < condition_source.length; i++) {
+            String tableName="";
+            if(enable_states_partition){
+                tableName=condition_sourceTable[i]+"_"+ getPartitionId(condition_source[i]);
+            }else{
+                tableName=condition_sourceTable[i];
+            }
+            condition_records[i] = storageManager.getTable(tableName).SelectKeyRecord(condition_source[i]);//TODO: improve this later.
+            if (condition_records[i] == null) {
+                LOG.info("No record is found for condition source:" + condition_source[i]);
+                return false;
+            }
+        }
+        String tableName="";
+        if(enable_states_partition){
+            tableName=srcTable+"_"+ getPartitionId(key);
+        }else{
+            tableName=srcTable;
+        }
+        TableRecord s_record = storageManager.getTable(tableName).SelectKeyRecord(key);
+        if (s_record != null) {
+            return Asy_ModifyRecord_ReadCC(txn_context, srcTable, s_record, record_ref, function, condition_records, condition, accessType, success);
+        } else {
+            // if no record_ is found, then a "virtual record_" should be inserted as the placeholder so that we can lock_ratio it.
+            LOG.info("No record is found:" + key);
+            return false;
+        }
+    }
     public boolean Asy_ReadRecord(TxnContext txn_context, String srcTable, String primary_key, SchemaRecordRef record_ref, double[] enqueue_time) throws DatabaseException {
         MetaTypes.AccessType accessType = MetaTypes.AccessType.READ_ONLY;
         String tableName="";
@@ -159,8 +191,60 @@ public abstract class TxnManagerDedicated implements TxnManager{
             return false;
         }
     }
+    @Override
+    public boolean Asy_ModifyRecord(TxnContext txn_context, String srcTable, String key, Function function, String[] condition_sourceTable, String[] condition_source, Condition condition, boolean[] success) throws DatabaseException {
+        MetaTypes.AccessType accessType = MetaTypes.AccessType.READ_WRITE_COND;
+        TableRecord[] condition_records = new TableRecord[condition_source.length];
+        for (int i = 0; i < condition_source.length; i++) {
+            String tableName="";
+            if(enable_states_partition){
+                tableName=condition_sourceTable[i]+"_"+ getPartitionId(condition_source[i]);
+            }else{
+                tableName=condition_sourceTable[i];
+            }
+            condition_records[i] = storageManager.getTable(tableName).SelectKeyRecord(condition_source[i]);//TODO: improve this later.
+            if (condition_records[i] == null) {
+                LOG.info("No record is found for condition source:" + condition_source[i]);
+                return false;
+            }
+        }
+        String tableName="";
+        if(enable_states_partition){
+            tableName=srcTable+"_"+ getPartitionId(key);
+        }else{
+            tableName=srcTable;
+        }
+        TableRecord s_record = storageManager.getTable(tableName).SelectKeyRecord(key);
+
+        if (s_record != null) {
+            return Asy_ModifyRecordCC(txn_context, srcTable, s_record, function, condition_records, condition, accessType, success);
+        } else {
+            LOG.info("No record is found:" + key);
+            // if no record_ is found, then a "virtual record_" should be inserted as the placeholder so that we can lock_ratio it.
+            return false;
+        }
+    }
+    @Override
+    public boolean Asy_ModifyRecord(TxnContext txn_context, String srcTable, String key, Function function) throws DatabaseException {
+        MetaTypes.AccessType accessType = MetaTypes.AccessType.READ_WRITE;
+        String tableName="";
+        if(enable_states_partition){
+            tableName=srcTable+"_"+ getPartitionId(key);
+        }else{
+            tableName=srcTable;
+        }
+        TableRecord t_record = storageManager.getTable(tableName).SelectKeyRecord(key);
+        if (t_record != null) {
+            return Asy_ModifyRecordCC(txn_context, srcTable, t_record, t_record, function, accessType, 1);
+        } else {
+            // if no record_ is found, then a "virtual record_" should be inserted as the placeholder so that we can lock_ratio it.
+            return false;
+        }
+    }
     //implement in the TxnManagerTStream
     protected abstract boolean Asy_ModifyRecord_ReadCC(TxnContext txn_context, String srcTable, TableRecord tableRecord, SchemaRecordRef record_ref, Function function, MetaTypes.AccessType accessType);
+    protected abstract boolean Asy_ModifyRecord_ReadCC(TxnContext txn_context, String srcTable, TableRecord s_record, SchemaRecordRef record_ref, Function function,
+                                              TableRecord[] condition_records, Condition condition, MetaTypes.AccessType accessType, boolean[] success);
     protected abstract boolean Asy_ReadRecordCC(TxnContext txn_context, String primary_key, String table_name, TableRecord t_record, SchemaRecordRef record_ref, double[] enqueue_time, MetaTypes.AccessType access_type);
     protected abstract boolean Asy_WriteRecordCC(TxnContext txn_context, String table_name, TableRecord t_record, String primary_key, List<DataBox> value, double[] enqueue_time, MetaTypes.AccessType access_type);
     protected abstract boolean Asy_WriteRecordCC(TxnContext txn_context, String primary_key, String table_name, TableRecord t_record, long value, int column_id, MetaTypes.AccessType access_type);

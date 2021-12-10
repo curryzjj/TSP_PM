@@ -29,9 +29,9 @@ public class OBInitiallizer extends TableInitilizer {
     private static final Logger LOG = LoggerFactory.getLogger(OBInitiallizer.class);
     protected int partition_interval;
     SplittableRandom rnd=new SplittableRandom(1234);
-    public OBInitiallizer(Database db, double scale_factor, double theta, int partition_id, Configuration config) {
-        super(db, scale_factor, theta, partition_id, config);
-        partition_interval = (int) Math.ceil(NUM_ITEMS / (double) partition_id);//NUM_ITEMS / tthread;
+    public OBInitiallizer(Database db, double scale_factor, double theta, int partition_num, Configuration config) {
+        super(db, scale_factor, theta, partition_num, config);
+        partition_interval = (int) Math.ceil(NUM_ITEMS / (double) partition_num);//NUM_ITEMS / tthread;
     }
     private RecordSchema Goods() {
         List<DataBox> dataBoxes = new ArrayList<>();
