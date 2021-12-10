@@ -28,9 +28,11 @@ import static utils.PartitionHelper.getPartition_interval;
 public class GSInitializer extends TableInitilizer{
     private static final Logger LOG = LoggerFactory.getLogger(GSInitializer.class);
     protected int partition_interval;
+    protected int range_interval;
     public GSInitializer(Database db, double scale_factor, double theta, int partition_id, Configuration config) {
         super(db, scale_factor, theta, partition_id, config);
-        partition_interval = (int) Math.ceil(NUM_ITEMS / (double) partition_id);//NUM_ITEMS / tthread;
+        partition_interval=getPartition_interval();
+        range_interval = (int) Math.ceil(NUM_ITEMS / (double) config.getInt("tthread"));//NUM_ITEMS / tthread;
     }
 
     @Override
@@ -75,13 +77,12 @@ public class GSInitializer extends TableInitilizer{
     }
     @Override
     public void loadDB(int thread_id, TopologyContext context) {
-        int partition_interval=getPartition_interval();
-        int left_bound=thread_id*partition_interval;
+        int left_bound=thread_id*range_interval;
         int right_bound;
         if(thread_id==context.getNUMTasks()-1){//last executor need to handle right-over
             right_bound=NUM_ITEMS;
         }else{
-            right_bound=(thread_id+1)*partition_interval;
+            right_bound=(thread_id+1)*range_interval;
         }
         for (int key = left_bound; key < right_bound; key++) {
             String value = GenerateValue(key);

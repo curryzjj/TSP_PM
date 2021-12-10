@@ -26,10 +26,12 @@ import static utils.PartitionHelper.getPartition_interval;
 
 public class TPInitializer extends TableInitilizer {
     private static final Logger LOG = LoggerFactory.getLogger(TPInitializer.class);
-    protected int delta;
+    protected int partition_interval;
+    protected int range_interval;
     public TPInitializer(Database db, double scale_factor, double theta, int partition_num, Configuration config) {
         super(db, scale_factor, theta, partition_num, config);
-        delta = (int) Math.ceil(NUM_SEGMENTS / (double) partition_num);//NUM_ITEMS / tthread;
+        partition_interval=getPartition_interval();
+        range_interval = (int) Math.ceil(NUM_SEGMENTS / (double) partition_num);//NUM_ITEMS / tthread;
     }
 
     @Override
@@ -52,13 +54,12 @@ public class TPInitializer extends TableInitilizer {
 
     @Override
     public void loadDB(int thread_id, TopologyContext context) {
-        int partition_interval=getPartition_interval();
-        int left_bound=thread_id*partition_interval;
+        int left_bound=thread_id*range_interval;
         int right_bound;
         if(thread_id==context.getNUMTasks()-1){//last executor need to handle right-over
             right_bound=NUM_SEGMENTS;
         }else{
-            right_bound=(thread_id+1)*partition_interval;
+            right_bound=(thread_id+1)*range_interval;
         }
         for (int key = left_bound; key < right_bound ; key++) {
             String _key = String.valueOf(key);
@@ -132,6 +133,6 @@ public class TPInitializer extends TableInitilizer {
     }
     private int getPartitionId(String key) {
         Integer _key = Integer.valueOf(key);
-        return _key / delta;
+        return _key / partition_interval;
     }
 }
