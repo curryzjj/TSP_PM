@@ -36,7 +36,7 @@ public class AlertEvent extends TxnEvent {
      * @param alert_array
      */
     public AlertEvent(int bid, String bid_array, int partition_id, int number_of_partitions,
-                      int num_access, String key_array, String alert_array) {
+                      int num_access, String key_array, String alert_array,long timestamp) {
         super(bid, partition_id, bid_array, number_of_partitions);
         this.num_access = num_access;
         record_refs = new SchemaRecordRef[num_access];
@@ -55,11 +55,12 @@ public class AlertEvent extends TxnEvent {
         for (int i = 0; i < top_arrays.length; i++) {
             this.ask_price[i] = Long.parseLong(top_arrays[i].trim());
         }
+        this.timestamp=timestamp;
     }
     private void setValues(int num_access,SplittableRandom rnd){
         ask_price=new long[num_access];
         for (int access_id=0;access_id<num_access;++access_id){
-
+            ask_price[access_id]=rnd.nextLong(MAX_Price);
         }
     }
     private void set_values(int access_id, SplittableRandom rnd) {

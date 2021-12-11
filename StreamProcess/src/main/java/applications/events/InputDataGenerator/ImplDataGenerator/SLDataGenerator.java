@@ -84,6 +84,8 @@ public class SLDataGenerator extends InputDataGenerator {
                 sb.append(((DepositEvent) event).getAccountTransfer());//7
                 sb.append(split_exp);
                 sb.append(((DepositEvent) event).getBookEntryTransfer());//8
+                sb.append(split_exp);
+                sb.append(((DepositEvent) event).getTimestamp());
             } else if (event instanceof TransactionEvent) {
                 sb.append(((TransactionEvent) event).getBid());//0 -- bid
                 sb.append(split_exp);
@@ -106,6 +108,8 @@ public class SLDataGenerator extends InputDataGenerator {
                 sb.append(((TransactionEvent) event).getAccountTransfer());//9
                 sb.append(split_exp);
                 sb.append(((TransactionEvent) event).getBookEntryTransfer());//10
+                sb.append(split_exp);
+                sb.append(((TransactionEvent) event).getTimestamp());
             }
             bw.write(sb.toString() + "\n");
         }

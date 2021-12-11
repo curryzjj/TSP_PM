@@ -11,6 +11,7 @@ import applications.events.ob.AlertEvent;
 import applications.events.ob.BuyingEvent;
 import applications.events.ob.OBParam;
 import applications.events.ob.ToppingEvent;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +80,8 @@ public class OBDataGenerator extends InputDataGenerator {
                 sb.append(Arrays.toString(((BuyingEvent) event).getBidPrice()));//6
                 sb.append(split_exp);
                 sb.append(Arrays.toString(((BuyingEvent) event).getBidQty()));//7
+                sb.append(split_exp);
+                sb.append(((BuyingEvent) event).getTimestamp());
 
             } else if (event instanceof AlertEvent) {
                 sb.append(((AlertEvent) event).getBid());//0 -- bid
@@ -96,6 +99,8 @@ public class OBDataGenerator extends InputDataGenerator {
                 sb.append(Arrays.toString(((AlertEvent) event).getItemId()));//6
                 sb.append(split_exp);
                 sb.append(Arrays.toString(((AlertEvent) event).getAsk_price()));
+                sb.append(split_exp);
+                sb.append(((AlertEvent) event).getTimestamp());
 
             } else if (event instanceof ToppingEvent) {
                 sb.append(((ToppingEvent) event).getBid());//0 -- bid
@@ -113,6 +118,8 @@ public class OBDataGenerator extends InputDataGenerator {
                 sb.append(Arrays.toString(((ToppingEvent) event).getItemId()));//6
                 sb.append(split_exp);
                 sb.append(Arrays.toString(((ToppingEvent) event).getItemTopUp()));
+                sb.append(split_exp);
+                sb.append(((ToppingEvent) event).getTimestamp());
             }
             bw.write(sb.toString() + "\n");
         }

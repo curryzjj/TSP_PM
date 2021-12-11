@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static UserApplications.CONTROL.enable_states_partition;
+import static UserApplications.CONTROL.partition_num;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 import static utils.PartitionHelper.getPartition_interval;
 
@@ -31,13 +32,13 @@ public class TPInitializer extends TableInitilizer {
     public TPInitializer(Database db, double scale_factor, double theta, int partition_num, Configuration config) {
         super(db, scale_factor, theta, partition_num, config);
         partition_interval=getPartition_interval();
-        range_interval = (int) Math.ceil(NUM_SEGMENTS / (double) partition_num);//NUM_ITEMS / tthread;
+        range_interval = (int) Math.ceil(NUM_SEGMENTS / (double) config.getInt("tthread"));//NUM_ITEMS / tthread;
     }
 
     @Override
     public void creates_Table(Configuration config) {
         if(enable_states_partition){
-            for(int i = 0; i< partition_id; i++){
+            for(int i = 0; i< partition_num; i++){
                 RecordSchema s = SpeedScheme();
                 db.createTable(s, "segment_speed_"+i, DataBoxTypes.STRING);
                 RecordSchema b = CntScheme();

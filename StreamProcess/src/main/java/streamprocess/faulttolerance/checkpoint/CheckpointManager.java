@@ -4,6 +4,7 @@ import System.FileSystem.FileSystem;
 import System.FileSystem.ImplFS.LocalFileSystem;
 import System.FileSystem.ImplFSDataOutputStream.LocalDataOutputStream;
 import System.FileSystem.Path;
+import System.measure.MeasureTools;
 import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
@@ -28,8 +29,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 
-import static UserApplications.CONTROL.enable_parallel;
-import static UserApplications.CONTROL.enable_shared_state;
+import static UserApplications.CONTROL.*;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
 import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastCommitSnapshotResult;
 
@@ -123,7 +123,13 @@ public class CheckpointManager extends FTManager {
                 if(close){
                     return;
                 }
+                if(enable_measure){
+                    MeasureTools.FTM_receive_all_Ack(System.nanoTime());
+                }
                 if(callSnapshot.containsValue(Undo)||callSnapshot.containsValue(Recovery)){
+                    if(enable_measure){
+                        MeasureTools.startRecovery(System.nanoTime());
+                    }
                     LOG.info("CheckpointManager received all register and start recovery");
                     SnapshotResult lastSnapshotResult=getLastCommitSnapshotResult(checkpointFile);
                     //this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
@@ -141,7 +147,13 @@ public class CheckpointManager extends FTManager {
                     notifyAllComplete();
                     LOG.info("Recovery complete!");
                     lock.notifyAll();
+                    if(enable_measure){
+                        MeasureTools.finishRecovery(System.nanoTime());
+                    }
                 }else{
+                    if(enable_measure){
+                        MeasureTools.startPersist(System.nanoTime());
+                    }
                     LOG.info("CheckpointManager received all register and start snapshot");
                     if(enable_parallel){
                         this.snapshotResult=this.db.parallelSnapshot(isCommitted.poll(),00000L);
@@ -152,6 +164,10 @@ public class CheckpointManager extends FTManager {
                     commitCurrentLog();
                     notifySnapshotComplete();
                     lock.notifyAll();
+                    if(enable_measure){
+                        MeasureTools.finishPersist(System.nanoTime());
+                        MeasureTools.setSnapshotFileSize(this.snapshotResult.getSnapshotResults().keySet());
+                    }
                 }
             }
         }

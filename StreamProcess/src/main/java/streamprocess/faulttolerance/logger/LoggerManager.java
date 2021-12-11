@@ -4,6 +4,7 @@ import System.FileSystem.FileSystem;
 import System.FileSystem.ImplFS.LocalFileSystem;
 import System.FileSystem.ImplFSDataOutputStream.LocalDataOutputStream;
 import System.FileSystem.Path;
+import System.measure.MeasureTools;
 import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
@@ -25,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 
+import static UserApplications.CONTROL.enable_measure;
 import static UserApplications.CONTROL.enable_parallel;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
 import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastGlobalLSN;
@@ -104,14 +106,26 @@ public class LoggerManager extends FTManager {
                 if(close){
                     return;
                 }
+                if(enable_measure){
+                    MeasureTools.FTM_receive_all_Ack(System.nanoTime());
+                }
                 if(callLog.containsValue(Undo)){
+                    if(enable_measure){
+                        MeasureTools.startUndoTransaction(System.nanoTime());
+                    }
                     LOG.info("LoggerManager received all register and start Undo");
                     this.db.undoFromWAL();
                     LOG.info("Undo log complete!");
                     this.db.getTxnProcessingEngine().isTransactionAbort=false;
                     notifyAllComplete();
                     lock.notifyAll();
+                    if(enable_measure){
+                        MeasureTools.finishUndoTransaction(System.nanoTime());
+                    }
                 }else if(callLog.containsValue(Recovery)){
+                    if(enable_measure){
+                        MeasureTools.startRecovery(System.nanoTime());
+                    }
                     LOG.info("LoggerManager received all register and start recovery");
                     if(enable_parallel){
                         this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
@@ -126,11 +140,21 @@ public class LoggerManager extends FTManager {
                     }
                     notifyAllComplete();
                     lock.notifyAll();
+                    if(enable_measure){
+                        MeasureTools.finishRecovery(System.nanoTime());
+                    }
                 } else if (callLog.containsValue(Persist)){
+                    if(enable_measure){
+                        MeasureTools.startPersist(System.nanoTime());
+                    }
                     LOG.info("LoggerManager received all register and start commit log");
                     commitLog();
                     notifyAllComplete();
                     lock.notifyAll();
+                    if(enable_measure){
+                        MeasureTools.finishPersist(System.nanoTime());
+                        MeasureTools.setWalFileSize(Current_Path.getParent());
+                    }
                 }
             }
         }
@@ -141,6 +165,9 @@ public class LoggerManager extends FTManager {
             g.getExecutionNode(id).ackCommit();
         }
         this.callLog_ini();
+        if (enable_measure){
+            MeasureTools.FTM_finish_Ack(System.nanoTime());
+        }
     }
 
     private boolean commitLog() throws IOException, ExecutionException, InterruptedException {

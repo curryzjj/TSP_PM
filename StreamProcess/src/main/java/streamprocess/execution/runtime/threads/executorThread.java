@@ -56,6 +56,7 @@ public abstract class executorThread extends Thread {
         if (executor != null && !this.executor.isLeafNode()) {
             this.executor.getController().setContext(this.executor.getExecutorID(), context);
         }
+
     }
     //get+set TopologyContext
     public TopologyContext getContext() {

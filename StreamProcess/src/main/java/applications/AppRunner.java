@@ -1,6 +1,7 @@
 package applications;
 
 import System.Platform.Platform;
+import System.measure.MeasureTools;
 import System.util.Configuration;
 import System.util.OsUtils;
 import UserApplications.CONTROL;
@@ -102,6 +103,8 @@ public class  AppRunner extends baseRunner {
         TEST_NUM_EVENTS=config.getInt("TEST_NUM_EVENTS");
         ZIP_SKEW=config.getDouble("ZIP_SKEW");
         partition_num=config.getInt("partition_num");
+        //set the MeasureTool
+        MeasureTools tools=new MeasureTools(config.getInt("partition_num"),config.getInt("executor.threads"),config.getInt("FTOptions"));
         //Get the descriptor for thr given application
         AppDriver.AppDescriptor app=driver.getApp(application);
         // In case topology names is given, create one
@@ -134,6 +137,7 @@ public class  AppRunner extends baseRunner {
                 submitter.getOM().getEM().closeFTM();
             }
             submitter.getOM().getEM().exit();
+            MeasureTools.showMeasureResult();
         } catch (IOException e) {
             e.printStackTrace();
         }

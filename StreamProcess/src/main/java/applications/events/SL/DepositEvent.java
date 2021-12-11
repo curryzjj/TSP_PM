@@ -57,12 +57,14 @@ public class DepositEvent extends TxnEvent {
                         String accountId,
                         String bookEntryId,
                         long accountTransfer,
-                        long bookEntryTransfer) {
+                        long bookEntryTransfer,
+                        long timestamp) {
         super(bid, pid, bid_array, num_of_partition);
         this.accountId = accountId;
         this.bookEntryId = bookEntryId;
         this.accountTransfer = accountTransfer;
         this.bookEntryTransfer = bookEntryTransfer;
+        this.timestamp=timestamp;
     }
 
 

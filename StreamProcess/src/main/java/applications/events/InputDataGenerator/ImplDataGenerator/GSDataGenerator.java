@@ -69,7 +69,9 @@ public class GSDataGenerator extends InputDataGenerator {
                     split_exp+
                     Arrays.toString(microEvent.getKeys())+//5 keys
                     split_exp+
-                    microEvent.READ_EVENT();//6 is read_event
+                    microEvent.READ_EVENT()+//6 is read_event
+                    split_exp+
+                    microEvent.getTimestamp();
             bw.write(str+"\n");
         }
         bw.flush();

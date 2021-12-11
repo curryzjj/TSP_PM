@@ -132,7 +132,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             split[2], //bid_array
                             Integer.parseInt(split[3]),//num_of_partition
                             split[5],//key_array
-                            Boolean.parseBoolean(split[6])//flag
+                            Boolean.parseBoolean(split[6]),//flag
+                            Long.parseLong(split[7])
                     );
                     break;
                 case "BuyingEvent":
@@ -143,7 +144,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             Integer.parseInt(split[3]),//num_of_partition
                             split[5],//key_array
                             split[6],//price_array
-                            split[7]  //qty_array
+                            split[7]  ,//qty_array
+                            Long.parseLong(split[8])
                     );
                     break;
                 case "AlertEvent":
@@ -154,7 +156,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             Integer.parseInt(split[3]),//num_of_partition
                             Integer.parseInt(split[5]), //num_access
                             split[6],//key_array
-                            split[7]//price_array
+                            split[7],//price_array
+                            Long.parseLong(split[8])
                     );
                     break;
                 case "ToppingEvent":
@@ -165,7 +168,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             Integer.parseInt(split[3]),//num_of_partition
                             Integer.parseInt(split[5]), //num_access
                             split[6],//key_array
-                            split[7]  //top_array
+                            split[7] , //top_array
+                            Long.parseLong(split[8])
                     );
                     break;
                 case "DepositEvent":
@@ -177,7 +181,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             split[5],//getAccountId
                             split[6],//getBookEntryId
                             Integer.parseInt(split[7]),  //getAccountTransfer
-                            Integer.parseInt(split[8])  //getBookEntryTransfer
+                            Integer.parseInt(split[8]),  //getBookEntryTransfer
+                            Long.parseLong(split[9])
                     );
                     break;
                 case "TransactionEvent":
@@ -191,7 +196,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             split[7],//getTargetAccountId
                             split[8],//getTargetBookEntryId
                             Integer.parseInt(split[9]),  //getAccountTransfer
-                            Integer.parseInt(split[10])  //getBookEntryTransfer
+                            Integer.parseInt(split[10]),  //getBookEntryTransfer
+                            Long.parseLong(split[11])
                     );
                     break;
                 default:

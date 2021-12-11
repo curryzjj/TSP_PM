@@ -46,7 +46,7 @@ public class BuyingEvent extends TxnEvent {
      * Loading a BuyingEvent.
      */
     public BuyingEvent(int bid, String bid_array, int pid, int num_of_partition,
-                       String key_array, String price_array, String qty_array) {
+                       String key_array, String price_array, String qty_array,long timestamp) {
         super(bid, pid, bid_array, num_of_partition);
 
         record_refs = new SchemaRecordRef[NUM_ACCESSES_PER_BUY];
@@ -76,7 +76,7 @@ public class BuyingEvent extends TxnEvent {
         for (int i = 0; i < qty_arrays.length; i++) {
             this.bid_qty[i] = Long.parseLong(qty_arrays[i].trim());
         }
-
+        this.timestamp=timestamp;
     }
 
     public long getTimestamp() {

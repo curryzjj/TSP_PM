@@ -47,7 +47,7 @@ public class ToppingEvent extends TxnEvent {
      * @param top_array
      */
     public ToppingEvent(int bid, String bid_array, int partition_id, int number_of_partitions,
-                        int num_access, String key_array, String top_array) {
+                        int num_access, String key_array, String top_array,long timestamp) {
         super(bid, partition_id, bid_array, number_of_partitions);
         this.num_access = num_access;
 
@@ -70,7 +70,7 @@ public class ToppingEvent extends TxnEvent {
         for (int i = 0; i < top_arrays.length; i++) {
             this.itemTopUp[i] = Long.parseLong(top_arrays[i].trim());
         }
-
+        this.timestamp=timestamp;
     }
 
     public int getNum_access() {

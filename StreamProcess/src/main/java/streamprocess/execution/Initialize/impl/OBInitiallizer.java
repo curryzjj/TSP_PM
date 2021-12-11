@@ -23,7 +23,6 @@ import java.util.SplittableRandom;
 import static UserApplications.CONTROL.NUM_ITEMS;
 import static UserApplications.CONTROL.enable_states_partition;
 import static UserApplications.constants.OnlineBidingSystemConstants.Constant.MAX_Price;
-import static utils.PartitionHelper.getPartition_interval;
 
 public class OBInitiallizer extends TableInitilizer {
     private static final Logger LOG = LoggerFactory.getLogger(OBInitiallizer.class);
@@ -52,7 +51,7 @@ public class OBInitiallizer extends TableInitilizer {
     @Override
     public void creates_Table(Configuration config) {
         if(enable_states_partition){
-            for (int i = 0; i< partition_id; i++){
+            for (int i = 0; i< partition_num; i++){
                 RecordSchema s = Goods();
                 db.createTable(s, "goods_"+i, TransactionalProcessConstants.DataBoxTypes.LONG);
             }

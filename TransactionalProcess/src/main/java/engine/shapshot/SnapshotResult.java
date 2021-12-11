@@ -55,7 +55,13 @@ public class SnapshotResult implements Serializable {
     }
 
     public HashMap<Path, KeyGroupRangeOffsets> getSnapshotResults() {
-        return snapshotResults;
+        if (snapshotResults.size()==0){
+            HashMap<Path,KeyGroupRangeOffsets> snapshotResult=new HashMap<>();
+            snapshotResult.put(this.snapshotPath,this.keyGroupRangeOffsets);
+            return snapshotResult;
+        }else{
+            return snapshotResults;
+        }
     }
 
     public Path getSnapshotPath() {

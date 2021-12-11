@@ -1,5 +1,6 @@
 package streamprocess.components.operators.base.transaction;
 
+import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import engine.transaction.impl.TxnManagerTStream;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
+import static UserApplications.CONTROL.enable_measure;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
 public abstract class TransactionalBoltTStream extends TransactionalBolt {
@@ -48,6 +50,9 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     protected void AsyncRegisterPersist(){
         this.lock=this.FTM.getLock();
         synchronized (lock){
+            if (enable_measure){
+                MeasureTools.bolt_register_Ack(this.thread_Id,System.nanoTime());
+            }
             this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Persist);
             lock.notifyAll();
         }
@@ -63,6 +68,9 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
                 //wait for log to commit
                 LOG.info("Wait for the log to commit");
                 lock.wait();
+            }
+            if (enable_measure){
+                MeasureTools.bolt_receive_ack_time(this.thread_Id,System.nanoTime());
             }
             this.isCommit =false;
         }

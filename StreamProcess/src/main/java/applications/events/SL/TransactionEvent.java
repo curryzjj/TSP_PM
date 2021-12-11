@@ -63,7 +63,7 @@ public class TransactionEvent extends TxnEvent {
                             String targetAccountId,
                             String targetBookEntryId,
                             long accountTransfer,
-                            long bookEntryTransfer) {
+                            long bookEntryTransfer,long timestamp) {
 
         super(bid, partition_id, bid_array, num_of_partition);
         this.sourceAccountId = sourceAccountId;
@@ -73,6 +73,7 @@ public class TransactionEvent extends TxnEvent {
         this.accountTransfer = accountTransfer;
         this.bookEntryTransfer = bookEntryTransfer;
         this.minAccountBalance = MIN_BALANCE;
+        this.timestamp=timestamp;
     }
 
     public String getSourceAccountId() {

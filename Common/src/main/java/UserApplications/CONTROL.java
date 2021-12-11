@@ -1,6 +1,7 @@
 package UserApplications;
 
 import java.util.SplittableRandom;
+import java.util.Timer;
 
 public class CONTROL {
     //global settings.
@@ -46,7 +47,7 @@ public class CONTROL {
     //boolean enable_admission_control = enable_latency_measurement;//only enable for TStream
 
     //profile related.
-    boolean enable_profile = true;//enable this only when we want to test for breakdown.
+    public static boolean  enable_measure = true;//enable this only when we want to test for breakdown.
 
     public static boolean enable_debug = true;//some critical debug section.
 
@@ -67,6 +68,7 @@ public class CONTROL {
 
 //    boolean enable_pushdown = false;//enabled by default.
     public static SplittableRandom rnd = new SplittableRandom(1234);
+    public static  Timer timer =new Timer();
 
 
 }

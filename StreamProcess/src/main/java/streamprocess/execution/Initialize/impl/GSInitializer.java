@@ -29,8 +29,8 @@ public class GSInitializer extends TableInitilizer{
     private static final Logger LOG = LoggerFactory.getLogger(GSInitializer.class);
     protected int partition_interval;
     protected int range_interval;
-    public GSInitializer(Database db, double scale_factor, double theta, int partition_id, Configuration config) {
-        super(db, scale_factor, theta, partition_id, config);
+    public GSInitializer(Database db, double scale_factor, double theta, int partition_num, Configuration config) {
+        super(db, scale_factor, theta, partition_num, config);
         partition_interval=getPartition_interval();
         range_interval = (int) Math.ceil(NUM_ITEMS / (double) config.getInt("tthread"));//NUM_ITEMS / tthread;
     }
@@ -38,7 +38,7 @@ public class GSInitializer extends TableInitilizer{
     @Override
     public void creates_Table(Configuration config) {
         if(enable_states_partition){
-            for(int i = 0; i< partition_id; i++){
+            for(int i = 0; i< partition_num; i++){
                 RecordSchema s = MicroTableSchema();
                 db.createTable(s, "MicroTable_"+i, TransactionalProcessConstants.DataBoxTypes.STRING);
             }

@@ -87,12 +87,12 @@ public class ExecutionManager {
                     integers.size(),
                     conf.getInt("tthread"));
             if(enable_wal&&enable_parallel){
-                writeExecutor= Executors.newFixedThreadPool(integers.size());
+                writeExecutor= Executors.newFixedThreadPool(partition_num);
             }else if(enable_parallel&&enable_snapshot){
-                snapshotExecutor=Executors.newFixedThreadPool(integers.size());
+                snapshotExecutor=Executors.newFixedThreadPool(partition_num);
             }
-            int delta = (int) Math.ceil(NUM_SEGMENTS / (double)integers.size());
-            db.setCheckpointOptions(integers.size(),delta);
+            int delta = (int) Math.ceil(NUM_SEGMENTS / (double)partition_num);
+            db.setCheckpointOptions(partition_num,delta);
         }
         executorThread thread = null;
         for (ExecutionNode e : g.getExecutionNodeArrayList()) {

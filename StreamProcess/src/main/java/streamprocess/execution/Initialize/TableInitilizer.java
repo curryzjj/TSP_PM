@@ -13,14 +13,14 @@ public abstract class TableInitilizer {
     protected final Database db;
     protected final double scale_factor;
     protected final double theta;
-    protected final int partition_id;
+    protected final int partition_num;
     protected final Configuration config;
 
-    protected TableInitilizer(Database db, double scale_factor, double theta, int partition_id, Configuration config) {
+    protected TableInitilizer(Database db, double scale_factor, double theta, int partition_num, Configuration config) {
         this.db = db;
         this.scale_factor = scale_factor;
         this.theta = theta;
-        this.partition_id = partition_id;
+        this.partition_num = partition_num;
         this.config = config;
     }
 

@@ -56,7 +56,7 @@ public class MicroEvent extends TxnEvent {
      * @param key_array
      */
     public MicroEvent(int bid, int pid, String bid_array, int num_of_partition,
-                      String key_array, boolean flag) {
+                      String key_array, boolean flag,long timestamp ) {
         super(bid, pid, bid_array, num_of_partition);
         recordRefs = new SchemaRecordRef[NUM_ACCESSES];
         for (int i = 0; i < NUM_ACCESSES; i++) {
@@ -70,6 +70,7 @@ public class MicroEvent extends TxnEvent {
             this.keys[i] = Integer.parseInt(key_arrays[i].trim());
         }
         setValues(keys);
+        this.timestamp=timestamp;
     }
     public int[] getKeys() {
         return keys;

@@ -24,14 +24,15 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 
-import static System.Constants.Mac_Measure_Latency_Path;
-import static System.Constants.Node22_Measure_Latency_Path;
+import static System.Constants.Mac_Measure_Path;
+import static System.Constants.Node22_Measure_Path;
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
 
 public class MeasureSink extends BaseSink {
     private static final Logger LOG = LoggerFactory.getLogger(MeasureSink.class);
     private static final DescriptiveStatistics latency = new DescriptiveStatistics();
+    private static final DescriptiveStatistics throughput=new DescriptiveStatistics();
     private Path result_Path;
     private FileSystem localFS;
     private File resultFile;
@@ -40,18 +41,25 @@ public class MeasureSink extends BaseSink {
     protected stable_sink_helper helper;
     private int exe;
     protected final ArrayDeque<Long> latency_map = new ArrayDeque();
+    protected static final ArrayDeque<Long> throughput_map=new ArrayDeque<>();
     public int batch_number_per_wm;
     /** <bid,timestamp> */
     protected List<Tuple2<Long, Long>> perCommitTuple=new ArrayList<>();
     protected long currentCommitBid=0;
     protected int abortTransaction=0;
-
+    protected static long count;
+    protected static long  p_count;
     public MeasureSink() {
         super(new HashMap<>());
         this.input_selectivity.put(DEFAULT_STREAM_ID, 1.0);
         this.input_selectivity.put("tn", 1.0);
         status=new Status();
         this.localFS=new LocalFileSystem();
+        if(enable_measure){
+            count=0;
+            p_count=0;
+        }
+        this.startThroughputMeasure();
     }
 
     public Integer default_scale(Configuration conf) {
@@ -76,6 +84,7 @@ public class MeasureSink extends BaseSink {
                 if(in.getMarker().getValue()=="recovery"){
                     this.abortRepeatedResults(in.getBID());
                 }else if(in.getMarker().getValue()=="finish"){
+                    timer.cancel();
                     measure_end(in.getBID());
                     context.stop_running();
                 }else {
@@ -125,6 +134,7 @@ public class MeasureSink extends BaseSink {
                     final long process_latency = end - event._2;//ns
                     totalLatency=totalLatency+process_latency;
                     size++;
+                    count++;
                 }
                 events.remove();
             }
@@ -136,9 +146,9 @@ public class MeasureSink extends BaseSink {
             CommitTuple(bid);
         }
         if(OsUtils.isMac()){
-            this.result_Path=new Path(Mac_Measure_Latency_Path,getConfigPrefix());
+            this.result_Path=new Path(Mac_Measure_Path,getConfigPrefix()+"_"+"Latency"+"_"+config.getInt("FTOptions")+"_"+config.getInt("failureModel")+"_"+config.getInt("failureTime")+"_"+config.getInt("executor.threads"));
         }else{
-            this.result_Path=new Path(Node22_Measure_Latency_Path,getConfigPrefix());
+            this.result_Path=new Path(Node22_Measure_Path,getConfigPrefix()+"_"+"Latency"+"_"+config.getInt("FTOptions")+"_"+config.getInt("failureModel")+"_"+config.getInt("failureTime")+"_"+config.getInt("executor.threads"));
         }
         Path parent=result_Path.getParent();
         if (parent != null && !localFS.mkdirs(parent)) {
@@ -147,25 +157,56 @@ public class MeasureSink extends BaseSink {
         resultFile=localFS.pathToFile(result_Path);
         LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(resultFile);
         DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
-        long totalLatency=0L;
         StringBuilder sb = new StringBuilder();
         for (Long a:latency_map){
             latency.addValue(a/1E6);
             dataOutputStream.writeUTF(String.valueOf(a/1E6));
             dataOutputStream.write(new byte[]{13,10});
-            totalLatency=totalLatency+a.longValue();
         }
-        sb.append("=======Details=======");
+        sb.append("=======Latency Details=======");
         sb.append("\n" + latency.toString() + "\n");
         sb.append("===99th===" + "\n");
         sb.append(latency.getPercentile(99) + "\n");
+        LOG.info(sb.toString());
+        if(OsUtils.isMac()){
+            this.result_Path=new Path(Mac_Measure_Path,getConfigPrefix()+"_"+"Throughput"+"_"+config.getInt("FTOptions")+"_"+config.getInt("failureModel")+"_"+config.getInt("failureTime")+"_"+config.getInt("executor.threads"));
+        }else{
+            this.result_Path=new Path(Node22_Measure_Path,getConfigPrefix()+"_"+"Throughput"+"_"+config.getInt("FTOptions")+"_"+config.getInt("failureModel")+"_"+config.getInt("failureTime")+"_"+config.getInt("executor.threads"));
+        }
+        resultFile=localFS.pathToFile(result_Path);
+        localDataOutputStream=new LocalDataOutputStream(resultFile);
+        dataOutputStream=new DataOutputStream(localDataOutputStream);
+        sb = new StringBuilder();
+        for (Long a:throughput_map){
+            throughput.addValue(a);//k events/s
+            dataOutputStream.writeUTF(String.valueOf(a));
+            dataOutputStream.write(new byte[]{13,10});
+        }
+        sb.append("=======Throughput Details=======");
+        sb.append("\n" + throughput.toString() + "\n");
+        sb.append("===99th===" + "\n");
         dataOutputStream.close();
         localDataOutputStream.close();
         LOG.info(sb.toString());
     }
 
+    public long getCount() {
+        return count;
+    }
+
     @Override
     protected Logger getLogger() {
         return LOG;
+    }
+    public void startThroughputMeasure(){
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                long current_count=getCount();
+                long throughput=(current_count-p_count)/100;
+                p_count=current_count;
+                throughput_map.add(throughput);
+            }
+        },  100, 100);//ms
     }
 }
