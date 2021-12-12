@@ -17,6 +17,7 @@ public abstract class BaseTable implements ITable {
     private TableStats stats;
     private String table_Id;
     public BaseTable(RecordSchema schema,String table_Id){
+        this.schema=schema;
         secondary_count_=0;
     }
     public abstract boolean InsertRecord(TableRecord record) throws DatabaseException;
@@ -27,4 +28,8 @@ public abstract class BaseTable implements ITable {
     public abstract Iterator<String> keyIterator();
     public abstract int keySize();
     public abstract Set getKey();
+
+    public RecordSchema getSchema() {
+        return schema;
+    }
 }

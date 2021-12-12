@@ -28,4 +28,8 @@ public class RecordSchema implements Serializable {
         }
         secondary_num = fields.size();
     }
+
+    public List<DataBox> getFieldTypes() {
+        return fieldTypes;
+    }
 }

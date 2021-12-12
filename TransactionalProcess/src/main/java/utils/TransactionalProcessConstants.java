@@ -6,7 +6,7 @@ public class TransactionalProcessConstants {
      * An enum with the current supported types.
      */
     public enum DataBoxTypes {
-        BOOL, INT, LONG, TimestampType, FLOAT, STRING, OTHERS
+        BOOL, INT, LONG, TimestampType, DOUBLE,FLOAT, STRING, OTHERS
     }
     public enum CheckpointType{
         RocksDBFullSnapshot,InMemoryFullSnapshot

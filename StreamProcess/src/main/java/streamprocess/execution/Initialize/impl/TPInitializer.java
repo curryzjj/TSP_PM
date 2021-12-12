@@ -40,13 +40,13 @@ public class TPInitializer extends TableInitilizer {
         if(enable_states_partition){
             for(int i = 0; i< partition_num; i++){
                 RecordSchema s = SpeedScheme();
-                db.createTable(s, "segment_speed_"+i, DataBoxTypes.STRING);
+                db.createTable(s, "segment_speed_"+i, DataBoxTypes.DOUBLE);
                 RecordSchema b = CntScheme();
                 db.createTable(b, "segment_cnt_"+i,DataBoxTypes.OTHERS);
             }
         }else{
             RecordSchema s = SpeedScheme();
-            db.createTable(s, "segment_speed", DataBoxTypes.STRING);
+            db.createTable(s, "segment_speed", DataBoxTypes.DOUBLE);
             RecordSchema b = CntScheme();
             db.createTable(b, "segment_cnt",DataBoxTypes.OTHERS);
         }

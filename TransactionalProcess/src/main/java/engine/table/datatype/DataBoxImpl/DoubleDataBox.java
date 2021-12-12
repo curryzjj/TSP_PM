@@ -6,6 +6,7 @@ import engine.table.datatype.serialize.Serialize;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Float data type which serializes to 14 bytes.
@@ -18,7 +19,12 @@ public class DoubleDataBox extends DataBox {
     public DoubleDataBox(double f) {
         this.d = f;
     }
-
+    public DoubleDataBox(byte[] buf) {
+        if (buf.length != this.getSize()) {
+            throw new DataBoxException("Wrong size buffer for int");
+        }
+        this.d = ByteBuffer.wrap(buf).getDouble();
+    }
     @Override
     public int getSize() throws DataBoxException {
         return 8;

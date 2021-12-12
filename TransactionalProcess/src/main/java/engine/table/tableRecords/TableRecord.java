@@ -7,20 +7,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import static utils.TransactionalProcessConstants.content_type;
 
 public class TableRecord implements Comparable<TableRecord>, Serializable {
     private static final Logger LOG= LoggerFactory.getLogger(TableRecord.class);
-    public Content content_;
     public ConcurrentSkipListMap<Long, SchemaRecord> versions = new ConcurrentSkipListMap<>();//TODO: In fact... there can be at most only one write to the d_record concurrently. It is safe to just use sorted hashmap.
     public SchemaRecord record_;
     public TableRecord(SchemaRecord record){
-//        switch(content_type){
-//
-//        }
         record_=record;
+        this.updateMultiValues(0,record);
     }
     @Override
     public int compareTo(@NotNull TableRecord o) {
@@ -31,5 +29,18 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
     }
     public int getID() {
         return record_.getId().getID();
+    }
+    public SchemaRecord readPreValues(long ts){
+        SchemaRecord record_at_ts=null;
+        Map.Entry<Long,SchemaRecord> entry=versions.lowerEntry(ts);
+        if (entry!=null){
+            record_at_ts= entry.getValue();
+        }else{
+            record_at_ts=versions.get(ts);
+        }
+        return record_at_ts;
+    }
+    public void updateMultiValues(long ts,SchemaRecord record){
+        versions.put(ts,record);
     }
 }

@@ -6,6 +6,8 @@ import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.log.LogRecord;
 import engine.shapshot.SnapshotResult;
+import engine.table.RecordSchema;
+import engine.table.datatype.DataBox;
 import engine.table.datatype.serialize.Deserialize;
 import engine.table.keyGroup.KeyGroupRangeOffsets;
 import engine.table.tableRecords.TableRecord;
@@ -15,15 +17,14 @@ import org.slf4j.LoggerFactory;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static engine.Database.snapshotExecutor;
 import static engine.log.WALManager.writeExecutor;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static utils.FullSnapshotUtil.END_OF_KEY_GROUP_MARK;
 import static utils.TransactionalProcessConstants.FaultTolerance.END_OF_GLOBAL_LSN_MARK;
 
@@ -127,7 +128,28 @@ public class AbstractRecoveryManager {
                 if(isNewLSN){
                     for (Iterator<LogRecord> it = commitLogRecords.iterator(); it.hasNext(); ) {
                         LogRecord logRecord = it.next();
-                        db.InsertRecord(logRecord.getTableName(),logRecord.getUpdateTableRecord());
+                        RecordSchema schema=db.getStorageManager().tables.get(logRecord.getTableName()).getSchema();
+                        List<DataBox> boxes=schema.getFieldTypes();
+                        String[] values=logRecord.getValues();
+                        for(int i=0;i<boxes.size();i++){
+                            switch (boxes.get(i).type()){
+                                case INT:boxes.get(i).setInt(Integer.parseInt(values[i]));
+                                break;
+                                case FLOAT:boxes.get(i).setDouble(Double.parseDouble(values[i]));
+                                break;
+                                case LONG:boxes.get(i).setLong(Long.parseLong(values[i]));
+                                break;
+                                case STRING:boxes.get(i).setString(values[i],values[i].length());
+                                break;
+                                case OTHERS:
+                                    String[] ints=values[i].split(" ");
+                                    for(String s:ints){
+                                        boxes.get(i).getHashSet().add(Integer.parseInt(s));
+                                    }
+                                break;
+                            }
+                        }
+                        db.getStorageManager().getTable(logRecord.getTableName()).SelectKeyRecord(logRecord.getKey()).record_.updateValues(boxes);
                     }
                     commitLogRecords.clear();
                     isNewLSN=false;
@@ -178,7 +200,9 @@ public class AbstractRecoveryManager {
     private static LogRecord getLogRecord(DataInputViewStreamWrapper inputViewStreamWrapper,int len) throws IOException, ClassNotFoundException {
         byte[] re=new byte[len];
         inputViewStreamWrapper.readFully(re);
-        LogRecord logRecord=Deserialize.Deserialize2Object(re,LogRecord.class.getClassLoader());
+        String str= new String(re, UTF_8);
+        LogRecord logRecord=new LogRecord(str);
+//        LogRecord logRecord=Deserialize.Deserialize2Object(re,LogRecord.class.getClassLoader());
         return logRecord;
     }
 }

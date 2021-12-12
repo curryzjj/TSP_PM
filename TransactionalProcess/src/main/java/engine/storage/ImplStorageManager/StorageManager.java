@@ -60,7 +60,6 @@ public class StorageManager extends AbstractStorageManager {
         if (tables.containsKey(tableName)) {
             throw new DatabaseException("Table name already exists");
         }
-        //TODO:switch different tables
         tables.put(tableName, new ShareTable(s,tableName,true));//here we decide which table to use.
         this.RegisterState(tableName,s);
         table_count++;

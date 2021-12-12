@@ -84,6 +84,11 @@ public class HashSetDataBox extends DataBox {
 
     @Override
     public String toString() {
-        return "" + this.set;
+        String str = new String();
+        if(this.set.iterator().hasNext()){
+            Object a=this.set.iterator().next();
+            str=str+a.toString()+" ";
+        }
+        return str;
     }
 }

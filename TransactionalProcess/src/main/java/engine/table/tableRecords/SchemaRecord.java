@@ -86,10 +86,10 @@ public class SchemaRecord implements Serializable {
         if (values != null) {
             StringBuilder s = new StringBuilder();
             for (DataBox d : values) {
-                s.append(d.toString().trim());
-                s.append(", ");
+                s.append(d.toString());
+                s.append(",");
             }
-            return s.substring(0, s.length() - 2);
+            return s.toString();
         } else if (single_value != null) {
             return single_value.toString();
         } else

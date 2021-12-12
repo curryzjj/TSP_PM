@@ -9,6 +9,7 @@ import engine.table.datatype.serialize.Serialize;
 import utils.CloseableRegistry.CloseableRegistry;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Vector;
 import java.util.concurrent.Callable;
@@ -61,11 +62,16 @@ public class UpdateLogAsyncWrite implements UpdateLogWrite {
         logStreamWithResultProvider.getLogOutputStream().flush();
     }
     private void writeLogRecord(DataOutputView outputView,LogRecord logRecord) throws IOException {
-        if(logRecord.getUpdateTableRecord()!=null){
-            byte[] serializeObject=Serialize.serializeObject(logRecord);
-            int len=serializeObject.length;
-            outputView.writeInt(len);
-            outputView.write(serializeObject);
+//        if(logRecord.getUpdateTableRecord()!=null){
+//            byte[] serializeObject=Serialize.serializeObject(logRecord);
+//            int len=serializeObject.length;
+//            outputView.writeInt(len);
+//            outputView.write(serializeObject);
+//        }
+        if (logRecord.getUpdateTableRecord()!=null){
+            String str=logRecord.toSerializableString();
+            outputView.writeInt(str.getBytes(StandardCharsets.UTF_8).length);
+            outputView.write(str.getBytes(StandardCharsets.UTF_8));
         }
     }
 }

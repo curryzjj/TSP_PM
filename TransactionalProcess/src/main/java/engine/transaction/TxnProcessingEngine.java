@@ -358,4 +358,18 @@ public class TxnProcessingEngine {
     public ConcurrentSkipListSet<Long> getTransactionAbort() {
         return transactionAbort;
     }
+    //Functions to process the operation
+    private void CT_Depo_Fun(Operation operation){
+        SchemaRecord srcRecord=operation.s_record.readPreValues(operation.bid);
+        List<DataBox> values=srcRecord.getValues();
+        SchemaRecord tempo_record=new SchemaRecord(values);
+        tempo_record.getValues().get(operation.column_id).incLong(operation.function.delta_long);
+        operation.s_record.updateMultiValues(operation.bid, tempo_record);
+    }
+    private void CT_Transfer_Fun(Operation operation){
+        SchemaRecord preValues=operation.condition_records[0].readPreValues(operation.bid);
+        SchemaRecord preValues1=operation.condition_records[1].readPreValues(operation.bid);
+
+
+    }
 }
