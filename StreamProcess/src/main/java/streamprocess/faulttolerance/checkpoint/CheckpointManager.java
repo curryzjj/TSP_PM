@@ -86,7 +86,7 @@ public class CheckpointManager extends FTManager {
     }
     public boolean spoutRegister(long checkpointId){
         this.isCommitted.add(checkpointId);
-        LOG.info("Spout register the checkpoint with the checkpointId= "+checkpointId);
+        LOG.debug("Spout register the checkpoint with the checkpointId= "+checkpointId);
         return true;
     }
     public void boltRegister(int executorId,FaultToleranceConstants.FaultToleranceStatus status){
@@ -95,7 +95,7 @@ public class CheckpointManager extends FTManager {
         }else{
             callRecovery.put(executorId,status);
         }
-        LOG.info("executor("+executorId+")"+" register the "+status);
+        LOG.debug("executor("+executorId+")"+" register the "+status);
     }
     private void callSnapshot_ini(){
         for (ExecutionNode e:g.getExecutionNodeArrayList()){
@@ -130,13 +130,13 @@ public class CheckpointManager extends FTManager {
                     if(enable_measure){
                         MeasureTools.startRecovery(System.nanoTime());
                     }
-                    LOG.info("CheckpointManager received all register and start recovery");
+                    LOG.debug("CheckpointManager received all register and start recovery");
                     SnapshotResult lastSnapshotResult=getLastCommitSnapshotResult(checkpointFile);
                     //this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     this.db.getTxnProcessingEngine().isTransactionAbort=false;
-                    LOG.info("Reload state complete!");
+                    LOG.debug("Reload state complete!");
                     synchronized (lock){
                         while (callRecovery.containsValue(NULL)){
                             lock.wait();
@@ -145,7 +145,7 @@ public class CheckpointManager extends FTManager {
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     this.isCommitted.clear();
                     notifyAllComplete();
-                    LOG.info("Recovery complete!");
+                    LOG.debug("Recovery complete!");
                     lock.notifyAll();
                     if(enable_measure){
                         MeasureTools.finishRecovery(System.nanoTime());
@@ -154,7 +154,7 @@ public class CheckpointManager extends FTManager {
                     if(enable_measure){
                         MeasureTools.startPersist(System.nanoTime());
                     }
-                    LOG.info("CheckpointManager received all register and start snapshot");
+                    LOG.debug("CheckpointManager received all register and start snapshot");
                     if(enable_parallel){
                         this.snapshotResult=this.db.parallelSnapshot(isCommitted.poll(),00000L);
                     }else{
@@ -180,7 +180,7 @@ public class CheckpointManager extends FTManager {
         dataOutputStream.writeInt(len);
         dataOutputStream.write(result);
         dataOutputStream.close();
-        LOG.info("CheckpointManager commit the checkpoint to the current.log");
+        LOG.debug("CheckpointManager commit the checkpoint to the current.log");
         return true;
     }
     public void notifySnapshotComplete() throws Exception {

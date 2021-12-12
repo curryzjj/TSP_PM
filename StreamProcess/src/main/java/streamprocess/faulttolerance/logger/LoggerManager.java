@@ -80,11 +80,11 @@ public class LoggerManager extends FTManager {
     }
     public void boltRegister(int executorId,FaultToleranceConstants.FaultToleranceStatus status){
         callLog.put(executorId, status);
-        LOG.info("executor("+executorId+")"+" register the "+status);
+        LOG.debug("executor("+executorId+")"+" register the "+status);
     }
     public boolean spoutRegister(long globalLSN){
         isCommitted.add(globalLSN);
-        LOG.info("Spout register the wal with the globalLSN= "+globalLSN);
+        LOG.debug("Spout register the wal with the globalLSN= "+globalLSN);
         return true;
     }
     private void callLog_ini() {
@@ -113,9 +113,9 @@ public class LoggerManager extends FTManager {
                     if(enable_measure){
                         MeasureTools.startUndoTransaction(System.nanoTime());
                     }
-                    LOG.info("LoggerManager received all register and start Undo");
+                    LOG.debug("LoggerManager received all register and start Undo");
                     this.db.undoFromWAL();
-                    LOG.info("Undo log complete!");
+                    LOG.debug("Undo log complete!");
                     this.db.getTxnProcessingEngine().isTransactionAbort=false;
                     notifyAllComplete();
                     lock.notifyAll();
@@ -126,7 +126,7 @@ public class LoggerManager extends FTManager {
                     if(enable_measure){
                         MeasureTools.startRecovery(System.nanoTime());
                     }
-                    LOG.info("LoggerManager received all register and start recovery");
+                    LOG.debug("LoggerManager received all register and start recovery");
                     if(enable_parallel){
                         this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                         long theLastLSN=getLastGlobalLSN(walFile);
@@ -147,7 +147,7 @@ public class LoggerManager extends FTManager {
                     if(enable_measure){
                         MeasureTools.startPersist(System.nanoTime());
                     }
-                    LOG.info("LoggerManager received all register and start commit log");
+                    LOG.debug("LoggerManager received all register and start commit log");
                     commitLog();
                     notifyAllComplete();
                     lock.notifyAll();
@@ -177,7 +177,7 @@ public class LoggerManager extends FTManager {
             commitLog.get();
         }
         commitGlobalLSN(LSN);
-        LOG.info("Update log commit!");
+        LOG.debug("Update log commit!");
         return true;
     }
     private boolean commitGlobalLSN(long globalLSN) throws IOException, InterruptedException {
@@ -185,7 +185,7 @@ public class LoggerManager extends FTManager {
         DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
         dataOutputStream.writeLong(globalLSN);
         dataOutputStream.close();
-        LOG.info("LoggerManager commit the globalLSN to the current.log");
+        LOG.debug("LoggerManager commit the globalLSN to the current.log");
         return true;
     }
     public Object getLock(){

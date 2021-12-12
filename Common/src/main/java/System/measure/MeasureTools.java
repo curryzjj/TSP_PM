@@ -84,10 +84,16 @@ public class MeasureTools {
         }
     }
     public static void setWalFileSize(Path path){
-        for (int i=0;i<wal_file_size.length;i++){
-            File walFile=localFileSystem.pathToFile(new Path(path,"wal_"+i));
-            wal_file_size[i].addValue(walFile.length()-previous_wal_file_size[i]);
-            previous_wal_file_size[i]=walFile.length();
+        if(wal_file_size.length==1){
+            File walFile=localFileSystem.pathToFile(new Path(path,"WAL"));
+            wal_file_size[0].addValue(walFile.length()-previous_wal_file_size[0]);
+            previous_wal_file_size[0]=walFile.length();
+        }else{
+            for (int i=0;i<wal_file_size.length;i++){
+                File walFile=localFileSystem.pathToFile(new Path(path,"WAL_"+i));
+                wal_file_size[i].addValue(walFile.length()-previous_wal_file_size[i]);
+                previous_wal_file_size[i]=walFile.length();
+            }
         }
     }
     private static long get_begin_time(long[] times){

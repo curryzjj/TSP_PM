@@ -66,7 +66,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         synchronized (lock){
             while(!isCommit){
                 //wait for log to commit
-                LOG.info("Wait for the log to commit");
+                LOG.debug("Wait for the log to commit");
                 lock.wait();
             }
             if (enable_measure){
@@ -87,7 +87,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         }
         synchronized (lock){
             while(!isCommit){
-                LOG.info("Wait for the database to undo");
+                LOG.debug("Wait for the database to undo");
                 lock.wait();
             }
             this.isCommit =false;
@@ -105,7 +105,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         }
         synchronized (lock){
             while(!isCommit){
-                LOG.info("Wait for the database to recovery");
+                LOG.debug("Wait for the database to recovery");
                 lock.wait();
             }
             this.isCommit =false;
@@ -120,7 +120,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         this.getContext().getRM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
         synchronized (lock){
             while (!isCommit){
-                LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
+                LOG.debug(this.executor.getOP_full()+" is waiting for the Recovery");
                 lock.wait();
             }
         }

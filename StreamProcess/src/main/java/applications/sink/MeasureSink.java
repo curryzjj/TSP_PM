@@ -207,6 +207,6 @@ public class MeasureSink extends BaseSink {
                 p_count=current_count;
                 throughput_map.add(throughput);
             }
-        },  100, 100);//ms
+        },  1000, 1000);//ms
     }
 }
