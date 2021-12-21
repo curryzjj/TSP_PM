@@ -97,7 +97,7 @@ public class LoggerManager extends FTManager {
     private boolean not_all_registerLog(){
         return callLog.containsValue(NULL);
     }
-    private  void execute() throws Exception{
+    private void execute() throws Exception{
         while (running){
             synchronized (lock){
                 while(not_all_registerLog()&&!close){

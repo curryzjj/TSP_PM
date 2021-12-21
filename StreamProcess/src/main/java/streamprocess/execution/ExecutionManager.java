@@ -30,6 +30,7 @@ import static UserApplications.CONTROL.*;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 import static engine.Database.snapshotExecutor;
 import static engine.log.WALManager.writeExecutor;
+import static streamprocess.faulttolerance.clr.EventManager.clrExecutor;
 
 public class ExecutionManager {
     private final static Logger LOG = LoggerFactory.getLogger(ExecutionManager.class);
@@ -68,7 +69,7 @@ public class ExecutionManager {
         timeSliceLengthMs = conf.getInt("timeSliceLengthMs");
         g.build_inputSchedule();
         clock = new Clock(conf.getDouble("shapshot", 1));
-        if(enable_snapshot||enable_wal){
+        if(enable_snapshot||enable_wal||enable_clr){
             this.startFaultTolerance(RM,FTM);
         }
         if (enable_shared_state){
@@ -90,6 +91,8 @@ public class ExecutionManager {
                 writeExecutor= Executors.newFixedThreadPool(partition_num);
             }else if(enable_parallel&&enable_snapshot){
                 snapshotExecutor=Executors.newFixedThreadPool(partition_num);
+            } else if(enable_clr&&enable_parallel){
+                clrExecutor=Executors.newFixedThreadPool(partition_num);
             }
             int delta = (int) Math.ceil(NUM_SEGMENTS / (double)partition_num);
             db.setCheckpointOptions(partition_num,delta);
@@ -193,6 +196,8 @@ public class ExecutionManager {
             writeExecutor.shutdown();
         }else if(enable_parallel&&enable_snapshot){
             snapshotExecutor.shutdown();
+        }else if(enable_parallel&&enable_clr){
+            clrExecutor.shutdown();
         }
     }
 }

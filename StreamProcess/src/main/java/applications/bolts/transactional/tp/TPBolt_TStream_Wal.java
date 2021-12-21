@@ -1,5 +1,6 @@
 package applications.bolts.transactional.tp;
 
+import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
@@ -22,7 +23,6 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 switch (in.getMarker().getValue()){
                     case "recovery":
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        this.registerRecovery();
                         break;
                     case "marker":
                         if(TXN_PROCESS_FT()){
@@ -46,6 +46,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
 
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
+        MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
         int FT=transactionManager.start_evaluate(thread_Id,this.fid);
         boolean transactionSuccess=FT==0;
         switch (FT){
@@ -69,11 +70,36 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 transactionSuccess=this.TXN_PROCESS_FT();
                 break;
         }
+        MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         return transactionSuccess;
     }
 
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        return true;
+        MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
+        int FT=transactionManager.start_evaluate(thread_Id,this.fid);
+        boolean transactionSuccess=FT==0;
+        switch (FT){
+            case 0:
+                this.AsyncRegisterPersist();
+                REQUEST_REQUEST_CORE();
+                REQUEST_POST();
+                LREvents.clear();//clear stored events.
+                BUFFER_PROCESS();
+                bufferedTuple.clear();
+                break;
+            case 1:
+                this.SyncRegisterUndo();
+                this.AsyncReConstructRequest();
+                transactionSuccess=this.TXN_PROCESS_FT();
+                break;
+            case 2:
+                this.SyncRegisterRecovery();
+                this.AsyncReConstructRequest();
+                transactionSuccess=this.TXN_PROCESS_FT();
+                break;
+        }
+        MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
+        return transactionSuccess;
     }
 }

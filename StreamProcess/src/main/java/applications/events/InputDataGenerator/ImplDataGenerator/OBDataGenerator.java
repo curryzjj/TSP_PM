@@ -44,7 +44,7 @@ public class OBDataGenerator extends InputDataGenerator {
             TxnEvent event= (TxnEvent) this.create_new_event(current_bid);
             batch_event.add(event);
         }
-        if(enable_snapshot||enable_wal){
+        if(enable_snapshot||enable_wal||enable_clr){
             try {
                 storeInput(batch_event);
             } catch (IOException e) {

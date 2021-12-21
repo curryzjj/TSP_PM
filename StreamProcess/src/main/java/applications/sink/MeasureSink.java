@@ -4,6 +4,7 @@ import System.FileSystem.FileSystem;
 import System.FileSystem.ImplFS.LocalFileSystem;
 import System.FileSystem.ImplFSDataOutputStream.LocalDataOutputStream;
 import System.FileSystem.Path;
+import System.measure.MeasureTools;
 import System.sink.helper.stable_sink_helper;
 import System.util.Configuration;
 import System.util.OsUtils;
@@ -44,7 +45,8 @@ public class MeasureSink extends BaseSink {
     protected static final ArrayDeque<Long> throughput_map=new ArrayDeque<>();
     public int batch_number_per_wm;
     /** <bid,timestamp> */
-    protected List<Tuple2<Long, Long>> perCommitTuple=new ArrayList<>();
+    //protected List<Tuple2<Long, Long>> perCommitTuple=new ArrayList<>();
+    protected HashMap<Long,Long> perCommitTuple=new HashMap<>();
     protected long currentCommitBid=0;
     protected int abortTransaction=0;
     protected static long count;
@@ -82,7 +84,7 @@ public class MeasureSink extends BaseSink {
         if(in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
                 if(in.getMarker().getValue()=="recovery"){
-                    this.abortRepeatedResults(in.getBID());
+                    MeasureTools.finishRecovery(System.nanoTime());
                 }else if(in.getMarker().getValue()=="finish"){
                     timer.cancel();
                     measure_end(in.getBID());
@@ -97,20 +99,11 @@ public class MeasureSink extends BaseSink {
                 LOG.info("The tuple ("+in.getBID()+ ") is abort");
                 abortTransaction++;
             }else{
-                perCommitTuple.add(new Tuple2(in.getBID(),in.getValue(1)));
+                perCommitTuple.put(in.getBID(),(long)in.getValue(1));
             }
         }
     }
 
-    private void abortRepeatedResults(long bid) {
-        Iterator<Tuple2<Long, Long>> events=perCommitTuple.iterator();
-        while(events.hasNext()){
-            Tuple2<Long,Long> event=events.next();
-            if(event._1().longValue()<bid){
-                events.remove();
-            }
-        }
-    }
 
     @Override
     public void execute(JumboTuple in) throws DatabaseException, BrokenBarrierException, InterruptedException {
@@ -126,17 +119,17 @@ public class MeasureSink extends BaseSink {
         if(enable_latency_measurement&&perCommitTuple.size()!=0){
             long totalLatency=0L;
             long size=0;
-            Iterator<Tuple2<Long, Long>> events=perCommitTuple.iterator();
+            Iterator<Map.Entry<Long, Long>> events = perCommitTuple.entrySet().iterator();
             while(events.hasNext()){
-                Tuple2<Long,Long> event=events.next();
-                if(event._1().longValue()<bid){
+                Map.Entry<Long, Long> event = events.next();
+                if(event.getKey()<bid){
                     final long end = System.nanoTime();
-                    final long process_latency = end - event._2;//ns
+                    final long process_latency = (long) ((end - event.getValue())/1E6);//ms
                     totalLatency=totalLatency+process_latency;
                     size++;
                     count++;
+                    events.remove();
                 }
-                events.remove();
             }
             latency_map.add(totalLatency/size);
         }
@@ -159,8 +152,8 @@ public class MeasureSink extends BaseSink {
         DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
         StringBuilder sb = new StringBuilder();
         for (Long a:latency_map){
-            latency.addValue(a/1E6);
-            dataOutputStream.writeUTF(String.valueOf(a/1E6));
+            latency.addValue(a);
+            dataOutputStream.writeUTF(String.valueOf(a));
             dataOutputStream.write(new byte[]{13,10});
         }
         sb.append("=======Latency Details=======");

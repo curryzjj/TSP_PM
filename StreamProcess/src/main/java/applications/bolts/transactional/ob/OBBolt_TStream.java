@@ -1,7 +1,6 @@
 package applications.bolts.transactional.ob;
 
 import applications.events.TxnEvent;
-import applications.events.gs.MicroEvent;
 import applications.events.ob.AlertEvent;
 import applications.events.ob.BidingResult;
 import applications.events.ob.BuyingEvent;
@@ -11,18 +10,22 @@ import engine.transaction.TxnContext;
 import engine.transaction.function.Condition;
 import engine.transaction.function.DEC;
 import engine.transaction.function.INC;
-import javafx.scene.control.Alert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
+import streamprocess.faulttolerance.clr.ComputationTask;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.BrokenBarrierException;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
+import static UserApplications.CONTROL.enable_clr;
 import static UserApplications.constants.OnlineBidingSystemConstants.Constant.NUM_ACCESSES_PER_BUY;
 
 public abstract class OBBolt_TStream extends TransactionalBoltTStream {
@@ -33,6 +36,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         this.configPrefix="tpob";
         status=new Status();
         this.setStateful();
+        this.tasks=new ArrayList<>();
     }
 
     @Override
@@ -67,6 +71,14 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         }
         if(flag){
             EventsHolder.add(event);//mark the tuple as ``in-complete"
+            if(enable_clr){
+                //only the current computationTask can be logged
+                for (int i = 0; i < event.getNum_access(); i++){
+                    List<String> values=new ArrayList<>();
+                    values.add(String.valueOf(event.getItemTopUp()[i]));
+                    tasks.add(new ComputationTask("topping",String.valueOf(event.getItemId()[i]),"goods",txnContext.getBID(),getPartitionId(String.valueOf(event.getItemId()[i])),values));
+                }
+            }
         }else {
             collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
         }
@@ -81,6 +93,14 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         }
         if(flag){
             EventsHolder.add(event);//mark the tuple as ``in-complete"
+            if(enable_clr){
+                //only the current computationTask can be logged
+                for (int i = 0; i < event.getNum_access(); i++){
+                    List<String> values=new ArrayList<>();
+                    values.add(String.valueOf(event.getAsk_price()[i]));
+                    tasks.add(new ComputationTask("alert",String.valueOf(event.getItemId()[i]),"goods",txnContext.getBID(),getPartitionId(String.valueOf(event.getItemId()[i])),values));
+                }
+            }
         }else {
             collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
         }
@@ -103,6 +123,15 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         }
         if(flag){
             EventsHolder.add(event);//mark the tuple as ``in-complete"
+            if(enable_clr){
+                //only the current computationTask can be logged
+                for (int i = 0; i < NUM_ACCESSES_PER_BUY; i++){
+                    List<String> values=new ArrayList<>();
+                    values.add(String.valueOf(event.getBidPrice(i)));
+                    values.add(String.valueOf(event.getBidQty(i)));
+                    tasks.add(new ComputationTask("buying",String.valueOf(event.getItemId()[i]),"goods",txnContext.getBID(),getPartitionId(String.valueOf(event.getItemId()[i])),values));
+                }
+            }
         }else {
             collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
         }
@@ -191,5 +220,48 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
 
     protected void TOPPING_REQUEST_POST(ToppingEvent event) throws InterruptedException {
         collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), event.topping_result, event.getTimestamp());//the tuple is finished finally.
+    }
+    protected void reRunComputationTask() throws BrokenBarrierException, IOException, InterruptedException, DatabaseException {
+        Queue queue=this.FTM.getComputationTasks(this.executor.getExecutorID());
+        boolean finish=false;
+        while(!finish){
+            Object task=queue.poll();
+            if(task!=null){
+                synchronized (queue){
+                    queue.notifyAll();
+                }
+                ComputationTask computationTask= (ComputationTask) task;
+                if(!computationTask.finish_flag){
+                    if(computationTask.txn_flag){
+                        transactionManager.start_evaluate(this.thread_Id,0);
+                    }else{
+                        reConstructTxn(computationTask);
+                    }
+                }else{
+                    finish=true;
+                }
+            }
+        }
+    }
+    private void reConstructTxn(ComputationTask task) throws DatabaseException {
+        TxnContext txnContext=new TxnContext(thread_Id,this.fid,task.bid);
+        switch (task.event_name){
+            case "topping" :
+                transactionManager.Asy_ModifyRecord(txnContext, task.table_name,task.key, new INC(Long.parseLong(task.getValue(0))), 2);//asynchronously return.
+            break;
+            case "alert":
+                transactionManager.Asy_WriteRecord(txnContext, task.table_name, task.key, Long.parseLong(task.getValue(0)), 1);//asynchronously return.
+            break;
+            case "buying":
+                transactionManager.Asy_ModifyRecord(//TODO: add atomicity preserving later.
+                    txnContext,
+                        task.table_name,
+                    task.key,
+                    new DEC(Long.parseLong(task.getValue(1))),
+                    new Condition(Long.parseLong(task.getValue(0)), Long.parseLong(task.getValue(1))),
+                   new boolean[1]
+            );
+
+        }
     }
 }

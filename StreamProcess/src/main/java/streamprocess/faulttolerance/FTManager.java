@@ -1,6 +1,10 @@
 package streamprocess.faulttolerance;
 
+import streamprocess.faulttolerance.clr.ComputationTask;
+
 import java.io.IOException;
+import java.util.List;
+import java.util.Queue;
 
 public abstract class FTManager extends Thread {
     public boolean running=true;
@@ -22,4 +26,9 @@ public abstract class FTManager extends Thread {
     public abstract void boltRegister(int executorId, FaultToleranceConstants.FaultToleranceStatus status);
     public abstract Object getLock();
     public abstract void close();
+    public void commitComputationTasks(List<ComputationTask> tasks){
+    }
+    public Queue getComputationTasks(int executorId){
+        return null;
+    }
 }

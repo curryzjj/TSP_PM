@@ -9,6 +9,7 @@ import UserApplications.baseRunner;
 import applications.topology.WordCount;
 import applications.topology.transactional.GS_txn;
 import applications.topology.transactional.OB_txn;
+import applications.topology.transactional.SL_txn;
 import applications.topology.transactional.TP_txn;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
@@ -36,6 +37,8 @@ public class  AppRunner extends baseRunner {
         driver.addApp("TP_txn", TP_txn.class);
         driver.addApp("GS_txn", GS_txn.class);
         driver.addApp("OB_txn", OB_txn.class);
+        driver.addApp("SL_txn", SL_txn.class);
+
     }
     private void run() throws UnhandledCaseException, InterruptedException, IOException {
         //Get the running environment
@@ -71,6 +74,9 @@ public class  AppRunner extends baseRunner {
                 break;
             case 2:
                 enable_snapshot=true;
+                break;
+            case 3:
+                enable_clr=true;
                 break;
         }
         //Set the parallel
@@ -133,7 +139,7 @@ public class  AppRunner extends baseRunner {
         submitter.getOM().join();
         try {
             final_topology.db.close();
-            if(enable_wal||enable_snapshot){
+            if(enable_wal||enable_snapshot||enable_clr){
                 submitter.getOM().getEM().closeFTM();
             }
             submitter.getOM().getEM().exit();

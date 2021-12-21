@@ -81,7 +81,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                         checkpoint_counter++;
                     }
                 }
-            }else if(enable_wal){
+            }else if(enable_wal||enable_clr){
                 if (!this.getContext().getFTM().spoutRegister(bid)){
                     return;
                 }
@@ -130,7 +130,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         double actual_system_throughput = epoch_size * 1E9 / elapsed_time;//events/ s
     }
     public void stopRunning() throws InterruptedException {
-        if(enable_wal||enable_snapshot){
+        if(enable_wal||enable_snapshot||enable_clr){
             this.getContext().getFTM().spoutRegister(bid);
         }
         collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"finish");

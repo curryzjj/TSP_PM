@@ -36,6 +36,7 @@ public class CONTROL {
     public static boolean enable_snapshot =false;
     public static boolean enable_wal = false;
     public static boolean enable_parallel=false;
+    public static boolean enable_clr=false;
     public static boolean enable_states_partition = false;//must be enabled for parallel snapshot
     public static int partition_num=1;
     public static boolean enable_transaction_abort=false;

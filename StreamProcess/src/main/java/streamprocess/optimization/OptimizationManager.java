@@ -13,14 +13,14 @@ import streamprocess.execution.ExecutionManager;
 import streamprocess.execution.ExecutionPlan;
 import streamprocess.faulttolerance.FTManager;
 import streamprocess.faulttolerance.checkpoint.CheckpointManager;
+import streamprocess.faulttolerance.clr.CLRManager;
 import streamprocess.faulttolerance.logger.LoggerManager;
 import streamprocess.faulttolerance.recovery.RecoveryManager;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
-import static UserApplications.CONTROL.enable_snapshot;
-import static UserApplications.CONTROL.enable_wal;
+import static UserApplications.CONTROL.*;
 
 public class OptimizationManager extends Thread {
     private final static Logger LOG = LoggerFactory.getLogger(OptimizationManager.class);
@@ -68,9 +68,8 @@ public class OptimizationManager extends Thread {
            FTM=new CheckpointManager(g,conf,db);
         }else if(enable_wal){
             FTM=new LoggerManager(g,conf,db);
-        }
-        if(enable_snapshot||enable_wal){
-            RM=new RecoveryManager(g,conf,db);
+        }else if(enable_clr){
+            FTM=new CLRManager(g,conf,db);
         }
         if(nav){
             LOG.info("Native execution");

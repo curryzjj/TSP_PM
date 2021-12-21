@@ -26,6 +26,8 @@ public interface StreamLedgerConstants extends BaseConstants {
         String DT = "depositTxn";
         String TT = "transferTxn";
         String SL = "CTBolt";
+        String EXECUTOR = "executor";
+
     }
 
     interface Constant {

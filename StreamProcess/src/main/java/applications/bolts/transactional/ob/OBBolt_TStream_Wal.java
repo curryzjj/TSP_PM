@@ -20,7 +20,6 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                 switch (in.getMarker().getValue()){
                     case "recovery":
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        this.registerRecovery();
                         break;
                     case "marker":
                         if(TXN_PROCESS_FT()){

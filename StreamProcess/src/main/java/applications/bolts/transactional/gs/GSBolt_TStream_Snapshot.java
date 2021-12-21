@@ -22,14 +22,11 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "marker":
-                        if(TXN_PROCESS()){
-                            /* When the transaction is successful, the data can be pre-commit to the outside world */
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        }
+                        TXN_PROCESS();
                         break;
                     case "finish":
                         if(TXN_PROCESS()){
-                            /* When the transaction is successful, the data can be pre-commit to the outside world */
+                            /* All the data has been executed */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         }
                         this.context.stop_running();
@@ -79,6 +76,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
         switch (FT){
             case 0:
                 REQUEST_REQUEST_CORE();
+                /* When the transaction is successful, the data can be pre-commit to the outside world */
                 REQUEST_POST();
                 EventsHolder.clear();
                 BUFFER_PROCESS();

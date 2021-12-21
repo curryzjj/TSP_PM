@@ -1,13 +1,9 @@
 package engine.log;
 
-import com.oracle.tools.packager.Log;
-import engine.table.datatype.serialize.Serialize;
 import engine.table.tableRecords.TableRecord;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public class LogRecord implements Serializable {
     private static final long serialVersionUID = -9072621686098189801L;

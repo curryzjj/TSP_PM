@@ -21,8 +21,10 @@ public class MeasureTools {
     private static final DescriptiveStatistics recovery_time=new DescriptiveStatistics();
     private static final DescriptiveStatistics transaction_abort_time=new DescriptiveStatistics();
     private static final DescriptiveStatistics persist_time=new DescriptiveStatistics();
+    private static DescriptiveStatistics[] transaction_run_time;
     private static long[] bolt_register_ack_time;
     private static long[] bolt_receive_ack_time;
+    private static long[] transaction_begin_time;
     private static long FTM_finish_time;
     private static long recovery_begin_time;
     private static long persist_begin_time;
@@ -34,14 +36,19 @@ public class MeasureTools {
         snapshot_file_size = new DescriptiveStatistics[partition_num];
         wal_file_size=new DescriptiveStatistics[partition_num];
         previous_wal_file_size=new long[partition_num];
+        transaction_run_time=new DescriptiveStatistics[tthread_num];
         for(int i=0;i<partition_num;i++){
             previous_wal_file_size[i]=0;
             serialization_time[i] = new DescriptiveStatistics();
             snapshot_file_size[i] = new DescriptiveStatistics();
             wal_file_size[i]=new DescriptiveStatistics();
         }
+        for (int i=0;i<tthread_num;i++){
+            transaction_run_time[i]=new DescriptiveStatistics();
+        }
         bolt_register_ack_time =new long[tthread_num];
         bolt_receive_ack_time =new long[tthread_num];
+        transaction_begin_time=new long[tthread_num];
         FT=FT_;
     }
     public static void bolt_register_Ack(int thread_id,long time){
@@ -56,6 +63,12 @@ public class MeasureTools {
     public static void bolt_receive_ack_time(int thread_id,long time){
         bolt_receive_ack_time[thread_id]=time;
         FTM_finish_ack_time.addValue((time-FTM_finish_time)/1E6);
+    }
+    public static void startTransaction(int threadId,long time){
+        transaction_begin_time[threadId]=time;
+    }
+    public static void finishTransaction(int threadId,long time){
+        transaction_run_time[threadId].addValue((time-transaction_begin_time[threadId])/1E6);
     }
     public static void startPersist(long time){
         persist_begin_time=time;
@@ -118,16 +131,18 @@ public class MeasureTools {
                 for (int i=0;i<wal_file_size.length;i++){
                     sb.append("=======Wal"+i+" file size Details=======");
                     sb.append("\n" + wal_file_size[i].toString() + "\n");
-                    i++;
                 }
             break;
             case 2:
                 for (int i=0;i<snapshot_file_size.length;i++){
                     sb.append("=======Snapshot"+i+" file size Details=======");
                     sb.append("\n" + snapshot_file_size[i].toString() + "\n");
-                    i++;
                 }
             break;
+        }
+        for (int i=0;i<transaction_run_time.length;i++){
+            sb.append("=======Thread"+i+" transaction running time Details=======");
+            sb.append("\n" + transaction_run_time[i].toString() + "\n");
         }
         LOG.info(sb.toString());
     }

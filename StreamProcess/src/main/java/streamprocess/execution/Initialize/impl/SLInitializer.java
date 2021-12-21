@@ -25,11 +25,11 @@ import static UserApplications.constants.StreamLedgerConstants.Constant.BOOK_ENT
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 import static utils.PartitionHelper.getPartition_interval;
 
-public class LSInitializer extends TableInitilizer {
-    private static final Logger LOG = LoggerFactory.getLogger(LSInitializer.class);
+public class SLInitializer extends TableInitilizer {
+    private static final Logger LOG = LoggerFactory.getLogger(SLInitializer.class);
     protected int partition_interval;
     protected int range_interval;
-    public LSInitializer(Database db, double scale_factor, double theta, int partition_num, Configuration config) {
+    public SLInitializer(Database db, double scale_factor, double theta, int partition_num, Configuration config) {
         super(db, scale_factor, theta, partition_num, config);
         partition_interval=getPartition_interval();
         range_interval = (int) Math.ceil(NUM_ITEMS / (double) config.getInt("tthread"));//NUM_ITEMS / tthread;

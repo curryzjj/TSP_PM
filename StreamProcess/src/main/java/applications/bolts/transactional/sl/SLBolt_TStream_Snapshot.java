@@ -1,4 +1,4 @@
-package applications.bolts.transactional.ob;
+package applications.bolts.transactional.sl;
 
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
-public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
-    public OBBolt_TStream_Snapshot(int fid) {
+public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
+    public SLBolt_TStream_Snapshot(int fid) {
         super(fid);
     }
 

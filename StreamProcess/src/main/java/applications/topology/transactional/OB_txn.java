@@ -4,6 +4,7 @@ import System.util.Configuration;
 import UserApplications.constants.GrepSumConstants;
 import UserApplications.constants.OnlineBidingSystemConstants;
 import UserApplications.constants.PKConstants;
+import applications.bolts.transactional.ob.OBBolt_TStream_Clr;
 import applications.bolts.transactional.ob.OBBolt_TStream_NoFT;
 import applications.bolts.transactional.ob.OBBolt_TStream_Snapshot;
 import applications.bolts.transactional.ob.OBBolt_TStream_Wal;
@@ -52,6 +53,11 @@ public class OB_txn extends TransactionalTopology {
            }else if(enable_wal){
                builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
                        new OBBolt_TStream_Wal(0),
+                       config.getInt(Executor_Threads),
+                       new ShuffleGrouping(OnlineBidingSystemConstants.Component.SPOUT));
+           }else if(enable_clr){
+               builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
+                       new OBBolt_TStream_Clr(0),
                        config.getInt(Executor_Threads),
                        new ShuffleGrouping(OnlineBidingSystemConstants.Component.SPOUT));
            }else{

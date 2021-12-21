@@ -54,6 +54,8 @@ public class GS_txn extends TransactionalTopology {
                         new GSBolt_TStream_Wal(0),
                         config.getInt(Executor_Threads),
                         new ShuffleGrouping(Component.SPOUT));
+            }else if(enable_clr){
+
             }else {
                 builder.setBolt(Component.EXECUTOR,
                         new GSBolt_TStream_NoFT(0),

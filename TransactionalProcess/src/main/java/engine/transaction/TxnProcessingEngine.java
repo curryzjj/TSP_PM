@@ -9,6 +9,7 @@ import engine.transaction.common.MyList;
 import engine.transaction.common.Operation;
 import engine.transaction.function.AVG;
 import engine.log.LogRecord;
+import engine.transaction.function.DEC;
 import engine.transaction.function.INC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +71,7 @@ public class TxnProcessingEngine {
                 this.walManager.setHolder_by_tableName("accounts",partition_num);
                 holder_by_stage.put("bookEntries", new Holder_in_range(num_op));
                 this.walManager.setHolder_by_tableName("bookEntries",partition_num);
-
+                break;
             default:
                 throw new UnsupportedOperationException("app not recognized");
         }
@@ -256,7 +257,7 @@ public class TxnProcessingEngine {
             break;
             case READ_WRITE://read, modify, write
                 if(app=="SL_txn"){
-
+                    this.CT_Depo_Fun(operation);
                 }else{
                     SchemaRecord src_record=operation.s_record.record_;
                     List<DataBox> values=src_record.getValues();
@@ -270,7 +271,7 @@ public class TxnProcessingEngine {
             break;
             case READ_WRITE_COND://read, modify(depends on the condition), write(depend on the condition)
                 if(app=="SL_txn"){
-
+                    this.CT_Transfer_Fun(operation);
                 }else{
                     List<DataBox> d_record=operation.condition_records[0].record_.getValues();
                     long askPrice = d_record.get(1).getLong();//price
@@ -288,6 +289,14 @@ public class TxnProcessingEngine {
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.d_record);
                 }
+            break;
+            case READ_WRITE_COND_READ:
+                assert operation.record_ref != null;
+                if (app == "SL_txn") {//used in SL
+                    CT_Transfer_Fun(operation);
+                    operation.record_ref.setRecord(operation.d_record.readPreValues(operation.bid));//read the resulting tuple.
+                } else
+                    throw new UnsupportedOperationException();
             break;
             default:throw new UnsupportedOperationException();
         }
@@ -369,7 +378,24 @@ public class TxnProcessingEngine {
     private void CT_Transfer_Fun(Operation operation){
         SchemaRecord preValues=operation.condition_records[0].readPreValues(operation.bid);
         SchemaRecord preValues1=operation.condition_records[1].readPreValues(operation.bid);
-
-
+        final long sourceAccountBalance = preValues.getValues().get(1).getLong();
+        final long sourceAssetValue = preValues1.getValues().get(1).getLong();
+        if (sourceAccountBalance>operation.condition.arg1&&sourceAccountBalance>operation.condition.arg2&&sourceAssetValue>operation.condition.arg3){
+            SchemaRecord srcRecord=operation.s_record.readPreValues(operation.bid);
+            List<DataBox> values=srcRecord.getValues();
+            SchemaRecord tempo_record;
+            tempo_record = new SchemaRecord(values);//tempo record
+            //apply function.
+            if (operation.function instanceof INC) {
+                tempo_record.getValues().get(1).incLong(sourceAccountBalance, operation.function.delta_long);//compute.
+            } else if (operation.function instanceof DEC) {
+                tempo_record.getValues().get(1).decLong(sourceAccountBalance, operation.function.delta_long);//compute.
+            } else
+                throw new UnsupportedOperationException();
+            operation.d_record.updateMultiValues(operation.bid,tempo_record);
+            operation.success[0]=true;
+        }else {
+            operation.success[0]=false;
+        }
     }
 }

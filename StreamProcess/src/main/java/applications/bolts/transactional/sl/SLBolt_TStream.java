@@ -127,7 +127,11 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     @Override
     protected void REQUEST_POST() throws InterruptedException {
         for (TxnEvent event:EventsHolder){
-            collector.emit(event.getBid(), true, event.getTimestamp());//the tuple is finished.
+            if(event instanceof TransactionEvent){
+                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, event.getTimestamp(),((TransactionEvent) event).transaction_result);//the tuple is finished.
+            }else{
+                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, event.getTimestamp());//the tuple is finished.
+            }
         }
     }
 
@@ -146,11 +150,11 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         event.transaction_result = new TransactionResult(event, event.success[0],event.src_account_value.getRecord().getValues().get(1).getLong(), event.dst_account_value.getRecord().getValues().get(1).getLong());
     }
     protected void DEPOSITE_REQUEST_CORE(DepositEvent event) {
-        List<DataBox> values = event.account_value.getRecord().getValues();
-        long newAccountValue = values.get(1).getLong() + event.getAccountTransfer();
-        values.get(1).setLong(newAccountValue);
-        List<DataBox> asset_values = event.asset_value.getRecord().getValues();
-        long newAssetValue = values.get(1).getLong() + event.getBookEntryTransfer();
-        asset_values.get(1).setLong(newAssetValue);
+//        List<DataBox> values = event.account_value.getRecord().getValues();
+//        long newAccountValue = values.get(1).getLong() + event.getAccountTransfer();
+//        values.get(1).setLong(newAccountValue);
+//        List<DataBox> asset_values = event.asset_value.getRecord().getValues();
+//        long newAssetValue = values.get(1).getLong() + event.getBookEntryTransfer();
+//        asset_values.get(1).setLong(newAssetValue);
     }
 }

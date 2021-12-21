@@ -10,16 +10,20 @@ import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.FaultToleranceConstants;
+import streamprocess.faulttolerance.clr.ComputationTask;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
-import static UserApplications.CONTROL.enable_measure;
+import static UserApplications.CONTROL.*;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
 public abstract class TransactionalBoltTStream extends TransactionalBolt {
+    public int partition_delta;
+    public List<ComputationTask> tasks;
     public TransactionalBoltTStream(Logger log,int fid){
         super(log,fid);
     }
@@ -27,6 +31,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public void initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
         super.initialize(thread_Id, thisTaskId, graph);
         transactionManager=new TxnManagerTStream(db.getStorageManager(),this.context.getThisComponentId(),thread_Id,NUM_SEGMENTS,this.context.getThisComponent().getNumTasks());
+        partition_delta=(int) Math.ceil(NUM_ITEMS / (double) partition_num);//NUM_ITEMS / partition_num;
     }
     public void loadDB(Map conf, TopologyContext context, OutputCollector collector){
         loadDB(context.getThisTaskId()-context.getThisComponent().getExecutorList().get(0).getExecutorID(),context.getThisTaskId(),context.getGraph());
@@ -49,6 +54,9 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
      */
     protected void AsyncRegisterPersist(){
         this.lock=this.FTM.getLock();
+        if(enable_clr){
+            this.FTM.commitComputationTasks(tasks);
+        }
         synchronized (lock){
             if (enable_measure){
                 MeasureTools.bolt_register_Ack(this.thread_Id,System.nanoTime());
@@ -125,5 +133,9 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
             }
         }
         isCommit=false;
+    }
+    public int getPartitionId(String key){
+        Integer _key = Integer.valueOf(key);
+        return _key / partition_delta;
     }
 }
