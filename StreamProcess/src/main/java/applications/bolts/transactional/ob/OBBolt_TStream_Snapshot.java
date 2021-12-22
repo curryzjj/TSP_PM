@@ -49,6 +49,7 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         int FT=transactionManager.start_evaluate(thread_Id,this.fid);
+        boolean transactionSuccess=FT==0;
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
@@ -60,6 +61,10 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
                 bufferedTuple.clear();
                 break;
             case 1:
+                this.SyncRegisterUndo();
+                this.AsyncReConstructRequest();
+                transactionSuccess=this.TXN_PROCESS_FT();
+                break;
             case 2:
                 this.SyncRegisterRecovery();
                 this.collector.clean();
@@ -67,12 +72,13 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
                 this.bufferedTuple.clear();
                 break;
         }
-        return FT==0;
+        return transactionSuccess;
     }
 
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         int FT=transactionManager.start_evaluate(thread_Id,this.fid);
+        boolean transactionSuccess=FT==0;
         switch (FT){
             case 0:
                 REQUEST_REQUEST_CORE();
@@ -83,6 +89,10 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
                 bufferedTuple.clear();
                 break;
             case 1:
+                this.SyncRegisterUndo();
+                this.AsyncReConstructRequest();
+                transactionSuccess=this.TXN_PROCESS();
+                break;
             case 2:
                 this.SyncRegisterRecovery();
                 this.collector.clean();
@@ -90,6 +100,6 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
                 this.bufferedTuple.clear();
                 break;
         }
-        return FT==0;
+        return transactionSuccess;
     }
 }

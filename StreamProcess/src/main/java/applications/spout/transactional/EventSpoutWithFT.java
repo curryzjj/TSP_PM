@@ -69,6 +69,10 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
 
     @Override
     public void nextTuple(int batch) throws InterruptedException {
+        if(!startClock){
+            this.clock.start();
+            startClock=true;
+        }
         if (needReplay){
             this.registerRecovery();
         }

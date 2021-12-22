@@ -16,7 +16,7 @@ public class Clock implements Closeable {
     private Timer timer;
 
     public Clock(double checkpoint_interval){
-        gap=(long)(checkpoint_interval*(long) 10);
+        gap=(long)(checkpoint_interval*(long) 1000);
         LOG.info("Clock advance interval:"+checkpoint_interval);
         create_time=System.nanoTime();
         timer=new Timer();

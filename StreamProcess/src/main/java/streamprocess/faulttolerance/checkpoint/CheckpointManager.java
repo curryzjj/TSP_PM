@@ -126,7 +126,7 @@ public class CheckpointManager extends FTManager {
                 if(enable_measure){
                     MeasureTools.FTM_receive_all_Ack(System.nanoTime());
                 }
-                if(callSnapshot.containsValue(Undo)||callSnapshot.containsValue(Recovery)){
+                if(callSnapshot.containsValue(Recovery)){
                     if(enable_measure){
                         MeasureTools.startRecovery(System.nanoTime());
                     }
@@ -150,7 +150,15 @@ public class CheckpointManager extends FTManager {
                     if(enable_measure){
                         MeasureTools.finishRecovery(System.nanoTime());
                     }
-                }else{
+                }else if(callSnapshot.containsValue(Undo)){
+                    LOG.debug("CheckpointManager received all register and start undo");
+                    this.db.undoFromWAL();
+                    LOG.info("Undo log complete!");
+                    this.db.getTxnProcessingEngine().isTransactionAbort=false;
+                    this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                    notifyAllComplete();
+                    lock.notifyAll();
+                } else if(callSnapshot.containsValue(Persist)){
                     if(enable_measure){
                         MeasureTools.startPersist(System.nanoTime());
                     }

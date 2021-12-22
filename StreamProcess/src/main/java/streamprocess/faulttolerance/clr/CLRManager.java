@@ -8,6 +8,7 @@ import System.measure.MeasureTools;
 import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
+import engine.Exception.DatabaseException;
 import org.checkerframework.checker.units.qual.C;
 import org.jctools.queues.MpscArrayQueue;
 import org.slf4j.Logger;
@@ -79,7 +80,7 @@ public class CLRManager extends FTManager {
             localDataOutputStream.close();
         }
     }
-    private void execute() throws InterruptedException, IOException {
+    private void execute() throws InterruptedException, IOException, DatabaseException {
         while (running){
             synchronized (lock){
                 while (not_all_registerEvent()&&!close){
@@ -96,11 +97,19 @@ public class CLRManager extends FTManager {
                 }else if(callEvent.containsValue(Recovery)){
                     LOG.debug("CLRManager received all register and start recovery");
                     this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
+                    this.db.undoFromWAL();
                     this.recoveryComputationTask();
                     notifyAllComplete();
                     lock.notifyAll();
                     this.eventManager.loadComputationTasks(this.db.getTxnProcessingEngine().getRecoveryRangeId(),Current_Path.getParent(),computationTasksQueue);
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                }else if(callEvent.containsValue(Undo)){
+                    LOG.debug("CLRManager received all register and start undo");
+                    this.db.undoFromWAL();
+                    LOG.debug("Undo log complete!");
+                    this.db.getTxnProcessingEngine().isTransactionAbort=false;
+                    notifyAllComplete();
+                    lock.notifyAll();
                 }
             }
         }
@@ -178,7 +187,7 @@ public class CLRManager extends FTManager {
     public void run() {
         try{
             execute();
-        } catch (InterruptedException | IOException e) {
+        } catch (InterruptedException | IOException | DatabaseException e) {
             e.printStackTrace();
         } finally {
             try {

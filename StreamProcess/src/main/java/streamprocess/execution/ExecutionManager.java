@@ -68,7 +68,7 @@ public class ExecutionManager {
         LOG.info("Finally, targetHZ set to:" + loadTargetHz);
         timeSliceLengthMs = conf.getInt("timeSliceLengthMs");
         g.build_inputSchedule();
-        clock = new Clock(conf.getDouble("shapshot", 1));
+        clock = new Clock(conf.getDouble("batch_number_per_wm", 1));
         if(enable_snapshot||enable_wal||enable_clr){
             this.startFaultTolerance(RM,FTM);
         }
