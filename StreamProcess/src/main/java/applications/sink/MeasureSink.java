@@ -196,7 +196,7 @@ public class MeasureSink extends BaseSink {
             @Override
             public void run() {
                 long current_count=getCount();
-                long throughput=(current_count-p_count)/100;
+                long throughput=(current_count-p_count)/1000;
                 p_count=current_count;
                 throughput_map.add(throughput);
             }

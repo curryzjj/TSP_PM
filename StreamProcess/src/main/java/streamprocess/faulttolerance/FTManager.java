@@ -1,5 +1,6 @@
 package streamprocess.faulttolerance;
 
+import streamprocess.faulttolerance.clr.ComputationLogic;
 import streamprocess.faulttolerance.clr.ComputationTask;
 
 import java.io.IOException;
@@ -27,6 +28,9 @@ public abstract class FTManager extends Thread {
     public abstract Object getLock();
     public abstract void close();
     public void commitComputationTasks(List<ComputationTask> tasks){
+    }
+    public void commitComputationLogics(List<ComputationLogic> logics){
+
     }
     public Queue getComputationTasks(int executorId){
         return null;

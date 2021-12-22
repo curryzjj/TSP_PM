@@ -90,7 +90,7 @@ public class CLRManager extends FTManager {
                     return;
                 }
                 if(callEvent.containsValue(Persist)){
-                    LOG.debug("CLRManager received all register and start commit event task");
+                    LOG.info("CLRManager received all register and start commit event task");
                     commitEvent();
                     notifyAllComplete();
                     lock.notifyAll();
@@ -159,12 +159,18 @@ public class CLRManager extends FTManager {
     }
 
     @Override
+    public void commitComputationLogics(List<ComputationLogic> logics) {
+        currentEventsTask.addComputationLogic(logics);
+    }
+
+    @Override
     public Queue getComputationTasks(int executorId) {
         return this.computationTasksQueue.get(executorId);
     }
 
     private void commitEvent() throws IOException, InterruptedException {
-        eventManager.persistEventsTask(this.Current_Path.getParent(),currentEventsTask);
+        //eventManager.persistEventsTask(this.Current_Path.getParent(),currentEventsTask);
+        eventManager.persistEventsLogic(this.Current_Path.getParent(),currentEventsTask);
     }
     private void recoveryComputationTask(){
         for (ExecutionNode e:g.getExecutionNodeArrayList()){

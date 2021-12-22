@@ -10,9 +10,12 @@ import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.FaultToleranceConstants;
+import streamprocess.faulttolerance.clr.ComputationLogic;
 import streamprocess.faulttolerance.clr.ComputationTask;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
@@ -24,6 +27,7 @@ import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public int partition_delta;
     public List<ComputationTask> tasks;
+    public List<ComputationLogic> computationLogics;
     public TransactionalBoltTStream(Logger log,int fid){
         super(log,fid);
     }
@@ -32,6 +36,10 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         super.initialize(thread_Id, thisTaskId, graph);
         transactionManager=new TxnManagerTStream(db.getStorageManager(),this.context.getThisComponentId(),thread_Id,NUM_SEGMENTS,this.context.getThisComponent().getNumTasks());
         partition_delta=(int) Math.ceil(NUM_ITEMS / (double) partition_num);//NUM_ITEMS / partition_num;
+        if(enable_clr){
+            this.tasks=new ArrayList<>();
+            this.computationLogics=new ArrayList<>();
+        }
     }
     public void loadDB(Map conf, TopologyContext context, OutputCollector collector){
         loadDB(context.getThisTaskId()-context.getThisComponent().getExecutorList().get(0).getExecutorID(),context.getThisTaskId(),context.getGraph());
@@ -55,7 +63,8 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     protected void AsyncRegisterPersist(){
         this.lock=this.FTM.getLock();
         if(enable_clr){
-            this.FTM.commitComputationTasks(tasks);
+           // this.FTM.commitComputationTasks(tasks);
+            this.FTM.commitComputationLogics(computationLogics);
         }
         synchronized (lock){
             if (enable_measure){

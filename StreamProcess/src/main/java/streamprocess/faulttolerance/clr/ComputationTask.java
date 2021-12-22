@@ -19,25 +19,22 @@ public class ComputationTask implements Serializable {
     private static final long serialVersionUID = 4822059630736962439L;
     public String event_name;
     public String key;
-    public String table_name;
     public List<String> values;
     public long bid;
     public int partition_id;
     //used in the re_running the commit computationTasks
     public boolean txn_flag=false;
     public boolean finish_flag=false;
-    public ComputationTask(String event_name, String key, String table_name, long bid,int partition_id,List<String> value){
+    public ComputationTask(String event_name, String key, long bid,int partition_id,List<String> value){
         this.event_name = event_name;
         this.key = key;
-        this.table_name = table_name;
         this.bid = bid;
         this.partition_id=partition_id;
         this.values=value;
     }
-    public ComputationTask(long bid,String key,String table_name,String event_name,String values){
+    public ComputationTask(long bid,String key,String event_name,String values){
         this.event_name = event_name;
         this.key = key;
-        this.table_name = table_name;
         this.bid = bid;
         String value[]=values.split(";");
         this.values=new ArrayList<>();
@@ -54,8 +51,6 @@ public class ComputationTask implements Serializable {
         stringBuilder.append(bid);
         stringBuilder.append(" ");
         stringBuilder.append(key);
-        stringBuilder.append(" ");
-        stringBuilder.append(table_name);
         stringBuilder.append(" ");
         stringBuilder.append(event_name);
         stringBuilder.append(" ");

@@ -27,6 +27,56 @@ public class EventManager {
     public EventManager(){
 
     }
+    public class PersistLogicTask implements Callable<Boolean>{
+        private int partition_id;
+        private ConcurrentLinkedQueue<ComputationLogic> computationTasks;
+        private long eventTaskId;
+        private File clrFile;
+        public PersistLogicTask(int partition_id, long eventTaskId, ConcurrentLinkedQueue<ComputationLogic> logics, Path parentPath){
+            this.partition_id=partition_id;
+            this.eventTaskId=eventTaskId;
+            this.computationTasks=logics;
+            Path path=new Path(parentPath,"CLR"+partition_id);
+            clrFile=localFS.pathToFile(path);
+        }
+        @Override
+        public Boolean call() throws Exception {
+            persistComputationLogics(this.clrFile,this.computationTasks,this.eventTaskId,this.partition_id);
+            return true;
+        }
+    }
+    public void persistComputationLogics(File clrFile,ConcurrentLinkedQueue<ComputationLogic> logics,long eventTaskId,int partitionId) throws IOException {
+        FileWriter Fw= null;
+        Fw = new FileWriter(clrFile,true);
+        BufferedWriter bw= new BufferedWriter(Fw);
+        for (ComputationLogic logic:logics){
+            bw.write(logic.toString(partitionId));
+            bw.write( "\n");
+        }
+        bw.write(split_exp+" ");
+        bw.write(String.valueOf(eventTaskId));
+        bw.write( "\n");
+        bw.flush();
+        bw.close();
+        Fw.close();
+    }
+    private void Init_PersistEventLogic(List<PersistLogicTask> callables,Path current,EventsTask eventsTask){
+        for (int i=0;i<partition_num;i++){
+            callables.add(new PersistLogicTask(i,eventsTask.getTaskId(), eventsTask.getComputationLogicsQueues(), current));
+        }
+    }
+    public void persistEventsLogic(Path currentPath,EventsTask eventsTask) throws IOException, InterruptedException {
+        if(enable_states_partition){
+            List<PersistLogicTask> callables=new ArrayList<>();
+            Init_PersistEventLogic(callables,currentPath,eventsTask);
+            clrExecutor.invokeAll(callables);
+        }else{
+            Path path=new Path(currentPath,"CLR");
+            File clrFile=localFS.pathToFile(path);
+            persistComputationLogics(clrFile,eventsTask.getComputationLogicsQueues(), eventsTask.getTaskId(),0);
+        }
+    }
+
     private class PersistEventTask implements Callable<Boolean>{
         private int partition_id;
         private ConcurrentLinkedQueue<ComputationTask> computationTasks;
@@ -50,12 +100,12 @@ public class EventManager {
             callables.add(new PersistEventTask(i,eventsTask.getTaskId(),eventsTask.getComputationTasksByPartitionId(i),current));
         }
     }
-
     public void persistComputationTasks(File clrFile,ConcurrentLinkedQueue<ComputationTask> tasks, long eventTaskId ) throws IOException {
         FileWriter Fw= null;
         Fw = new FileWriter(clrFile,true);
         BufferedWriter bw= new BufferedWriter(Fw);
         for (ComputationTask task:tasks){
+            bw.write(String.valueOf(eventTaskId));
             bw.write(task.toString());
             bw.write( "\n");
         }
@@ -95,7 +145,7 @@ public class EventManager {
                     queues.get(a).offer(task);
                 }
             }else{
-                ComputationTask task=new ComputationTask(Long.parseLong(split[0]),split[1],split[2],split[3],split[4]);
+                ComputationTask task=new ComputationTask(Long.parseLong(split[0]),split[1],split[2],split[3]);
                 queues.get(i).offer(task);
             }
             i++;
