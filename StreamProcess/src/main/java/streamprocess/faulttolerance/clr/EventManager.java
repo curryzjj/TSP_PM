@@ -2,13 +2,16 @@ package streamprocess.faulttolerance.clr;
 
 
 import System.FileSystem.ImplFS.LocalFileSystem;
+import System.FileSystem.ImplFSDataOutputStream.LocalDataOutputStream;
 import System.FileSystem.Path;
+import com.ning.compress.lzf.util.LZFFileOutputStream;
 import org.checkerframework.checker.units.qual.C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Int;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -161,21 +164,17 @@ public class EventManager {
     }
 
     private void persistBidTask(File clrFile,ConcurrentLinkedQueue<Long> bids,long eventTaskId) throws IOException {
-        FileWriter Fw= null;
-        Fw = new FileWriter(clrFile,true);
-        BufferedWriter bw= new BufferedWriter(Fw);
+        //OutputStream outputStream=new LZFFileOutputStream(clrFile,true);
+        LocalDataOutputStream outputStream=new LocalDataOutputStream(clrFile);
         StringBuilder stringBuilder=new StringBuilder();
         for (Long bid:bids){
             stringBuilder.append(bid.toString());
             stringBuilder.append(" ");
         }
-        bw.write(stringBuilder.toString());
-        bw.write(split_exp+" ");
-        bw.write(String.valueOf(eventTaskId));
-        bw.write( "\n");
-        bw.flush();
-        bw.close();
-        Fw.close();
+        stringBuilder.append(split_exp+" ");
+        stringBuilder.append(eventTaskId);
+        outputStream.write(stringBuilder.toString().getBytes(StandardCharsets.UTF_8).length);
+        outputStream.write(stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
     }
     public void persistBid(Path currentPath, EventsTask eventsTask) throws InterruptedException, IOException {
         if(enable_states_partition){
@@ -187,5 +186,18 @@ public class EventManager {
             File clrFile=localFS.pathToFile(path);
             persistBidTask(clrFile,eventsTask.getBidQueuesByPartitionId(0), eventsTask.getTaskId());
         }
+    }
+    public void commitEventId(Path currentPath,EventsTask eventsTask) throws IOException {
+        Path path=new Path(currentPath,"CLR");
+        File clrFile=localFS.pathToFile(path);
+        FileWriter Fw= null;
+        Fw = new FileWriter(clrFile,true);
+        BufferedWriter bw= new BufferedWriter(Fw);
+        bw.write(split_exp+" ");
+        bw.write(String.valueOf(eventsTask.getTaskId()));
+        bw.write( "\n");
+        bw.flush();
+        bw.close();
+        Fw.close();
     }
 }

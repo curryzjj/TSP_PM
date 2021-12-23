@@ -64,7 +64,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         this.lock=this.FTM.getLock();
         if(enable_clr){
            // this.FTM.commitComputationTasks(tasks);
-            this.FTM.commitComputationLogics(computationLogics);
+            //this.FTM.commitComputationLogics(computationLogics);
         }
         synchronized (lock){
             if (enable_measure){
