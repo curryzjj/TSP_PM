@@ -50,7 +50,7 @@ public class EventManager {
         Fw = new FileWriter(clrFile,true);
         BufferedWriter bw= new BufferedWriter(Fw);
         for (ComputationLogic logic:logics){
-            bw.write(logic.toString(partitionId));
+           // bw.write(logic.toString(partitionId));
             bw.write( "\n");
         }
         bw.write(split_exp+" ");
@@ -100,7 +100,7 @@ public class EventManager {
             callables.add(new PersistEventTask(i,eventsTask.getTaskId(),eventsTask.getComputationTasksByPartitionId(i),current));
         }
     }
-    public void persistComputationTasks(File clrFile,ConcurrentLinkedQueue<ComputationTask> tasks, long eventTaskId ) throws IOException {
+    private void persistComputationTasks(File clrFile,ConcurrentLinkedQueue<ComputationTask> tasks, long eventTaskId ) throws IOException {
         FileWriter Fw= null;
         Fw = new FileWriter(clrFile,true);
         BufferedWriter bw= new BufferedWriter(Fw);
@@ -158,5 +158,34 @@ public class EventManager {
             queues.get(a).offer(task);
         }
 
+    }
+
+    private void persistBidTask(File clrFile,ConcurrentLinkedQueue<Long> bids,long eventTaskId) throws IOException {
+        FileWriter Fw= null;
+        Fw = new FileWriter(clrFile,true);
+        BufferedWriter bw= new BufferedWriter(Fw);
+        StringBuilder stringBuilder=new StringBuilder();
+        for (Long bid:bids){
+            stringBuilder.append(bid.toString());
+            stringBuilder.append(" ");
+        }
+        bw.write(stringBuilder.toString());
+        bw.write(split_exp+" ");
+        bw.write(String.valueOf(eventTaskId));
+        bw.write( "\n");
+        bw.flush();
+        bw.close();
+        Fw.close();
+    }
+    public void persistBid(Path currentPath, EventsTask eventsTask) throws InterruptedException, IOException {
+        if(enable_states_partition){
+            List<PersistEventTask> callables=new ArrayList<>();
+            Init_PersistEventTask(callables,currentPath,eventsTask);
+            clrExecutor.invokeAll(callables);
+        }else{
+            Path path=new Path(currentPath,"CLR");
+            File clrFile=localFS.pathToFile(path);
+            persistBidTask(clrFile,eventsTask.getBidQueuesByPartitionId(0), eventsTask.getTaskId());
+        }
     }
 }

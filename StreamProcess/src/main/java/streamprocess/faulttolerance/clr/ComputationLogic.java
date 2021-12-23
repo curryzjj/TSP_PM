@@ -39,5 +39,10 @@ public class ComputationLogic implements Serializable {
     public void putIndex(int partitionId,int index){
         this.indexByPartition.get(partitionId).add(index);
     }
-
+    public long getBid(){
+        return this.bid;
+    }
+    public boolean haveTaskOnPartition(int partitionId){
+        return this.indexByPartition.get(partitionId).isEmpty();
+    }
 }

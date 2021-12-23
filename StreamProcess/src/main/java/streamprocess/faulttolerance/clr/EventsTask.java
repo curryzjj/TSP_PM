@@ -16,13 +16,16 @@ public class EventsTask implements Serializable {
     private static final long serialVersionUID = -8306359454629589737L;
     private long TaskId;
     private final ConcurrentHashMap<Integer,ConcurrentLinkedQueue<ComputationTask>> taskQueues;
+    private final ConcurrentHashMap<Integer,ConcurrentLinkedQueue<Long>> bidQueues;
     private final ConcurrentLinkedQueue<ComputationLogic> computationLogicsQueues;//concurrent
     public EventsTask(long taskId){
         this.TaskId=taskId;
         taskQueues=new ConcurrentHashMap<>();
+        bidQueues = new ConcurrentHashMap<>();
         computationLogicsQueues =new ConcurrentLinkedQueue<ComputationLogic>();
         for (int i=0;i<partition_num;i++){
             taskQueues.put(i,new ConcurrentLinkedQueue<>());
+            bidQueues.put(i,new ConcurrentLinkedQueue<>());
         }
     }
     public void addComputationTask(List<ComputationTask> tasks){
@@ -33,7 +36,11 @@ public class EventsTask implements Serializable {
     }
     public void addComputationLogic(List<ComputationLogic> logics){
         for (ComputationLogic logic:logics){
-            this.computationLogicsQueues.add(logic);
+            for (int i=0;i<partition_num;i++){
+                if (!logic.haveTaskOnPartition(i)){
+                    this.bidQueues.get(i).add(logic.getBid());
+                }
+            }
         }
     }
 
@@ -46,5 +53,9 @@ public class EventsTask implements Serializable {
 
     public ConcurrentLinkedQueue<ComputationLogic> getComputationLogicsQueues() {
         return computationLogicsQueues;
+    }
+
+    public ConcurrentLinkedQueue<Long> getBidQueuesByPartitionId(int partitionId) {
+        return bidQueues.get(partitionId);
     }
 }
