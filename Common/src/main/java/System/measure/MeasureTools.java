@@ -140,10 +140,13 @@ public class MeasureTools {
                 }
             break;
         }
+        double Total_time=0;
         for (int i=0;i<transaction_run_time.length;i++){
             sb.append("=======Thread"+i+" transaction running time Details=======");
             sb.append("\n" + transaction_run_time[i].toString() + "\n");
+            Total_time=Total_time+transaction_run_time[i].getMean();
         }
+        sb.append("Avg transaction_run_time: "+Total_time/transaction_run_time.length);
         LOG.info(sb.toString());
     }
 }

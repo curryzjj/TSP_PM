@@ -61,7 +61,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         }
     }
     public boolean snapshot(){
-        if(checkpoint_counter%checkpoint_interval==0){
+        if(bid%(checkpoint_interval*batch_number_per_wm)==0){
             return true;
         }else {
             return false;
