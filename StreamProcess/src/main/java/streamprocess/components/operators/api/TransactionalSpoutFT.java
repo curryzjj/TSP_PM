@@ -61,7 +61,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         }
     }
     public boolean snapshot(){
-        if(myiteration%checkpoint_interval==0){
+        if(checkpoint_counter%checkpoint_interval==0){
             return true;
         }else {
             return false;
@@ -73,7 +73,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
         String msg1=msg;
-        if (this.clock.tick(myiteration)) {//emit marker tuple
+        if (this.marker()) {//emit marker tuple
             if(enable_snapshot){
                 if(snapshot()){
                     if(this.getContext().getFTM().spoutRegister(bid)){
