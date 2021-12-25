@@ -9,7 +9,6 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
 import engine.log.LogResult;
-import engine.table.datatype.serialize.Serialize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
@@ -45,9 +44,11 @@ public class LoggerManager extends FTManager {
     private boolean close;
     private Queue<Long> isCommitted;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callLog;
+    private ConcurrentHashMap<Integer,FaultToleranceConstants.FaultToleranceStatus> callRecovery;
     public LoggerManager(ExecutionGraph g,Configuration conf,Database db){
         this.isCommitted=new ArrayDeque<>();
         this.callLog=new ConcurrentHashMap<>();
+        this.callRecovery=new ConcurrentHashMap<>();
         this.lock=new Object();
         this.conf=conf;
         this.g=g;
@@ -61,6 +62,7 @@ public class LoggerManager extends FTManager {
             this.localFS=new LocalFileSystem();
         }
         this.callLog_ini();
+        this.callRecovery_ini();
     }
     public void initialize(boolean needRecovery) throws IOException {
         final Path parent = Current_Path.getParent();
@@ -79,7 +81,11 @@ public class LoggerManager extends FTManager {
         }
     }
     public void boltRegister(int executorId,FaultToleranceConstants.FaultToleranceStatus status){
-        callLog.put(executorId, status);
+        if(callLog.containsValue(executorId)){
+            callLog.put(executorId,status);
+        }else{
+            callRecovery.put(executorId,status);
+        }
         LOG.debug("executor("+executorId+")"+" register the "+status);
     }
     public boolean spoutRegister(long globalLSN){
@@ -91,6 +97,13 @@ public class LoggerManager extends FTManager {
         for (ExecutionNode e:g.getExecutionNodeArrayList()){
             if(e.op.IsStateful()){
                 this.callLog.put(e.getExecutorID(),NULL);
+            }
+        }
+    }
+    private void callRecovery_ini(){
+        for (ExecutionNode e:g.getExecutionNodeArrayList()){
+            if(!e.isLeafNode()&&!e.op.IsStateful()){
+                this.callRecovery.put(e.getExecutorID(),NULL);
             }
         }
     }
@@ -117,7 +130,7 @@ public class LoggerManager extends FTManager {
                     this.db.undoFromWAL();
                     LOG.debug("Undo log complete!");
                     this.db.getTxnProcessingEngine().isTransactionAbort=false;
-                    notifyAllComplete();
+                    notifyLogComplete();
                     lock.notifyAll();
                     if(enable_measure){
                         MeasureTools.finishUndoTransaction(System.nanoTime());
@@ -130,6 +143,7 @@ public class LoggerManager extends FTManager {
                     if(enable_parallel){
                         this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                         long theLastLSN=getLastGlobalLSN(walFile);
+                        //this.g.getSpout().recoveryInput(theLastLSN);
                         this.db.recoveryFromWAL(theLastLSN);
                         this.db.undoFromWAL();
                         this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
@@ -138,7 +152,7 @@ public class LoggerManager extends FTManager {
                         long theLastLSN=this.db.recoveryFromWAL(-1);
                         this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     }
-                    notifyAllComplete();
+                    notifyLogComplete();
                     lock.notifyAll();
                     if(enable_measure){
                         MeasureTools.finishRecovery(System.nanoTime());
@@ -149,7 +163,7 @@ public class LoggerManager extends FTManager {
                     }
                     LOG.debug("LoggerManager received all register and start commit log");
                     commitLog();
-                    notifyAllComplete();
+                    notifyLogComplete();
                     lock.notifyAll();
                     if(enable_measure){
                         MeasureTools.finishPersist(System.nanoTime());
@@ -160,7 +174,7 @@ public class LoggerManager extends FTManager {
         }
     }
 
-    private void notifyAllComplete() {
+    private void notifyLogComplete() {
         for(int id:callLog.keySet()){
             g.getExecutionNode(id).ackCommit();
         }
@@ -169,7 +183,16 @@ public class LoggerManager extends FTManager {
             MeasureTools.FTM_finish_Ack(System.nanoTime());
         }
     }
-
+    public void notifyAllComplete() throws Exception {
+        for(int id:callLog.keySet()){
+            g.getExecutionNode(id).ackCommit();
+        }
+        this.callLog_ini();
+        for(int id:callRecovery.keySet()){
+            g.getExecutionNode(id).ackCommit();
+        }
+        this.callRecovery_ini();
+    }
     private boolean commitLog() throws IOException, ExecutionException, InterruptedException {
         long LSN=isCommitted.poll();
         RunnableFuture<LogResult> commitLog=this.db.commitLog(LSN, 00000L);

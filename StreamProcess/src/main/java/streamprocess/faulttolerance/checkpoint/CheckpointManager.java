@@ -221,7 +221,7 @@ public class CheckpointManager extends FTManager {
             e.printStackTrace();
         }finally {
             try {
-                localFS.delete(Current_Path,true);
+                localFS.delete(Current_Path.getParent(),true);
             } catch (IOException e) {
                 e.printStackTrace();
             }
