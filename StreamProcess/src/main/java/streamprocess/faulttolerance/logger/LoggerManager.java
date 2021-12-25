@@ -81,7 +81,7 @@ public class LoggerManager extends FTManager {
         }
     }
     public void boltRegister(int executorId,FaultToleranceConstants.FaultToleranceStatus status){
-        if(callLog.containsValue(executorId)){
+        if(callLog.containsKey(executorId)){
             callLog.put(executorId,status);
         }else{
             callRecovery.put(executorId,status);
@@ -143,7 +143,6 @@ public class LoggerManager extends FTManager {
                     if(enable_parallel){
                         this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                         long theLastLSN=getLastGlobalLSN(walFile);
-                        //this.g.getSpout().recoveryInput(theLastLSN);
                         this.db.recoveryFromWAL(theLastLSN);
                         this.db.undoFromWAL();
                         this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();

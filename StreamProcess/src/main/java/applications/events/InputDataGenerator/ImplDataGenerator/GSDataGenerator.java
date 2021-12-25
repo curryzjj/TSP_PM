@@ -104,16 +104,28 @@ public class GSDataGenerator extends InputDataGenerator {
             p_bid[i] = 0;
         }
         if (RATIO_OF_READ == 0) {
-            read_decision = new boolean[]{false, false, false, false, false, false, false, false};// all write.
-        } else if (RATIO_OF_READ == 0.25) {
-            read_decision = new boolean[]{false, false, false, false, false, false, true, true};//75% W, 25% R.
-        } else if (RATIO_OF_READ == 0.5) {
-            read_decision = new boolean[]{false, false, false, false, true, true, true, true};//equal r-w ratio.
-        } else if (RATIO_OF_READ == 0.75) {
-            read_decision = new boolean[]{false, false, true, true, true, true, true, true};//25% W, 75% R.
-        } else if (RATIO_OF_READ == 1) {
-            read_decision = new boolean[]{true, true, true, true, true, true, true, true};// all read.
-        } else {
+            read_decision = new boolean[]{false,false,false, false, false, false, false, false, false, false};// all write.
+        } else if (RATIO_OF_READ == 0.1) {
+            read_decision = new boolean[]{false,false,false, false, false, false, false, false, false, true};//75% W, 25% R.
+        } else if (RATIO_OF_READ == 0.2) {
+            read_decision = new boolean[]{false,false,false, false, false, false, false, false, true, true};//equal r-w ratio.
+        } else if (RATIO_OF_READ == 0.3) {
+            read_decision = new boolean[]{false,false,false, false, false, false, false, true, true, true};//25% W, 75% R.
+        } else if (RATIO_OF_READ == 0.4) {
+            read_decision = new boolean[]{false,false,false, false, false, false, true, true, true, true};// all read.
+        } else if (RATIO_OF_READ==0.5){
+            read_decision = new boolean[]{false,false,false, false, false, true, true, true, true, true};// all read.
+        }else if (RATIO_OF_READ==0.6){
+            read_decision = new boolean[]{false,false,false, false, true, true, true, true, true, true};// all read.
+        }else if (RATIO_OF_READ==0.7){
+            read_decision = new boolean[]{false,false,false, true, true, true, true, true, true, true};// all read.
+        }else if (RATIO_OF_READ==0.8){
+            read_decision = new boolean[]{false,false,true, true, true, true, true, true, true, true};// all read.
+        }else if (RATIO_OF_READ==0.9){
+            read_decision = new boolean[]{false,true,true, true, true, true, true, true, true, true};// all read.
+        }else if (RATIO_OF_READ==1.0){
+            read_decision = new boolean[]{true,true,true, true, true, true, true, true, true, true};// all read.
+        } else{
             throw new UnsupportedOperationException();
         }
         LOG.info("ratio_of_read: " + RATIO_OF_READ + "\tREAD DECISIONS: " + Arrays.toString(read_decision));

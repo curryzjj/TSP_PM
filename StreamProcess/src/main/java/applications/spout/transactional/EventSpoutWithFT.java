@@ -69,10 +69,6 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
 
     @Override
     public void nextTuple(int batch) throws InterruptedException {
-        if(!startClock){
-            this.clock.start();
-            startClock=true;
-        }
         if (needReplay){
             this.registerRecovery();
         }
@@ -89,7 +85,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             }
         }
         while (batch>0){
-            List<TxnEvent> events=inputDataGenerator.generateEvent(2000);
+            List<TxnEvent> events=inputDataGenerator.generateEvent(batch);
             if(events!=null){
                 batch=batch-events.size();
                 for (TxnEvent input : events) {

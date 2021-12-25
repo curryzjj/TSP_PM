@@ -70,7 +70,7 @@ public abstract class InputDataGenerator implements Serializable {
     protected boolean next_read_decision() {
         boolean rt = read_decision[read_decision_id];
         read_decision_id++;
-        if (read_decision_id == 8)
+        if (read_decision_id == 10)
             read_decision_id = 0;
         return rt;
     }

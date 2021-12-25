@@ -1,6 +1,5 @@
 package streamprocess.components.operators.api;
 
-import System.tools.FastZipfGenerator;
 import applications.events.InputDataGenerator.InputDataGenerator;
 import applications.events.TxnEvent;
 import org.joda.time.DateTime;

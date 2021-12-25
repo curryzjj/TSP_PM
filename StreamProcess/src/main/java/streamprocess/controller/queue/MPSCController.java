@@ -42,7 +42,7 @@ public class MPSCController extends QueueController{
                 if(linked){
                     outputQueue.put(executor,new MpscLinkedQueue8<>());
                 }else{
-                    outputQueue.put(executor,new MpscArrayQueue(desired_elements_epoch_per_core));
+                    outputQueue.put(executor,new MpscArrayQueue(100000000));
                 }
             }
         }
