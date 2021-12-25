@@ -96,7 +96,7 @@ public class SpoutWithFT extends TransactionalSpoutFT {
             }
         }
         while(batch>0){
-            List<AbstractInputTuple> inputData=inputDataGenerator.generateData(batch_number_per_wm);
+            List<AbstractInputTuple> inputData=inputDataGenerator.generateData(1000);
             if(inputData!=null) {
                 batch=batch-inputData.size();
                 for (AbstractInputTuple inputDatum : inputData) {

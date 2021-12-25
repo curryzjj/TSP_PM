@@ -125,10 +125,8 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     private boolean READ_CORE(MicroEvent event) {
         for (int i = 0; i < NUM_ACCESSES; ++i) {
             SchemaRecordRef ref = event.getRecord_refs()[i];
-
             if (ref.isEmpty())
                 return false;//not yet processed.
-
             DataBox dataBox = ref.getRecord().getValues().get(1);
             int read_result = Integer.parseInt(dataBox.getString().trim());
             event.result[i] = read_result;

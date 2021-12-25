@@ -10,6 +10,7 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Exception.DatabaseException;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -46,7 +47,11 @@ public class MeasureSink extends BaseSink {
     public int batch_number_per_wm;
     /** <bid,timestamp> */
     //protected List<Tuple2<Long, Long>> perCommitTuple=new ArrayList<>();
+
+    //2PC
     protected HashMap<Long,Long> perCommitTuple=new HashMap<>();
+    //no_commit
+    protected final ArrayDeque<Long> no_commit_latency_map=new ArrayDeque<>();
     protected long currentCommitBid=0;
     protected int abortTransaction=0;
     protected static long count;
@@ -90,7 +95,11 @@ public class MeasureSink extends BaseSink {
                     measure_end(in.getBID());
                     context.stop_running();
                 }else {
-                    CommitTuple(in.getBID());
+                    if(enable_wal||enable_snapshot||enable_clr){
+                        CommitTuple(in.getBID());
+                    }else{
+                        addLatency();
+                    }
                 }
             }
         }else{
@@ -99,7 +108,12 @@ public class MeasureSink extends BaseSink {
                 LOG.info("The tuple ("+in.getBID()+ ") is abort");
                 abortTransaction++;
             }else{
-                perCommitTuple.put(in.getBID(),(long)in.getValue(1));
+                if(enable_wal||enable_snapshot||enable_clr){
+                    perCommitTuple.put(in.getBID(),(long)in.getValue(1));
+                }else{
+                    long latency=System.nanoTime()-(long)in.getValue(1);
+                    no_commit_latency_map.add((long) (latency/1E6));
+                }
             }
         }
     }
@@ -132,6 +146,16 @@ public class MeasureSink extends BaseSink {
                 }
             }
             latency_map.add(totalLatency/size);
+        }
+    }
+    private void addLatency() {
+        if(no_commit_latency_map.size()!=0){
+            long totalLatency=0;
+            for (long latency:no_commit_latency_map){
+                totalLatency=totalLatency+latency;
+            }
+            latency_map.add(totalLatency/no_commit_latency_map.size());
+            no_commit_latency_map.clear();
         }
     }
     private void measure_end(long bid) throws IOException {

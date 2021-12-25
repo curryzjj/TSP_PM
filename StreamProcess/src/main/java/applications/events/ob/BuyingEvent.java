@@ -39,7 +39,6 @@ public class BuyingEvent extends TxnEvent {
         bid_qty = new long[NUM_ACCESSES_PER_BUY];
         this.timestamp=System.nanoTime();
         setValues(rnd);
-
     }
 
     /**

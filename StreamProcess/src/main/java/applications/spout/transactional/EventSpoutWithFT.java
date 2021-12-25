@@ -89,7 +89,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             }
         }
         while (batch>0){
-            List<TxnEvent> events=inputDataGenerator.generateEvent(1000);
+            List<TxnEvent> events=inputDataGenerator.generateEvent(2000);
             if(events!=null){
                 batch=batch-events.size();
                 for (TxnEvent input : events) {
