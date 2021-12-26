@@ -12,6 +12,7 @@ import streamprocess.execution.ExecutionNode;
 import ch.usi.overseer.OverHpc;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
@@ -117,12 +118,12 @@ public abstract class executorThread extends Thread {
     //end
 
     //profile and routing(Exception->DatabaseException)
-    protected abstract void _execute_noControl() throws InterruptedException, DatabaseException, BrokenBarrierException;
-    protected abstract void _execute() throws InterruptedException, DatabaseException, BrokenBarrierException;
-    protected abstract void _profile() throws InterruptedException, DatabaseException, BrokenBarrierException;
+    protected abstract void _execute_noControl() throws InterruptedException, DatabaseException, BrokenBarrierException, IOException;
+    protected abstract void _execute() throws InterruptedException, DatabaseException, BrokenBarrierException, IOException;
+    protected abstract void _profile() throws InterruptedException, DatabaseException, BrokenBarrierException, IOException;
     //The above is implemented by the bolt(spout)Thread and called by the below
     void profile_routing(Platform p) throws InterruptedException, DatabaseException, BrokenBarrierException {}
-    void routing() throws InterruptedException, DatabaseException, BrokenBarrierException{
+    void routing() throws InterruptedException, DatabaseException, BrokenBarrierException, IOException {
         if(start){
             cnt=0;
             start_emit=System.nanoTime();

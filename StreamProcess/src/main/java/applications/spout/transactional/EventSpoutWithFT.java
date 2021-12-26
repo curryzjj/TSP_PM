@@ -18,6 +18,7 @@ import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
@@ -65,29 +66,35 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         this.checkpoint_interval = config.getInt("snapshot");
         Data_path = Data_path.concat(path);
         inputDataGenerator.initialize(Data_path,this.exe,NUM_ITEMS-1,ZIP_SKEW,config);
+        this.getContext().getEventGenerator().setInputDataGenerator(inputDataGenerator);
+        this.inputQueue=this.getContext().getEventGenerator().getEventsQueue();
+        this.getContext().getEventGenerator().start();
     }
 
     @Override
-    public void nextTuple(int batch) throws InterruptedException {
+    public void nextTuple(int batch) throws InterruptedException, IOException {
         if (needReplay){
             this.registerRecovery();
         }
-        while(replay&&batch!=0){
+        if(replay){
             TxnEvent event=replayEvent();
             if(event!=null){
                 collector.emit_single(DEFAULT_STREAM_ID,bid,event);
                 bid++;
                 lostData++;
-                batch--;
                 forward_marker(this.taskId, bid, null,"marker");
             }else{
                 collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"recovery");
             }
-        }
-        while (batch>0){
-            List<TxnEvent> events=inputDataGenerator.generateEvent(batch);
-            if(events!=null){
-                batch=batch-events.size();
+        }else{
+            List<TxnEvent> events= (List<TxnEvent>) inputQueue.poll();
+            while(events==null){
+                events=(List<TxnEvent>) inputQueue.poll();
+            }
+            if(events.size()!=0){
+                if(enable_snapshot||enable_clr||enable_wal){
+                    this.inputDataGenerator.storeInput(events);
+                }
                 for (TxnEvent input : events) {
                     collector.emit_single(DEFAULT_STREAM_ID, bid, input);
                     bid++;
@@ -95,7 +102,6 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 }
             }else{
                 stopRunning();
-                batch=0;
             }
         }
     }

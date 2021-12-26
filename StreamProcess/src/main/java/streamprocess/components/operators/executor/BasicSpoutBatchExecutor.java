@@ -12,6 +12,7 @@ import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Map;
 
 public class BasicSpoutBatchExecutor extends SpoutExecutor{
@@ -109,11 +110,11 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
         _op.callback(callee, marker);
     }
 
-    public void bulk_emit_nonblocking(int batch) throws InterruptedException{
+    public void bulk_emit_nonblocking(int batch) throws InterruptedException, IOException {
         _op.nextTuple_nonblocking(batch);
     }
 
-    public void bulk_emit(int batch) throws InterruptedException {
+    public void bulk_emit(int batch) throws InterruptedException, IOException {
         _op.nextTuple(batch);
     }
 

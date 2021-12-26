@@ -1,5 +1,6 @@
 package streamprocess.components.topology;
 
+import applications.events.InputDataGenerator.EventGenerator;
 import ch.usi.overseer.OverHpc;
 import engine.Database;
 import streamprocess.components.grouping.Grouping;
@@ -30,6 +31,7 @@ public class TopologyContext {
     private static Database db;
     private static FTManager FTM;
     private static RecoveryManager RM;
+    private static EventGenerator eventGenerator;
     private static HashMap<Integer, executorThread> threadMap;
     private final int _taskId;//executorID
     /**
@@ -43,7 +45,8 @@ public class TopologyContext {
                            HashMap<Integer,executorThread> threadMap,
                            OverHpc HPCMonotor,
                            FTManager FTM,
-                           RecoveryManager RM){
+                           RecoveryManager RM,
+                           EventGenerator eventGenerator){
         TopologyContext.plan=plan;
         TopologyContext.graph=g;
         TopologyContext.db=db;
@@ -51,6 +54,7 @@ public class TopologyContext {
         TopologyContext.HPCMonotor=HPCMonotor;
         TopologyContext.FTM=FTM;
         TopologyContext.RM=RM;
+        TopologyContext.eventGenerator=eventGenerator;
         this._taskId=executor.getExecutorID();
     }
 
@@ -65,6 +69,11 @@ public class TopologyContext {
     public RecoveryManager getRM(){
         return RM;
     }
+
+    public EventGenerator getEventGenerator() {
+        return eventGenerator;
+    }
+
     public ExecutionGraph getGraph() {
         return graph;
     }

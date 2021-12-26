@@ -2,6 +2,7 @@ package streamprocess.optimization;
 
 import System.Platform.Platform;
 import System.util.Configuration;
+import applications.events.InputDataGenerator.EventGenerator;
 import engine.Database;
 import net.openhft.affinity.AffinityLock;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ public class OptimizationManager extends Thread {
     private ExecutionManager EM;
     private FTManager FTM;
     private RecoveryManager RM;
+    private EventGenerator eventGenerator;
     public CountDownLatch latch;
     private long profiling_gaps = 10000;//10 seconds.
     private int profile_start = 0;
@@ -71,11 +73,12 @@ public class OptimizationManager extends Thread {
         }else if(enable_clr){
             FTM=new CLRManager(g,conf,db);
         }
+        eventGenerator=new EventGenerator(conf);
         if(nav){
             LOG.info("Native execution");
             executionPlan=new ExecutionPlan(null,null);
             executionPlan.setProfile();
-            EM.distributeTasks(conf,executionPlan,latch,false,false,db,p,FTM,RM);
+            EM.distributeTasks(conf,executionPlan,latch,false,false,db,p,FTM,RM,eventGenerator);
         }
         final String dumpLocks = AffinityLock.dumpLocks();
         return executionPlan;

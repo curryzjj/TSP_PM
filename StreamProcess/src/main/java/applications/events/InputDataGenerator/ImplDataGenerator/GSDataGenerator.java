@@ -37,13 +37,6 @@ public class GSDataGenerator extends InputDataGenerator {
             MicroEvent microEvent= (MicroEvent) this.create_new_event(current_bid);
             batch_event.add(microEvent);
         }
-        if(enable_snapshot||enable_wal||enable_clr){
-            try {
-                storeInput(batch_event);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
         recordNum=recordNum-Math.min(recordNum,batch);
         return batch_event;
     }

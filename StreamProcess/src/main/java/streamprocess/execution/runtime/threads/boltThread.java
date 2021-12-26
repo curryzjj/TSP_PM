@@ -17,6 +17,7 @@ import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.optimization.OptimizationManager;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.BrokenBarrierException;
@@ -140,7 +141,7 @@ public class boltThread extends executorThread{
                 LOG.info("Operator:\t" + executor.getOP_full() + " starts");
                 routing();
             }
-        } catch (BrokenBarrierException |InterruptedException|DatabaseException e) {
+        } catch (BrokenBarrierException | InterruptedException | DatabaseException | IOException e) {
             e.printStackTrace();
         } finally {
             if (lock != null) {

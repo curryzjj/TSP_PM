@@ -37,7 +37,7 @@ public class MPSCController extends QueueController{
     public void allocate_queue(boolean linked, int desired_elements_epoch_per_core) {
         for(int executor:downExecutor_list.keySet()){
             if(OsUtils.isWindows()||OsUtils.isMac()){
-                outputQueue.put(executor,new MpscArrayQueue(desired_elements_epoch_per_core));//TODO:fixed the error
+                outputQueue.put(executor,new MpscArrayQueue(1000000));
             }else{
                 if(linked){
                     outputQueue.put(executor,new MpscLinkedQueue8<>());

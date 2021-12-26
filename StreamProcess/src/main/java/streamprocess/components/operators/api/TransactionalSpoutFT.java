@@ -1,5 +1,6 @@
 package streamprocess.components.operators.api;
 
+import applications.events.InputDataGenerator.EventGenerator;
 import applications.events.InputDataGenerator.InputDataGenerator;
 import applications.events.TxnEvent;
 import org.joda.time.DateTime;
@@ -12,6 +13,7 @@ import streamprocess.execution.runtime.tuple.msgs.Marker;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Queue;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
@@ -19,6 +21,7 @@ import static UserApplications.CONTROL.*;
 public abstract class TransactionalSpoutFT extends AbstractSpout implements emitMarker {
     private static final Logger LOG= LoggerFactory.getLogger(TransactionalSpoutFT.class);
     protected InputDataGenerator inputDataGenerator;
+    protected Queue inputQueue;
     protected long previous_bid=-1;
     protected long epoch_size=0;
     protected double target_Hz;
@@ -51,7 +54,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         return empty;
     }
     @Override
-    public abstract void nextTuple(int batch) throws InterruptedException;
+    public abstract void nextTuple(int batch) throws InterruptedException, IOException;
     public boolean marker(){
         if(bid%batch_number_per_wm==0){
             return true;
