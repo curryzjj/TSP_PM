@@ -17,6 +17,7 @@ public class MeasureTools {
     private static DescriptiveStatistics[] serialization_time;
     private static DescriptiveStatistics[] snapshot_file_size;
     private static DescriptiveStatistics[] wal_file_size;
+    private static DescriptiveStatistics input_store_time=new DescriptiveStatistics();
     private static long[] previous_wal_file_size;
     private static final DescriptiveStatistics recovery_time=new DescriptiveStatistics();
     private static final DescriptiveStatistics transaction_abort_time=new DescriptiveStatistics();
@@ -25,6 +26,7 @@ public class MeasureTools {
     private static long[] bolt_register_ack_time;
     private static long[] bolt_receive_ack_time;
     private static long[] transaction_begin_time;
+    private static long input_store_begin_time;
     private static long FTM_finish_time;
     private static long recovery_begin_time;
     private static long persist_begin_time;
@@ -50,6 +52,12 @@ public class MeasureTools {
         bolt_receive_ack_time =new long[tthread_num];
         transaction_begin_time=new long[tthread_num];
         FT=FT_;
+    }
+    public static void Input_store_begin(long time){
+        input_store_begin_time=time;
+    }
+    public static void Input_store_finish(){
+        input_store_time.addValue((System.nanoTime()-input_store_begin_time)/1E6);
     }
     public static void bolt_register_Ack(int thread_id,long time){
         bolt_register_ack_time[thread_id]=time;
@@ -120,6 +128,8 @@ public class MeasureTools {
         sb.append("\n" + FTM_start_ack_time.toString() + "\n");
         sb.append("=======FTM Finish Ack Time Details=======");
         sb.append("\n" + FTM_finish_ack_time.toString() + "\n");
+        sb.append("=======Input store Time Details=======");
+        sb.append("\n" + input_store_time.toString() + "\n");
         sb.append("=======Persist Time Details=======");
         sb.append("\n" + persist_time.toString() + "\n");
         sb.append("=======Recovery Time Details=======");

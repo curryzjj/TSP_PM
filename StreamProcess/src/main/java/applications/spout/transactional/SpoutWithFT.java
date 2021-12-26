@@ -1,6 +1,7 @@
 package applications.spout.transactional;
 
 import System.constants.BaseConstants;
+import System.measure.MeasureTools;
 import System.util.Configuration;
 import System.util.OsUtils;
 import applications.DataTypes.AbstractInputTuple;
@@ -103,7 +104,9 @@ public class SpoutWithFT extends TransactionalSpoutFT {
             }
             if(inputData.size()!=0){
                 if(enable_snapshot||enable_clr||enable_wal){
+                    MeasureTools.Input_store_begin(System.nanoTime());
                     this.inputDataGenerator.storeInput(inputData);
+                    MeasureTools.Input_store_finish();
                 }
                 for (AbstractInputTuple inputDatum : inputData) {
                     PositionReport input = (PositionReport) inputDatum;

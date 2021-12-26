@@ -1,6 +1,7 @@
 package applications.spout.transactional;
 
 import System.constants.BaseConstants;
+import System.measure.MeasureTools;
 import System.util.OsUtils;
 import applications.events.InputDataGenerator.InputDataGenerator;
 import applications.events.SL.DepositEvent;
@@ -93,7 +94,9 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             }
             if(events.size()!=0){
                 if(enable_snapshot||enable_clr||enable_wal){
+                    MeasureTools.Input_store_begin(System.nanoTime());
                     this.inputDataGenerator.storeInput(events);
+                    MeasureTools.Input_store_finish();
                 }
                 for (TxnEvent input : events) {
                     collector.emit_single(DEFAULT_STREAM_ID, bid, input);
