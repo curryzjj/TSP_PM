@@ -63,6 +63,9 @@ public class SpoutWithFT extends TransactionalSpoutFT {
         this.checkpoint_interval = config.getInt("snapshot");
         Data_path = Data_path.concat(path);
         inputDataGenerator.initialize(Data_path,this.exe,NUM_ITEMS-1,ZIP_SKEW,config);
+        this.getContext().getEventGenerator().setInputDataGenerator(inputDataGenerator);
+        this.inputQueue=this.getContext().getEventGenerator().getEventsQueue();
+        this.getContext().getEventGenerator().start();
     }
 
     @Override
@@ -75,7 +78,7 @@ public class SpoutWithFT extends TransactionalSpoutFT {
         }
     }
     @Override
-    public void nextTuple(int batch) throws InterruptedException {
+    public void nextTuple(int batch) throws InterruptedException, IOException {
         if(!startClock){
             this.clock.start();
             startClock=true;
@@ -83,31 +86,33 @@ public class SpoutWithFT extends TransactionalSpoutFT {
         if(needReplay){
             this.registerRecovery();
         }
-        while(replay&&batch!=0){
+        if(replay){
             AbstractInputTuple input=replayTuple();
             if(input!=null){
                 collector.emit_single(DEFAULT_STREAM_ID,bid,input);
                 bid++;
                 lostData++;
-                batch--;
                 forward_marker(this.taskId, bid, null,"marker");
             }else{
                 collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"recovery");
             }
-        }
-        while(batch>0){
-            List<AbstractInputTuple> inputData=inputDataGenerator.generateData(1000);
-            if(inputData!=null) {
-                batch=batch-inputData.size();
+        }else {
+            List<AbstractInputTuple> inputData=(List<AbstractInputTuple>) inputQueue.poll();
+            while (inputData==null){
+                inputData=(List<AbstractInputTuple>) inputQueue.poll();
+            }
+            if(inputData.size()!=0){
+                if(enable_snapshot||enable_clr||enable_wal){
+                    this.inputDataGenerator.storeInput(inputData);
+                }
                 for (AbstractInputTuple inputDatum : inputData) {
                     PositionReport input = (PositionReport) inputDatum;
                     collector.emit_single(DEFAULT_STREAM_ID, bid, input);
                     bid++;
                     forward_marker(this.taskId, bid, null, "marker");
                 }
-            }else{
+            }else {
                 stopRunning();
-                batch=0;
             }
         }
     }

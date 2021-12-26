@@ -3,6 +3,7 @@ package streamprocess.execution;
 import System.Platform.Platform;
 import System.util.Configuration;
 import UserApplications.CONTROL;
+import applications.events.InputDataGenerator.EventGenerator;
 import ch.usi.overseer.OverHpc;
 import engine.Clock;
 import engine.Database;
@@ -62,7 +63,7 @@ public class ExecutionManager {
      * All executors have to sync_ratio for OM to start, so it's safe to do initialization here. E.g., initialize database.
      */
     public void  distributeTasks(Configuration conf, ExecutionPlan plan, CountDownLatch latch, boolean benchmark,
-                                boolean profile, Database db, Platform p, FTManager FTM,RecoveryManager RM) throws UnhandledCaseException, IOException {
+                                 boolean profile, Database db, Platform p, FTManager FTM, RecoveryManager RM, EventGenerator eventGenerator) throws UnhandledCaseException, IOException {
         assert plan !=null;
         loadTargetHz =(int) conf.getDouble("targetHz",10000000);
         LOG.info("Finally, targetHZ set to:" + loadTargetHz);
@@ -100,10 +101,10 @@ public class ExecutionManager {
         executorThread thread = null;
         for (ExecutionNode e : g.getExecutionNodeArrayList()) {
             switch(e.operator.type){
-                case spoutType:thread=launchSpout_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM,RM),conf,plan.toSocket(e.getExecutorID()),latch);
+                case spoutType:thread=launchSpout_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM,RM,eventGenerator),conf,plan.toSocket(e.getExecutorID()),latch);
                 break;
                 case boltType:
-                case sinkType:thread=launchBolt_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM,RM),conf,plan.toSocket(e.getExecutorID()),latch);
+                case sinkType:thread=launchBolt_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM,RM,eventGenerator),conf,plan.toSocket(e.getExecutorID()),latch);
                 break;
                 case virtualType:
                     LOG.info("Won't launch virtual ground");

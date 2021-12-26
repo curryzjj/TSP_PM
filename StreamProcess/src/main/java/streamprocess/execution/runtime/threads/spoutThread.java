@@ -14,6 +14,7 @@ import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -43,7 +44,7 @@ public class spoutThread extends executorThread{
         super(e, conf, context, cpu, node, latch, HPCMonotor, threadMap);
         this.sp=(BasicSpoutBatchExecutor) e.op;
         this.collector = new OutputCollector(e,context);
-        batch = conf.getInt("batch_number_per_wm", 1);
+        batch = conf.getInt("input_store_batch", 1);
         this.loadTargetHz = loadTargetHz;
         this.timeSliceLengthMs = timeSliceLengthMs;
         sp.setExecutionNode(e);
@@ -53,19 +54,15 @@ public class spoutThread extends executorThread{
     }
 
     @Override
-    protected void _execute_noControl() throws InterruptedException {
+    protected void _execute_noControl() throws InterruptedException, IOException {
         sp.bulk_emit(batch);
-        if(enable_app_combo){
-            cnt+=batch;
-        }else{
-            cnt+=batch;
-        }
+        cnt=cnt+batch;
     }
 
     /**
      * Only spout need to control
      */
-    protected void _execute_withControl() throws InterruptedException {
+    protected void _execute_withControl() throws InterruptedException, IOException {
         long emitStartTime = System.currentTimeMillis();
         sp.bulk_emit(elements);
         cnt += elements;
@@ -82,16 +79,12 @@ public class spoutThread extends executorThread{
             busy_time++;
     }
     @Override
-    protected void _execute() throws InterruptedException {
-      if(Arrival_Control){
-          _execute_withControl();
-      }else{
-          _execute_noControl();
-      }
+    protected void _execute() throws InterruptedException, IOException {
+        _execute_noControl();
     }
 
     @Override
-    protected void _profile() throws InterruptedException, DatabaseException, BrokenBarrierException {
+    protected void _profile() throws InterruptedException, DatabaseException, BrokenBarrierException, IOException {
         //Some conditions
         sp.bulk_emit(batch);
     }
@@ -132,7 +125,7 @@ public class spoutThread extends executorThread{
                 LOG.info(this.executor.getOP_full()+" started");
                 routing();
             }
-        } catch (DatabaseException|BrokenBarrierException |InterruptedException e) {
+        } catch (DatabaseException | BrokenBarrierException | InterruptedException | IOException e) {
             e.printStackTrace();
         } finally {
             if (lock!=null){
