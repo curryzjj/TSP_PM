@@ -123,6 +123,7 @@ public class spoutThread extends executorThread{
                 profile_routing(context.getGraph().topology.getPlatform());
             }else {
                 LOG.info(this.executor.getOP_full()+" started");
+                this.context.getEventGenerator().start();
                 routing();
             }
         } catch (DatabaseException | BrokenBarrierException | InterruptedException | IOException e) {

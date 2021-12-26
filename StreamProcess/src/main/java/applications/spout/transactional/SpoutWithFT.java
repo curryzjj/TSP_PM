@@ -66,7 +66,6 @@ public class SpoutWithFT extends TransactionalSpoutFT {
         inputDataGenerator.initialize(Data_path,this.exe,NUM_ITEMS-1,ZIP_SKEW,config);
         this.getContext().getEventGenerator().setInputDataGenerator(inputDataGenerator);
         this.inputQueue=this.getContext().getEventGenerator().getEventsQueue();
-        this.getContext().getEventGenerator().start();
     }
 
     @Override

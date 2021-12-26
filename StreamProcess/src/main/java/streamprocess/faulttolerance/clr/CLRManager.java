@@ -169,10 +169,10 @@ public class CLRManager extends FTManager {
     }
 
     private void commitEvent() throws IOException, InterruptedException {
-        //eventManager.persistEventsTask(this.Current_Path.getParent(),currentEventsTask);
+        eventManager.persistEventsTask(this.Current_Path.getParent(),currentEventsTask);
         //eventManager.persistEventsLogic(this.Current_Path.getParent(),currentEventsTask);
         //eventManager.persistBid(this.Current_Path.getParent(),currentEventsTask);
-        eventManager.commitEventId(this.Current_Path.getParent(),currentEventsTask);
+        //eventManager.commitEventId(this.Current_Path.getParent(),currentEventsTask);
     }
     private void recoveryComputationTask(){
         for (ExecutionNode e:g.getExecutionNodeArrayList()){
