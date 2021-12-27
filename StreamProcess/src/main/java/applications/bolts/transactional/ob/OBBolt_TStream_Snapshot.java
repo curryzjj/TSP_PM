@@ -17,7 +17,6 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                //this.collector.ack(in,in.getMarker());
                 switch (in.getMarker().getValue()){
                     case "recovery":
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());

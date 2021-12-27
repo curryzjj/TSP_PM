@@ -87,18 +87,18 @@ public class SpoutWithFT extends TransactionalSpoutFT {
         }
         if(needReplay){
             this.registerRecovery();
-        }
-        if(replay){
-            AbstractInputTuple input=replayTuple();
-            if(input!=null){
-                collector.emit_single(DEFAULT_STREAM_ID,bid,input);
-                bid++;
-                lostData++;
-                forward_marker(this.taskId, bid, null,"marker");
-            }else{
-                collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"recovery");
+            if(replay) {
+                AbstractInputTuple input = replayTuple();
+                if (input != null) {
+                    collector.emit_single(DEFAULT_STREAM_ID, bid, input);
+                    bid++;
+                    lostData++;
+                    forward_marker(this.taskId, bid, null, "marker");
+                } else {
+                    collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "recovery");
+                }
             }
-        }else {
+        } else {
             List<AbstractInputTuple> inputData=(List<AbstractInputTuple>) inputQueue.poll();
             while (inputData==null){
                 inputData=(List<AbstractInputTuple>) inputQueue.poll();

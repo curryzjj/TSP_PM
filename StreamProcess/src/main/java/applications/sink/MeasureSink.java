@@ -88,9 +88,9 @@ public class MeasureSink extends BaseSink {
     public void execute(Tuple in) throws InterruptedException, IOException {
         if(in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                if(in.getMarker().getValue()=="recovery"){
+                if(Objects.equals(in.getMarker().getValue(), "recovery")){
                     MeasureTools.finishRecovery(System.nanoTime());
-                }else if(in.getMarker().getValue()=="finish"){
+                }else if(Objects.equals(in.getMarker().getValue(), "finish")){
                     timer.cancel();
                     measure_end(in.getBID());
                     context.stop_running();

@@ -114,8 +114,6 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         synchronized (lock){
             this.getContext().getFTM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
             this.collector.clean();
-            Marker marker=new Marker(DEFAULT_STREAM_ID,boardcast_time,0,myiteration,"recovery");
-            this.collector.broadcast_marker(bid,marker);
             try {
                 this.loadReplay();
             } catch (FileNotFoundException e) {

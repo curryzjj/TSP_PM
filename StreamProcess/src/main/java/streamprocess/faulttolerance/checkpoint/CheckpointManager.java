@@ -147,9 +147,6 @@ public class CheckpointManager extends FTManager {
                     notifyAllComplete();
                     LOG.debug("Recovery complete!");
                     lock.notifyAll();
-                    if(enable_measure){
-                        MeasureTools.finishRecovery(System.nanoTime());
-                    }
                 }else if(callSnapshot.containsValue(Undo)){
                     LOG.debug("CheckpointManager received all register and start undo");
                     this.db.undoFromWAL();

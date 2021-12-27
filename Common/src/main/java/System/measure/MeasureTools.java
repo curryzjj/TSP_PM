@@ -41,7 +41,8 @@ public class MeasureTools {
         wal_file_size=new DescriptiveStatistics[partition_num];
         previous_wal_file_size=new long[partition_num];
         transaction_run_time=new DescriptiveStatistics[tthread_num];
-        for(int i=0;i<partition_num;i++){
+        event_post_time=new DescriptiveStatistics[tthread_num];
+         for(int i=0;i<partition_num;i++){
             previous_wal_file_size[i]=0;
             serialization_time[i] = new DescriptiveStatistics();
             snapshot_file_size[i] = new DescriptiveStatistics();
@@ -49,6 +50,7 @@ public class MeasureTools {
         }
         for (int i=0;i<tthread_num;i++){
             transaction_run_time[i]=new DescriptiveStatistics();
+            event_post_time[i]=new DescriptiveStatistics();
         }
         bolt_register_ack_time =new long[tthread_num];
         bolt_receive_ack_time =new long[tthread_num];

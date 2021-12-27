@@ -77,18 +77,19 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     public void nextTuple(int batch) throws InterruptedException, IOException {
         if (needReplay){
             this.registerRecovery();
-        }
-        if(replay){
-            TxnEvent event=replayEvent();
-            if(event!=null){
-                collector.emit_single(DEFAULT_STREAM_ID,bid,event);
-                bid++;
-                lostData++;
-                forward_marker(this.taskId, bid, null,"marker");
-            }else{
-                collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"recovery");
+            int i=0;
+            while(replay) {
+                TxnEvent event = replayEvent();
+                if (event != null) {
+                    collector.emit_single(DEFAULT_STREAM_ID, bid, event);
+                    bid++;
+                    lostData++;
+                    forward_marker(this.taskId, bid, null, "marker");
+                } else {
+                    collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "recovery");
+                }
             }
-        }else{
+        } else{
             List<TxnEvent> events= (List<TxnEvent>) inputQueue.poll();
             while(events==null){
                 events=(List<TxnEvent>) inputQueue.poll();
