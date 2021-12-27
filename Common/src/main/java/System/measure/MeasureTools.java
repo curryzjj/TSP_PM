@@ -100,19 +100,19 @@ public class MeasureTools {
         int i=0;
         for (Path path:paths){
             File snapshotFile=localFileSystem.pathToFile(path);
-            snapshot_file_size[i].addValue(snapshotFile.length());
+            snapshot_file_size[i].addValue(snapshotFile.length()/(1024*1024));
             i++;
         }
     }
     public static void setWalFileSize(Path path){
         if(wal_file_size.length==1){
             File walFile=localFileSystem.pathToFile(new Path(path,"WAL"));
-            wal_file_size[0].addValue(walFile.length()-previous_wal_file_size[0]);
+            wal_file_size[0].addValue((walFile.length()-previous_wal_file_size[0])/(1024*1024));
             previous_wal_file_size[0]=walFile.length();
         }else{
             for (int i=0;i<wal_file_size.length;i++){
                 File walFile=localFileSystem.pathToFile(new Path(path,"WAL_"+i));
-                wal_file_size[i].addValue(walFile.length()-previous_wal_file_size[i]);
+                wal_file_size[i].addValue((walFile.length()-previous_wal_file_size[i])/(1024*1024));
                 previous_wal_file_size[i]=walFile.length();
             }
         }
@@ -139,13 +139,13 @@ public class MeasureTools {
         switch(FT){
             case 1:
                 for (int i=0;i<wal_file_size.length;i++){
-                    sb.append("=======Wal"+i+" file size Details=======");
+                    sb.append("=======Wal"+i+" file size(MB) Details=======");
                     sb.append("\n" + wal_file_size[i].toString() + "\n");
                 }
             break;
             case 2:
                 for (int i=0;i<snapshot_file_size.length;i++){
-                    sb.append("=======Snapshot"+i+" file size Details=======");
+                    sb.append("=======Snapshot"+i+" file size(MB) Details=======");
                     sb.append("\n" + snapshot_file_size[i].toString() + "\n");
                 }
             break;

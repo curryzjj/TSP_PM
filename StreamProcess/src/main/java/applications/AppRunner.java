@@ -95,7 +95,7 @@ public class  AppRunner extends baseRunner {
                 enable_transaction_abort=enable_states_lost=true;
                 break;
         }
-
+        Time_Control=config.getBoolean("enable_time_Interval");
         if(OsUtils.isMac()){
             failureTime=(int)(config.getInt("TEST_NUM_EVENTS")*config.getDouble("failureTime"));
         }else {

@@ -91,7 +91,7 @@ public abstract class PartitionController implements IPartitionController,Serial
         OsUtils.configLOG(LOG);
         PartitionController.profile=profile;
         int queue_size_per_core;
-        queue_size_per_core = (int) (conf.getInt("targetHz") * conf.getInt("snapshot"));
+        queue_size_per_core = 100000000;
         threashold = queue_size_per_core - 1;//leave one space for watermark filling!
     }
     //use the method of the controller

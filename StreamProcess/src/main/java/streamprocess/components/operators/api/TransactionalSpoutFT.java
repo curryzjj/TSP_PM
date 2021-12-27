@@ -33,6 +33,8 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     boolean rt = false;
     protected int total_children_tasks=0;
     protected int tthread;
+    protected long start_time;
+    protected long time_Interval;//ms
 
     //TODO:BufferedWrite
 
@@ -56,10 +58,19 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public abstract void nextTuple(int batch) throws InterruptedException, IOException;
     public boolean marker(){
-        if(bid%batch_number_per_wm==0){
-            return true;
-        }else {
-            return false;
+        if(Time_Control){
+            if(System.currentTimeMillis()-start_time>=time_Interval){
+                this.start_time=System.currentTimeMillis();
+                return true;
+            }else {
+                return false;
+            }
+        } else{
+            if(bid%batch_number_per_wm==0){
+                return true;
+            }else {
+                return false;
+            }
         }
     }
     public boolean snapshot(){
