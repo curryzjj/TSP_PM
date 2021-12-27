@@ -43,12 +43,16 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
         TxnContext txnContext=new TxnContext(thread_Id,this.fid,in.getBID());
         TxnEvent event = (TxnEvent) in.getValue(0);
+        boolean isCorrect;
         if (event instanceof BuyingEvent) {
-            Buying_request_construct((BuyingEvent) event, txnContext);
+            isCorrect=Buying_request_construct((BuyingEvent) event, txnContext);
         } else if (event instanceof AlertEvent) {
-            Alert_request_construct((AlertEvent) event, txnContext);
+            isCorrect=Alert_request_construct((AlertEvent) event, txnContext);
         } else {
-            Topping_request_construct((ToppingEvent) event, txnContext);
+            isCorrect=Topping_request_construct((ToppingEvent) event, txnContext);
+        }
+        if(isCorrect&&enable_clr){
+            this.addComputationTask(event,txnContext);
         }
     }
     public void BUFFER_PROCESS() throws DatabaseException, InterruptedException {
@@ -61,7 +65,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
             }
         }
     }
-    protected void Topping_request_construct(ToppingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
+    protected boolean Topping_request_construct(ToppingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         boolean flag=true;
         for (int i = 0; i < event.getNum_access(); i++){
             flag=transactionManager.Asy_ModifyRecord(txnContext, "goods", String.valueOf(event.getItemId()[i]), new INC(event.getItemTopUp()[i]), 2);//asynchronously return.
@@ -71,22 +75,10 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         }
         if(flag){
             EventsHolder.add(event);//mark the tuple as ``in-complete"
-            if(enable_clr){
-                //only the current computationTask can be logged
-//                for (int i = 0; i < event.getNum_access(); i++){
-//                    List<String> values=new ArrayList<>();
-//                    values.add(String.valueOf(event.getItemTopUp()[i]));
-//                    tasks.add(new ComputationTask("topping",String.valueOf(event.getItemId()[i]),txnContext.getBID(),getPartitionId(String.valueOf(event.getItemId()[i])),values));
-//                }
-                ComputationLogic computationLogic=new ComputationLogic(txnContext.getBID());
-                for (int i=0;i<event.getItemId().length;i++){
-                    computationLogic.putIndex(getPartitionId(String.valueOf(event.getItemId()[i])),i);
-                }
-                computationLogics.add(computationLogic);
-            }
         }else {
             collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
         }
+        return flag;
     }
     protected boolean Alert_request_construct(AlertEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         boolean flag=true;
@@ -98,19 +90,6 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         }
         if(flag){
             EventsHolder.add(event);//mark the tuple as ``in-complete"
-            if(enable_clr){
-                //only the current computationTask can be logged
-//                for (int i = 0; i < event.getNum_access(); i++){
-//                    List<String> values=new ArrayList<>();
-//                    values.add(String.valueOf(event.getAsk_price()[i]));
-//                    tasks.add(new ComputationTask("alert",String.valueOf(event.getItemId()[i]),txnContext.getBID(),getPartitionId(String.valueOf(event.getItemId()[i])),values));
-//                }
-                ComputationLogic computationLogic=new ComputationLogic(txnContext.getBID());
-                for (int i=0;i<event.getItemId().length;i++){
-                    computationLogic.putIndex(getPartitionId(String.valueOf(event.getItemId()[i])),i);
-                }
-                computationLogics.add(computationLogic);
-            }
         }else {
             collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
         }
@@ -133,20 +112,6 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         }
         if(flag){
             EventsHolder.add(event);//mark the tuple as ``in-complete"
-            if(enable_clr){
-                //only the current computationTask can be logged
-//                for (int i = 0; i < NUM_ACCESSES_PER_BUY; i++){
-//                    List<String> values=new ArrayList<>();
-//                    values.add(String.valueOf(event.getBidPrice(i)));
-//                    values.add(String.valueOf(event.getBidQty(i)));
-//                    tasks.add(new ComputationTask("buying",String.valueOf(event.getItemId()[i]),txnContext.getBID(),getPartitionId(String.valueOf(event.getItemId()[i])),values));
-//                }
-                ComputationLogic computationLogic=new ComputationLogic(txnContext.getBID());
-                for (int i=0;i<event.getItemId().length;i++){
-                    computationLogic.putIndex(getPartitionId(String.valueOf(event.getItemId()[i])),i);
-                }
-                computationLogics.add(computationLogic);
-            }
         }else {
             collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
         }
@@ -277,6 +242,55 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                    new boolean[1]
             );
 
+        }
+    }
+    private void addComputationTask(TxnEvent Txnevent,TxnContext txnContext){
+        if(Txnevent instanceof BuyingEvent){
+            BuyingEvent event=(BuyingEvent) Txnevent;
+            for (int i = 0; i < NUM_ACCESSES_PER_BUY; i++){
+                List<String> values=new ArrayList<>();
+                values.add(String.valueOf(event.getBidPrice(i)));
+                values.add(String.valueOf(event.getBidQty(i)));
+                tasks.add(new ComputationTask("buying",String.valueOf(event.getItemId()[i]),txnContext.getBID(),getPartitionId(String.valueOf(event.getItemId()[i])),values));
+            }
+        }else if(Txnevent instanceof AlertEvent){
+            AlertEvent event=(AlertEvent) Txnevent;
+            for (int i = 0; i < event.getNum_access(); i++){
+                List<String> values=new ArrayList<>();
+                values.add(String.valueOf(event.getAsk_price()[i]));
+                tasks.add(new ComputationTask("alert",String.valueOf(event.getItemId()[i]),txnContext.getBID(),getPartitionId(String.valueOf(event.getItemId()[i])),values));
+            }
+        }else{
+            ToppingEvent event=(ToppingEvent) Txnevent;
+            for (int i = 0; i < event.getNum_access(); i++){
+                List<String> values=new ArrayList<>();
+                values.add(String.valueOf(event.getItemTopUp()[i]));
+                tasks.add(new ComputationTask("topping",String.valueOf(event.getItemId()[i]),txnContext.getBID(),getPartitionId(String.valueOf(event.getItemId()[i])),values));
+            }
+        }
+    }
+    private void addLogicTask(TxnEvent Txnevent,TxnContext txnContext){
+        if(Txnevent instanceof AlertEvent){
+            AlertEvent event=(AlertEvent) Txnevent;
+            ComputationLogic computationLogic=new ComputationLogic(txnContext.getBID());
+            for (int i=0;i<event.getItemId().length;i++){
+                computationLogic.putIndex(getPartitionId(String.valueOf(event.getItemId()[i])),i);
+            }
+            computationLogics.add(computationLogic);
+        }else if(Txnevent instanceof BuyingEvent){
+            BuyingEvent event=(BuyingEvent) Txnevent;
+            ComputationLogic computationLogic=new ComputationLogic(txnContext.getBID());
+            for (int i=0;i<event.getItemId().length;i++){
+                computationLogic.putIndex(getPartitionId(String.valueOf(event.getItemId()[i])),i);
+            }
+            computationLogics.add(computationLogic);
+        }else {
+            ToppingEvent event=(ToppingEvent) Txnevent;
+            ComputationLogic computationLogic=new ComputationLogic(txnContext.getBID());
+            for (int i=0;i<event.getItemId().length;i++){
+                computationLogic.putIndex(getPartitionId(String.valueOf(event.getItemId()[i])),i);
+            }
+            computationLogics.add(computationLogic);
         }
     }
 }

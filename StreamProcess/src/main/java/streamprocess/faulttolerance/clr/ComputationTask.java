@@ -33,7 +33,7 @@ public class ComputationTask implements Serializable {
         this.values=value;
     }
     public ComputationTask(long bid,String key,String event_name,String values){
-        this.event_name = event_name;
+        this.event_name = "q";
         this.key = key;
         this.bid = bid;
         String value[]=values.split(";");

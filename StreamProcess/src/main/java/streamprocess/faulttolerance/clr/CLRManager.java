@@ -91,7 +91,9 @@ public class CLRManager extends FTManager {
                 }
                 if(callEvent.containsValue(Persist)){
                     LOG.info("CLRManager received all register and start commit event task");
+                    MeasureTools.startPersist(System.nanoTime());
                     commitEvent();
+                    MeasureTools.finishPersist(System.nanoTime());
                     notifyAllComplete();
                     lock.notifyAll();
                 }else if(callEvent.containsValue(Recovery)){

@@ -136,9 +136,6 @@ public class LoggerManager extends FTManager {
                         MeasureTools.finishUndoTransaction(System.nanoTime());
                     }
                 }else if(callLog.containsValue(Recovery)){
-                    if(enable_measure){
-                        MeasureTools.startRecovery(System.nanoTime());
-                    }
                     LOG.debug("LoggerManager received all register and start recovery");
                     if(enable_parallel){
                         this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
@@ -153,9 +150,6 @@ public class LoggerManager extends FTManager {
                     }
                     notifyLogComplete();
                     lock.notifyAll();
-                    if(enable_measure){
-                        MeasureTools.finishRecovery(System.nanoTime());
-                    }
                 } else if (callLog.containsValue(Persist)){
                     if(enable_measure){
                         MeasureTools.startPersist(System.nanoTime());

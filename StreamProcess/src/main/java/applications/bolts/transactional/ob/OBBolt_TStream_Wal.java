@@ -63,9 +63,11 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                 transactionSuccess=this.TXN_PROCESS_FT();
                 break;
             case 2:
+                MeasureTools.startRecovery(System.nanoTime());
                 this.SyncRegisterRecovery();
                 this.AsyncReConstructRequest();
                 transactionSuccess=this.TXN_PROCESS_FT();
+                MeasureTools.finishPersist(System.nanoTime());
                 break;
         }
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
