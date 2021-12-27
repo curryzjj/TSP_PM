@@ -42,7 +42,7 @@ public class EventGenerator extends Thread {
         this.loadTargetHz=configuration.getInt("targetHz");
         this.timeSliceLengthMs=configuration.getInt("timeSliceLengthMs");
         this.elements=this.loadPerTimeslice();
-        this.EventsQueue=new MpscArrayQueue(10000000);
+        this.EventsQueue=new MpscArrayQueue(20000000);
         this.batch=configuration.getInt("input_store_batch");
     }
 
@@ -89,6 +89,7 @@ public class EventGenerator extends Thread {
                     this.EventsQueue.offer(events);
                     finish=true;
                     circle=0;
+                    return finish;
                 }
             }
         }

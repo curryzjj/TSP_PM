@@ -58,6 +58,13 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public abstract void nextTuple(int batch) throws InterruptedException, IOException;
     public boolean marker(){
+        if(bid%batch_number_per_wm==0){
+            return true;
+        }else {
+            return false;
+        }
+    }
+    public boolean snapshot(){
         if(Time_Control){
             if(System.currentTimeMillis()-start_time>=time_Interval){
                 this.start_time=System.currentTimeMillis();
@@ -65,19 +72,12 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
             }else {
                 return false;
             }
-        } else{
-            if(bid%batch_number_per_wm==0){
+        }else {
+            if(bid%(checkpoint_interval*batch_number_per_wm)==0){
                 return true;
             }else {
                 return false;
             }
-        }
-    }
-    public boolean snapshot(){
-        if(bid%(checkpoint_interval*batch_number_per_wm)==0){
-            return true;
-        }else {
-            return false;
         }
     }
     public void forward_marker(int sourceId, long bid, Marker marker, String msg) throws InterruptedException{
