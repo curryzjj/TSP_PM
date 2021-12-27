@@ -47,12 +47,15 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
         int FT=transactionManager.start_evaluate(thread_Id,this.fid);
+        MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         boolean transactionSuccess=FT==0;
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
+                MeasureTools.startPost(this.thread_Id,System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
+                MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 this.SyncCommitLog();
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
@@ -69,7 +72,6 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
                 transactionSuccess=this.TXN_PROCESS_FT();
                 break;
         }
-        MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         return transactionSuccess;
     }
 

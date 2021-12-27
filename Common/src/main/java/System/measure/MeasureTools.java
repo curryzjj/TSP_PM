@@ -23,9 +23,11 @@ public class MeasureTools {
     private static final DescriptiveStatistics transaction_abort_time=new DescriptiveStatistics();
     private static final DescriptiveStatistics persist_time=new DescriptiveStatistics();
     private static DescriptiveStatistics[] transaction_run_time;
+    private static DescriptiveStatistics[] event_post_time;
     private static long[] bolt_register_ack_time;
     private static long[] bolt_receive_ack_time;
     private static long[] transaction_begin_time;
+    private static long[] post_begin_time;
     private static long input_store_begin_time;
     private static long FTM_finish_time;
     private static long recovery_begin_time;
@@ -51,6 +53,7 @@ public class MeasureTools {
         bolt_register_ack_time =new long[tthread_num];
         bolt_receive_ack_time =new long[tthread_num];
         transaction_begin_time=new long[tthread_num];
+        post_begin_time=new long[tthread_num];
         FT=FT_;
     }
     public static void Input_store_begin(long time){
@@ -77,6 +80,12 @@ public class MeasureTools {
     }
     public static void finishTransaction(int threadId,long time){
         transaction_run_time[threadId].addValue((time-transaction_begin_time[threadId])/1E6);
+    }
+    public static void startPost(int threadId,long time){
+        post_begin_time[threadId]=time;
+    }
+    public static void finishPost(int threadId,long time){
+        event_post_time[threadId].addValue((time-post_begin_time[threadId])/1E6);
     }
     public static void startPersist(long time){
         persist_begin_time=time;
@@ -157,6 +166,13 @@ public class MeasureTools {
             Total_time=Total_time+transaction_run_time[i].getMean();
         }
         sb.append("Avg transaction_run_time: "+Total_time/transaction_run_time.length);
+        LOG.info(sb.toString());
+        for (int i=0;i< event_post_time.length;i++){
+            sb.append("=======Thread"+i+" Event post time Details=======");
+            sb.append("\n" + event_post_time[i].toString() + "\n");
+            Total_time=Total_time+event_post_time[i].getMean();
+        }
+        sb.append("Avg post_run_time: "+Total_time/event_post_time.length);
         LOG.info(sb.toString());
     }
 }
