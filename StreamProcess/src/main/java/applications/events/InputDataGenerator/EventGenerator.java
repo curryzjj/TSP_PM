@@ -32,6 +32,7 @@ public class EventGenerator extends Thread {
     private long startTime;
     private long finishTime;
     private long lastFinishTime;
+    private long busyTime;
     public Queue EventsQueue;
     private long exe;
     private boolean isReport=false;
@@ -111,7 +112,9 @@ public class EventGenerator extends Thread {
         if (emitTime < timeSliceLengthMs) {// in terms of milliseconds.
             try {
                 if(timeSliceLengthMs-emitTime>emitStartTime-lastFinishTime){
-                    Thread.sleep(timeSliceLengthMs - emitTime-emitStartTime+lastFinishTime);
+                    if(timeSliceLengthMs-emitTime>busyTime){
+                        Thread.sleep(timeSliceLengthMs - emitTime-emitStartTime+lastFinishTime-busyTime);
+                    }
                 }
             } catch (InterruptedException ignored) {
                 //  e.printStackTrace();
@@ -119,6 +122,7 @@ public class EventGenerator extends Thread {
             lastFinishTime=System.currentTimeMillis();
             sleep_time++;
         } else
+            this.busyTime=emitTime-timeSliceLengthMs;
             busy_time++;
         return finish;
     }
