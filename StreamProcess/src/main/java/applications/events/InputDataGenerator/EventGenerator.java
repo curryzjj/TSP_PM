@@ -28,6 +28,7 @@ public class EventGenerator extends Thread {
     private long busy_time;
     private long cnt=0;
     private long startTime;
+    private long finishTime;
     public Queue EventsQueue;
     private boolean isReport=false;
     public void setInputDataGenerator(InputDataGenerator inputDataGenerator) {
@@ -59,7 +60,7 @@ public class EventGenerator extends Thread {
               finish=seedDataWithoutControl();
           }
         }
-        LOG.info("Event arrival rate is "+ cnt*1E6/(System.nanoTime()-startTime)+" (k input_event/s)" +"busy time: "+busy_time+" sleep time: "+sleep_time+" cnt "+cnt);
+        LOG.info("Event arrival rate is "+ cnt*1E6/(finishTime-startTime)+" (k input_event/s)" +"busy time: "+busy_time+" sleep time: "+sleep_time+" cnt "+cnt);
     }
     private boolean seedDataWithControl(){
         boolean finish=false;
@@ -75,7 +76,8 @@ public class EventGenerator extends Thread {
                     tuples=new ArrayList<>();
                     this.EventsQueue.offer(tuples);
                     finish=true;
-                    circle=0;
+                    this.finishTime=System.nanoTime();
+                    return finish;
                 }
             }
         }else{
@@ -88,7 +90,7 @@ public class EventGenerator extends Thread {
                     events=new ArrayList<>();
                     this.EventsQueue.offer(events);
                     finish=true;
-                    circle=0;
+                    this.finishTime=System.nanoTime();
                     return finish;
                 }
             }
@@ -136,7 +138,7 @@ public class EventGenerator extends Thread {
         return finish;
     }
     private int loadPerTimeslice(){
-        return loadTargetHz/(1000/timeSliceLengthMs);//make each spout thread independent
+        return loadTargetHz*timeSliceLengthMs/1000;//make each spout thread independent
     }
 
     public Queue getEventsQueue() {

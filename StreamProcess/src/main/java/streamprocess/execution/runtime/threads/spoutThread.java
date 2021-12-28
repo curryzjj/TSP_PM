@@ -155,6 +155,6 @@ public class spoutThread extends executorThread{
         }
     }
     private int loadPerTimeslice(){
-        return loadTargetHz/(1000/timeSliceLengthMs);//make each spout thread independent
+        return loadTargetHz*timeSliceLengthMs/1000;//make each spout thread independent
     }
 }

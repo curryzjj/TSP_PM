@@ -87,14 +87,14 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
         String msg1=msg;
         if (this.marker()) {//emit marker tuple
-            if(enable_snapshot){
+            if(enable_snapshot||enable_wal){
                 if(snapshot()){
                     if(this.getContext().getFTM().spoutRegister(bid)){
                         msg1="snapshot";
                         checkpoint_counter++;
                     }
                 }
-            }else if(enable_wal||enable_clr){
+            }else if(enable_clr){
                 if (!this.getContext().getFTM().spoutRegister(bid)){
                     return;
                 }

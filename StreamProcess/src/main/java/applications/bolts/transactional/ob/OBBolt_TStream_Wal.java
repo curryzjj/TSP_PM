@@ -23,18 +23,23 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "marker":
-                        if(TXN_PROCESS_FT()){
+                        if(TXN_PROCESS()){
                             /* When the wal is completed, the data can be consumed by the outside world */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         }
                         break;
                     case "finish":
-                        if(TXN_PROCESS_FT()){
-                            /* When the wal is completed, the data can be consumed by the outside world */
+                        if(TXN_PROCESS()){
+                            /* All the data has been executed */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         }
                         this.context.stop_running();
                         break;
+                    case "snapshot" :
+                        if(TXN_PROCESS_FT()){
+                            /* When the wal is completed, the data can be consumed by the outside world */
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        }
                 }
             }
         }else {
@@ -66,11 +71,9 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                 transactionSuccess=this.TXN_PROCESS_FT();
                 break;
             case 2:
-                MeasureTools.startRecovery(System.nanoTime());
                 this.SyncRegisterRecovery();
                 this.AsyncReConstructRequest();
                 transactionSuccess=this.TXN_PROCESS_FT();
-                MeasureTools.finishRecovery(System.nanoTime());
                 break;
         }
         return transactionSuccess;
