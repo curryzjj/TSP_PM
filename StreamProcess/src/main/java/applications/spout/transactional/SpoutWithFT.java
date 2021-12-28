@@ -81,13 +81,9 @@ public class SpoutWithFT extends TransactionalSpoutFT {
     }
     @Override
     public void nextTuple(int batch) throws InterruptedException, IOException {
-        if(!startClock){
-            this.clock.start();
-            startClock=true;
-        }
         if(needReplay){
             this.registerRecovery();
-            if(replay) {
+            while(replay) {
                 AbstractInputTuple input = replayTuple();
                 if (input != null) {
                     collector.emit_single(DEFAULT_STREAM_ID, bid, input);

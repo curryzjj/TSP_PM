@@ -1,6 +1,7 @@
 package applications.events.InputDataGenerator;
 
 import System.util.Configuration;
+import System.util.OsUtils;
 import applications.DataTypes.AbstractInputTuple;
 import applications.events.InputDataGenerator.ImplDataGenerator.TPDataGenerator;
 import applications.events.TxnEvent;
@@ -8,6 +9,7 @@ import net.openhft.affinity.AffinityLock;
 import org.jctools.queues.MpscArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.actors.LinkedQueue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +31,9 @@ public class EventGenerator extends Thread {
     private long cnt=0;
     private long startTime;
     private long finishTime;
+    private long lastFinishTime;
     public Queue EventsQueue;
+    private long exe;
     private boolean isReport=false;
     public void setInputDataGenerator(InputDataGenerator inputDataGenerator) {
         this.inputDataGenerator = inputDataGenerator;
@@ -45,6 +49,11 @@ public class EventGenerator extends Thread {
         this.elements=this.loadPerTimeslice();
         this.EventsQueue=new MpscArrayQueue(20000000);
         this.batch=configuration.getInt("input_store_batch");
+        if(OsUtils.isMac()){
+            this.exe= configuration.getInt("TEST_NUM_EVENTS");
+        }else{
+            this.exe=configuration.getInt("NUM_EVENTS");
+        }
     }
 
     @Override
@@ -52,6 +61,7 @@ public class EventGenerator extends Thread {
         boolean finish=false;
         sequential_binding();
         this.startTime=System.nanoTime();
+        this.lastFinishTime=System.currentTimeMillis();
         while (!finish){
           if(Arrival_Control){
               finish=seedDataWithControl();
@@ -60,7 +70,7 @@ public class EventGenerator extends Thread {
               finish=seedDataWithoutControl();
           }
         }
-        LOG.info("Event arrival rate is "+ cnt*1E6/(finishTime-startTime)+" (k input_event/s)" +"busy time: "+busy_time+" sleep time: "+sleep_time+" cnt "+cnt);
+        LOG.info("Event arrival rate is "+ exe*1E6/(finishTime-startTime)+" (k input_event/s)" +"busy time: "+busy_time+" sleep time: "+sleep_time+" cnt "+cnt);
     }
     private boolean seedDataWithControl(){
         boolean finish=false;
@@ -96,13 +106,17 @@ public class EventGenerator extends Thread {
             }
         }
         // Sleep for the rest of timeslice if needed
-        long emitTime = System.currentTimeMillis() - emitStartTime;
+        long finishTime=System.currentTimeMillis();
+        long emitTime = finishTime - emitStartTime;
         if (emitTime < timeSliceLengthMs) {// in terms of milliseconds.
             try {
-                Thread.sleep(timeSliceLengthMs - emitTime);
+                if(timeSliceLengthMs-emitTime>emitStartTime-lastFinishTime){
+                    Thread.sleep(timeSliceLengthMs - emitTime-emitStartTime+lastFinishTime);
+                }
             } catch (InterruptedException ignored) {
                 //  e.printStackTrace();
             }
+            lastFinishTime=System.currentTimeMillis();
             sleep_time++;
         } else
             busy_time++;

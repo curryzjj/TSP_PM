@@ -154,7 +154,7 @@ public class LoggerManager extends FTManager {
                     if(enable_measure){
                         MeasureTools.startPersist(System.nanoTime());
                     }
-                    LOG.debug("LoggerManager received all register and start commit log");
+                    LOG.info("LoggerManager received all register and start commit log");
                     commitLog();
                     notifyLogComplete();
                     lock.notifyAll();
@@ -193,7 +193,7 @@ public class LoggerManager extends FTManager {
             commitLog.get();
         }
         commitGlobalLSN(LSN);
-        LOG.debug("Update log commit!");
+        LOG.info("Update log commit!");
         return true;
     }
     private boolean commitGlobalLSN(long globalLSN) throws IOException, InterruptedException {
