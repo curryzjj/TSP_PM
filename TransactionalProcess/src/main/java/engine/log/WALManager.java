@@ -87,6 +87,7 @@ public class WALManager {
             for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.values()){
                 logRecords.clear();
             }
+            logRecordsInRange.hasKey.clear();
         }
         return true;
     }

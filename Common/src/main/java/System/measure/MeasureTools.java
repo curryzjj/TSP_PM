@@ -96,6 +96,7 @@ public class MeasureTools {
         persist_time.addValue((time-persist_begin_time)/1E6);
     }
     public static void startRecovery(long time){
+        System.out.println("a");
         recovery_begin_time=time;
     }
     public static void finishRecovery(long time){

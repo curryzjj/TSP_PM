@@ -136,19 +136,30 @@ public class LoggerManager extends FTManager {
                         MeasureTools.finishUndoTransaction(System.nanoTime());
                     }
                 }else if(callLog.containsValue(Recovery)){
+                    if(enable_measure){
+                        MeasureTools.startRecovery(System.nanoTime());
+                    }
                     LOG.debug("LoggerManager received all register and start recovery");
                     if(enable_parallel){
                         this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                         long theLastLSN=getLastGlobalLSN(walFile);
                         this.db.recoveryFromWAL(theLastLSN);
-                        this.db.undoFromWAL();
-                        this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                        this.g.getSpout().recoveryInput(theLastLSN);
                     }else{
                         this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                         long theLastLSN=this.db.recoveryFromWAL(-1);
-                        this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                        LOG.debug("Reload state complete!");
+                        this.g.getSpout().recoveryInput(theLastLSN);
                     }
-                    notifyLogComplete();
+                    this.isCommitted.clear();
+                    this.db.undoFromWAL();
+                    this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                    synchronized (lock){
+                        while (callRecovery.containsValue(NULL)){
+                            lock.wait();
+                        }
+                    }
+                    notifyAllComplete();
                     lock.notifyAll();
                 } else if (callLog.containsValue(Persist)){
                     if(enable_measure){

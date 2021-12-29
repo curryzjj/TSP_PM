@@ -13,25 +13,19 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
     public TPBolt_TStream_Wal(int fid) {
         super(fid);
     }
-
-
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if (in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                //this.collector.ack(in,in.getMarker());
                 switch (in.getMarker().getValue()){
                     case "recovery":
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "marker":
-                        if(TXN_PROCESS()){
-                            /* When the wal is completed, the data can be consumed by the outside world */
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        }
+                        TXN_PROCESS();
                         break;
                     case "finish":
-                        if(TXN_PROCESS_FT()){
+                        if(TXN_PROCESS()){
                             /* When the wal is completed, the data can be consumed by the outside world */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         }
@@ -42,7 +36,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                             /* When the wal is completed, the data can be consumed by the outside world */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         }
-                    break;
+                        break;
                 }
             }
         }else{
@@ -75,8 +69,9 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS_FT();
+                this.collector.clean();
+                this.LREvents.clear();
+                this.bufferedTuple.clear();
                 break;
         }
         return transactionSuccess;
@@ -92,6 +87,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
             case 0:
                 MeasureTools.startPost(this.thread_Id,System.nanoTime());
                 REQUEST_REQUEST_CORE();
+                /* When the transaction is successful, the data can be pre-commit to the outside world */
                 REQUEST_POST();
                 MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 LREvents.clear();//clear stored events.
@@ -105,8 +101,9 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS_FT();
+                this.collector.clean();
+                this.LREvents.clear();
+                this.bufferedTuple.clear();
                 break;
         }
         return transactionSuccess;
