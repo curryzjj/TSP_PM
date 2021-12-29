@@ -22,12 +22,12 @@ public class WALManager {
     public static ExecutorService writeExecutor;
     public class LogRecords_in_range{
         public ConcurrentHashMap<Integer, Vector<LogRecord>> holder_by_range=new ConcurrentHashMap<>();
-        public HashMap<String,Boolean> hasKey;
+        public ConcurrentHashMap<String,Boolean> hasKey;
         public LogRecords_in_range(Integer num_op){
             int i;
             for (i=0;i<num_op;i++){
                 holder_by_range.put(i,new Vector<>());
-                this.hasKey=new HashMap<>();
+                this.hasKey=new ConcurrentHashMap<>();
             }
         }
     }
