@@ -38,6 +38,7 @@ public class UpdateLogAsyncWrite implements UpdateLogWrite {
             for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.values()){
               logRecords.clear();
             }
+            logRecordsInRange.hasKey.clear();
         }
         if(logCloseableRegistry.unregisterCloseable(logStreamWithResultProvider)){
             logStreamWithResultProvider.closeAndFinalizeLogCommitStreamResult();

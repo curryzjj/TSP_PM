@@ -7,10 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
@@ -25,10 +22,12 @@ public class WALManager {
     public static ExecutorService writeExecutor;
     public class LogRecords_in_range{
         public ConcurrentHashMap<Integer, Vector<LogRecord>> holder_by_range=new ConcurrentHashMap<>();
+        public HashMap<String,Boolean> hasKey;
         public LogRecords_in_range(Integer num_op){
             int i;
             for (i=0;i<num_op;i++){
                 holder_by_range.put(i,new Vector<>());
+                this.hasKey=new HashMap<>();
             }
         }
     }
@@ -57,7 +56,10 @@ public class WALManager {
      * @param myList
      */
     public void addLogRecord(MyList myList){
-        holder_by_tableName.get(myList.getTable_name()).holder_by_range.get(myList.getPartitionId()).add(myList.getLogRecord());
+        if(!holder_by_tableName.get(myList.getTable_name()).hasKey.containsKey(myList.getPrimaryKey())){
+            holder_by_tableName.get(myList.getTable_name()).holder_by_range.get(myList.getPartitionId()).add(myList.getLogRecord());
+            holder_by_tableName.get(myList.getTable_name()).hasKey.put(myList.getPrimaryKey(), true);
+        }
     }
     public UpdateLogWrite asyncCommitLog(long globalLSN, long timestamp, LogStreamFactory logStreamFactory) throws IOException {
         if(enable_parallel){
