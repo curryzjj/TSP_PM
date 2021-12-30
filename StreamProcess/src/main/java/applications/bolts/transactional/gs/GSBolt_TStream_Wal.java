@@ -74,8 +74,9 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS_FT();
+                this.collector.clean();
+                this.EventsHolder.clear();
+                this.bufferedTuple.clear();
                 break;
         }
         return transactionSuccess;

@@ -72,8 +72,9 @@ public class SLBolt_TStream_Wal extends SLBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS_FT();
+                this.collector.clean();
+                this.EventsHolder.clear();
+                this.bufferedTuple.clear();
                 break;
         }
         return transactionSuccess;

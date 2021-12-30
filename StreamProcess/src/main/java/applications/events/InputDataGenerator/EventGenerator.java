@@ -9,7 +9,6 @@ import net.openhft.affinity.AffinityLock;
 import org.jctools.queues.MpscArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.actors.LinkedQueue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,7 @@ public class EventGenerator extends Thread {
     private long startTime;
     private long finishTime;
     private long lastFinishTime;
-    private long busyTime;
+    private long busyTime=0;
     public Queue EventsQueue;
     private long exe;
     private boolean isReport=false;
@@ -114,6 +113,9 @@ public class EventGenerator extends Thread {
                 if(timeSliceLengthMs-emitTime>emitStartTime-lastFinishTime){
                     if(timeSliceLengthMs-emitTime>busyTime){
                         Thread.sleep(timeSliceLengthMs - emitTime-emitStartTime+lastFinishTime-busyTime);
+                        busyTime=0;
+                    }else{
+                        busyTime=busy_time-timeSliceLengthMs+emitTime;
                     }
                 }
             } catch (InterruptedException ignored) {
@@ -122,7 +124,7 @@ public class EventGenerator extends Thread {
             lastFinishTime=System.currentTimeMillis();
             sleep_time++;
         } else
-            this.busyTime=emitTime-timeSliceLengthMs;
+            this.busyTime=busy_time+emitTime-timeSliceLengthMs;
             busy_time++;
         return finish;
     }
