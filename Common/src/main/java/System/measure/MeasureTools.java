@@ -18,6 +18,7 @@ public class MeasureTools {
     private static DescriptiveStatistics[] snapshot_file_size;
     private static DescriptiveStatistics[] wal_file_size;
     private static DescriptiveStatistics input_store_time=new DescriptiveStatistics();
+    private static DescriptiveStatistics twoPC_commit_time=new DescriptiveStatistics();
     private static long[] previous_wal_file_size;
     private static final DescriptiveStatistics recovery_time=new DescriptiveStatistics();
     private static final DescriptiveStatistics transaction_abort_time=new DescriptiveStatistics();
@@ -29,6 +30,7 @@ public class MeasureTools {
     private static long[] transaction_begin_time;
     private static long[] post_begin_time;
     private static long input_store_begin_time;
+    private static long commitStartTime;
     private static long FTM_finish_time;
     private static long recovery_begin_time;
     private static long persist_begin_time;
@@ -57,6 +59,12 @@ public class MeasureTools {
         transaction_begin_time=new long[tthread_num];
         post_begin_time=new long[tthread_num];
         FT=FT_;
+    }
+    public static void twoPC_commit_begin(long time){
+        commitStartTime=time;
+    }
+    public static void twoPC_commit_finish(long time){
+        twoPC_commit_time.addValue((time-commitStartTime)/1E6);
     }
     public static void Input_store_begin(long time){
         input_store_begin_time=time;
@@ -96,7 +104,6 @@ public class MeasureTools {
         persist_time.addValue((time-persist_begin_time)/1E6);
     }
     public static void startRecovery(long time){
-        System.out.println("a");
         recovery_begin_time=time;
     }
     public static void finishRecovery(long time){
@@ -164,18 +171,20 @@ public class MeasureTools {
         }
         double Total_time=0;
         for (int i=0;i<transaction_run_time.length;i++){
-            sb.append("=======Thread"+i+" transaction running time Details=======");
-            sb.append("\n" + transaction_run_time[i].toString() + "\n");
+            //sb.append("=======Thread"+i+" transaction running time Details=======");
+            //sb.append("\n" + transaction_run_time[i].toString() + "\n");
             Total_time=Total_time+transaction_run_time[i].getMean();
         }
-        sb.append("Avg transaction_run_time: "+Total_time/transaction_run_time.length);
+        sb.append("Avg transaction_run_time: "+Total_time/transaction_run_time.length+"\n");
         LOG.info(sb.toString());
         for (int i=0;i< event_post_time.length;i++){
-            sb.append("=======Thread"+i+" Event post time Details=======");
-            sb.append("\n" + event_post_time[i].toString() + "\n");
+            //sb.append("=======Thread"+i+" Event post time Details=======");
+            //sb.append("\n" + event_post_time[i].toString() + "\n");
             Total_time=Total_time+event_post_time[i].getMean();
         }
-        sb.append("Avg post_run_time: "+Total_time/event_post_time.length);
+        sb.append("Avg post_run_time: "+Total_time/event_post_time.length+"\n");
+        sb.append("=======2PC commit time=======");
+        sb.append("\n" + twoPC_commit_time + "\n");
         LOG.info(sb.toString());
     }
 }

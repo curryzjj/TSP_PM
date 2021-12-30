@@ -131,6 +131,7 @@ public class MeasureSink extends BaseSink {
 
     private void CommitTuple(long bid) {
         if(enable_latency_measurement&&perCommitTuple.size()!=0){
+            MeasureTools.twoPC_commit_begin(System.nanoTime());
             long totalLatency=0L;
             long size=0;
             Iterator<Map.Entry<Long, Long>> events = perCommitTuple.entrySet().iterator();
@@ -146,6 +147,7 @@ public class MeasureSink extends BaseSink {
                 }
             }
             latency_map.add(totalLatency/size);
+            MeasureTools.twoPC_commit_finish(System.nanoTime());
         }
     }
     private void addLatency() {

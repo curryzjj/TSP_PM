@@ -115,7 +115,7 @@ public class EventGenerator extends Thread {
                         Thread.sleep(timeSliceLengthMs - emitTime-emitStartTime+lastFinishTime-busyTime);
                         busyTime=0;
                     }else{
-                        busyTime=busy_time-timeSliceLengthMs+emitTime;
+                        busyTime=busyTime-timeSliceLengthMs+emitTime;
                     }
                 }
             } catch (InterruptedException ignored) {
@@ -123,9 +123,11 @@ public class EventGenerator extends Thread {
             }
             lastFinishTime=System.currentTimeMillis();
             sleep_time++;
-        } else
-            this.busyTime=busy_time+emitTime-timeSliceLengthMs;
+        } else{
+            this.busyTime=busyTime+emitTime-timeSliceLengthMs;
+            lastFinishTime=System.currentTimeMillis();
             busy_time++;
+        }
         return finish;
     }
     private boolean seedDataWithoutControl(){
