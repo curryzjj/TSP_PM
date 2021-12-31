@@ -35,6 +35,8 @@ public class MeasureTools {
     private static long recovery_begin_time;
     private static long persist_begin_time;
     private static long transaction_abort_begin_time;
+    private static double reloadDB;
+    private static long reloadDB_start_time;
     private static final LocalFileSystem localFileSystem=new LocalFileSystem();
     private static int FT;
     public MeasureTools(int partition_num,int tthread_num,int FT_) {
@@ -115,6 +117,12 @@ public class MeasureTools {
     public static void finishUndoTransaction(long time){
         transaction_abort_time.addValue((time-transaction_abort_begin_time)/1E6);
     }
+    public static void startReloadDB(long time){
+        reloadDB_start_time=time;
+    }
+    public static void finishReloadDB(long time){
+        reloadDB=(time-reloadDB_start_time)/1E6;
+    }
     public static void setSnapshotFileSize(Set<Path> paths){
         int i=0;
         for (Path path:paths){
@@ -151,6 +159,8 @@ public class MeasureTools {
         sb.append("\n" + input_store_time.toString() + "\n");
         sb.append("=======Persist Time Details=======");
         sb.append("\n" + persist_time.toString() + "\n");
+        sb.append("=======ReloadDB Time Details=======");
+        sb.append("\n" + reloadDB + "\n");
         sb.append("=======Recovery Time Details=======");
         sb.append("\n" + recovery_time.toString() + "\n");
         sb.append("=======Undo Time Details=======");
