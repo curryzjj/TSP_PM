@@ -85,8 +85,9 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                     bid++;
                     lostData++;
                     forward_marker(this.taskId, bid, null, "marker");
-                } else {
-                    collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "recovery");
+                    if(bid==failureTime){
+                        collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "recovery");
+                    }
                 }
             }
         } else{

@@ -192,6 +192,7 @@ public class CheckpointManager extends FTManager {
         for(int id:callSnapshot.keySet()){
             g.getExecutionNode(id).ackCommit();
         }
+        MeasureTools.FTM_finish_Ack(System.nanoTime());
         this.callSnapshot_ini();
     }
     public void notifyAllComplete() throws Exception {
