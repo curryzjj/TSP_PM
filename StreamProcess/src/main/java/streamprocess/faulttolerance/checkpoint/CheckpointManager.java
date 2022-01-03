@@ -134,7 +134,9 @@ public class CheckpointManager extends FTManager {
                     SnapshotResult lastSnapshotResult=getLastCommitSnapshotResult(checkpointFile);
                     //this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId());
+                    MeasureTools.startReloadDB(System.nanoTime());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
+                    MeasureTools.finishReloadDB(System.nanoTime());
                     this.db.getTxnProcessingEngine().isTransactionAbort=false;
                     LOG.debug("Reload state complete!");
                     synchronized (lock){

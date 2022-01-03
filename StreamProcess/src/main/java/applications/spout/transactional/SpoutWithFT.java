@@ -87,11 +87,12 @@ public class SpoutWithFT extends TransactionalSpoutFT {
                 AbstractInputTuple input = replayTuple();
                 if (input != null) {
                     collector.emit_single(DEFAULT_STREAM_ID, bid, input);
+                    if(bid==failureTime){
+                        collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "recovery");
+                    }
                     bid++;
                     lostData++;
                     forward_marker(this.taskId, bid, null, "marker");
-                } else {
-                    collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "recovery");
                 }
             }
         } else {

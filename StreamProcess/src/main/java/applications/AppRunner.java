@@ -96,10 +96,14 @@ public class  AppRunner extends baseRunner {
                 break;
         }
         Time_Control=config.getBoolean("enable_time_Interval");
-        if(OsUtils.isMac()){
-            failureTime=(int)(config.getInt("TEST_NUM_EVENTS")*config.getDouble("failureTime"));
+        if(MAX_RECOVERY_TIME){
+            failureTime=config.getInt("snapshot")*config.getInt("batch_number_per_wm")*2-1;
         }else {
-            failureTime=(int)(config.getInt("NUM_EVENTS")*config.getDouble("failureTime"));
+            if(OsUtils.isMac()){
+                failureTime=(int)(config.getInt("TEST_NUM_EVENTS")*config.getDouble("failureTime"));
+            }else {
+                failureTime=(int)(config.getInt("NUM_EVENTS")*config.getDouble("failureTime"));
+            }
         }
         //Set the application
         Arrival_Control=config.getBoolean("Arrival_Control");
