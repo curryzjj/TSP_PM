@@ -114,6 +114,7 @@ public class  AppRunner extends baseRunner {
         TEST_NUM_EVENTS=config.getInt("TEST_NUM_EVENTS");
         ZIP_SKEW=config.getDouble("ZIP_SKEW");
         partition_num=config.getInt("partition_num");
+        Exactly_Once=config.getBoolean("Exactly_Once");
         //set the MeasureTool
         MeasureTools tools=new MeasureTools(config.getInt("partition_num"),config.getInt("executor.threads"),config.getInt("FTOptions"));
         //Get the descriptor for thr given application

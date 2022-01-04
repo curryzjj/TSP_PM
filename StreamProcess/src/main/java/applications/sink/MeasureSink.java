@@ -95,7 +95,7 @@ public class MeasureSink extends BaseSink {
                     measure_end(in.getBID());
                     context.stop_running();
                 }else {
-                    if(enable_wal||enable_snapshot||enable_clr){
+                    if(Exactly_Once){
                         CommitTuple(in.getBID());
                     }else{
                         addLatency();
@@ -108,7 +108,7 @@ public class MeasureSink extends BaseSink {
                 LOG.info("The tuple ("+in.getBID()+ ") is abort");
                 abortTransaction++;
             }else{
-                if(enable_wal||enable_snapshot||enable_clr){
+                if(Exactly_Once){
                     perCommitTuple.put(in.getBID(),(long)in.getValue(1));
                 }else{
                     long latency=System.nanoTime()-(long)in.getValue(1);

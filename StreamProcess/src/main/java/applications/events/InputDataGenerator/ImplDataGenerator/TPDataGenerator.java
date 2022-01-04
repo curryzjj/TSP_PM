@@ -26,7 +26,7 @@ public class TPDataGenerator extends InputDataGenerator {
     private ZipfGenerator zipfGenerator;
 
     /**
-     * Generate TP data in batch and store in the input store
+     * Generate TP data in batch
      * @param batch
      * @return
      */

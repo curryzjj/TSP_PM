@@ -105,7 +105,7 @@ public class EventGenerator extends Thread {
                 }
             }
         }
-        // Sleep for the rest of timeslice if needed
+        // Sleep for the rest of time slice if needed
         long finishTime=System.currentTimeMillis();
         long emitTime = finishTime - emitStartTime;
         if (emitTime < timeSliceLengthMs) {// in terms of milliseconds.
@@ -141,6 +141,7 @@ public class EventGenerator extends Thread {
                 }else{
                     tuples=new ArrayList<>();
                     this.EventsQueue.offer(tuples);
+                    this.finishTime=System.nanoTime();
                     finish=true;
                 }
             }
@@ -153,6 +154,7 @@ public class EventGenerator extends Thread {
                 }else{
                     events=new ArrayList<>();
                     this.EventsQueue.offer(events);
+                    this.finishTime=System.nanoTime();
                     finish=true;
                 }
             }

@@ -44,6 +44,7 @@ public class CONTROL {
     public static boolean enable_states_lost=false;
     public static int failureTime=0;
     public static boolean MAX_RECOVERY_TIME=true;
+    public static boolean Exactly_Once=true;
     //latency related.
     public static boolean enable_latency_measurement = true;//
 
