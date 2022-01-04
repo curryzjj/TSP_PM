@@ -10,7 +10,6 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Exception.DatabaseException;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
-import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -34,6 +33,7 @@ import static UserApplications.CONTROL.*;
 public class MeasureSink extends BaseSink {
     private static final Logger LOG = LoggerFactory.getLogger(MeasureSink.class);
     private static final DescriptiveStatistics latency = new DescriptiveStatistics();
+    private static final DescriptiveStatistics waitTime=new DescriptiveStatistics();
     private static final DescriptiveStatistics throughput=new DescriptiveStatistics();
     private Path result_Path;
     private FileSystem localFS;
@@ -49,7 +49,7 @@ public class MeasureSink extends BaseSink {
     //protected List<Tuple2<Long, Long>> perCommitTuple=new ArrayList<>();
 
     //2PC
-    protected HashMap<Long,Long> perCommitTuple=new HashMap<>();
+    protected HashMap<Long, Tuple2<Long,Long>> perCommitTuple=new HashMap<>();
     //no_commit
     protected final ArrayDeque<Long> no_commit_latency_map=new ArrayDeque<>();
     protected long currentCommitBid=0;
@@ -79,7 +79,6 @@ public class MeasureSink extends BaseSink {
         batch_number_per_wm = 100;
         exe = NUM_EVENTS;
         LOG.info("expected last events = " + exe);
-
     }
 
     protected int tthread;
@@ -109,7 +108,7 @@ public class MeasureSink extends BaseSink {
                 abortTransaction++;
             }else{
                 if(Exactly_Once){
-                    perCommitTuple.put(in.getBID(),(long)in.getValue(1));
+                    perCommitTuple.put(in.getBID(),new Tuple2<>((long)in.getValue(1),System.nanoTime()));
                 }else{
                     long latency=System.nanoTime()-(long)in.getValue(1);
                     no_commit_latency_map.add((long) (latency/1E6));
@@ -133,20 +132,24 @@ public class MeasureSink extends BaseSink {
         if(enable_latency_measurement&&perCommitTuple.size()!=0){
             MeasureTools.twoPC_commit_begin(System.nanoTime());
             long totalLatency=0L;
+            long totalWaitTime=0L;
             long size=0;
-            Iterator<Map.Entry<Long, Long>> events = perCommitTuple.entrySet().iterator();
+            Iterator<Map.Entry<Long, Tuple2<Long, Long>>> events = perCommitTuple.entrySet().iterator();
             while(events.hasNext()){
-                Map.Entry<Long, Long> event = events.next();
+                Map.Entry<Long, Tuple2<Long, Long>> event = events.next();
                 if(event.getKey()<bid){
                     final long end = System.nanoTime();
-                    final long process_latency = (long) ((end - event.getValue())/1E6);//ms
+                    final long process_latency = (long) ((end - event.getValue()._1)/1E6);//ms
+                    final long wait_latency=(long) ((end - event.getValue()._2)/1E6);//ms
                     totalLatency=totalLatency+process_latency;
+                    totalWaitTime=totalWaitTime+wait_latency;
                     size++;
                     count++;
                     events.remove();
                 }
             }
             latency_map.add(totalLatency/size);
+            waitTime.addValue(totalWaitTime/size);
             MeasureTools.twoPC_commit_finish(System.nanoTime());
         }
     }
@@ -201,9 +204,8 @@ public class MeasureSink extends BaseSink {
             dataOutputStream.writeUTF(String.valueOf(a));
             dataOutputStream.write(new byte[]{13,10});
         }
-        sb.append("=======Throughput Details=======");
-        sb.append("\n" + throughput.toString() + "\n");
-        sb.append("===99th===" + "\n");
+        sb.append("=======WaitTime Details=======");
+        sb.append("\n" + waitTime.toString() + "\n");
         dataOutputStream.close();
         localDataOutputStream.close();
         LOG.info(sb.toString());
