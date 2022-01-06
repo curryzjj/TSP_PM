@@ -146,8 +146,8 @@ public class LoggerManager extends FTManager {
                         this.db.recoveryFromWAL(theLastLSN);
                         this.g.getSpout().recoveryInput(theLastLSN);
                     }else{
-                        this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                         MeasureTools.startReloadDB(System.nanoTime());
+                        this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                         long theLastLSN=this.db.recoveryFromWAL(-1);
                         LOG.debug("Reload state complete!");
                         MeasureTools.finishReloadDB(System.nanoTime());
