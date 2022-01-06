@@ -122,6 +122,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
 
     @Override
     protected void loadReplay() throws FileNotFoundException {
+        MeasureTools.startReloadInput(System.nanoTime());
         long msg=offset;
         bid=0;
         openFile(Data_path);
@@ -130,6 +131,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             offset--;
             bid++;
         }
+        MeasureTools.finishReloadInput(System.nanoTime());
         LOG.info("The input data have been load to the offset "+msg);
     }
 

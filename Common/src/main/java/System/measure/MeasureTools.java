@@ -30,6 +30,8 @@ public class MeasureTools {
     private static long[] transaction_begin_time;
     private static long[] post_begin_time;
     private static long input_store_begin_time;
+    private static long input_reload_begin_time;
+    private static double input_reload_time;
     private static long commitStartTime;
     private static long FTM_finish_time;
     private static long recovery_begin_time;
@@ -127,6 +129,12 @@ public class MeasureTools {
     public static void finishReloadDB(long time){
         reloadDB=(time-reloadDB_start_time)/1E6;
     }
+    public static void startReloadInput(long time){
+        input_reload_begin_time=time;
+    }
+    public static void finishReloadInput(long time){
+        input_reload_time=(time-input_reload_begin_time)/1E6;
+    }
     public static void setSnapshotFileSize(Set<Path> paths){
         int i=0;
         for (Path path:paths){
@@ -165,6 +173,8 @@ public class MeasureTools {
         sb.append("\n" + persist_time.toString() + "\n");
         sb.append("=======ReloadDB Time Details=======");
         sb.append("\n" + reloadDB + "\n");
+        sb.append("=======Reload Input Time Details=======");
+        sb.append("\n" + input_reload_time + "\n");
         sb.append("=======Recovery Time Details=======");
         sb.append("\n" + recovery_time.toString() + "\n");
         sb.append("=======Lost Data=======");
