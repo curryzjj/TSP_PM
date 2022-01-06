@@ -99,23 +99,23 @@ public class GSDataGenerator extends InputDataGenerator {
         if (RATIO_OF_READ == 0) {
             read_decision = new boolean[]{false,false,false, false, false, false, false, false, false, false};// all write.
         } else if (RATIO_OF_READ == 0.1) {
-            read_decision = new boolean[]{false,false,false, false, false, false, false, false, false, true};//75% W, 25% R.
+            read_decision = new boolean[]{false,false,false, false, false, false, false, false, false, true};//90% W, 10% R.
         } else if (RATIO_OF_READ == 0.2) {
-            read_decision = new boolean[]{false,false,false, false, false, false, false, false, true, true};//equal r-w ratio.
+            read_decision = new boolean[]{false,false,false, false, false, false, false, false, true, true};//80% W, 20% R.
         } else if (RATIO_OF_READ == 0.3) {
-            read_decision = new boolean[]{false,false,false, false, false, false, false, true, true, true};//25% W, 75% R.
+            read_decision = new boolean[]{false,false,false, false, false, false, false, true, true, true};//70% W, 30% R.
         } else if (RATIO_OF_READ == 0.4) {
-            read_decision = new boolean[]{false,false,false, false, false, false, true, true, true, true};// all read.
+            read_decision = new boolean[]{false,false,false, false, false, false, true, true, true, true};//60% W, 40% R.
         } else if (RATIO_OF_READ==0.5){
-            read_decision = new boolean[]{false,false,false, false, false, true, true, true, true, true};// all read.
+            read_decision = new boolean[]{false,false,false, false, false, true, true, true, true, true};//50% W, 50% R.
         }else if (RATIO_OF_READ==0.6){
-            read_decision = new boolean[]{false,false,false, false, true, true, true, true, true, true};// all read.
+            read_decision = new boolean[]{false,false,false, false, true, true, true, true, true, true};//40% W, 60% R.
         }else if (RATIO_OF_READ==0.7){
-            read_decision = new boolean[]{false,false,false, true, true, true, true, true, true, true};// all read.
+            read_decision = new boolean[]{false,false,false, true, true, true, true, true, true, true};//30% W, 70% R.
         }else if (RATIO_OF_READ==0.8){
-            read_decision = new boolean[]{false,false,true, true, true, true, true, true, true, true};// all read.
+            read_decision = new boolean[]{false,false,true, true, true, true, true, true, true, true};//20% W, 80% R.
         }else if (RATIO_OF_READ==0.9){
-            read_decision = new boolean[]{false,true,true, true, true, true, true, true, true, true};// all read.
+            read_decision = new boolean[]{false,true,true, true, true, true, true, true, true, true};//10% W, 90% R.
         }else if (RATIO_OF_READ==1.0){
             read_decision = new boolean[]{true,true,true, true, true, true, true, true, true, true};// all read.
         } else{

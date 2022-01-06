@@ -82,12 +82,13 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 TxnEvent event = replayEvent();
                 if (event != null) {
                     collector.emit_single(DEFAULT_STREAM_ID, bid, event);
-                    bid++;
                     lostData++;
-                    forward_marker(this.taskId, bid, null, "marker");
                     if(bid==failureTime){
                         collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "recovery");
+                        MeasureTools.setReplayData(lostData);
                     }
+                    bid++;
+                    forward_marker(this.taskId, bid, null, "marker");
                 }
             }
         } else{

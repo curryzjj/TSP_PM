@@ -39,6 +39,7 @@ public class MeasureTools {
     private static long reloadDB_start_time;
     private static final LocalFileSystem localFileSystem=new LocalFileSystem();
     private static int FT;
+    private static int replayData;
     public MeasureTools(int partition_num,int tthread_num,int FT_) {
         serialization_time = new DescriptiveStatistics[partition_num];
         snapshot_file_size = new DescriptiveStatistics[partition_num];
@@ -61,6 +62,9 @@ public class MeasureTools {
         transaction_begin_time=new long[tthread_num];
         post_begin_time=new long[tthread_num];
         FT=FT_;
+    }
+    public static void setReplayData(int num){
+        replayData=num;
     }
     public static void twoPC_commit_begin(long time){
         commitStartTime=time;
@@ -163,6 +167,8 @@ public class MeasureTools {
         sb.append("\n" + reloadDB + "\n");
         sb.append("=======Recovery Time Details=======");
         sb.append("\n" + recovery_time.toString() + "\n");
+        sb.append("=======Lost Data=======");
+        sb.append("\n" + replayData + "\n");
         sb.append("=======Undo Time Details=======");
         sb.append("\n" + transaction_abort_time.toString() + "\n");
         switch(FT){
