@@ -19,9 +19,9 @@ public abstract class baseRunner {
     protected static String CFG_PATH = null;
     @Parameter(names={"-a","--app"},description = "The application to be executed",required = false)
     //public String application = "GS_txn";
-    public String application = "TP_txn";
+    //public String application = "TP_txn";
     //public String application="OB_txn";
-    //public String application="SL_txn";
+    public String application="SL_txn";
 
     //public String application = "WordCount";
     @Parameter(names = {"-t", "--Brisk.topology-name"}, required = false, description = "The name of the Brisk.topology")

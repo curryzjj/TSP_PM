@@ -1,6 +1,7 @@
 package utils.StateIterator.ImplSingleStateIterator;
 
 import engine.table.datatype.serialize.Serialize;
+import engine.table.tableRecords.TableRecord;
 import utils.StateIterator.InMemoryTableIteratorWrapper;
 import utils.StateIterator.SingleStateIterator;
 
@@ -34,7 +35,9 @@ public class TableSingleStateIterator implements SingleStateIterator {
     @Override
     public byte[] value() {
         try {
-            return Serialize.serializeObject(iterator.next());
+            TableRecord tableRecord=iterator.next();
+            tableRecord.clean_map();
+            return Serialize.serializeObject(tableRecord);
         } catch (IOException e) {
             e.printStackTrace();
         }

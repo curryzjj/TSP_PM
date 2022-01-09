@@ -97,7 +97,7 @@ public class  AppRunner extends baseRunner {
         }
         Time_Control=config.getBoolean("enable_time_Interval");
         if(MAX_RECOVERY_TIME){
-            failureTime=config.getInt("snapshot")*config.getInt("batch_number_per_wm")*config.getInt("failureTime")-1;
+            failureTime= (int) (config.getInt("snapshot")*config.getInt("batch_number_per_wm")*config.getDouble("failureTime")-1);
         }else {
             if(OsUtils.isMac()){
                 failureTime=(int)(config.getInt("TEST_NUM_EVENTS")*config.getDouble("failureTime"));

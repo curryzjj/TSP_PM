@@ -43,4 +43,7 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
     public void updateMultiValues(long ts,SchemaRecord record){
         versions.put(ts,record);
     }
+    public void clean_map() {
+        versions.headMap(versions.lastKey(), false).clear();
+    }
 }

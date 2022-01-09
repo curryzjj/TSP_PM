@@ -39,6 +39,7 @@ public class DepositEvent extends TxnEvent {
         this.bookEntryId = bookEntryId;
         this.accountTransfer = accountTransfer;
         this.bookEntryTransfer = bookEntryTransfer;
+        this.timestamp=System.nanoTime();
     }
 
     /**

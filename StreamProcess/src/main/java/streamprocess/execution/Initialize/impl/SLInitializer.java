@@ -49,6 +49,7 @@ public class SLInitializer extends TableInitilizer {
             RecordSchema b = BookEntryScheme();
             db.createTable(b, "bookEntries",TransactionalProcessConstants.DataBoxTypes.LONG);
         }
+        db.createTableRange(2);
     }
     private RecordSchema getRecordSchema() {
         List<DataBox> dataBoxes = new ArrayList<>();

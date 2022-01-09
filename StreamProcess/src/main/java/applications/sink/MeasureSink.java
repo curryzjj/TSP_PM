@@ -168,9 +168,9 @@ public class MeasureSink extends BaseSink {
             CommitTuple(bid);
         }
         if(OsUtils.isMac()){
-            this.result_Path=new Path(Mac_Measure_Path,getConfigPrefix()+"_"+"Latency"+"_"+config.getInt("FTOptions")+"_"+config.getInt("failureModel")+"_"+config.getInt("failureTime")+"_"+config.getInt("executor.threads"));
+            this.result_Path=new Path(Mac_Measure_Path,getConfigPrefix()+"_"+"Latency"+"_"+config.getInt("FTOptions")+"_"+config.getInt("failureModel")+"_"+config.getDouble("failureTime")+"_"+config.getInt("executor.threads"));
         }else{
-            this.result_Path=new Path(Node22_Measure_Path,getConfigPrefix()+"_"+"Latency"+"_"+config.getInt("FTOptions")+"_"+config.getInt("failureModel")+"_"+config.getInt("failureTime")+"_"+config.getInt("executor.threads"));
+            this.result_Path=new Path(Node22_Measure_Path,getConfigPrefix()+"_"+"Latency"+"_"+config.getInt("FTOptions")+"_"+config.getInt("failureModel")+"_"+config.getDouble("failureTime")+"_"+config.getInt("executor.threads"));
         }
         Path parent=result_Path.getParent();
         if (parent != null && !localFS.mkdirs(parent)) {
