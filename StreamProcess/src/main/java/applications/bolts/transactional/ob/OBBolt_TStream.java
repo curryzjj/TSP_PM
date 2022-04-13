@@ -244,7 +244,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
 
         }
     }
-    private void addComputationTask(TxnEvent Txnevent,TxnContext txnContext){
+    private void  addComputationTask(TxnEvent Txnevent,TxnContext txnContext){
         if(Txnevent instanceof BuyingEvent){
             BuyingEvent event=(BuyingEvent) Txnevent;
             for (int i = 0; i < NUM_ACCESSES_PER_BUY; i++){

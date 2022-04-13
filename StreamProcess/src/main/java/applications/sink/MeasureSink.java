@@ -2,12 +2,8 @@ package applications.sink;
 
 import System.FileSystem.FileSystem;
 import System.FileSystem.ImplFS.LocalFileSystem;
-import System.FileSystem.ImplFSDataOutputStream.LocalDataOutputStream;
-import System.FileSystem.Path;
 import System.measure.MeasureTools;
-import System.sink.helper.stable_sink_helper;
 import System.util.Configuration;
-import System.util.OsUtils;
 import engine.Exception.DatabaseException;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
@@ -19,40 +15,34 @@ import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
 
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 
-import static System.Constants.Mac_Measure_Path;
-import static System.Constants.Node22_Measure_Path;
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
 
 public class MeasureSink extends BaseSink {
-    private static final Logger LOG = LoggerFactory.getLogger(MeasureSink.class);
-    private static final DescriptiveStatistics latency = new DescriptiveStatistics();
-    private static final DescriptiveStatistics waitTime=new DescriptiveStatistics();
-    private static final DescriptiveStatistics throughput=new DescriptiveStatistics();
-    private Path result_Path;
-    private FileSystem localFS;
-    private File resultFile;
     private static final long serialVersionUID = 6249684803036342603L;
+    private static final Logger LOG = LoggerFactory.getLogger(MeasureSink.class);
+    private final DescriptiveStatistics latency = new DescriptiveStatistics();
+    private final DescriptiveStatistics waitTime=new DescriptiveStatistics();
+    private final DescriptiveStatistics throughput=new DescriptiveStatistics();
+    private DescriptiveStatistics twoPC_commit_time=new DescriptiveStatistics();
+    private long commitStartTime;
+    protected long startTime;
+    private FileSystem localFS;
     protected static boolean profile = false;
-    protected stable_sink_helper helper;
     private int exe;
-    protected final ArrayDeque<Long> latency_map = new ArrayDeque();
-    protected static final ArrayDeque<Long> throughput_map=new ArrayDeque<>();
+    protected final List<Double> latency_map = new ArrayList<>();
+    protected static final List<Double> throughput_map = new ArrayList<>();
     public int batch_number_per_wm;
     /** <bid,timestamp> */
-    //protected List<Tuple2<Long, Long>> perCommitTuple=new ArrayList<>();
 
     //2PC
     protected HashMap<Long, Tuple2<Long,Long>> perCommitTuple=new HashMap<>();
     //no_commit
-    protected final ArrayDeque<Long> no_commit_latency_map=new ArrayDeque<>();
-    protected long currentCommitBid=0;
+    protected final List<Double> no_commit_latency_map=new ArrayList<>();
     protected int abortTransaction=0;
     protected static long count;
     protected static long  p_count;
@@ -85,19 +75,23 @@ public class MeasureSink extends BaseSink {
 
     @Override
     public void execute(Tuple in) throws InterruptedException, IOException {
+        if (count == 0){
+            startTime = System.nanoTime();
+        }
         if(in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
                 if(Objects.equals(in.getMarker().getValue(), "recovery")){
                     MeasureTools.finishRecovery(System.nanoTime());
-                }else if(Objects.equals(in.getMarker().getValue(), "finish")){
-                    timer.cancel();
-                    measure_end(in.getBID());
-                    context.stop_running();
                 }else {
                     if(Exactly_Once){
                         CommitTuple(in.getBID());
                     }else{
                         addLatency();
+                    }
+                    if(Objects.equals(in.getMarker().getValue(), "finish")){
+                        timer.cancel();
+                        measure_end();
+                        context.stop_running();
                     }
                 }
             }
@@ -111,7 +105,8 @@ public class MeasureSink extends BaseSink {
                     perCommitTuple.put(in.getBID(),new Tuple2<>((long)in.getValue(1),System.nanoTime()));
                 }else{
                     long latency=System.nanoTime()-(long)in.getValue(1);
-                    no_commit_latency_map.add((long) (latency/1E6));
+                    no_commit_latency_map.add(latency/1E6);
+                    count++;
                 }
             }
         }
@@ -130,85 +125,62 @@ public class MeasureSink extends BaseSink {
 
     private void CommitTuple(long bid) {
         if(enable_latency_measurement&&perCommitTuple.size()!=0){
-            MeasureTools.twoPC_commit_begin(System.nanoTime());
-            long totalLatency=0L;
-            long totalWaitTime=0L;
-            long size=0;
+            commitStartTime = System.nanoTime();
+            double totalLatency=0;
+            double totalWaitTime=0;
+            long size=5000;//Latency is calculated every 'size' events
+            long commitSize=0;
             Iterator<Map.Entry<Long, Tuple2<Long, Long>>> events = perCommitTuple.entrySet().iterator();
             while(events.hasNext()){
                 Map.Entry<Long, Tuple2<Long, Long>> event = events.next();
                 if(event.getKey()<bid){
                     final long end = System.nanoTime();
-                    final long process_latency = (long) ((end - event.getValue()._1)/1E6);//ms
-                    final long wait_latency=(long) ((end - event.getValue()._2)/1E6);//ms
+                    final double process_latency = ((end - event.getValue()._1)/1E6);//ms
+                    final double wait_latency= ((end - event.getValue()._2)/1E6);//ms
                     totalLatency=totalLatency+process_latency;
                     totalWaitTime=totalWaitTime+wait_latency;
-                    size++;
+                    size--;
                     count++;
+                    commitSize++;
                     events.remove();
+                    if(size==0){
+                        latency_map.add(totalLatency/5000);
+                        totalLatency=0;
+                        size=5000;
+                    }
                 }
             }
-            latency_map.add(totalLatency/size);
-            waitTime.addValue(totalWaitTime/size);
-            MeasureTools.twoPC_commit_finish(System.nanoTime());
+            if (size !=0) {
+                latency_map.add(totalLatency/(5000-size));
+            }
+            waitTime.addValue(totalWaitTime/commitSize);
+            twoPC_commit_time.addValue((System.nanoTime()-commitStartTime)/1E6);
         }
     }
     private void addLatency() {
         if(no_commit_latency_map.size()!=0){
-            long totalLatency=0;
-            for (long latency:no_commit_latency_map){
+            double totalLatency=0;
+            for (double latency:no_commit_latency_map){
                 totalLatency=totalLatency+latency;
             }
             latency_map.add(totalLatency/no_commit_latency_map.size());
             no_commit_latency_map.clear();
         }
     }
-    private void measure_end(long bid) throws IOException {
-        if(perCommitTuple.size()!=0){
-            CommitTuple(bid);
-        }
-        if(OsUtils.isMac()){
-            this.result_Path=new Path(Mac_Measure_Path,getConfigPrefix()+"_"+"Latency"+"_"+config.getInt("FTOptions")+"_"+config.getInt("failureModel")+"_"+config.getDouble("failureTime")+"_"+config.getInt("executor.threads"));
-        }else{
-            this.result_Path=new Path(Node22_Measure_Path,getConfigPrefix()+"_"+"Latency"+"_"+config.getInt("FTOptions")+"_"+config.getInt("failureModel")+"_"+config.getDouble("failureTime")+"_"+config.getInt("executor.threads"));
-        }
-        Path parent=result_Path.getParent();
-        if (parent != null && !localFS.mkdirs(parent)) {
-            throw new IOException("Mkdirs failed to create " + parent);
-        }
-        resultFile=localFS.pathToFile(result_Path);
-        LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(resultFile);
-        DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
-        StringBuilder sb = new StringBuilder();
-        for (Long a:latency_map){
+    private void measure_end() {
+        MeasureTools.setAvgThroughput(thisTaskId,count*1E6/(System.nanoTime()-startTime));
+        for (double a:latency_map){
             latency.addValue(a);
-            dataOutputStream.writeUTF(String.valueOf(a));
-            dataOutputStream.write(new byte[]{13,10});
         }
-        sb.append("=======Latency Details=======");
-        sb.append("\n" + latency.toString() + "\n");
-        sb.append("===99th===" + "\n");
-        sb.append(latency.getPercentile(99) + "\n");
-        LOG.info(sb.toString());
-        if(OsUtils.isMac()){
-            this.result_Path=new Path(Mac_Measure_Path,getConfigPrefix()+"_"+"Throughput"+"_"+config.getInt("FTOptions")+"_"+config.getInt("failureModel")+"_"+config.getInt("failureTime")+"_"+config.getInt("executor.threads"));
-        }else{
-            this.result_Path=new Path(Node22_Measure_Path,getConfigPrefix()+"_"+"Throughput"+"_"+config.getInt("FTOptions")+"_"+config.getInt("failureModel")+"_"+config.getInt("failureTime")+"_"+config.getInt("executor.threads"));
-        }
-        resultFile=localFS.pathToFile(result_Path);
-        localDataOutputStream=new LocalDataOutputStream(resultFile);
-        dataOutputStream=new DataOutputStream(localDataOutputStream);
-        sb = new StringBuilder();
-        for (Long a:throughput_map){
+        for (double a:throughput_map){
             throughput.addValue(a);//k events/s
-            dataOutputStream.writeUTF(String.valueOf(a));
-            dataOutputStream.write(new byte[]{13,10});
         }
-        sb.append("=======WaitTime Details=======");
-        sb.append("\n" + waitTime.toString() + "\n");
-        dataOutputStream.close();
-        localDataOutputStream.close();
-        LOG.info(sb.toString());
+        MeasureTools.setThroughputMap(thisTaskId,throughput_map);
+        MeasureTools.setLatencyMap(thisTaskId,latency_map);
+        MeasureTools.setAvgLatency(thisTaskId,latency.getMean());
+        MeasureTools.setTailLatency(thisTaskId,latency.getPercentile(0.9));
+        MeasureTools.setAvgWaitTime(thisTaskId,waitTime.getMean());
+        MeasureTools.setAvgCommitTime(thisTaskId,twoPC_commit_time.getMean());
     }
 
     public long getCount() {
@@ -224,10 +196,11 @@ public class MeasureSink extends BaseSink {
             @Override
             public void run() {
                 long current_count=getCount();
-                long throughput=(current_count-p_count)/1000;
+                double throughput=(current_count-p_count)/1000.0;
                 p_count=current_count;
                 throughput_map.add(throughput);
             }
         },  1000, 1000);//ms
     }
+
 }

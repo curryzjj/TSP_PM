@@ -1,78 +1,31 @@
 package System.measure;
 
-import System.FileSystem.ImplFS.LocalFileSystem;
 import System.FileSystem.Path;
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
+
+import static System.measure.Metrics.*;
+import static System.measure.Metrics.Runtime_Breakdown.*;
+import static java.nio.file.StandardOpenOption.APPEND;
 
 public class MeasureTools {
     private static final Logger LOG = LoggerFactory.getLogger(MeasureTools.class);
-    private static final DescriptiveStatistics FTM_start_ack_time =new DescriptiveStatistics();
-    private static final DescriptiveStatistics FTM_finish_ack_time =new DescriptiveStatistics();
-    private static DescriptiveStatistics[] serialization_time;
-    private static DescriptiveStatistics[] snapshot_file_size;
-    private static DescriptiveStatistics[] wal_file_size;
-    private static DescriptiveStatistics input_store_time=new DescriptiveStatistics();
-    private static DescriptiveStatistics twoPC_commit_time=new DescriptiveStatistics();
-    private static long[] previous_wal_file_size;
-    private static final DescriptiveStatistics recovery_time=new DescriptiveStatistics();
-    private static final DescriptiveStatistics transaction_abort_time=new DescriptiveStatistics();
-    private static final DescriptiveStatistics persist_time=new DescriptiveStatistics();
-    private static DescriptiveStatistics[] transaction_run_time;
-    private static DescriptiveStatistics[] event_post_time;
-    private static long[] bolt_register_ack_time;
-    private static long[] bolt_receive_ack_time;
-    private static long[] transaction_begin_time;
-    private static long[] post_begin_time;
-    private static long input_store_begin_time;
-    private static long input_reload_begin_time;
-    private static double input_reload_time;
-    private static long commitStartTime;
-    private static long FTM_finish_time;
-    private static long recovery_begin_time;
-    private static long persist_begin_time;
-    private static long transaction_abort_begin_time;
-    private static double reloadDB;
-    private static long reloadDB_start_time;
-    private static final LocalFileSystem localFileSystem=new LocalFileSystem();
-    private static int FT;
-    private static int replayData;
     public MeasureTools(int partition_num,int tthread_num,int FT_) {
-        serialization_time = new DescriptiveStatistics[partition_num];
-        snapshot_file_size = new DescriptiveStatistics[partition_num];
-        wal_file_size=new DescriptiveStatistics[partition_num];
-        previous_wal_file_size=new long[partition_num];
-        transaction_run_time=new DescriptiveStatistics[tthread_num];
-        event_post_time=new DescriptiveStatistics[tthread_num];
-         for(int i=0;i<partition_num;i++){
-            previous_wal_file_size[i]=0;
-            serialization_time[i] = new DescriptiveStatistics();
-            snapshot_file_size[i] = new DescriptiveStatistics();
-            wal_file_size[i]=new DescriptiveStatistics();
-        }
-        for (int i=0;i<tthread_num;i++){
-            transaction_run_time[i]=new DescriptiveStatistics();
-            event_post_time[i]=new DescriptiveStatistics();
-        }
-        bolt_register_ack_time =new long[tthread_num];
-        bolt_receive_ack_time =new long[tthread_num];
-        transaction_begin_time=new long[tthread_num];
-        post_begin_time=new long[tthread_num];
-        FT=FT_;
+        Metrics.Initialize(partition_num,tthread_num,FT_);
+        Metrics.Performance.Initialize();
+        Metrics.Runtime_Breakdown.Initialize(tthread_num);
     }
     public static void setReplayData(int num){
         replayData=num;
-    }
-    public static void twoPC_commit_begin(long time){
-        commitStartTime=time;
-    }
-    public static void twoPC_commit_finish(long time){
-        twoPC_commit_time.addValue((time-commitStartTime)/1E6);
     }
     public static void Input_store_begin(long time){
         input_store_begin_time=time;
@@ -134,6 +87,28 @@ public class MeasureTools {
     }
     public static void finishReloadInput(long time){
         input_reload_time=(time-input_reload_begin_time)/1E6;
+    }
+    //Sink Measure
+    public static void setAvgThroughput(int threadId, double result) {
+        Performance.Avg_throughput.put(threadId,result);
+    }
+    public static void setAvgLatency(int threadId, double result) {
+        Performance.Avg_latency.put(threadId,result);
+    }
+    public static void setTailLatency(int threadId, double result) {
+        Performance.Tail_latency.put(threadId,result);
+    }
+    public static void setThroughputMap(int threadId, List<Double> result) {
+        Performance.throughput_map.put(threadId,result);
+    }
+    public static void setLatencyMap(int threadId, List<Double> result) {
+        Performance.latency_map.put(threadId,result);
+    }
+    public static void setAvgWaitTime(int threadId, double result) {
+        Avg_WaitTime.put(threadId,result);
+    }
+    public static void setAvgCommitTime(int threadId, double result) {
+        Avg_CommitTime.put(threadId,result);
     }
     public static void setSnapshotFileSize(Set<Path> paths){
         int i=0;
@@ -197,20 +172,134 @@ public class MeasureTools {
         }
         double Total_time=0;
         for (int i=0;i<transaction_run_time.length;i++){
-            //sb.append("=======Thread"+i+" transaction running time Details=======");
-            //sb.append("\n" + transaction_run_time[i].toString() + "\n");
             Total_time=Total_time+transaction_run_time[i].getMean();
         }
         sb.append("Avg transaction_run_time: "+Total_time/transaction_run_time.length+"\n");
         LOG.info(sb.toString());
         for (int i=0;i< event_post_time.length;i++){
-            //sb.append("=======Thread"+i+" Event post time Details=======");
-            //sb.append("\n" + event_post_time[i].toString() + "\n");
             Total_time=Total_time+event_post_time[i].getMean();
         }
         sb.append("Avg post_run_time: "+Total_time/event_post_time.length+"\n");
         sb.append("=======2PC commit time=======");
-        sb.append("\n" + twoPC_commit_time + "\n");
+        //sb.append("\n" + twoPC_commit_time + "\n");
         LOG.info(sb.toString());
+    }
+    private static void PerformanceReport(String baseDirectory, StringBuilder sb) throws IOException {
+        sb.append("\n");
+        String statsFolderPath = baseDirectory + "_overview";
+        File file = new File(statsFolderPath);
+        LOG.info("Dumping stats to...");
+        LOG.info(String.valueOf(file.getAbsoluteFile()));
+        file.mkdirs();
+        if (file.exists())
+            file.delete();
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        BufferedWriter fileWriter = Files.newBufferedWriter(Paths.get(file.getPath()), APPEND);
+        double totalThroughput = 0;
+        double totalAvgLatency = 0;
+        double totalTailLatency = 0;
+        for (double rt : Performance.Avg_throughput.values()) {
+            totalThroughput = totalThroughput+rt;
+        }
+        for (double rt : Performance.Avg_latency.values()) {
+            totalAvgLatency = totalAvgLatency+rt;
+        }
+        for (double rt : Performance.Tail_latency.values()) {
+            totalTailLatency = totalTailLatency+rt;
+        }
+        fileWriter.write("Throughput: " + totalThroughput + "\n");
+        fileWriter.write("Avg_latency: " + totalAvgLatency/Performance.Avg_latency.size() + "\n");
+        fileWriter.write("Tail_latency: " + totalTailLatency/Performance.Tail_latency.size() + "\n");
+        sb.append("=======Throughput=======");
+        sb.append("\n" + totalThroughput + "\n");
+        sb.append("=======Avg_latency=======");
+        sb.append("\n" + totalAvgLatency/Performance.Avg_latency.size() + "\n");
+        sb.append("=======Tail_latency=======");
+        sb.append("\n" + totalTailLatency/Performance.Tail_latency.size()  + "\n");
+        fileWriter.close();
+    }
+    private static void RuntimeLatencyReport(String baseDirectory) throws IOException {
+        String statsFolderPath = baseDirectory + "_latency";
+        File file = new File(statsFolderPath);
+        LOG.info("Dumping stats to...");
+        LOG.info(String.valueOf(file.getAbsoluteFile()));
+        file.mkdirs();
+        if (file.exists())
+            file.delete();
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        BufferedWriter fileWriter = Files.newBufferedWriter(Paths.get(file.getPath()), APPEND);
+        fileWriter.write("time_id\t latency\n");
+        for (int i=0;i<Performance.latency_map.get(0).size();i++){
+            double latency = 0;
+            for (List<Double> list : Performance.latency_map.values()){
+                latency = latency + list.get(i);
+            }
+            String output = String.format("%d\t" +
+                            "%-10.4f\t"
+                    , i,latency
+            );
+            fileWriter.write(output + "\n");
+        }
+        fileWriter.close();
+    }
+    private static void RuntimeThroughputReport(String baseDirectory) throws IOException {
+        String statsFolderPath = baseDirectory + "_throughput";
+        File file = new File(statsFolderPath);
+        LOG.info("Dumping stats to...");
+        LOG.info(String.valueOf(file.getAbsoluteFile()));
+        file.mkdirs();
+        if (file.exists())
+            file.delete();
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        BufferedWriter fileWriter = Files.newBufferedWriter(Paths.get(file.getPath()), APPEND);
+        fileWriter.write("time_id\t throughput\n");
+        for (int i=0;i<Performance.throughput_map.get(0).size();i++){
+            double latency = 0;
+            for (List<Double> list : Performance.throughput_map.values()){
+                latency = latency + list.get(i);
+            }
+            String output = String.format("%d\t" +
+                            "%-10.4f\t"
+                    , i,latency
+            );
+            fileWriter.write(output + "\n");
+        }
+        fileWriter.close();
+    }
+    private static void RuntimeBreakdownReport(String baseDirectory, StringBuilder sb) throws IOException {
+        //TODO: implement later
+        sb.append("\n");
+        String statsFolderPath = baseDirectory + "_overview";
+        File file = new File(statsFolderPath);
+        LOG.info("Dumping stats to...");
+        LOG.info(String.valueOf(file.getAbsoluteFile()));
+        file.mkdirs();
+        if (file.exists())
+            file.delete();
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        BufferedWriter fileWriter = Files.newBufferedWriter(Paths.get(file.getPath()), APPEND);
+        fileWriter.write("thread_id\t Txn_time\t Stream_time\t");
+    }
+    public static void METRICS_REPORT(String baseDirectory) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        PerformanceReport(baseDirectory,sb);
+        RuntimeThroughputReport(baseDirectory);
+        RuntimeLatencyReport(baseDirectory);
     }
 }

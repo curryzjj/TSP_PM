@@ -51,6 +51,17 @@ public final class OsUtils {
             return null;
         }
     }
+    public static String osWrapperPostFix(String path) {
+        if (isWindows()) {
+            return path + "\\";
+        } else if (isMac()) {
+            return path + "/";
+        } else if (isUnix()) {
+            return path + "/";
+        } else {
+            return null;
+        }
+    }
 
     public static boolean isWindows() {
         return (OS.contains("win"));

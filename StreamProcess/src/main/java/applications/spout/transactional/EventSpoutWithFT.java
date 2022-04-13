@@ -56,13 +56,12 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         }
         if(OsUtils.isMac()){
             path=config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_TEST_PATH)));
-            this.exe=TEST_NUM_EVENTS;
             Data_path=Mac_Data_Path;
         }else{
             path = config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_PATH)));
-            this.exe=NUM_EVENTS;
             Data_path=Node22_Data_Path;
         }
+        this.exe=NUM_EVENTS;
         this.batch_number_per_wm=config.getInt("batch_number_per_wm");
         this.checkpoint_interval = config.getInt("snapshot");
         Data_path = Data_path.concat(path);

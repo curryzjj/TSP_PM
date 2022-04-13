@@ -53,7 +53,7 @@ public class EventManager {
         Fw = new FileWriter(clrFile,true);
         BufferedWriter bw= new BufferedWriter(Fw);
         for (ComputationLogic logic:logics){
-           // bw.write(logic.toString(partitionId));
+            bw.write(logic.toString(partitionId));
             bw.write( "\n");
         }
         bw.write(split_exp+" ");
@@ -164,7 +164,6 @@ public class EventManager {
     }
 
     private void persistBidTask(File clrFile,ConcurrentLinkedQueue<Long> bids,long eventTaskId) throws IOException {
-        //OutputStream outputStream=new LZFFileOutputStream(clrFile,true);
         LocalDataOutputStream outputStream=new LocalDataOutputStream(clrFile);
         StringBuilder stringBuilder=new StringBuilder();
         for (Long bid:bids){

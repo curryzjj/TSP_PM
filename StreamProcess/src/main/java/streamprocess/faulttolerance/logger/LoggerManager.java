@@ -169,12 +169,12 @@ public class LoggerManager extends FTManager {
                     }
                     LOG.info("LoggerManager received all register and start commit log");
                     commitLog();
-                    notifyLogComplete();
-                    lock.notifyAll();
                     if(enable_measure){
                         MeasureTools.finishPersist(System.nanoTime());
                         MeasureTools.setWalFileSize(Current_Path.getParent());
                     }
+                    notifyLogComplete();
+                    lock.notifyAll();
                 }
             }
         }

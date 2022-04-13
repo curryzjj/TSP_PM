@@ -168,13 +168,13 @@ public class CheckpointManager extends FTManager {
                         RunnableFuture<SnapshotResult> snapshotResult =this.db.snapshot(isCommitted.poll(),00000L);
                         this.snapshotResult=snapshotResult.get();
                     }
-                    commitCurrentLog();
-                    notifySnapshotComplete();
-                    lock.notifyAll();
                     if(enable_measure){
                         MeasureTools.finishPersist(System.nanoTime());
                         MeasureTools.setSnapshotFileSize(this.snapshotResult.getSnapshotResults().keySet());
                     }
+                    commitCurrentLog();
+                    notifySnapshotComplete();
+                    lock.notifyAll();
                 }
             }
         }

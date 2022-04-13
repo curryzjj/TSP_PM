@@ -33,9 +33,10 @@ public class InMemoryDataBase extends Database {
     public InMemoryDataBase(Configuration configuration) {
         CloseableRegistry closeableRegistry=new CloseableRegistry();
         storageManager = new StorageManager(closeableRegistry,configuration);
-        if(OsUtils.isMac()){
+        if(!OsUtils.isMac()){
             String snapshotPath=configuration.getString("snapshotTestPath");
-            this.snapshotPath=new Path(System.getProperty("user.home").concat(snapshotPath));
+            //this.snapshotPath=new Path(System.getProperty("user.home").concat(snapshotPath));
+            this.snapshotPath=new Path(snapshotPath);
             String WalPath=configuration.getString("WALTestPath");
             this.WalPath=new Path(System.getProperty("user.home").concat(WalPath));
         }else {

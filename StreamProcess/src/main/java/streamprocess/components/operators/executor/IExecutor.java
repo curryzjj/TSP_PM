@@ -32,8 +32,6 @@ public interface IExecutor extends Serializable {
     void callback(int callee, Marker marker);
     void setExecutionNode(ExecutionNode e);
     Integer default_scale(Configuration conf);
-    //void configureWriter(Writer writer);
-    //void configureLocker(OrderLock lock, OrderValidate orderValidate);
     void clean_status(Marker marker);
     void ackCommit();
     void recoveryInput(long offset) throws FileNotFoundException, InterruptedException;

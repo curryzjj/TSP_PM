@@ -34,6 +34,7 @@ public abstract class InputDataGenerator implements Serializable {
     protected int access_per_partition;
     protected int floor_interval;
     protected int partition_num;
+    protected int partition_num_per_txn;
     protected final String split_exp = ";";
     public static FastZipfGenerator shared_store;
     public static FastZipfGenerator[] partitioned_store;
@@ -44,11 +45,10 @@ public abstract class InputDataGenerator implements Serializable {
     public abstract Object create_new_event(int bid);
     public abstract void close();
     protected void randomKeys(int p, TxnParam param, Set keys,int access_per_partition,int counter,int numAccessesPerEvent){
-        int pid=p;
         for (int access_id=0;access_id<numAccessesPerEvent;++access_id){
             FastZipfGenerator generator;
             if(enable_states_partition){
-                generator= partitioned_store[pid];
+                generator= partitioned_store[current_pid];
             }else {
                 generator=shared_store;
             }
@@ -60,11 +60,11 @@ public abstract class InputDataGenerator implements Serializable {
             param.set_keys(access_id,res);
             counter++;
             if (counter==access_per_partition){
-                pid++;
-                if(pid== partition_num){
-                    pid=0;
+                current_pid++;
+                if(current_pid == partition_num){
+                    current_pid=0;
                 }
-                counter++;
+                counter=0;
             }
         }
     }

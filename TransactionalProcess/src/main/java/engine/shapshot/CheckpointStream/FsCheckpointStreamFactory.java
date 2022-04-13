@@ -94,9 +94,10 @@ public class FsCheckpointStreamFactory implements CheckpointStreamFactory{
         @Override
         public void write(int b) throws IOException {
             if (pos >= writeBuffer.length) {
+                flushToFile();
+            }else{
+                writeBuffer[pos++] = (byte) b;
             }
-            writeBuffer[pos++] = (byte) b;
-            flushToFile();
         }
 
         @Override

@@ -22,10 +22,7 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "marker":
-                        if(TXN_PROCESS()){
-                            /* When the wal is completed, the data can be consumed by the outside world */
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        }
+                        TXN_PROCESS();
                         break;
                     case "finish":
                         if(TXN_PROCESS()){

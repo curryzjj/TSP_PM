@@ -76,7 +76,6 @@ public final class SnapshotStrategyRunner<SR extends SnapshotResources> {
         if (executionType == SYNCHRONOUS) {
             asyncSnapshotTask.run();
         }
-
         return asyncSnapshotTask;
     }
     public final SnapshotStrategy.SnapshotResultSupplier parallelSnapshot(long checkpointId,

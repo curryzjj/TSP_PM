@@ -129,6 +129,8 @@ public class OBDataGenerator extends InputDataGenerator {
         this.current_pid=0;
         this.event_decision_id=0;
         this.partition_num =config.getInt("partition_num");
+        this.partition_num_per_txn=config.getInt("partition_num_per_txn");
+        this.access_per_partition = (int) Math.ceil(NUM_ACCESSES / (double) partition_num_per_txn);
         if(enable_states_partition){
             floor_interval= (int) Math.floor(NUM_ITEMS / (double) partition_num);//NUM_ITEMS / partition_num;
             partitioned_store =new FastZipfGenerator[partition_num];
@@ -190,32 +192,28 @@ public class OBDataGenerator extends InputDataGenerator {
         OBParam param=new OBParam(NUM_ACCESSES_PER_BUY);
         Set keys=new HashSet();
         int counter=0;
-        int access_per_partition=(int) Math.ceil(NUM_ACCESSES_PER_BUY / (double) partition_num);
+        int access_per_partition=(int) Math.ceil(NUM_ACCESSES_PER_BUY / (double) partition_num_per_txn);
         randomKeys(current_pid,param,keys,access_per_partition,counter,NUM_ACCESSES_PER_BUY);
         assert !enable_states_partition || verify(keys, current_pid, partition_num);
         current_bid++;
         return new BuyingEvent(param.keys(),rnd,current_pid,bid_array,bid, partition_num);
     }
     private AlertEvent randomAlertEvents(long[] bid_array, long bid, SplittableRandom rnd){
-        int num_access=rnd.nextInt(NUM_ACCESSES_PER_ALERT)+5;
-        OBParam param=new OBParam(num_access);
+        OBParam param=new OBParam(NUM_ACCESSES);
         Set keys=new HashSet();
         int counter=0;
-        int access_per_partition = (int) Math.ceil(num_access / (double) partition_num);
-        randomKeys(current_pid,param,keys,access_per_partition,counter,num_access);
+        randomKeys(current_pid,param,keys,access_per_partition,counter,NUM_ACCESSES);
         assert verify(keys, current_pid, partition_num);
         current_bid++;
-        return new AlertEvent(num_access,param.keys(),rnd,current_pid,bid_array,bid, partition_num);
+        return new AlertEvent(NUM_ACCESSES,param.keys(),rnd,current_pid,bid_array,bid, partition_num);
     }
     private ToppingEvent randomToppingEvents(long[] bid_array, long bid, SplittableRandom rnd){
-        int num_access=rnd.nextInt(NUM_ACCESSES_PER_TOP)+5;
-        OBParam param=new OBParam(num_access);
+        OBParam param=new OBParam(NUM_ACCESSES);
         Set keys=new HashSet();
         int counter=0;
-        int access_per_partition = (int) Math.ceil(num_access / (double) partition_num);
-        randomKeys(current_pid,param,keys,access_per_partition,counter,num_access);
+        randomKeys(current_pid,param,keys,access_per_partition,counter,NUM_ACCESSES);
         assert verify(keys, current_pid, partition_num);
         current_bid++;
-        return new ToppingEvent(num_access,param.keys(),rnd,current_pid,bid_array,bid, partition_num);
+        return new ToppingEvent(NUM_ACCESSES,param.keys(),rnd,current_pid,bid_array,bid, partition_num);
     }
 }

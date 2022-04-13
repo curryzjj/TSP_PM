@@ -1,7 +1,5 @@
 package System;
 
-import System.util.OsUtils;
-
 public interface Constants {
     //System constants
     String Mac_Project_Path=System.getProperty("user.home").concat("/hair-loss/TSP_PM");
@@ -20,6 +18,5 @@ public interface Constants {
     //Result constants
     String Mac_Measure_Path =System.getProperty("user.home").concat("/hair-loss/app/results/");
     String Node22_Measure_Path =System.getProperty("user.home").concat("/app/results/");
-
 
 }

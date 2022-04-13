@@ -50,21 +50,21 @@ public class GSDataGenerator extends InputDataGenerator {
         BufferedWriter bw= new BufferedWriter(Fw);
         for(TxnEvent e:inputs){
             MicroEvent microEvent= (MicroEvent) e;
-            String str=microEvent.getBid()+//0--bid
+            String str=microEvent.getBid()+//0--bid long
                     split_exp+
-                    microEvent.getPid()+//1
+                    microEvent.getPid()+//1 int
                     split_exp+
-                    Arrays.toString(microEvent.getBid_array())+//2
+                    Arrays.toString(microEvent.getBid_array())+//2 int
                     split_exp+
-                    microEvent.num_p() +//3 num of p
+                    microEvent.num_p() +//3 num of p int
                     split_exp +
                     "MicroEvent"+//4 input_event type
                     split_exp+
-                    Arrays.toString(microEvent.getKeys())+//5 keys
+                    Arrays.toString(microEvent.getKeys())+//5 keys int
                     split_exp+
-                    microEvent.READ_EVENT()+//6 is read_event
+                    microEvent.READ_EVENT()+//6 is read_event boolean
                     split_exp+
-                    microEvent.getTimestamp();
+                    microEvent.getTimestamp();//7 timestamp long
             bw.write(str+"\n");
         }
         bw.flush();
@@ -81,7 +81,8 @@ public class GSDataGenerator extends InputDataGenerator {
         this.current_pid=0;
         this.read_decision_id=0;
         this.partition_num =config.getInt("partition_num");
-        this.access_per_partition = (int) Math.ceil(NUM_ACCESSES / (double) partition_num);
+        this.partition_num_per_txn=config.getInt("partition_num_per_txn");
+        this.access_per_partition = (int) Math.ceil(NUM_ACCESSES / (double) partition_num_per_txn);
         if(enable_states_partition){
             floor_interval= (int) Math.floor(NUM_ITEMS / (double) partition_num);//NUM_ITEMS / partition_num;
             partitioned_store =new FastZipfGenerator[partition_num];
