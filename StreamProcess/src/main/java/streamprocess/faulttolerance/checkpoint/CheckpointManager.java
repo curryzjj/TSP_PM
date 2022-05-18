@@ -173,7 +173,7 @@ public class CheckpointManager extends FTManager {
                         MeasureTools.setSnapshotFileSize(this.snapshotResult.getSnapshotResults().keySet());
                     }
                     commitCurrentLog();
-                    notifySnapshotComplete();
+                    notifySnapshotComplete(this.snapshotResult.getCheckpointId());
                     lock.notifyAll();
                 }
             }
@@ -190,10 +190,11 @@ public class CheckpointManager extends FTManager {
         LOG.debug("CheckpointManager commit the checkpoint to the current.log");
         return true;
     }
-    public void notifySnapshotComplete() throws Exception {
+    public void notifySnapshotComplete(long offset) throws Exception {
         for(int id:callSnapshot.keySet()){
             g.getExecutionNode(id).ackCommit();
         }
+        g.getSpout().ackCommit(offset);
         MeasureTools.FTM_finish_Ack(System.nanoTime());
         this.callSnapshot_ini();
     }

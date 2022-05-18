@@ -1,11 +1,11 @@
 package streamprocess.components.operators.api;
 
-import applications.events.InputDataGenerator.EventGenerator;
 import applications.events.InputDataGenerator.InputDataGenerator;
 import applications.events.TxnEvent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.controller.output.MultiStreamInFlightLog;
 import streamprocess.faulttolerance.FaultToleranceConstants;
 import streamprocess.faulttolerance.checkpoint.emitMarker;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
@@ -47,6 +47,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected int batch_number_per_wm;
     protected int checkpoint_interval;
     protected int checkpoint_counter=0;
+    protected MultiStreamInFlightLog multiStreamInFlightLog;
 
     protected TransactionalSpoutFT(Logger log) {
         super(log);
@@ -100,13 +101,18 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 }
             }
             LOG.info(executor.getOP_full() + " emit marker of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + bid);
-            collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration,msg1);
             boardcast_time = System.nanoTime();
+            collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration,msg1);
+            if(enable_upstreamBackup) {
+                multiStreamInFlightLog.addEvent(streamId,new Marker(streamId,boardcast_time,bid,myiteration,msg1));
+                if (msg1.equals("snapshot")) {
+                    multiStreamInFlightLog.addEpoch(bid, DEFAULT_STREAM_ID);
+                }
+            }
             myiteration++;
             success = false;
             epoch_size = bid - previous_bid;
             previous_bid = bid;
-            earilier_check = true;
         }
     }
     public void registerRecovery() throws InterruptedException {
@@ -127,7 +133,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 lock.wait();
             }
             this.isCommit =false;
-            this.needReplay=false;
+            this.needWaitReplay =false;
         }
     }
 
@@ -154,6 +160,13 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         LOG.info("Spout sent marker "+myiteration);
         LOG.info("Spout sent snapshot "+checkpoint_counter);
         context.stop_running();
+    }
+
+    @Override
+    public void cleanEpoch(long offset) {
+        if (enable_upstreamBackup){
+            multiStreamInFlightLog.cleanEpoch(offset,DEFAULT_STREAM_ID);
+        }
     }
 
     @Override

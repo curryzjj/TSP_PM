@@ -101,6 +101,12 @@ public class VirtualExecutor implements IExecutor{
     }
 
     @Override
+    public void ackCommit(long offset) {
+
+    }
+
+
+    @Override
     public void recoveryInput(long offset) {
 
     }

@@ -18,6 +18,7 @@ public interface IPartitionController extends Serializable {
     int emit(Meta meta, String streamId, long bid, Object output) throws InterruptedException;
 
     int force_emit(Meta meta, String streamId, long bid, Object... output) throws InterruptedException;
+    int force_emit(Meta meta, String streamId, long bid, int targetId,Object... output) throws InterruptedException;
 
     int force_emit(Meta meta, String streamId, long[] bid, long msg_id, Object... output) throws InterruptedException;
 

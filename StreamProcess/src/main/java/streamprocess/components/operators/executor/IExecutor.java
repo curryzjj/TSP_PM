@@ -34,6 +34,7 @@ public interface IExecutor extends Serializable {
     Integer default_scale(Configuration conf);
     void clean_status(Marker marker);
     void ackCommit();
+    void ackCommit(long offset);
     void recoveryInput(long offset) throws FileNotFoundException, InterruptedException;
     int getStage();
     void earlier_clean_state(Marker marker);

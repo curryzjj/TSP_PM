@@ -6,8 +6,8 @@ import streamprocess.execution.runtime.collector.MetaGroup;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.LinkedList;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * OutputController may or maynot be shared by multiple producers
@@ -64,7 +64,8 @@ public abstract class OutputController implements Serializable {
 
     public abstract void force_emitOnStream(MetaGroup MetaGroup, String streamId, char[] data) throws InterruptedException;
     public abstract void force_emitOnStream(MetaGroup MetaGroup, String streamId, long bid, StreamValues data) throws InterruptedException;
-    public abstract void force_emitOnStream(MetaGroup MetaGroup, String streamId, long bid, Object... data) throws InterruptedException;
+    public abstract int force_emitOnStream(MetaGroup MetaGroup, String streamId, long bid, Object... data) throws InterruptedException;
+    public abstract void force_emitOnStream(MetaGroup MetaGroup, String streamId,int targetId, long bid, Object... data) throws InterruptedException;
     public abstract void force_emitOnStream(MetaGroup MetaGroup, String streamId, long[] bid, long msg_id, Object... data) throws InterruptedException;
     /**
      * As OutputController is shared, we need to know ``who is sending the tuple"

@@ -96,6 +96,11 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
     }
 
     @Override
+    public void ackCommit(long offset) {
+        this._op.cleanEpoch(offset);
+    }
+
+    @Override
     public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
         this._op.recoveryInput(offset);
     }

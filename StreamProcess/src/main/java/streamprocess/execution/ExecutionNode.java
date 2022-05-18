@@ -250,6 +250,9 @@ public class ExecutionNode implements Serializable {
     public void ackCommit(){
         op.ackCommit();
     }
+    public void ackCommit(long offset){
+        op.ackCommit(offset);
+    }
     public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
         op.recoveryInput(offset);
     }

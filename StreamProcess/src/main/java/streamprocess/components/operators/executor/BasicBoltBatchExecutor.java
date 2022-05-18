@@ -33,6 +33,11 @@ public class BasicBoltBatchExecutor extends BoltExecutor{
         _op.callback(callee, marker);
     }
 
+    @Override
+    public void ackCommit(long offset) {
+        this._op.cleanEpoch(offset);
+    }
+
 
     public void execute(JumboTuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {
         try {

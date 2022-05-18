@@ -39,7 +39,7 @@ public class ExecutionGraph implements Serializable {
     private ExecutionNode virtualNode;
     private ExecutionNode spout;
     private ExecutionNode sink;
-    private boolean shared;//OutputController share by multi producers
+    private boolean shared;//OutputController shared by multi producers
     private boolean common;//OutputController shared by multi consumers
     //some Constructors
     public ExecutionGraph(Topology topo, Map<String, Integer> parallelism, Configuration conf){

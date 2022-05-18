@@ -11,10 +11,13 @@ import applications.events.TxnEvent;
 import applications.events.ob.AlertEvent;
 import applications.events.ob.BuyingEvent;
 import applications.events.ob.ToppingEvent;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.TransactionalSpoutFT;
+import streamprocess.controller.output.MultiStreamInFlightLog;
 import streamprocess.execution.ExecutionGraph;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.File;
@@ -32,7 +35,6 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     private static final Logger LOG= LoggerFactory.getLogger(SpoutWithFT.class);
     private Scanner scanner;
     private String Data_path;
-
     public EventSpoutWithFT(){
         super(LOG);
         this.scalable=false;
@@ -70,17 +72,21 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         this.inputQueue=this.getContext().getEventGenerator().getEventsQueue();
         this.start_time=System.currentTimeMillis();
         this.time_Interval=config.getInt("time_Interval");
+        if (enable_upstreamBackup){
+            multiStreamInFlightLog = new MultiStreamInFlightLog(this.executor.operator);
+        }
     }
 
     @Override
     public void nextTuple(int batch) throws InterruptedException, IOException {
-        if (needReplay){
+        if (needWaitReplay){
             this.registerRecovery();
             int i=0;
             while(replay) {
                 TxnEvent event = replayEvent();
                 if (event != null) {
                     collector.emit_single(DEFAULT_STREAM_ID, bid, event);
+                    //TODO: add targetId
                     lostData++;
                     if(bid==failureTime){
                         collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "recovery");
@@ -102,7 +108,10 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                     MeasureTools.Input_store_finish();
                 }
                 for (TxnEvent input : events) {
-                    collector.emit_single(DEFAULT_STREAM_ID, bid, input);
+                    int targetId = collector.emit_single(DEFAULT_STREAM_ID, bid, input);
+                    if (enable_upstreamBackup) {
+                        multiStreamInFlightLog.addEvent(targetId,DEFAULT_STREAM_ID,input);
+                    }
                     bid++;
                     forward_marker(this.taskId, bid, null, "marker");
                 }
@@ -113,7 +122,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     }
     @Override
     public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
-        this.needReplay =true;
+        this.needWaitReplay =true;
         this.replay=true;
         this.offset=offset;
     }

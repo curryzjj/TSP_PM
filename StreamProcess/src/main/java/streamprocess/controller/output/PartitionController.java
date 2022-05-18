@@ -378,7 +378,7 @@ public abstract class PartitionController implements IPartitionController,Serial
     }
 
     public void clean(){
-        this.controller.clean();
+        this.controller.cleanAll();
     };
 
     //tuple collections

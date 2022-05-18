@@ -37,6 +37,8 @@ public class CONTROL {
     public static int failureTime=0;
     public static boolean MAX_RECOVERY_TIME=true;
     public static boolean Exactly_Once=true;
+    //fault tolerance relax
+    public static boolean enable_upstreamBackup=true;
     //latency related.
     public static boolean enable_latency_measurement = true;//
 

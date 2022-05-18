@@ -121,7 +121,12 @@ public class OutputCollector<T> {
         assert data != null && sc != null;
         sc.force_emitOnStream(meta, streamId, bid, data);
     }
-    public void emit_single(String streamId, long bid, Object... data) throws InterruptedException {
+    public int emit_single(String streamId, long bid, Object... data) throws InterruptedException {
+        assert data != null && sc != null;
+        return sc.force_emitOnStream(meta, streamId, bid, data);
+    }
+    //emit single to target executor
+    public void emit_single(String streamId, long bid,int targetId, Object... data) throws InterruptedException {
         assert data != null && sc != null;
         sc.force_emitOnStream(meta, streamId, bid, data);
     }

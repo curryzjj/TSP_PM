@@ -77,8 +77,8 @@ public class MultiStreamOutputContoller extends OutputController{
         for (int i = 0; i < it.length; i++) {
             PartitionController p = it[i];
             p.emit(MetaGroup.get(p.childOP), streamId, bid, output);
-        }
     }
+}
 
     @Override
     public void emitOnStream(MetaGroup MetaGroup, String streamId, long bid, Object data) throws InterruptedException {
@@ -167,7 +167,18 @@ public class MultiStreamOutputContoller extends OutputController{
     }
 
     @Override
-    public void force_emitOnStream(MetaGroup MetaGroup, String streamId, long bid, Object... data) throws InterruptedException {
+    public int force_emitOnStream(MetaGroup MetaGroup, String streamId, long bid, Object... data) throws InterruptedException {
+        PartitionController[] it = collections.get(streamId);
+        int targetId = 0;
+        for (int i = 0; i < it.length; i++) {
+            PartitionController p = it[i];
+            targetId = p.force_emit(MetaGroup.get(p.childOP), streamId, bid, data);
+        }
+        return targetId;
+    }
+
+    @Override
+    public void force_emitOnStream(MetaGroup MetaGroup, String streamId, int targetId, long bid, Object... data) throws InterruptedException {
         PartitionController[] it = collections.get(streamId);
         for (int i = 0; i < it.length; i++) {
             PartitionController p = it[i];

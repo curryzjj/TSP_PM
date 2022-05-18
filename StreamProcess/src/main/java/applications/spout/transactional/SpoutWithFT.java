@@ -15,7 +15,6 @@ import streamprocess.components.operators.api.TransactionalSpoutFT;
 import streamprocess.execution.ExecutionGraph;
 
 import java.io.*;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -23,7 +22,6 @@ import static System.Constants.Mac_Data_Path;
 import static System.Constants.Node22_Data_Path;
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
-import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
 public class SpoutWithFT extends TransactionalSpoutFT {
     private static final Logger LOG= LoggerFactory.getLogger(SpoutWithFT.class);
@@ -80,7 +78,7 @@ public class SpoutWithFT extends TransactionalSpoutFT {
     }
     @Override
     public void nextTuple(int batch) throws InterruptedException, IOException {
-        if(needReplay){
+        if(needWaitReplay){
             this.registerRecovery();
             while(replay) {
                 AbstractInputTuple input = replayTuple();
@@ -173,7 +171,7 @@ public class SpoutWithFT extends TransactionalSpoutFT {
      */
     @Override
     public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
-        this.needReplay =true;
+        this.needWaitReplay =true;
         this.replay=true;
         this.offset=offset;
     }

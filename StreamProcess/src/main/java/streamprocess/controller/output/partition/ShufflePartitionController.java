@@ -101,6 +101,12 @@ public class ShufflePartitionController extends PartitionController {
     }
 
     @Override
+    public int force_emit(Meta meta, String streamId, long bid, int targetId, Object... output) throws InterruptedException {
+        force_offer(meta.src_id, targetId, streamId, bid, output);
+        return targetId;
+    }
+
+    @Override
     public int force_emit(Meta meta, String streamId, long[] bid, long msg_id, Object... output) throws InterruptedException {
         if (meta.index == extendedTargetId.size()) {
             meta.index = 0;

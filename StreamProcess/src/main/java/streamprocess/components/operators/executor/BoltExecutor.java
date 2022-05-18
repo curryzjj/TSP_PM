@@ -102,6 +102,10 @@ public abstract class BoltExecutor implements IExecutor {
     public void ackCommit() {
         this.op.isCommit =true;
     }
+    @Override
+    public void ackCommit(long offset) {
+        this.op.cleanEpoch(offset);
+    }
 
     @Override
     public int getStage() {

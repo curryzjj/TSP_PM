@@ -20,7 +20,6 @@ public class MPSCController extends QueueController{
     private Map<Integer,Queue> outputQueue=new HashMap<>();//<Downstream executor Id, corresponding output queue>
     public MPSCController(HashMap<Integer, ExecutionNode> downExecutor_list) {
         super(downExecutor_list);
-        //Queue temp1=new MpscArrayQueue(1024);//Don't why need this
     }
 
     @Override
@@ -60,9 +59,15 @@ public class MPSCController extends QueueController{
     }
 
     @Override
-    public void clean() {
+    public void cleanAll() {
         for (Queue q:this.outputQueue.values()){
             q.clear();
         }
+    }
+
+    @Override
+    public void clean(int executeId) {
+        Queue q = this.outputQueue.get(executeId);
+        q.clear();
     }
 }
