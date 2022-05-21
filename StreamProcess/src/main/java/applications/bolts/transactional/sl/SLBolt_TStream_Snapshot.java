@@ -67,7 +67,7 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
             case 1:
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.EventsHolder.clear();
                 this.bufferedTuple.clear();
                 break;
@@ -94,7 +94,7 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
             case 1:
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.EventsHolder.clear();
                 this.bufferedTuple.clear();
                 break;

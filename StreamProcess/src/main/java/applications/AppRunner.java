@@ -51,6 +51,7 @@ public class  AppRunner extends baseRunner {
         // Loads the configuration file set by the user or the default
         // configuration
         // Prepared default configuration
+        setConfiguration(config);
         if (configStr==null){
             String cfg=String.format(CFG_PATH,application);
             String ftcfg=String.format(CFG_PATH,"FTConfig");
@@ -65,7 +66,6 @@ public class  AppRunner extends baseRunner {
             }
             this.metric_path=this.metric_path+application;
         }
-        setConfiguration(config);
         //Set the fault tolerance mechanisms
         switch (config.getInt("FTOptions")){
             case 0:

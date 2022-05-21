@@ -3,7 +3,6 @@ package applications.bolts.transactional.tp;
 import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
@@ -22,7 +21,10 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "marker":
-                        TXN_PROCESS();
+                        if (TXN_PROCESS_FT()){
+                            /* When the wal is completed, the data can be consumed by the outside world */
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        }
                         break;
                     case "finish":
                         if(TXN_PROCESS()){
@@ -32,7 +34,8 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                         this.context.stop_running();
                         break;
                     case "snapshot" :
-                        if(TXN_PROCESS_FT()){
+                        this.isSnapshot = true;
+                        if (TXN_PROCESS_FT()){
                             /* When the wal is completed, the data can be consumed by the outside world */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         }
@@ -69,7 +72,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.LREvents.clear();
                 this.bufferedTuple.clear();
                 break;
@@ -101,7 +104,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.LREvents.clear();
                 this.bufferedTuple.clear();
                 break;

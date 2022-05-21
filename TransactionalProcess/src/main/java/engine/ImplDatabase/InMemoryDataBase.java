@@ -23,6 +23,7 @@ import org.rocksdb.RocksDBException;
 import utils.CloseableRegistry.CloseableRegistry;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.RunnableFuture;
 
@@ -33,17 +34,18 @@ public class InMemoryDataBase extends Database {
     public InMemoryDataBase(Configuration configuration) {
         CloseableRegistry closeableRegistry=new CloseableRegistry();
         storageManager = new StorageManager(closeableRegistry,configuration);
-        if(!OsUtils.isMac()){
+        if(OsUtils.isMac()){
             String snapshotPath=configuration.getString("snapshotTestPath");
-            //this.snapshotPath=new Path(System.getProperty("user.home").concat(snapshotPath));
-            this.snapshotPath=new Path(snapshotPath);
-            String WalPath=configuration.getString("WALTestPath");
-            this.WalPath=new Path(System.getProperty("user.home").concat(WalPath));
+            this.snapshotPath=new Path(System.getProperty("user.home").concat(snapshotPath));
+            WalBathPath=configuration.getString("WALTestPath");
+            this.WalPath=new Path(System.getProperty("user.home").concat(WalBathPath));
+            WalBathPath=WalPath.toString();
         }else {
             String snapshotPath=configuration.getString("snapshotPath");
             this.snapshotPath=new Path(System.getProperty("user.home").concat(snapshotPath));
-            String WalPath=configuration.getString("WALPath");
-            this.WalPath=new Path(System.getProperty("user.home").concat(WalPath));
+            WalBathPath=configuration.getString("WALPath");
+            this.WalPath=new Path(System.getProperty("user.home").concat(WalBathPath));
+            WalBathPath=WalPath.toString();
         }
         this.fs=new LocalFileSystem();
         this.txnProcessingEngine= TxnProcessingEngine.getInstance();
@@ -126,5 +128,16 @@ public class InMemoryDataBase extends Database {
                 txnProcessingEngine.getWalManager(),SYNCHRONOUS
         ).commitLog(globalLSN, timestamp, logStreamFactory);
         return commitLog;
+    }
+
+    @Override
+    public void setWalPath(String folder) throws IOException {
+        this.WalPath = new Path(WalBathPath.concat("/").concat(folder));
+        File dir = new File(this.WalPath.toString());
+        if (dir.exists()) {
+            throw new IOException("Mkdirs failed to create " + dir.toString());
+        } else {
+            dir.mkdirs();
+        }
     }
 }

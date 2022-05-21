@@ -80,7 +80,7 @@ public class FieldsPartitionController extends PartitionController {
     }
 
     @Override
-    public int force_emit(Meta meta, String streamId, long bid, int targetId, Object... output) throws InterruptedException {
+    public int force_emit_ID(Meta meta, String streamId, int targetId, long bid, Object... output) throws InterruptedException {
         force_offer(meta.src_id, targetId, streamId, bid, output);
         return targetId;
     }

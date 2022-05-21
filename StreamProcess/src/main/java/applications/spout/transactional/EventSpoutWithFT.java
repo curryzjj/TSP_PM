@@ -11,13 +11,11 @@ import applications.events.TxnEvent;
 import applications.events.ob.AlertEvent;
 import applications.events.ob.BuyingEvent;
 import applications.events.ob.ToppingEvent;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.TransactionalSpoutFT;
 import streamprocess.controller.output.MultiStreamInFlightLog;
 import streamprocess.execution.ExecutionGraph;
-import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.File;
@@ -81,20 +79,10 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     public void nextTuple(int batch) throws InterruptedException, IOException {
         if (needWaitReplay){
             this.registerRecovery();
-            int i=0;
-            while(replay) {
-                TxnEvent event = replayEvent();
-                if (event != null) {
-                    collector.emit_single(DEFAULT_STREAM_ID, bid, event);
-                    //TODO: add targetId
-                    lostData++;
-                    if(bid==failureTime){
-                        collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "recovery");
-                        MeasureTools.setReplayData(lostData);
-                    }
-                    bid++;
-                    forward_marker(this.taskId, bid, null, "marker");
-                }
+            if (enable_upstreamBackup) {
+                replayEvents();
+            } else{
+                replayInput();
             }
         } else{
             List<TxnEvent> events= (List<TxnEvent>) inputQueue.poll();
@@ -102,7 +90,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 events=(List<TxnEvent>) inputQueue.poll();
             }
             if(events.size()!=0){
-                if(enable_snapshot||enable_clr||enable_wal){
+                if(enable_input_store){
                     MeasureTools.Input_store_begin(System.nanoTime());
                     this.inputDataGenerator.storeInput(events);
                     MeasureTools.Input_store_finish();
@@ -120,16 +108,11 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             }
         }
     }
-    @Override
-    public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
-        this.needWaitReplay =true;
-        this.replay=true;
-        this.offset=offset;
-    }
+
 
 
     @Override
-    protected void loadReplay() throws FileNotFoundException {
+    protected void loadInputFromSSD() throws FileNotFoundException {
         MeasureTools.startReloadInput(System.nanoTime());
         long msg=offset;
         bid=0;
@@ -144,7 +127,24 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     }
 
     @Override
-    protected TxnEvent replayEvent() {
+    protected void replayInput() throws InterruptedException {
+        while(replay) {
+            TxnEvent event = replayInputFromSSD();
+            if (event != null) {
+                collector.emit_single(DEFAULT_STREAM_ID, bid, event);
+                lostData++;
+                if(bid==failureTime){
+                    collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "recovery");
+                    MeasureTools.setReplayData(lostData);
+                }
+                bid++;
+                forward_marker(this.taskId, bid, null, "marker");
+            }
+        }
+    }
+
+    @Override
+    protected TxnEvent replayInputFromSSD() {
         if(scanner.hasNextLine()){
             TxnEvent event;
             String read = scanner.nextLine();

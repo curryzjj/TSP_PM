@@ -39,6 +39,7 @@ public class CONTROL {
     public static boolean Exactly_Once=true;
     //fault tolerance relax
     public static boolean enable_upstreamBackup=true;
+    public static boolean enable_input_store=true;
     //latency related.
     public static boolean enable_latency_measurement = true;//
 

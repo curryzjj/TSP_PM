@@ -9,6 +9,9 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
 import engine.log.LogResult;
+import engine.shapshot.SnapshotResult;
+import engine.table.datatype.serialize.Serialize;
+import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
@@ -28,19 +31,26 @@ import java.util.concurrent.RunnableFuture;
 import static UserApplications.CONTROL.enable_measure;
 import static UserApplications.CONTROL.enable_parallel;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
+import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastCommitSnapshotResult;
 import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastGlobalLSN;
 
 public class LoggerManager extends FTManager {
     private final Logger LOG= LoggerFactory.getLogger(LoggerManager.class);
     public boolean running=true;
-    private Path Current_Path;
     private FileSystem localFS;
+    //WAL location
+    private Path WAL_Path;
     private File walFile;
+    private String LogFolderName;
+    //Snapshot location
+    private Path Snapshot_Path;
+    private File snapshotFile;
     private ExecutionGraph g;
     private Database db;
     private Configuration conf;
     private Object lock;
     private LogResult logResult;
+    private SnapshotResult snapshotResult;
     private boolean close;
     private Queue<Long> isCommitted;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callLog;
@@ -55,26 +65,38 @@ public class LoggerManager extends FTManager {
         this.db=db;
         this.close=false;
         if(OsUtils.isMac()){
-            this.Current_Path=new Path(System.getProperty("user.home").concat(conf.getString("WALTestPath")),"CURRENT");
+            this.WAL_Path =new Path(System.getProperty("user.home").concat(conf.getString("WALTestPath")),"CURRENT");
+            this.Snapshot_Path =new Path(System.getProperty("user.home").concat(conf.getString("checkpointTestPath")),"CURRENT");
             this.localFS=new LocalFileSystem();
         }else {
-            this.Current_Path=new Path(System.getProperty("user.home").concat(conf.getString("WALPath")),"CURRENT");
+            this.WAL_Path =new Path(System.getProperty("user.home").concat(conf.getString("WALPath")),"CURRENT");
+            this.Snapshot_Path =new Path(System.getProperty("user.home").concat(conf.getString("checkpointPath")),"CURRENT");
             this.localFS=new LocalFileSystem();
         }
         this.callLog_ini();
         this.callRecovery_ini();
     }
     public void initialize(boolean needRecovery) throws IOException {
-        final Path parent = Current_Path.getParent();
+        Path parent = WAL_Path.getParent();
         if (parent != null && !localFS.mkdirs(parent)) {
             throw new IOException("Mkdirs failed to create " + parent);
         }
-        walFile =localFS.pathToFile(Current_Path);
+        parent = Snapshot_Path.getParent();
+        if (parent != null && !localFS.mkdirs(parent)) {
+            throw new IOException("Mkdirs failed to create " + parent);
+        }
+        walFile =localFS.pathToFile(WAL_Path);
+        snapshotFile = localFS.pathToFile(Snapshot_Path);
+        this.LogFolderName = UUID.randomUUID().toString();
+        this.db.setWalPath(LogFolderName);
         if(!needRecovery){
             LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(walFile);
             DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
             Date date = new Date();
             SimpleDateFormat dateFormat= new SimpleDateFormat("yyyy-MM-dd :hh:mm:ss");
+            dataOutputStream.writeUTF("System begin at "+dateFormat.format(date));
+            localDataOutputStream=new LocalDataOutputStream(snapshotFile);
+            dataOutputStream=new DataOutputStream(localDataOutputStream);
             dataOutputStream.writeUTF("System begin at "+dateFormat.format(date));
             dataOutputStream.close();
             localDataOutputStream.close();
@@ -140,19 +162,24 @@ public class LoggerManager extends FTManager {
                         MeasureTools.startRecovery(System.nanoTime());
                     }
                     LOG.debug("LoggerManager received all register and start recovery");
-                    if(enable_parallel){
+                    LOG.debug("Reload database from lastSnapshot");
+                    MeasureTools.startReloadDB(System.nanoTime());
+                    SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(snapshotFile);
+                    if (lastSnapshotResult == null){
                         this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
-                        long theLastLSN=getLastGlobalLSN(walFile);
-                        this.db.recoveryFromWAL(theLastLSN);
-                        this.g.getSpout().recoveryInput(theLastLSN);
-                    }else{
-                        MeasureTools.startReloadDB(System.nanoTime());
-                        this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
-                        long theLastLSN=this.db.recoveryFromWAL(-1);
-                        LOG.debug("Reload state complete!");
-                        MeasureTools.finishReloadDB(System.nanoTime());
-                        this.g.getSpout().recoveryInput(theLastLSN);
+                    } else {
+                        this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     }
+                    MeasureTools.finishReloadDB(System.nanoTime());
+                    LOG.debug("Replay committed transactions");
+                    long theLastLSN=getLastGlobalLSN(walFile);
+                    if(enable_parallel){
+                        this.db.recoveryFromWAL(theLastLSN);
+                    }else{
+                        theLastLSN = this.db.recoveryFromWAL(-1);
+                    }
+                    LOG.debug("Replay committed transactions complete!");
+                    this.g.getSpout().recoveryInput(theLastLSN,null);
                     this.isCommitted.clear();
                     this.db.undoFromWAL();
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
@@ -171,9 +198,30 @@ public class LoggerManager extends FTManager {
                     commitLog();
                     if(enable_measure){
                         MeasureTools.finishPersist(System.nanoTime());
-                        MeasureTools.setWalFileSize(Current_Path.getParent());
+                        MeasureTools.setWalFileSize(WAL_Path.getParent());
                     }
                     notifyLogComplete();
+                    lock.notifyAll();
+                } else if (callLog.containsValue(Snapshot)) {
+                    if(enable_measure){
+                        MeasureTools.startPersist(System.nanoTime());
+                    }
+                    LOG.info("LoggerManager received all register and start commit log");
+                    long offset = commitLog();
+                    if(enable_measure){
+                        MeasureTools.finishPersist(System.nanoTime());
+                        MeasureTools.setWalFileSize(WAL_Path.getParent());
+                    }
+                    if(enable_parallel){
+                        this.snapshotResult=this.db.parallelSnapshot(offset,00000L);
+                    }else{
+                        RunnableFuture<SnapshotResult> snapshotResult =this.db.snapshot(offset,00000L);
+                        this.snapshotResult=snapshotResult.get();
+                    }
+                    commitCurrentLog();
+                    notifyLogComplete();
+                    this.LogFolderName = UUID.randomUUID().toString();
+                    this.db.setWalPath(LogFolderName);
                     lock.notifyAll();
                 }
             }
@@ -199,15 +247,16 @@ public class LoggerManager extends FTManager {
         }
         this.callRecovery_ini();
     }
-    private boolean commitLog() throws IOException, ExecutionException, InterruptedException {
+    private long commitLog() throws IOException, ExecutionException, InterruptedException {
         long LSN=isCommitted.poll();
         RunnableFuture<LogResult> commitLog=this.db.commitLog(LSN, 00000L);
+        this.g.getSpout().ackCommit(LSN);
         if(commitLog!=null){
             commitLog.get();
         }
         commitGlobalLSN(LSN);
         LOG.info("Update log commit!");
-        return true;
+        return LSN;
     }
     private boolean commitGlobalLSN(long globalLSN) throws IOException, InterruptedException {
         LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(walFile);
@@ -215,6 +264,17 @@ public class LoggerManager extends FTManager {
         dataOutputStream.writeLong(globalLSN);
         dataOutputStream.close();
         LOG.debug("LoggerManager commit the globalLSN to the current.log");
+        return true;
+    }
+    public boolean commitCurrentLog() throws IOException, InterruptedException {
+        LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(snapshotFile);
+        DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
+        byte[] result= Serialize.serializeObject(this.snapshotResult);
+        int len=result.length;
+        dataOutputStream.writeInt(len);
+        dataOutputStream.write(result);
+        dataOutputStream.close();
+        LOG.debug("CheckpointManager commit the checkpoint to the current.log");
         return true;
     }
     public Object getLock(){
@@ -233,7 +293,7 @@ public class LoggerManager extends FTManager {
         }finally {
             try {
                 /* Delete the current and wal log file */
-                localFS.delete(Current_Path.getParent(),true);
+                localFS.delete(WAL_Path.getParent(),true);
             } catch (IOException e) {
                 e.printStackTrace();
             }

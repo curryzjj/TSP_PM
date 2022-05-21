@@ -3,7 +3,6 @@ package applications.bolts.transactional.gs;
 import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
@@ -67,7 +66,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
             case 1:
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.EventsHolder.clear();
                 this.bufferedTuple.clear();
                 break;
@@ -94,7 +93,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
             case 1:
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.EventsHolder.clear();
                 this.bufferedTuple.clear();
                 break;

@@ -133,7 +133,7 @@ public class CheckpointManager extends FTManager {
                     LOG.debug("CheckpointManager received all register and start recovery");
                     SnapshotResult lastSnapshotResult=getLastCommitSnapshotResult(checkpointFile);
                     //this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
-                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId());
+                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null);
                     MeasureTools.startReloadDB(System.nanoTime());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     MeasureTools.finishReloadDB(System.nanoTime());

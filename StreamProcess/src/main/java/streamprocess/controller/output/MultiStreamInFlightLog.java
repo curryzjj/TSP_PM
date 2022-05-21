@@ -6,19 +6,19 @@ import streamprocess.components.grouping.Grouping;
 import streamprocess.components.topology.TopologyComponent;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MultiStreamInFlightLog {
     private static final Logger LOG= LoggerFactory.getLogger(MultiStreamInFlightLog.class);
-    private final HashMap<String,HashMap<String,InFlightLog>> InFightLogForStream;
+    private final ConcurrentHashMap<String,ConcurrentHashMap<String,InFlightLog>> InFightLogForStream;
     private class InFlightLog{
-        private final HashMap<Integer, HashMap<Long,List<Object>>> InFlightEvents = new HashMap<>();
+        private final ConcurrentHashMap<Integer, ConcurrentHashMap<Long,List<Object>>> InFlightEvents = new ConcurrentHashMap<>();
         private long currentOffset;
         public InFlightLog(ArrayList<Integer> executorID){
             for (int id:executorID){
-                HashMap<Long,List<Object>> epochs = new HashMap<>();
+                ConcurrentHashMap<Long,List<Object>> epochs = new ConcurrentHashMap<>();
                 List<Object> events=new ArrayList<>();
                 epochs.put(0L,events);
                 InFlightEvents.put(id,epochs);
@@ -32,28 +32,29 @@ public class MultiStreamInFlightLog {
             InFlightEvents.get(executorID).get(currentOffset).add(o);
         }
         public void addEvents(Object o){
-            for (HashMap<Long,List<Object>> epochs:InFlightEvents.values()){
+            for (ConcurrentHashMap<Long,List<Object>> epochs:InFlightEvents.values()){
                 epochs.get(currentOffset).add(o);
             }
         }
         public void addEpoch(long offset){
             currentOffset = offset;
-            for (HashMap<Long,List<Object>> epochs:InFlightEvents.values()){
+            for (ConcurrentHashMap<Long,List<Object>> epochs:InFlightEvents.values()){
                 List<Object> events=new ArrayList<>();
                 epochs.put(offset,events);
             }
         }
         public void cleanEpoch(long offset){
-            for (HashMap<Long,List<Object>> epochs:InFlightEvents.values()){
+            for (ConcurrentHashMap<Long,List<Object>> epochs:InFlightEvents.values()){
                 epochs.entrySet().removeIf(entry -> entry.getKey() < offset);
             }
+            LOG.info("Clean epoch at "+ offset);
         }
     }
     public MultiStreamInFlightLog(TopologyComponent op){
-        InFightLogForStream = new HashMap<>();
+        InFightLogForStream = new ConcurrentHashMap<>();
         for (String streamId:op.get_childrenStream()){
             Map<TopologyComponent, Grouping> children = op.getChildrenOfStream(streamId);
-            HashMap<String,InFlightLog> inFlightLogHashMap = new HashMap<>();
+            ConcurrentHashMap<String,InFlightLog> inFlightLogHashMap = new ConcurrentHashMap<>();
             for (TopologyComponent child:children.keySet()){
                InFlightLog inFlightLog = new InFlightLog(child.getExecutorIDList());
                inFlightLogHashMap.put(child.getId(),inFlightLog);
@@ -79,6 +80,7 @@ public class MultiStreamInFlightLog {
             inFlightLog.addEpoch(offset);
         }
     }
+    //GC after snapshot commit
     public void cleanEpoch(long offset, String stream){
         for (InFlightLog inFlightLog:InFightLogForStream.get(stream).values()){
             inFlightLog.cleanEpoch(offset);

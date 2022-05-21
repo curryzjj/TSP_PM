@@ -28,6 +28,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public int partition_delta;
     public List<ComputationTask> tasks;
     public List<ComputationLogic> computationLogics;
+    protected boolean isSnapshot;
     public TransactionalBoltTStream(Logger log,int fid){
         super(log,fid);
     }
@@ -62,15 +63,15 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
      */
     protected void AsyncRegisterPersist(){
         this.lock=this.FTM.getLock();
-        if(enable_clr){
-            this.FTM.commitComputationTasks(tasks);
-            //this.FTM.commitComputationLogics(computationLogics);
-        }
         synchronized (lock){
             if (enable_measure){
                 MeasureTools.bolt_register_Ack(this.thread_Id,System.nanoTime());
             }
-            this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Persist);
+            if (isSnapshot) {
+                this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Snapshot);
+                isSnapshot = false;
+            } else
+                this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Persist);
             lock.notifyAll();
         }
     }
@@ -82,7 +83,6 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     protected void SyncCommitLog() throws InterruptedException {
         synchronized (lock){
             while(!isCommit){
-                //wait for log to commit
                 LOG.debug("Wait for the log to commit");
                 lock.wait();
             }

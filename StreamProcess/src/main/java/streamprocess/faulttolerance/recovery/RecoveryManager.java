@@ -146,15 +146,15 @@ public class RecoveryManager extends FTManager {
         if(enable_snapshot){
             this.lastSnapshotResult=getLastCommitSnapshotResult(recoveryFile);
             this.db.recoveryFromSnapshot(lastSnapshotResult);
-            this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId());
+            this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null);
         }else if (enable_wal){
             if(enable_parallel){
                 long theLastLSN=getLastGlobalLSN(recoveryFile);
                 this.db.recoveryFromWAL(theLastLSN);
-                this.g.getSpout().recoveryInput(theLastLSN);
+                this.g.getSpout().recoveryInput(theLastLSN,null);
             }else{
                 long theLastLSN=this.db.recoveryFromWAL(-1);
-                this.g.getSpout().recoveryInput(theLastLSN);
+                this.g.getSpout().recoveryInput(theLastLSN,null);
             }
         }
     }

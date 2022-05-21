@@ -10,6 +10,7 @@ import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;//通过 Scanner 类来获取用户的输入
 
 import static System.Constants.Mac_Data_Path;
@@ -171,7 +172,7 @@ public abstract class AbstractSpout extends Operator {
     //createInput for FileSpout
     public void setInputDataGenerator(InputDataGenerator inputDataGenerator){}
 
-    public abstract void recoveryInput(long offset) throws FileNotFoundException, InterruptedException;
+    public abstract void recoveryInput(long offset, List<Integer> recoveryExecutorIds) throws FileNotFoundException, InterruptedException;
 
     @Override
     public void callback(int callee, Marker marker) {

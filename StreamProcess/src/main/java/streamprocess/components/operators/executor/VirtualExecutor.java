@@ -1,7 +1,6 @@
 package streamprocess.components.operators.executor;
 
 import System.util.Configuration;
-import engine.shapshot.SnapshotResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyBuilder;
@@ -11,7 +10,8 @@ import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
-import java.io.Writer;
+import java.io.FileNotFoundException;
+import java.util.List;
 import java.util.Map;
 
 public class VirtualExecutor implements IExecutor{
@@ -105,9 +105,8 @@ public class VirtualExecutor implements IExecutor{
 
     }
 
-
     @Override
-    public void recoveryInput(long offset) {
+    public void recoveryInput(long offset, List<Integer> recoveryExecutorIDs) throws FileNotFoundException, InterruptedException {
 
     }
 

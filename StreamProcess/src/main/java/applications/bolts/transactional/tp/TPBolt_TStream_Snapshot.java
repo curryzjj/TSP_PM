@@ -5,7 +5,6 @@ import engine.Exception.DatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
@@ -70,7 +69,7 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
             case 1:
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.LREvents.clear();
                 this.bufferedTuple.clear();
                 break;
@@ -97,7 +96,7 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
             case 1:
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.LREvents.clear();
                 this.bufferedTuple.clear();
                 break;
