@@ -9,6 +9,8 @@ import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.execution.runtime.tuple.Tuple;
 
+import java.io.FileNotFoundException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 
@@ -38,6 +40,11 @@ public class BasicBoltBatchExecutor extends BoltExecutor{
         this._op.cleanEpoch(offset);
     }
 
+    @Override
+    public void recoveryInput(long offset, List<Integer> recoveryExecutorIDs) throws FileNotFoundException, InterruptedException {
+
+    }
+
 
     public void execute(JumboTuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {
         try {
@@ -63,10 +70,6 @@ public class BasicBoltBatchExecutor extends BoltExecutor{
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-    @Override
-    public void recoveryInput(long offset) {
-
     }
 
 }

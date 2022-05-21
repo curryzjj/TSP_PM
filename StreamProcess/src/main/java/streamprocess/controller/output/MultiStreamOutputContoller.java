@@ -11,8 +11,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import System.Constants;
-
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 
 public class MultiStreamOutputContoller extends OutputController{
@@ -178,11 +176,11 @@ public class MultiStreamOutputContoller extends OutputController{
     }
 
     @Override
-    public void force_emitOnStream(MetaGroup MetaGroup, String streamId, int targetId, long bid, Object... data) throws InterruptedException {
+    public void force_emitOnStream_ID(MetaGroup MetaGroup, String streamId, int targetId, long bid, Object... data) throws InterruptedException {
         PartitionController[] it = collections.get(streamId);
         for (int i = 0; i < it.length; i++) {
             PartitionController p = it[i];
-            p.force_emit(MetaGroup.get(p.childOP), streamId, bid, data);
+            p.force_emit_ID(MetaGroup.get(p.childOP), streamId,targetId, bid,data);
         }
     }
 
@@ -271,6 +269,15 @@ public class MultiStreamOutputContoller extends OutputController{
     }
 
     @Override
+    public void marker_single(MetaGroup MetaGroup, String streamId, long bid, int targetId, Marker marker) throws InterruptedException {
+        PartitionController[] it = collections.get(streamId);
+        for (int i = 0; i < it.length; i++) {
+            PartitionController p = it[i];
+            p.marker_single(MetaGroup.get(p.childOP), streamId, bid, targetId,marker);
+        }
+    }
+
+    @Override
     public void setContext(int executorID, TopologyContext context) {
         for (String stream : PClist.keySet()) {
             for (String op : PClist.get(stream).keySet()) {
@@ -285,13 +292,22 @@ public class MultiStreamOutputContoller extends OutputController{
     }
 
     @Override
-    public void clean() {
+    public void cleanAll() {
         for (String streamId : PClist.keySet()) {
             PartitionController[] it = collections.get(streamId);
             for (int i = 0; i < it.length; i++) {
                 PartitionController p = it[i];
-                p.clean();
+                p.cleanAll();
             }
+        }
+    }
+
+    @Override
+    public void clean(String streamId, int targetId) {
+        PartitionController[] it = collections.get(streamId);
+        for (int i = 0; i < it.length; i++) {
+            PartitionController p = it[i];
+            p.clean(targetId);
         }
     }
 }

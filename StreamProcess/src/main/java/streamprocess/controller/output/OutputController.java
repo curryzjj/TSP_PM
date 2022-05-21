@@ -64,8 +64,9 @@ public abstract class OutputController implements Serializable {
 
     public abstract void force_emitOnStream(MetaGroup MetaGroup, String streamId, char[] data) throws InterruptedException;
     public abstract void force_emitOnStream(MetaGroup MetaGroup, String streamId, long bid, StreamValues data) throws InterruptedException;
+
     public abstract int force_emitOnStream(MetaGroup MetaGroup, String streamId, long bid, Object... data) throws InterruptedException;
-    public abstract void force_emitOnStream(MetaGroup MetaGroup, String streamId,int targetId, long bid, Object... data) throws InterruptedException;
+    public abstract void force_emitOnStream_ID(MetaGroup MetaGroup, String streamId, int targetId, long bid, Object... data) throws InterruptedException;
     public abstract void force_emitOnStream(MetaGroup MetaGroup, String streamId, long[] bid, long msg_id, Object... data) throws InterruptedException;
     /**
      * As OutputController is shared, we need to know ``who is sending the tuple"
@@ -109,9 +110,10 @@ public abstract class OutputController implements Serializable {
      */
     public abstract void marker_boardcast(MetaGroup MetaGroup, long bid, Marker marker) throws InterruptedException;
     public abstract void marker_boardcast(MetaGroup MetaGroup, String streamId, long bid, Marker marker) throws InterruptedException;
+    public abstract void marker_single(MetaGroup MetaGroup, String streamId, long bid, int targetId,Marker marker) throws InterruptedException;
     public abstract void setContext(int executorID, TopologyContext context);
     public abstract long getBID(String streamId);
 
-
-    public abstract void clean();
+    public abstract void cleanAll();
+    public abstract void clean(String streamId,int targetId);
 }

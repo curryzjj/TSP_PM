@@ -364,6 +364,12 @@ public abstract class PartitionController implements IPartitionController,Serial
         }
         return targetTasks.length;
     }
+
+    public int marker_single(Meta meta, String streamId, long bid, int targetId,Marker marker){
+        offer_marker(meta.src_id,targetId,streamId,bid, marker);
+        return targetId;
+    }
+
     public int create_marker_single(Meta meta, String streamId, long timestamp, long bid, int myiteration,String msg) {
         Tuple marker = create_marker(meta.src_id, streamId, timestamp, bid, package_marker(streamId, timestamp, bid, myiteration,msg));
         offer_create_marker(marker, targetTasks[0]);//only send to the first instance.
@@ -377,9 +383,12 @@ public abstract class PartitionController implements IPartitionController,Serial
         return targetTasks.length;
     }
 
-    public void clean(){
+    public void cleanAll(){
         this.controller.cleanAll();
     };
+    public void clean(int targetId){
+        this.controller.clean(targetId);
+    }
 
     //tuple collections
     class Collections implements Serializable {

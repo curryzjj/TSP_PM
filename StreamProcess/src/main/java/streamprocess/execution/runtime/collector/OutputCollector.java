@@ -105,6 +105,13 @@ public class OutputCollector<T> {
         }
         sc.marker_boardcast(meta, streamId, bid, marker);
     }
+
+    public void single_marker(String streamId, long bid,int targetId, Marker marker) throws InterruptedException{
+        if (executor.isLeafNode()){
+            return;
+        }
+        sc.marker_single(meta,streamId,bid,targetId,marker);
+    }
     //create marker
     public void create_marker_single(long boardcast_time,String streamId,long bid,int myiteration){
         sc.create_marker_single(meta,boardcast_time,streamId,bid,myiteration);
@@ -126,9 +133,9 @@ public class OutputCollector<T> {
         return sc.force_emitOnStream(meta, streamId, bid, data);
     }
     //emit single to target executor
-    public void emit_single(String streamId, long bid,int targetId, Object... data) throws InterruptedException {
+    public void emit_single_ID(String streamId,int targetId, long bid,Object... data) throws InterruptedException {
         assert data != null && sc != null;
-        sc.force_emitOnStream(meta, streamId, bid, data);
+        sc.force_emitOnStream_ID(meta, streamId,targetId,bid,data);
     }
     public void emit_single(long bid, Set<Integer> keys) throws InterruptedException {
         emit_single(DEFAULT_STREAM_ID, bid, keys);
@@ -150,7 +157,11 @@ public class OutputCollector<T> {
             }
         }
     }
-    public void clean() {
-        sc.clean();
+    public void cleanAll() {
+        sc.cleanAll();
+    }
+
+    public void clean(String streamId, int targetId){
+        sc.clean(streamId,targetId);
     }
 }

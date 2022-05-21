@@ -3,7 +3,6 @@ package applications.bolts.transactional.gs;
 import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
@@ -23,7 +22,17 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "marker":
-                        TXN_PROCESS();
+                        if (TXN_PROCESS_FT()){
+                            /* When the wal is completed, the data can be consumed by the outside world */
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        }
+                        break;
+                    case "snapshot":
+                        this.isSnapshot = true;
+                        if (TXN_PROCESS_FT()){
+                            /* When the wal is completed, the data can be consumed by the outside world */
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        }
                         break;
                     case "finish":
                         if(TXN_PROCESS_FT()){
@@ -32,12 +41,6 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
                         }
                         this.context.stop_running();
                         break;
-                    case "snapshot":
-                        if (TXN_PROCESS_FT()){
-                            /* When the wal is completed, the data can be consumed by the outside world */
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        }
-                    break;
                 }
             }
         }else {
@@ -71,7 +74,7 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.EventsHolder.clear();
                 this.bufferedTuple.clear();
                 break;
@@ -102,7 +105,7 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.EventsHolder.clear();
                 this.bufferedTuple.clear();
                 break;

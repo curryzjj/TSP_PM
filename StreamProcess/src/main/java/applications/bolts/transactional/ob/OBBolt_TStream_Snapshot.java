@@ -71,7 +71,7 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.EventsHolder.clear();
                 this.bufferedTuple.clear();
                 break;
@@ -103,7 +103,7 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.EventsHolder.clear();
                 this.bufferedTuple.clear();
                 break;

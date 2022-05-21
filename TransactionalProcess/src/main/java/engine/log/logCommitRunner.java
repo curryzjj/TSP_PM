@@ -47,7 +47,6 @@ public final class logCommitRunner {
         }.toAsyncLogCommitFutureTask(cancelStreamRegistry);
         if (executionType==SYNCHRONOUS){
             asyncCommitLogTask.run();
-            System.out.println("a");
         }
         return asyncCommitLogTask;
     }

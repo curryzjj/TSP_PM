@@ -202,7 +202,7 @@ public class AbstractRecoveryManager {
         inputViewStreamWrapper.readFully(re);
         String str= new String(re, UTF_8);
         LogRecord logRecord=new LogRecord(str);
-//        LogRecord logRecord=Deserialize.Deserialize2Object(re,LogRecord.class.getClassLoader());
+//      LogRecord logRecord=Deserialize.Deserialize2Object(re,LogRecord.class.getClassLoader());
         return logRecord;
     }
 }

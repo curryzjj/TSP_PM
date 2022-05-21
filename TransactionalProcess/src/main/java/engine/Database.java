@@ -28,6 +28,7 @@ public abstract class Database {
     public static ExecutorService snapshotExecutor;
     protected Path snapshotPath;
     protected Path WalPath;
+    protected String WalBathPath;
     protected FileSystem fs;
     protected CheckpointOptions checkpointOptions;
     /**
@@ -122,4 +123,6 @@ public abstract class Database {
     public TxnProcessingEngine getTxnProcessingEngine() {
         return txnProcessingEngine;
     }
+
+    public abstract void setWalPath(String filename) throws IOException;
 }

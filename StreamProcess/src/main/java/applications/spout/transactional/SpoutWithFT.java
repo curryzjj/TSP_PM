@@ -117,7 +117,7 @@ public class SpoutWithFT extends TransactionalSpoutFT {
     }
 
     @Override
-    protected void loadReplay() throws FileNotFoundException {
+    protected void loadInputFromSSD() throws FileNotFoundException {
         MeasureTools.startReloadInput(System.nanoTime());
         long msg=offset;
         bid=0;
@@ -132,9 +132,15 @@ public class SpoutWithFT extends TransactionalSpoutFT {
     }
 
     @Override
-    protected TxnEvent replayEvent() {
+    protected TxnEvent replayInputFromSSD() {
        return null;
     }
+
+    @Override
+    protected void replayInput() throws InterruptedException {
+
+    }
+
     protected AbstractInputTuple replayTuple() {
         if(scanner.hasNextLine()){
             AbstractInputTuple input;
@@ -161,19 +167,6 @@ public class SpoutWithFT extends TransactionalSpoutFT {
     @Override
     public void setInputDataGenerator(InputDataGenerator inputDataGenerator) {
         this.inputDataGenerator=inputDataGenerator;
-    }
-
-    /**
-     * Load data form input store, and replay the lost data
-     * @param offset
-     * @throws FileNotFoundException
-     * @throws InterruptedException
-     */
-    @Override
-    public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
-        this.needWaitReplay =true;
-        this.replay=true;
-        this.offset=offset;
     }
 
     private void openFile(String fileName) throws FileNotFoundException {

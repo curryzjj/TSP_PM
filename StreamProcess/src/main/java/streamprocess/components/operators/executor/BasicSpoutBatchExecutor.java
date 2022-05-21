@@ -1,8 +1,6 @@
 package streamprocess.components.operators.executor;
 
 import System.util.Configuration;
-import applications.AppRunner;
-import engine.shapshot.SnapshotResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractSpout;
@@ -13,6 +11,7 @@ import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class BasicSpoutBatchExecutor extends SpoutExecutor{
@@ -101,9 +100,11 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
     }
 
     @Override
-    public void recoveryInput(long offset) throws FileNotFoundException, InterruptedException {
-        this._op.recoveryInput(offset);
+    public void recoveryInput(long offset, List<Integer> recoveryExecutorIDs) throws FileNotFoundException, InterruptedException {
+        this._op.recoveryInput(offset, recoveryExecutorIDs);
+
     }
+
 
     @Override
     public void cleanup() {

@@ -8,6 +8,8 @@ import streamprocess.components.operators.api.AbstractSpout;
 import streamprocess.execution.ExecutionGraph;
 
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.util.List;
 
 public class MemFileSpout extends AbstractSpout {
     private static final Logger LOG = LoggerFactory.getLogger(MemFileSpout.class);
@@ -78,7 +80,7 @@ public class MemFileSpout extends AbstractSpout {
     }
 
     @Override
-    public void recoveryInput(long offset) {
+    public void recoveryInput(long offset, List<Integer> recoveryExecutorIds) throws FileNotFoundException, InterruptedException {
 
     }
 }

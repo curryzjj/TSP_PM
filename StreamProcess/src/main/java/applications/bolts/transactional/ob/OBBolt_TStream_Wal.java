@@ -22,7 +22,10 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "marker":
-                        TXN_PROCESS();
+                        if (TXN_PROCESS_FT()){
+                            /* When the wal is completed, the data can be consumed by the outside world */
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        }
                         break;
                     case "finish":
                         if(TXN_PROCESS()){
@@ -32,11 +35,12 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                         this.context.stop_running();
                         break;
                     case "snapshot" :
-                        if(TXN_PROCESS_FT()){
+                        this.isSnapshot = true;
+                        if (TXN_PROCESS_FT()){
                             /* When the wal is completed, the data can be consumed by the outside world */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         }
-                    break;
+                        break;
                 }
             }
         }else {
@@ -69,7 +73,7 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.EventsHolder.clear();
                 this.bufferedTuple.clear();
                 break;
@@ -100,7 +104,7 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.collector.clean();
+                this.collector.cleanAll();
                 this.EventsHolder.clear();
                 this.bufferedTuple.clear();
                 break;

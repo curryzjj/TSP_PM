@@ -90,4 +90,9 @@ public class RocksDBDatabase extends Database {
     public RunnableFuture<LogResult> commitLog(long checkpointId, long timestamp) throws IOException {
         return null;
     }
+
+    @Override
+    public void setWalPath(String filename) {
+
+    }
 }

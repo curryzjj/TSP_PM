@@ -88,7 +88,7 @@ public class DispatcherBolt extends filterBolt implements emitMarker {
         this.lock=this.getContext().getFTM().getLock();
         synchronized (lock){
             this.getContext().getFTM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
-            this.collector.clean();
+            this.collector.cleanAll();
             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
             lock.notifyAll();
         }

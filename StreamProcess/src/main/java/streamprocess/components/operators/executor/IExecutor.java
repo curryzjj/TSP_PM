@@ -1,7 +1,6 @@
 package streamprocess.components.operators.executor;
 
 import System.util.Configuration;
-import engine.shapshot.SnapshotResult;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
@@ -9,6 +8,7 @@ import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.FileNotFoundException;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 public interface IExecutor extends Serializable {
@@ -35,7 +35,7 @@ public interface IExecutor extends Serializable {
     void clean_status(Marker marker);
     void ackCommit();
     void ackCommit(long offset);
-    void recoveryInput(long offset) throws FileNotFoundException, InterruptedException;
+    void recoveryInput(long offset, List<Integer> recoveryExecutorIDs) throws FileNotFoundException, InterruptedException;
     int getStage();
     void earlier_clean_state(Marker marker);
     boolean IsStateful();
