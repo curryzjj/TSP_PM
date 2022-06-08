@@ -40,14 +40,6 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
             TRANSFER_REQUEST_CONSTRUCT((TransactionEvent) event, txnContext,false);
         }
     }
-    public void BUFFER_PROCESS() throws DatabaseException, InterruptedException {
-        if(bufferedTuple.isEmpty()){
-        }else{
-            for (Tuple tuple : bufferedTuple) {
-                PRE_TXN_PROCESS(tuple);
-            }
-        }
-    }
     protected boolean DEPOSITE_REQUEST_CONSTRUCT(DepositEvent event, TxnContext txnContext,boolean isReConstruct) throws DatabaseException, InterruptedException {
         boolean flag=transactionManager.Asy_ModifyRecord(txnContext,"accounts",event.getAccountId(),new INC(event.getAccountTransfer()));
         if(!flag){

@@ -9,10 +9,13 @@ import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
+import streamprocess.faulttolerance.clr.CausalService;
+import streamprocess.faulttolerance.clr.RecoveryDependency;
 
 import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class VirtualExecutor implements IExecutor{
     private static final Logger LOG = LoggerFactory.getLogger(TopologyBuilder.class);
@@ -106,7 +109,16 @@ public class VirtualExecutor implements IExecutor{
     }
 
     @Override
-    public void recoveryInput(long offset, List<Integer> recoveryExecutorIDs) throws FileNotFoundException, InterruptedException {
+    public RecoveryDependency ackRecoveryDependency() {
+        return null;
+    }
+    @Override
+    public ConcurrentHashMap<Integer, CausalService> ackCausalService() {
+        return null;
+    }
+
+    @Override
+    public void recoveryInput(long offset, List<Integer> recoveryExecutorIDs, long alignOffset) throws FileNotFoundException, InterruptedException {
 
     }
 

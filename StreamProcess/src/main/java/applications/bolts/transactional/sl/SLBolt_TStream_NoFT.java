@@ -39,7 +39,6 @@ public class SLBolt_TStream_NoFT extends SLBolt_TStream {
         REQUEST_POST();
         EventsHolder.clear();
         BUFFER_PROCESS();
-        bufferedTuple.clear();
         return true;
     }
 }

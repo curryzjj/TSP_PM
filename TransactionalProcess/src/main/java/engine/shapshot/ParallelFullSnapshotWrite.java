@@ -10,8 +10,10 @@ import engine.log.WALManager;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.CheckpointStreamWithResultProvider;
 import engine.shapshot.ShapshotResources.FullSnapshotResources;
+import engine.table.datatype.serialize.Deserialize;
 import engine.table.datatype.serialize.Serialize;
 import engine.table.keyGroup.KeyGroupRangeOffsets;
+import engine.table.tableRecords.TableRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -55,16 +57,16 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
     public SnapshotResult get(CloseableRegistry snapshotCloseableRegistry) throws Exception {
         Collection<SnapshotTask> callables=new ArrayList<>();
         initTasks(callables,snapshotCloseableRegistry);
-        List<Future<Tuple2<Path,KeyGroupRangeOffsets>>> snapshotPaths=snapshotExecutor.invokeAll(callables);
-        HashMap<Path,KeyGroupRangeOffsets> results=new HashMap<>();
-        for(int i=0;i<snapshotPaths.size();i++){
+        List<Future<Tuple2<Path,KeyGroupRangeOffsets>>> snapshotPaths = snapshotExecutor.invokeAll(callables);
+        HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> results = new HashMap<>();
+        for(int i = 0; i < snapshotPaths.size(); i++){
             try {
-                Tuple2<Path,KeyGroupRangeOffsets> tuple=snapshotPaths.get(i).get();
-                results.put(tuple._1,tuple._2);
+                Tuple2<Path,KeyGroupRangeOffsets> tuple = snapshotPaths.get(i).get();
+                results.put(i, tuple);
             } catch (ExecutionException e) {
                 System.out.println(e.getMessage());
             } catch (CancellationException e) {
-                System.out.println("Cance");
+                System.out.println("Cancel");
             }
         }
         return new SnapshotResult(results,timestamp,checkpointId);
@@ -96,7 +98,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
             snapshotCloseableRegistry.registerCloseable(provider);
             writeSnapshotToOutputStream(provider,snapshotResources, keyGroupRangeOffsets,this.taskId);
             if (snapshotCloseableRegistry.unregisterCloseable(provider)) {
-                 Path path=provider.closeAndFinalizeCheckpointStreamResult();
+                 Path path = provider.closeAndFinalizeCheckpointStreamResult();
                  return new Tuple2<Path, KeyGroupRangeOffsets>(path,keyGroupRangeOffsets);
             } else {
                 throw new IOException("Stream is already unregistered/closed.");
@@ -134,7 +136,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
         try{
             while(mergeIterator.isValid()){
                 if(mergeIterator.isNewKeyValueState()){
-                    kgOutStream =checkpointOutputStream;
+                    kgOutStream = checkpointOutputStream;
                     kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
                     kgOutView.writeShort(mergeIterator.kvStateId());
                     keyGroupRangeOffsets.setKeyGroupOffset(
@@ -164,7 +166,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
         OutputStream kgOutStream = null;
         CheckpointStreamFactory.CheckpointStateOutputStream checkpointOutputStream =
                 checkpointStreamWithResultProvider.getCheckpointOutputStream();
-        kgOutStream =checkpointOutputStream;
+        kgOutStream = checkpointOutputStream;
         kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
         try{
             while(mergeIterator.isValid()){
@@ -189,7 +191,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
     }
     private void writeKeyValuePair(byte[] key, byte[] value, DataOutputView out)
             throws IOException {
-        Serialize.writeSerializedKV(key,out);
+        //Serialize.writeSerializedKV(key,out);
         Serialize.writeSerializedKV(value,out);
     }
 

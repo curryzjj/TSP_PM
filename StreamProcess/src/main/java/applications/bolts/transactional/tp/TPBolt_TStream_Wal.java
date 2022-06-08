@@ -5,6 +5,7 @@ import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
 
 import java.io.IOException;
+import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
@@ -63,7 +64,6 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 this.SyncCommitLog();
                 LREvents.clear();//clear stored events.
                 BUFFER_PROCESS();
-                bufferedTuple.clear();
                 break;
             case 1:
                 this.SyncRegisterUndo();
@@ -74,7 +74,9 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 this.SyncRegisterRecovery();
                 this.collector.cleanAll();
                 this.LREvents.clear();
-                this.bufferedTuple.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
                 break;
         }
         return transactionSuccess;
@@ -95,7 +97,6 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 LREvents.clear();//clear stored events.
                 BUFFER_PROCESS();
-                bufferedTuple.clear();
                 break;
             case 1:
                 this.SyncRegisterUndo();
@@ -106,7 +107,9 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 this.SyncRegisterRecovery();
                 this.collector.cleanAll();
                 this.LREvents.clear();
-                this.bufferedTuple.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
                 break;
         }
         return transactionSuccess;

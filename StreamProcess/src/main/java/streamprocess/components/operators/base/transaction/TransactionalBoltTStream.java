@@ -5,19 +5,21 @@ import engine.Exception.DatabaseException;
 import engine.transaction.impl.TxnManagerTStream;
 import org.slf4j.Logger;
 import streamprocess.components.operators.api.TransactionalBolt;
+import streamprocess.components.topology.TopologyComponent;
 import streamprocess.components.topology.TopologyContext;
+import streamprocess.controller.output.Determinant.OutsideDeterminant;
+import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.ExecutionGraph;
+import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.FaultToleranceConstants;
+import streamprocess.faulttolerance.clr.CausalService;
 import streamprocess.faulttolerance.clr.ComputationLogic;
 import streamprocess.faulttolerance.clr.ComputationTask;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
@@ -28,7 +30,11 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public int partition_delta;
     public List<ComputationTask> tasks;
     public List<ComputationLogic> computationLogics;
+    public EpochInfo epochInfo;
+    protected HashMap<Integer,CausalService> causalService;
+    protected long recoveryId = -1;
     protected boolean isSnapshot;
+    protected long markerId = 0;
     public TransactionalBoltTStream(Logger log,int fid){
         super(log,fid);
     }
@@ -40,6 +46,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         if(enable_clr){
             this.tasks=new ArrayList<>();
             this.computationLogics=new ArrayList<>();
+            this.epochInfo = new EpochInfo(0L,this.executor.getExecutorID());
         }
     }
     public void loadDB(Map conf, TopologyContext context, OutputCollector collector){
@@ -56,6 +63,24 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
             PRE_EXECUTE(in);
         }else{
             PRE_TXN_PROCESS(in);
+        }
+    }
+    public void BUFFER_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
+        for (Queue<Tuple> tuples : bufferedTuples.values()) {
+            if (tuples.size() !=0) {
+                boolean isMarker = false;
+                while (!isMarker) {
+                    Tuple tuple = tuples.poll();
+                    if (tuple != null) {
+                        execute(tuple);
+                        if (tuple.isMarker()) {
+                            isMarker =true;
+                        }
+                    } else {
+                        isMarker = true;
+                    }
+                }
+            }
         }
     }
     /**
@@ -127,6 +152,17 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
             }
             this.isCommit =false;
         }
+        for (TopologyComponent child:this.executor.getChildren_keySet()) {
+            for (ExecutionNode e:child.getExecutorList()) {
+                if (enable_determinants_log) {
+                    this.causalService.put(e.getExecutorID(),e.askCausalService().get(this.executor.getExecutorID()));
+                    this.recoveryId = this.causalService.get(e.getExecutorID()).currentMarkerId;
+                } else if (enable_recovery_dependency){
+                    this.recoveryId = e.ackRecoveryDependency().currentMarkId;
+                }
+            }
+        }
+
     }
     /**
      * To register recovery when there is a failure(snapshot)
@@ -146,5 +182,12 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public int getPartitionId(String key){
         Integer _key = Integer.valueOf(key);
         return _key / partition_delta;
+    }
+    public void updateRecoveryDependency(int[] key, boolean isWrite){
+        int[] partitionId = new int[key.length];
+        for (int i = 0; i < key.length; i++){
+            partitionId[i] = getPartitionId(String.valueOf(key[i]));
+        }
+        this.epochInfo.addDependency(partitionId,isWrite);
     }
 }

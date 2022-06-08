@@ -12,14 +12,10 @@ import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
 
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Iterator;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.ExecutionException;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
-import static UserApplications.CONTROL.enable_snapshot;
 
 public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream.class);
@@ -76,16 +72,6 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                     ,String.valueOf(event.getPOSReport().getSegment())
                     ,event.count_value
                     ,new CNT(event.getPOSReport().getVid()));
-        }
-    }
-    public void BUFFER_PROCESS() throws DatabaseException, InterruptedException {
-        if(bufferedTuple.isEmpty()){
-            return;
-        }else{
-            Iterator<Tuple> bufferedTuples=bufferedTuple.iterator();
-            while (bufferedTuples.hasNext()){
-                PRE_TXN_PROCESS(bufferedTuples.next());
-            }
         }
     }
     protected void REQUEST_REQUEST_CORE() {

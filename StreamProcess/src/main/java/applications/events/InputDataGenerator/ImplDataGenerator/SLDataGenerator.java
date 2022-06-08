@@ -7,6 +7,7 @@ import System.util.Configuration;
 import applications.DataTypes.AbstractInputTuple;
 import applications.events.InputDataGenerator.InputDataGenerator;
 import applications.events.SL.DepositEvent;
+import applications.events.SL.SLParam;
 import applications.events.SL.TransactionEvent;
 import applications.events.TxnEvent;
 import applications.events.ob.AlertEvent;
@@ -19,9 +20,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static UserApplications.CONTROL.*;
 import static UserApplications.CONTROL.RATIO_OF_READ;
@@ -29,8 +28,6 @@ import static UserApplications.constants.StreamLedgerConstants.Constant.*;
 
 public class SLDataGenerator extends InputDataGenerator {
     private final static Logger LOG= LoggerFactory.getLogger(SLDataGenerator.class);
-    protected int[] event_decision_distribute;
-    protected int event_decision_id;
     @Override
     public List<AbstractInputTuple> generateData(int batch) {
         return null;
@@ -113,58 +110,17 @@ public class SLDataGenerator extends InputDataGenerator {
 
     @Override
     public void initialize(String dataPath, int recordNum, int range, double zipSkew, Configuration config) {
-        this.recordNum=recordNum;
-        this.dataPath=dataPath;
-        this.zipSkew=zipSkew;
-        this.range=range;
-        this.current_pid=0;
-        this.event_decision_id=0;
-        this.partition_num =config.getInt("partition_num");
-        if(enable_states_partition){
-            floor_interval= (int) Math.floor(NUM_ITEMS / (double) partition_num);//NUM_ITEMS / partition_num;
-            partitioned_store =new FastZipfGenerator[partition_num];
-            for (int i = 0; i < partition_num; i++) {
-                partitioned_store[i] = new FastZipfGenerator((int) floor_interval, zipSkew, i * floor_interval);
-            }
-        }else{
-            this.shared_store=new FastZipfGenerator(NUM_ITEMS, zipSkew,0);
-        }
-        p_bid = new long[partition_num];
-
-        for (int i = 0; i < partition_num; i++) {
-            p_bid[i] = 0;
-        }
-        if (RATIO_OF_READ == 0) {
-            this.event_decision_distribute=new int[]{1,1,1,1,1,1,1,1};//Transfer
-        } else if (RATIO_OF_READ == 0.25) {
-            this.event_decision_distribute=new int[]{0,0,1,1,1,1,1,1};//Deposit:Transfer
-        } else if (RATIO_OF_READ == 0.5) {
-            this.event_decision_distribute=new int[]{0,0,0,0,1,2,1,2};//
-        } else if (RATIO_OF_READ == 0.75) {
-            this.event_decision_distribute=new int[]{0,0,0,0,0,0,1,2};//
-        } else if (RATIO_OF_READ == 1) {
-            this.event_decision_distribute=new int[]{0,0,0,0,0,0,0,0};//Deposit
-        } else {
-            throw new UnsupportedOperationException();
-        }
-        LOG.info("ratio_of_read: " + RATIO_OF_READ + "\tREAD DECISIONS: " + Arrays.toString(read_decision));
+        super.initialize(dataPath,recordNum,range,zipSkew,config);
     }
 
     @Override
     public Object create_new_event(int bid) {
-        int flag=next_decision();
-        if(flag==0){
+        boolean flag = next_decision();
+        if(flag){
             return randomDepositEvent(p_bid,bid);
         }else {
             return randomTransferEvent(p_bid,bid);
         }
-    }
-    protected int next_decision() {
-        int rt = event_decision_distribute[event_decision_id];
-        event_decision_id++;
-        if (event_decision_id == 8)
-            event_decision_id = 0;
-        return rt;
     }
     @Override
     public void close() {
@@ -176,26 +132,12 @@ public class SLDataGenerator extends InputDataGenerator {
         }
     }
     private Object randomDepositEvent(long[] bid_array,long bid){
-        final int account;//key
-        if (enable_states_partition)
-            account = partitioned_store[current_pid].next();//rnd.nextInt(account_range) + partition_offset;
-        else
-            account = shared_store.next();//rnd.nextInt(account_range) + partition_offset;
-        if (partition_num > 1) {//multi-partition
-            current_pid++;
-            if (current_pid == partition_num)
-                current_pid = 0;
-        }
-        final int book;
-        if (enable_states_partition)
-            book = partitioned_store[current_pid].next();//rnd.nextInt(asset_range) + partition_offset;
-        else
-            book = shared_store.next();//rnd.nextInt(account_range) + partition_offset;
-        if (partition_num > 1) {//multi-partition
-            current_pid++;
-            if (current_pid == partition_num)
-                current_pid = 0;
-        }
+        SLParam param = new SLParam(2);
+        Set<Integer> keys = new HashSet<>();
+        current_pid = key_to_partition(partitionId_generator.next());
+        randomKeys(param,keys,2);
+        final int account = param.keys()[0];
+        final int book = param.keys()[1];
         final long accountsDeposit= rnd.nextLong(MAX_ACCOUNT_TRANSFER);
         final long deposit= rnd.nextLong(MAX_BOOK_TRANSFER);
         current_bid++;
@@ -209,62 +151,28 @@ public class SLDataGenerator extends InputDataGenerator {
                 deposit);
     }
     private Object randomTransferEvent(long[] bid_array,long bid){
+        SLParam param = new SLParam(4);
+        Set<Integer> keys = new HashSet<>();
+        current_pid = key_to_partition(partitionId_generator.next());
+        randomKeys(param,keys,4);
         final long accountsTransfer = rnd.nextLong(MAX_ACCOUNT_TRANSFER);
         final long transfer = rnd.nextLong(MAX_BOOK_TRANSFER);
-        while(true){
-            final int sourceAcct;
-            if (enable_states_partition)
-                sourceAcct = partitioned_store[current_pid].next();//rnd.nextInt(account_range) + partition_offset;
-            else
-                sourceAcct = shared_store.next();//rnd.nextInt(account_range) + partition_offset;
-            if (partition_num > 1) {//multi-partition
-                current_pid++;
-                if (current_pid == partition_num)
-                    current_pid = 0;
-            }
-            final int targetAcct;
-            if (enable_states_partition)
-                targetAcct = partitioned_store[current_pid].next();//rnd.nextInt(account_range) + partition_offset;
-            else
-                targetAcct = shared_store.next();//rnd.nextInt(account_range) + partition_offset;
-            if (partition_num > 1) {//multi-partition
-                current_pid++;
-                if (current_pid == partition_num)
-                    current_pid = 0;
-            }
-            final int sourceBook;
-            if (enable_states_partition)
-                sourceBook = partitioned_store[current_bid].next();//rnd.nextInt(asset_range) + partition_offset;
-            else
-                sourceBook = shared_store.next();//rnd.nextInt(account_range) + partition_offset;
-
-            if (partition_num > 1) {//multi-partition
-                current_bid++;
-                if (current_bid == partition_num)
-                    current_bid = 0;
-            }
-            final int targetBook;
-            if (enable_states_partition)
-                targetBook = partitioned_store[current_pid].next();//rnd.nextInt(asset_range) + partition_offset;
-            else
-                targetBook = shared_store.next();//rnd.nextInt(asset_range) + partition_offset;
-
-            if (sourceAcct == targetAcct || sourceBook == targetBook) {
-                continue;
-            }
-            current_bid++;
-            return new TransactionEvent(
-                    bid,
-                    current_pid,
-                    bid_array,
-                    partition_num,
-                    ACCOUNT_ID_PREFIX + sourceAcct,
-                    BOOK_ENTRY_ID_PREFIX + sourceBook,
-                    ACCOUNT_ID_PREFIX + targetAcct,
-                    BOOK_ENTRY_ID_PREFIX + targetBook,
-                    accountsTransfer,
-                    transfer,
-                    MIN_BALANCE);
-        }
+        final int sourceAcct = param.keys()[0];
+        final int targetAcct = param.keys()[1];
+        final int sourceBook = param.keys()[2];
+        final int targetBook = param.keys()[3];
+        current_bid++;
+        return new TransactionEvent(
+                bid,
+                current_pid,
+                bid_array,
+                partition_num,
+                ACCOUNT_ID_PREFIX + sourceAcct,
+                BOOK_ENTRY_ID_PREFIX + sourceBook,
+                ACCOUNT_ID_PREFIX + targetAcct,
+                BOOK_ENTRY_ID_PREFIX + targetBook,
+                accountsTransfer,
+                transfer,
+                MIN_BALANCE);
     }
 }

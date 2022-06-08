@@ -55,7 +55,6 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                 this.SyncCommitLog();
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
-                bufferedTuple.clear();
                 break;
             case 1:
                 this.SyncRegisterUndo();
@@ -64,8 +63,6 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                 break;
             case 2:
                 this.SyncRegisterRecovery();
-                this.reRunComputationTask();
-                this.AsyncReConstructRequest();
                 transactionSuccess=this.TXN_PROCESS_FT();
                 break;
         }

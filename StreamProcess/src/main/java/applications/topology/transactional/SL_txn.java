@@ -18,7 +18,6 @@ import streamprocess.execution.Initialize.TableInitilizer;
 import streamprocess.execution.Initialize.impl.SLInitializer;
 import streamprocess.execution.runtime.tuple.Fields;
 import utils.SpinLock;
-import System.constants.BaseConstants.BaseConf;
 
 import static UserApplications.CONTROL.*;
 import static UserApplications.constants.OnlineBidingSystemConstants.Conf.Executor_Threads;
@@ -43,7 +42,7 @@ public class SL_txn extends TransactionalTopology {
             spout.setFields(new Fields(StreamLedgerConstants.Field.TEXT));
             spout.setInputDataGenerator(new SLDataGenerator());
             builder.setSpout(StreamLedgerConstants.Component.SPOUT,spout,spoutThreads);
-            if(enable_snapshot){
+            if(enable_checkpoint){
                 builder.setBolt(StreamLedgerConstants.Component.EXECUTOR,
                         new SLBolt_TStream_Snapshot(0),
                         config.getInt(Executor_Threads),

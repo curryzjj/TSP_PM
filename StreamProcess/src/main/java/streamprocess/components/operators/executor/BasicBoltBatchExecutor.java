@@ -1,18 +1,20 @@
 package streamprocess.components.operators.executor;
 
 import engine.Exception.DatabaseException;
-import engine.shapshot.SnapshotResult;
 import streamprocess.components.operators.api.AbstractBolt;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.faulttolerance.clr.CausalService;
+import streamprocess.faulttolerance.clr.RecoveryDependency;
 
 import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BasicBoltBatchExecutor extends BoltExecutor{
     private final AbstractBolt _op;
@@ -41,7 +43,18 @@ public class BasicBoltBatchExecutor extends BoltExecutor{
     }
 
     @Override
-    public void recoveryInput(long offset, List<Integer> recoveryExecutorIDs) throws FileNotFoundException, InterruptedException {
+    public RecoveryDependency ackRecoveryDependency() {
+        return this._op.returnRecoveryDependency();
+    }
+
+    @Override
+    public ConcurrentHashMap<Integer, CausalService> ackCausalService() {
+        return this._op.returnCausalService();
+    }
+
+
+    @Override
+    public void recoveryInput(long offset, List<Integer> recoveryExecutorIDs, long alignOffset) throws FileNotFoundException, InterruptedException {
 
     }
 

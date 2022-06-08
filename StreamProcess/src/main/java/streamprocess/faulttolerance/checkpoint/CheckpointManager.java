@@ -9,11 +9,11 @@ import System.util.Configuration;
 import System.util.OsUtils;
 import engine.Database;
 import engine.shapshot.SnapshotResult;
-import engine.shapshot.SnapshotStrategy;
 import engine.table.datatype.serialize.Serialize;
-import org.checkerframework.checker.units.qual.C;
+import engine.table.keyGroup.KeyGroupRangeOffsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.faulttolerance.FTManager;
@@ -23,9 +23,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayDeque;
-import java.util.Date;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 
@@ -43,17 +41,17 @@ public class CheckpointManager extends FTManager {
     private Database db;
     private Configuration conf;
     private Object lock;
-    private SnapshotResult snapshotResult;
+    private ConcurrentHashMap<Long,SnapshotResult> snapshotResults = new ConcurrentHashMap<>();
     private boolean close;
-    private Queue<Long> isCommitted;
+    private Queue<Long> SnapshotOffset;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callSnapshot;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callRecovery;
     public CheckpointManager(ExecutionGraph g, Configuration conf, Database db){
-        this.isCommitted=new ArrayDeque<>();
-        this.callSnapshot=new ConcurrentHashMap<>();
-        this.callRecovery=new ConcurrentHashMap<>();
-        this.lock=new Object();
-        this.conf=conf;
+        this.SnapshotOffset = new ArrayDeque<>();
+        this.callSnapshot = new ConcurrentHashMap<>();
+        this.callRecovery = new ConcurrentHashMap<>();
+        this.lock = new Object();
+        this.conf = conf;
         this.g=g;
         this.db=db;
         this.close=false;
@@ -85,7 +83,7 @@ public class CheckpointManager extends FTManager {
         }
     }
     public boolean spoutRegister(long checkpointId){
-        this.isCommitted.add(checkpointId);
+        this.SnapshotOffset.add(checkpointId);
         LOG.debug("Spout register the checkpoint with the checkpointId= "+checkpointId);
         return true;
     }
@@ -97,6 +95,12 @@ public class CheckpointManager extends FTManager {
         }
         LOG.debug("executor("+executorId+")"+" register the "+status);
     }
+
+    @Override
+    public boolean sinkRegister(long id) throws IOException {
+        return this.commitCurrentLog(id);
+    }
+
     private void callSnapshot_ini(){
         for (ExecutionNode e:g.getExecutionNodeArrayList()){
             if(e.op.IsStateful()){
@@ -123,79 +127,62 @@ public class CheckpointManager extends FTManager {
                 if(close){
                     return;
                 }
-                if(enable_measure){
-                    MeasureTools.FTM_receive_all_Ack(System.nanoTime());
-                }
                 if(callSnapshot.containsValue(Recovery)){
-                    if(enable_measure){
-                        MeasureTools.startRecovery(System.nanoTime());
-                    }
                     LOG.debug("CheckpointManager received all register and start recovery");
-                    SnapshotResult lastSnapshotResult=getLastCommitSnapshotResult(checkpointFile);
-                    //this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
-                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null);
-                    MeasureTools.startReloadDB(System.nanoTime());
+                    SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(checkpointFile);
+                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, lastSnapshotResult.getCheckpointId());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
-                    MeasureTools.finishReloadDB(System.nanoTime());
-                    this.db.getTxnProcessingEngine().isTransactionAbort=false;
-                    LOG.debug("Reload state complete!");
+                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
+                    LOG.info("Reload state complete!");
                     synchronized (lock){
                         while (callRecovery.containsValue(NULL)){
                             lock.wait();
                         }
                     }
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
-                    this.isCommitted.clear();
+                    this.SnapshotOffset.clear();
                     notifyAllComplete();
-                    LOG.debug("Recovery complete!");
+                    LOG.info("Recovery complete!");
                     lock.notifyAll();
                 }else if(callSnapshot.containsValue(Undo)){
                     LOG.debug("CheckpointManager received all register and start undo");
                     this.db.undoFromWAL();
                     LOG.info("Undo log complete!");
-                    this.db.getTxnProcessingEngine().isTransactionAbort=false;
+                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
-                    notifyAllComplete();
+                    notifyBoltComplete();
                     lock.notifyAll();
-                } else if(callSnapshot.containsValue(Persist)){
-                    if(enable_measure){
-                        MeasureTools.startPersist(System.nanoTime());
-                    }
+                } else if(callSnapshot.containsValue(Snapshot)){
                     LOG.debug("CheckpointManager received all register and start snapshot");
+                    SnapshotResult snapshotResult;
                     if(enable_parallel){
-                        this.snapshotResult=this.db.parallelSnapshot(isCommitted.poll(),00000L);
+                        snapshotResult = this.db.parallelSnapshot(SnapshotOffset.poll(),00000L);
                     }else{
-                        RunnableFuture<SnapshotResult> snapshotResult =this.db.snapshot(isCommitted.poll(),00000L);
-                        this.snapshotResult=snapshotResult.get();
+                        RunnableFuture<SnapshotResult> getSnapshotResult = this.db.snapshot(SnapshotOffset.poll(),00000L);
+                        snapshotResult = getSnapshotResult.get();
                     }
-                    if(enable_measure){
-                        MeasureTools.finishPersist(System.nanoTime());
-                        MeasureTools.setSnapshotFileSize(this.snapshotResult.getSnapshotResults().keySet());
-                    }
-                    commitCurrentLog();
-                    notifySnapshotComplete(this.snapshotResult.getCheckpointId());
+                    this.snapshotResults.put(snapshotResult.getCheckpointId(),snapshotResult);
+                    notifyBoltComplete();
                     lock.notifyAll();
                 }
             }
         }
     }
-    public boolean commitCurrentLog() throws IOException, InterruptedException {
+    public boolean commitCurrentLog(long id) throws IOException {
         LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(checkpointFile);
-        DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
-        byte[] result= Serialize.serializeObject(this.snapshotResult);
-        int len=result.length;
+        DataOutputStream dataOutputStream = new DataOutputStream(localDataOutputStream);
+        byte[] result = Serialize.serializeObject(this.snapshotResults.get(id));
+        int len = result.length;
         dataOutputStream.writeInt(len);
         dataOutputStream.write(result);
         dataOutputStream.close();
         LOG.debug("CheckpointManager commit the checkpoint to the current.log");
         return true;
     }
-    public void notifySnapshotComplete(long offset) throws Exception {
+    public void notifyBoltComplete() throws Exception {
         for(int id:callSnapshot.keySet()){
             g.getExecutionNode(id).ackCommit();
         }
-        g.getSpout().ackCommit(offset);
-        MeasureTools.FTM_finish_Ack(System.nanoTime());
         this.callSnapshot_ini();
     }
     public void notifyAllComplete() throws Exception {

@@ -43,26 +43,12 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
         TxnContext txnContext=new TxnContext(thread_Id,this.fid,in.getBID());
         TxnEvent event = (TxnEvent) in.getValue(0);
-        boolean isCorrect;
         if (event instanceof BuyingEvent) {
-            isCorrect=Buying_request_construct((BuyingEvent) event, txnContext);
+           Buying_request_construct((BuyingEvent) event, txnContext);
         } else if (event instanceof AlertEvent) {
-            isCorrect=Alert_request_construct((AlertEvent) event, txnContext);
+            Alert_request_construct((AlertEvent) event, txnContext);
         } else {
-            isCorrect=Topping_request_construct((ToppingEvent) event, txnContext);
-        }
-        if(isCorrect&&enable_clr){
-            this.addComputationTask(event,txnContext);
-        }
-    }
-    public void BUFFER_PROCESS() throws DatabaseException, InterruptedException {
-        if(bufferedTuple.isEmpty()){
-            return;
-        }else{
-            Iterator<Tuple> bufferedTuples=bufferedTuple.iterator();
-            while (bufferedTuples.hasNext()){
-                PRE_TXN_PROCESS(bufferedTuples.next());
-            }
+           Topping_request_construct((ToppingEvent) event, txnContext);
         }
     }
     protected boolean Topping_request_construct(ToppingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
@@ -200,97 +186,5 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
 
     protected void TOPPING_REQUEST_POST(ToppingEvent event) throws InterruptedException {
         collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), event.topping_result, event.getTimestamp());//the tuple is finished finally.
-    }
-    protected void reRunComputationTask() throws BrokenBarrierException, IOException, InterruptedException, DatabaseException {
-        Queue queue=this.FTM.getComputationTasks(this.executor.getExecutorID());
-        boolean finish=false;
-        while(!finish){
-            Object task=queue.poll();
-            if(task!=null){
-                synchronized (queue){
-                    queue.notifyAll();
-                }
-                ComputationTask computationTask= (ComputationTask) task;
-                if(!computationTask.finish_flag){
-                    if(computationTask.txn_flag){
-                        transactionManager.start_evaluate(this.thread_Id,0);
-                    }else{
-                        reConstructTxn(computationTask);
-                    }
-                }else{
-                    finish=true;
-                }
-            }
-        }
-    }
-    private void reConstructTxn(ComputationTask task) throws DatabaseException {
-        TxnContext txnContext=new TxnContext(thread_Id,this.fid,task.bid);
-        switch (task.event_name){
-            case "topping" :
-                transactionManager.Asy_ModifyRecord(txnContext, "goods",task.key, new INC(Long.parseLong(task.getValue(0))), 2);//asynchronously return.
-            break;
-            case "alert":
-                transactionManager.Asy_WriteRecord(txnContext, "goods", task.key, Long.parseLong(task.getValue(0)), 1);//asynchronously return.
-            break;
-            case "buying":
-                transactionManager.Asy_ModifyRecord(//TODO: add atomicity preserving later.
-                    txnContext,
-                        "goods",
-                    task.key,
-                    new DEC(Long.parseLong(task.getValue(1))),
-                    new Condition(Long.parseLong(task.getValue(0)), Long.parseLong(task.getValue(1))),
-                   new boolean[1]
-            );
-
-        }
-    }
-    private void  addComputationTask(TxnEvent Txnevent,TxnContext txnContext){
-        if(Txnevent instanceof BuyingEvent){
-            BuyingEvent event=(BuyingEvent) Txnevent;
-            for (int i = 0; i < NUM_ACCESSES_PER_BUY; i++){
-                List<String> values=new ArrayList<>();
-                values.add(String.valueOf(event.getBidPrice(i)));
-                values.add(String.valueOf(event.getBidQty(i)));
-                tasks.add(new ComputationTask("buying",String.valueOf(event.getItemId()[i]),txnContext.getBID(),getPartitionId(String.valueOf(event.getItemId()[i])),values));
-            }
-        }else if(Txnevent instanceof AlertEvent){
-            AlertEvent event=(AlertEvent) Txnevent;
-            for (int i = 0; i < event.getNum_access(); i++){
-                List<String> values=new ArrayList<>();
-                values.add(String.valueOf(event.getAsk_price()[i]));
-                tasks.add(new ComputationTask("alert",String.valueOf(event.getItemId()[i]),txnContext.getBID(),getPartitionId(String.valueOf(event.getItemId()[i])),values));
-            }
-        }else{
-            ToppingEvent event=(ToppingEvent) Txnevent;
-            for (int i = 0; i < event.getNum_access(); i++){
-                List<String> values=new ArrayList<>();
-                values.add(String.valueOf(event.getItemTopUp()[i]));
-                tasks.add(new ComputationTask("topping",String.valueOf(event.getItemId()[i]),txnContext.getBID(),getPartitionId(String.valueOf(event.getItemId()[i])),values));
-            }
-        }
-    }
-    private void addLogicTask(TxnEvent Txnevent,TxnContext txnContext){
-        if(Txnevent instanceof AlertEvent){
-            AlertEvent event=(AlertEvent) Txnevent;
-            ComputationLogic computationLogic=new ComputationLogic(txnContext.getBID());
-            for (int i=0;i<event.getItemId().length;i++){
-                computationLogic.putIndex(getPartitionId(String.valueOf(event.getItemId()[i])),i);
-            }
-            computationLogics.add(computationLogic);
-        }else if(Txnevent instanceof BuyingEvent){
-            BuyingEvent event=(BuyingEvent) Txnevent;
-            ComputationLogic computationLogic=new ComputationLogic(txnContext.getBID());
-            for (int i=0;i<event.getItemId().length;i++){
-                computationLogic.putIndex(getPartitionId(String.valueOf(event.getItemId()[i])),i);
-            }
-            computationLogics.add(computationLogic);
-        }else {
-            ToppingEvent event=(ToppingEvent) Txnevent;
-            ComputationLogic computationLogic=new ComputationLogic(txnContext.getBID());
-            for (int i=0;i<event.getItemId().length;i++){
-                computationLogic.putIndex(getPartitionId(String.valueOf(event.getItemId()[i])),i);
-            }
-            computationLogics.add(computationLogic);
-        }
     }
 }

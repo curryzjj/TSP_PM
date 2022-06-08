@@ -172,7 +172,7 @@ public abstract class AbstractSpout extends Operator {
     //createInput for FileSpout
     public void setInputDataGenerator(InputDataGenerator inputDataGenerator){}
 
-    public abstract void recoveryInput(long offset, List<Integer> recoveryExecutorIds) throws FileNotFoundException, InterruptedException;
+    public abstract void recoveryInput(long offset, List<Integer> recoveryPartitionIds, long alignOffset) throws FileNotFoundException, InterruptedException;
 
     @Override
     public void callback(int callee, Marker marker) {

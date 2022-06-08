@@ -28,7 +28,6 @@ import java.util.concurrent.Executors;
 
 import static System.constants.BaseConstants.BaseStream.*;
 import static UserApplications.CONTROL.*;
-import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 import static engine.Database.snapshotExecutor;
 import static engine.log.WALManager.writeExecutor;
 import static streamprocess.faulttolerance.clr.EventManager.clrExecutor;
@@ -70,7 +69,7 @@ public class ExecutionManager {
         timeSliceLengthMs = conf.getInt("timeSliceLengthMs");
         g.build_inputSchedule();
         clock = new Clock(conf.getDouble("time_Interval", 1));
-        if(enable_snapshot||enable_wal||enable_clr){
+        if(enable_checkpoint ||enable_wal||enable_clr){
             this.startFaultTolerance(RM,FTM);
         }
         if (enable_shared_state){
@@ -88,14 +87,12 @@ public class ExecutionManager {
                     integers.get(integers.size() - 1),
                     integers.size(),
                     conf.getInt("tthread"));
-            if(enable_wal&&enable_parallel){
-                writeExecutor= Executors.newFixedThreadPool(partition_num);
-            }else if(enable_parallel&&enable_snapshot){
-                snapshotExecutor=Executors.newFixedThreadPool(partition_num);
-            } else if(enable_clr&&enable_parallel){
-                clrExecutor=Executors.newFixedThreadPool(partition_num);
+            if(enable_wal && enable_parallel){
+                writeExecutor = Executors.newFixedThreadPool(partition_num);
+            }else if(enable_parallel && enable_snapshot){
+                snapshotExecutor = Executors.newFixedThreadPool(partition_num);
             }
-            int delta = (int) Math.ceil(NUM_SEGMENTS / (double)partition_num);
+            int delta = (int) Math.ceil(NUM_ITEMS / (double)partition_num);
             db.setCheckpointOptions(partition_num,delta);
         }
         executorThread thread = null;
@@ -195,10 +192,8 @@ public class ExecutionManager {
         }
         if(enable_parallel&&enable_wal){
             writeExecutor.shutdown();
-        }else if(enable_parallel&&enable_snapshot){
+        }else if(enable_parallel&& enable_snapshot){
             snapshotExecutor.shutdown();
-        }else if(enable_parallel&&enable_clr){
-            clrExecutor.shutdown();
         }
     }
 }

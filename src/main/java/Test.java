@@ -1,35 +1,25 @@
-import net.openhft.affinity.AffinityLock;
-import net.openhft.affinity.AffinityStrategies;
-import net.openhft.affinity.AffinitySupport;
-
 import java.util.HashMap;
 
 public class Test {
 
     public static void main(String[] args) {
-        B b=new B();
-        System.out.println(b.a);
+        HashMap<Integer,B> b = new HashMap<>();
+        C c = new C(0,b);
+        c.interrupt();
+        System.out.println(c.b.a);
     }
 }
 
-class C{
-    public int a;
-    public C(){
-        System.out.println("A");
-        this.a=0;
-    }
-    public C(String a){
-        this.a=4;
-        System.out.println("A1");
-    }
-    public void setA(int a) {
-        this.a = a;
+class C extends Thread{
+    public B b;
+    public C(int id,HashMap<Integer, B> b){
+        this.b = new B();
+        b.put(id,this.b);
     }
 }
- class B extends C{
+ class B{
     public int a;
     public B(){
-        super("a");
-        //this.a=4;
+        this.a =4;
     }
 }

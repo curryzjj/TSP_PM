@@ -51,7 +51,7 @@ public abstract class TxnManagerDedicated implements TxnManager{
         }else{
             tableName=srcTable;
         }
-        tableRecord=storageManager.getTableRecords(tableName,key);
+        tableRecord = storageManager.getTableRecords(tableName,key);
         if(tableRecord!=null){
             return Asy_ModifyRecord_ReadCC(txn_context,srcTable,tableRecord,record_ref,function,accessType);
         }

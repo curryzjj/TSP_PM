@@ -35,6 +35,7 @@ public abstract class Grouping implements Serializable {
     public boolean isShuffle() {
         return this instanceof ShuffleGrouping;
     }
+    public boolean isKeyBased() { return this instanceof KeyBasedGrouping;}
     public boolean isMarkerShuffle() {
         return this instanceof MakerShuffleGrouping;
     }

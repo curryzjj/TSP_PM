@@ -145,25 +145,11 @@ public class OBDataGenerator extends InputDataGenerator {
         for (int i = 0; i < partition_num; i++) {
             p_bid[i] = 0;
         }
-        if (RATIO_OF_READ == 0) {
-            this.event_decision_distribute=new int[]{1,2,1,2,1,2,1,2};//alert,topping
-        } else if (RATIO_OF_READ == 0.25) {
-            this.event_decision_distribute=new int[]{0,0,1,2,1,2,1,2};//2:3:3 buy, alert, topping
-        } else if (RATIO_OF_READ == 0.5) {
-            this.event_decision_distribute=new int[]{0,0,0,0,1,2,1,2};//2:1:1 buy, alert, topping
-        } else if (RATIO_OF_READ == 0.75) {
-            this.event_decision_distribute=new int[]{0,0,0,0,0,0,1,2};//6:1:1 buy, alert, topping
-        } else if (RATIO_OF_READ == 1) {
-            this.event_decision_distribute=new int[]{0,0,0,0,0,0,0,0};//8:0:0 never used
-        } else {
-            throw new UnsupportedOperationException();
-        }
-        LOG.info("ratio_of_read: " + RATIO_OF_READ + "\tREAD DECISIONS: " + Arrays.toString(read_decision));
     }
 
     @Override
     public Object create_new_event(int bid) {
-        int flag = next_decision();
+        int flag = next_event_decision();
         if (flag == 0) {
             return randomBuyEvents(p_bid.clone(), bid, rnd);
         } else if (flag == 1) {
@@ -172,7 +158,7 @@ public class OBDataGenerator extends InputDataGenerator {
             return randomToppingEvents(p_bid.clone(), bid, rnd);//(AlertEvent) in.getValue(0);
         }
     }
-    protected int next_decision() {
+    protected int next_event_decision() {
         int rt = event_decision_distribute[event_decision_id];
         event_decision_id++;
         if (event_decision_id == 8)
@@ -193,7 +179,7 @@ public class OBDataGenerator extends InputDataGenerator {
         Set keys=new HashSet();
         int counter=0;
         int access_per_partition=(int) Math.ceil(NUM_ACCESSES_PER_BUY / (double) partition_num_per_txn);
-        randomKeys(current_pid,param,keys,access_per_partition,counter,NUM_ACCESSES_PER_BUY);
+        randomKeys(param,keys,NUM_ACCESSES_PER_BUY);
         assert !enable_states_partition || verify(keys, current_pid, partition_num);
         current_bid++;
         return new BuyingEvent(param.keys(),rnd,current_pid,bid_array,bid, partition_num);
@@ -202,7 +188,7 @@ public class OBDataGenerator extends InputDataGenerator {
         OBParam param=new OBParam(NUM_ACCESSES);
         Set keys=new HashSet();
         int counter=0;
-        randomKeys(current_pid,param,keys,access_per_partition,counter,NUM_ACCESSES);
+        randomKeys(param,keys,NUM_ACCESSES);
         assert verify(keys, current_pid, partition_num);
         current_bid++;
         return new AlertEvent(NUM_ACCESSES,param.keys(),rnd,current_pid,bid_array,bid, partition_num);
@@ -211,7 +197,7 @@ public class OBDataGenerator extends InputDataGenerator {
         OBParam param=new OBParam(NUM_ACCESSES);
         Set keys=new HashSet();
         int counter=0;
-        randomKeys(current_pid,param,keys,access_per_partition,counter,NUM_ACCESSES);
+        randomKeys(param,keys,NUM_ACCESSES);
         assert verify(keys, current_pid, partition_num);
         current_bid++;
         return new ToppingEvent(NUM_ACCESSES,param.keys(),rnd,current_pid,bid_array,bid, partition_num);

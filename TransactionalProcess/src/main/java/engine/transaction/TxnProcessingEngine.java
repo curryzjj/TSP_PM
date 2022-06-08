@@ -45,32 +45,42 @@ public class TxnProcessingEngine {
     //initialize
     private String app;
     public void initialize(int size,String app){
-        num_op=size;
-        this.app=app;
+        num_op = size;
+        this.app = app;
         holder_by_stage = new ConcurrentHashMap<>();
-        this.walManager=new WALManager(partition_num);
+        if (enable_undo_log || enable_wal) {
+            this.walManager = new WALManager(partition_num);
+        }
         this.transactionAbort=new ConcurrentSkipListSet<>();
         this.dropTable=new ArrayList<>();
         switch(app){
             case "TP_txn":
                 holder_by_stage.put("segment_speed", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("segment_speed",partition_num);
                 holder_by_stage.put("segment_cnt", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("segment_cnt",partition_num);
+                if (enable_undo_log || enable_wal) {
+                    this.walManager.setHolder_by_tableName("segment_speed",partition_num);
+                    this.walManager.setHolder_by_tableName("segment_cnt",partition_num);
+                }
                 break;
             case "GS_txn":
                 holder_by_stage.put("MicroTable", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("MicroTable",partition_num);
+                if (enable_undo_log || enable_wal) {
+                    this.walManager.setHolder_by_tableName("MicroTable",partition_num);
+                }
                 break;
             case "OB_txn":
                 holder_by_stage.put("goods", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("goods",partition_num);
+                if (enable_undo_log || enable_wal) {
+                    this.walManager.setHolder_by_tableName("goods",partition_num);
+                }
                 break;
             case "SL_txn":
                 holder_by_stage.put("accounts", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("accounts",partition_num);
                 holder_by_stage.put("bookEntries", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("bookEntries",partition_num);
+                if (enable_undo_log || enable_wal) {
+                    this.walManager.setHolder_by_tableName("bookEntries",partition_num);
+                    this.walManager.setHolder_by_tableName("accounts",partition_num);
+                }
                 break;
             default:
                 throw new UnsupportedOperationException("app not recognized");
@@ -182,9 +192,11 @@ public class TxnProcessingEngine {
         }
     }
     private void process(MyList<Operation> operation_chain, int mark_ID){
-        if (operation_chain.size()>0){
-            this.walManager.addLogRecord(operation_chain);
+        if (operation_chain.size() > 0){
             operation_chain.logRecord.setCopyTableRecord(operation_chain.first().s_record);
+            if (enable_undo_log) {
+                this.walManager.addLogRecord(operation_chain);
+            }
         }
         while (true){
             Operation operation=operation_chain.pollFirst();
@@ -198,15 +210,15 @@ public class TxnProcessingEngine {
                 this.transactionAbort.add(operation.bid);
                 this.isTransactionAbort=true;
                 return;
-            }else if(enable_states_lost){
+            } else if(enable_states_lost){
                 if(drop){
-                    if (enable_states_partition&&enable_parallel&&!enable_snapshot){
+                    if (enable_states_partition && enable_parallel &&!enable_checkpoint){
                         if (!dropTable.contains(mark_id)){
                             this.dropTable.add(mark_id);
                             this.drop=false;
                         }
                     }else{
-                        for(int i=0;i<num_op;i++){
+                        for(int i = 0; i < num_op; i++){
                             this.dropTable.add(i);
                         }
                         this.drop=false;
@@ -230,12 +242,10 @@ public class TxnProcessingEngine {
                     }
                     srcRecord.get(1).setDouble(lav);//write to state.
                     operation.record_ref.setRecord(new SchemaRecord(new DoubleDataBox(lav)));//return updated record.
-                    operation.record_ref.getRecord().getValue().getDouble();
                 }else{
                     HashSet cnt_segment = srcRecord.get(1).getHashSet();
                     cnt_segment.add(operation.function.delta_int);//update hashset; updated state also. TODO: be careful of this.
                     operation.record_ref.setRecord(new SchemaRecord(new IntDataBox(cnt_segment.size())));//return updated record.
-                    operation.record_ref.getRecord().getValue().getInt();
                 }
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.s_record);
@@ -333,6 +343,7 @@ public class TxnProcessingEngine {
     //evaluation
     public void start_evaluation(int thread_id, long mark_ID) throws InterruptedException {//each operation thread called this function
         //implement the SOURCE_CONTROL sync for all threads to come to this line to ensure chains are constructed for the current batch.
+        this.walManager.addLogForBatch(mark_ID);
         SOURCE_CONTROL.getInstance().Wait_Start(thread_id);
         int size=evaluation(thread_id,mark_ID);
         //implement the SOURCE_CONTROL sync for all threads to come to this line.

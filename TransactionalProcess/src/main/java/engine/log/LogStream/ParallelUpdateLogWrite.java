@@ -39,7 +39,7 @@ public class ParallelUpdateLogWrite implements UpdateLogWrite {
         initIterator(callables);
         List<Future<Boolean>> futures=writeExecutor.invokeAll(callables);
         for(WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
-            for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.values()){
+            for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.get(globalLSN).values()){
                 logRecords.clear();
             }
             logRecordsInRange.hasKey.clear();
@@ -50,7 +50,7 @@ public class ParallelUpdateLogWrite implements UpdateLogWrite {
     private void initIterator(List<CommitLogTask> callables) {
         for (WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
             for(int i=0;i<logRecordsInRange.holder_by_range.size();i++){
-                Iterator<LogRecord> logs=logRecordsInRange.holder_by_range.get(i).iterator();
+                Iterator<LogRecord> logs=logRecordsInRange.holder_by_range.get(i).get(globalLSN).iterator();
                 callables.get(i).setIterators(logs);
             }
         }

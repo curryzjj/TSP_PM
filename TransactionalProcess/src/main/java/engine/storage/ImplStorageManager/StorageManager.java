@@ -45,6 +45,7 @@ public class StorageManager extends AbstractStorageManager {
     }
 
     public BaseTable getTable(String tableName) throws DatabaseException {
+        //TODO: getTable from Operators
         if (!tables.containsKey(tableName)) {
             throw new DatabaseException("Table: " + tableName + " does not exist");
         }

@@ -38,10 +38,7 @@ public class ShufflePartitionController extends PartitionController {
      * no shuffle for better cache locality?
      */
     public void updateExtendedTargetId() {
-
-
         double min_ratio = Double.MAX_VALUE;
-
         for (int e : partition_ratio.keySet()) {
             double ratio = partition_ratio.get(e);
             if (ratio < min_ratio) {
@@ -49,7 +46,6 @@ public class ShufflePartitionController extends PartitionController {
             }
         }
         int range = (int) Math.ceil(this.batch / min_ratio);
-
         for (int e : partition_ratio.keySet()) {
             Double ratio = partition_ratio.get(e);
             int v = Math.max((int) (ratio * range), 1);//run every batch times then turn.
@@ -70,7 +66,6 @@ public class ShufflePartitionController extends PartitionController {
      */
     @Override
     public int emit(Meta meta, String streamId, long bid, Object... output) throws InterruptedException {
-
         if (meta.index == extendedTargetId.size()) {
             meta.index = 0;
         }
@@ -159,7 +154,6 @@ public class ShufflePartitionController extends PartitionController {
 
     @Override
     public int emit(Meta meta, String streamId, long bid, char[] output) throws InterruptedException {
-
         if (meta.index == extendedTargetId.size()) {
             meta.index = 0;
         }
@@ -304,7 +298,8 @@ public class ShufflePartitionController extends PartitionController {
     }
 
     public int emit_nowait(Meta meta, String streamId, char[] key, long value) {
-        //TODO: % is too slow, need some way to implement faster round-robin.
+        //TODO: % is too slow,
+        //need some way to implement faster round-robin.
         if (meta.index == extendedTargetId.size()) {
             meta.index = 0;
         }

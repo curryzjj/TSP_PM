@@ -38,7 +38,7 @@ public abstract class baseRunner {
 
 
     @Parameter(names = {"--shared"}, description = "shared by multi producers")
-    public boolean shared = true;
+    public boolean shared = false;
     @Parameter(names = {"--common"}, description = "common shared by consumers")
     public boolean common = false;
     @Parameter(names = {"--linked"}, description = "linked")

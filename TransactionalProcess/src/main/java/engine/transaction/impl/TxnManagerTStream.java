@@ -62,7 +62,6 @@ public class TxnManagerTStream extends TxnManagerDedicated {
         }
         long bid = txn_context.getBID();
         operation_chain_construction_read_only(t_record, primary_key, table_name, bid, accessType, record_ref, txn_context);
-
         return true;//it should be always success.
     }
 

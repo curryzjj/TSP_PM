@@ -17,6 +17,7 @@ import streamprocess.controller.output.OutputController;
 import streamprocess.controller.output.PartitionController;
 import streamprocess.controller.output.partition.AllPartitionController;
 import streamprocess.controller.output.partition.FieldsPartitionController;
+import streamprocess.controller.output.partition.KeyBasedPartitionController;
 import streamprocess.controller.output.partition.ShufflePartitionController;
 
 import java.io.Serializable;
@@ -298,7 +299,9 @@ public class ExecutionGraph implements Serializable {
         }else if(g.isShuffle()){
             return new ShufflePartitionController(srcOP, childOP
                     , downExecutor_list, batch, executor, common, conf.getBoolean("profile", false), conf);
-        } else {
+        }else if(g.isKeyBased()) {
+            return new KeyBasedPartitionController(srcOP, childOP, downExecutor_list, batch,executor, common, conf.getBoolean("profile", false), conf);
+        }else {
             LOG.info("create partition controller error: not suppourted yet");
             return null;
         }

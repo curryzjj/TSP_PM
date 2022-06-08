@@ -1,7 +1,6 @@
 package streamprocess.execution;
 
 import System.Platform.Platform;
-import engine.shapshot.SnapshotResult;
 import org.apache.commons.lang.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +11,13 @@ import streamprocess.controller.input.InputStreamController;
 import streamprocess.controller.output.OutputController;
 import streamprocess.controller.output.PartitionController;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
+import streamprocess.faulttolerance.clr.CausalService;
+import streamprocess.faulttolerance.clr.RecoveryDependency;
 
 import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * ExecutionNode support multiple input(receive_queue) and output streams(through stream partition)
@@ -253,7 +255,13 @@ public class ExecutionNode implements Serializable {
     public void ackCommit(long offset){
         op.ackCommit(offset);
     }
-    public void recoveryInput(long offset, List<Integer> recoveryExecutorIds) throws FileNotFoundException, InterruptedException {
-        op.recoveryInput(offset,recoveryExecutorIds);
+    public RecoveryDependency ackRecoveryDependency() {
+        return op.ackRecoveryDependency();
+    }
+    public ConcurrentHashMap<Integer, CausalService> askCausalService() {
+        return op.ackCausalService();
+    }
+    public void recoveryInput(long offset, List<Integer> recoveryExecutorIds, long alignOffset) throws FileNotFoundException, InterruptedException {
+        op.recoveryInput(offset,recoveryExecutorIds, alignOffset);
     }
 }

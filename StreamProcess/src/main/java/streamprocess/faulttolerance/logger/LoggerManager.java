@@ -11,7 +11,6 @@ import engine.Database;
 import engine.log.LogResult;
 import engine.shapshot.SnapshotResult;
 import engine.table.datatype.serialize.Serialize;
-import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.execution.ExecutionGraph;
@@ -179,7 +178,7 @@ public class LoggerManager extends FTManager {
                         theLastLSN = this.db.recoveryFromWAL(-1);
                     }
                     LOG.debug("Replay committed transactions complete!");
-                    this.g.getSpout().recoveryInput(theLastLSN,null);
+                    this.g.getSpout().recoveryInput(theLastLSN,null, theLastLSN);
                     this.isCommitted.clear();
                     this.db.undoFromWAL();
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
@@ -250,7 +249,6 @@ public class LoggerManager extends FTManager {
     private long commitLog() throws IOException, ExecutionException, InterruptedException {
         long LSN=isCommitted.poll();
         RunnableFuture<LogResult> commitLog=this.db.commitLog(LSN, 00000L);
-        this.g.getSpout().ackCommit(LSN);
         if(commitLog!=null){
             commitLog.get();
         }

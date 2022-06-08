@@ -51,7 +51,7 @@ public class RecoveryManager extends FTManager {
         this.completeRecovery=false;
         this.callRecovery_ini();
         String faultTolerance="";
-        if(enable_snapshot){
+        if(enable_checkpoint){
             faultTolerance="checkpoint";
         }else if(enable_wal){
             faultTolerance="WAL";
@@ -143,18 +143,18 @@ public class RecoveryManager extends FTManager {
     }
 
     private void recovery() throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
-        if(enable_snapshot){
+        if(enable_checkpoint){
             this.lastSnapshotResult=getLastCommitSnapshotResult(recoveryFile);
             this.db.recoveryFromSnapshot(lastSnapshotResult);
-            this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null);
+            this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, lastSnapshotResult.getCheckpointId());
         }else if (enable_wal){
             if(enable_parallel){
                 long theLastLSN=getLastGlobalLSN(recoveryFile);
                 this.db.recoveryFromWAL(theLastLSN);
-                this.g.getSpout().recoveryInput(theLastLSN,null);
+                this.g.getSpout().recoveryInput(theLastLSN,null, theLastLSN);
             }else{
                 long theLastLSN=this.db.recoveryFromWAL(-1);
-                this.g.getSpout().recoveryInput(theLastLSN,null);
+                this.g.getSpout().recoveryInput(theLastLSN,null, theLastLSN);
             }
         }
     }

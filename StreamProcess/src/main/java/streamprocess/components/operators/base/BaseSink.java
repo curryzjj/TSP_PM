@@ -3,18 +3,26 @@ package streamprocess.components.operators.base;
 import System.constants.BaseConstants;
 import System.util.ClassLoaderUtils;
 import System.util.Configuration;
+import UserApplications.CONTROL;
 import applications.sink.formatter.BasicFormatter;
 import applications.sink.formatter.Formatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.components.topology.TopologyComponent;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Fields;
+import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
-import streamprocess.faulttolerance.FaultToleranceConstants;
 import streamprocess.faulttolerance.checkpoint.emitMarker;
+import streamprocess.faulttolerance.clr.CausalService;
+import streamprocess.faulttolerance.clr.RecoveryDependency;
 
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static UserApplications.CONTROL.*;
 
 public abstract class BaseSink extends BaseOperator implements emitMarker {
     private static final Logger LOG= LoggerFactory.getLogger(BaseSink.class);
@@ -22,6 +30,13 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
     protected int thisTaskId;
     boolean isSINK=true;
     protected static final int max_num_msg=(int) 1E5;
+    //<MarkerId,RD>
+    public ConcurrentHashMap<Long, RecoveryDependency> recoveryDependency = new ConcurrentHashMap<>();
+    public long currentMarkerId = 0;
+    //<UpstreamId,CausalService>
+    public ConcurrentHashMap<Integer, CausalService> causalService = new ConcurrentHashMap<>();
+    //<UpstreamId,bufferQueue>
+    public HashMap<Integer, Queue<Tuple>> bufferedTuples = new HashMap<>();
     private BaseSink(Logger log){super(log);}
     BaseSink(Map<String, Double> input_selectivity, double read_selectivity) {
         super(LOG, input_selectivity, null, (double) 1, read_selectivity);
@@ -44,12 +59,64 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
         }
 
         formatter.initialize(Configuration.fromMap(config), getContext());
-        if(thisTaskId==graph.getSink().getExecutorID()){
-            isSINK=true;
+        if(thisTaskId == graph.getSink().getExecutorID()){
+            isSINK = true;
+        }
+        for (String stream:this.executor.operator.getParents().keySet()) {
+            for (TopologyComponent topologyComponent:this.executor.operator.getParentsOfStream(stream).keySet()) {
+                for (int id:topologyComponent.getExecutorIDList()) {
+                    if (enable_determinants_log) {
+                        this.causalService.put(id,new CausalService());
+                    }
+                    this.bufferedTuples.put(id, new ArrayDeque<>());
+                }
+            }
         }
     }
-    protected abstract Logger getLogger();
 
+    public void addRecoveryDependency(long markerId) {
+        if(!this.recoveryDependency.containsKey(markerId)) {
+            RecoveryDependency RD;
+            if (recoveryDependency.get(currentMarkerId) != null) {
+                RD = new RecoveryDependency(this.recoveryDependency.get(currentMarkerId).getRecoveryDependency(),markerId);
+            } else {
+                RD = new RecoveryDependency(partition_num,markerId);
+            }
+            this.recoveryDependency.put(markerId,RD);
+        }
+    }
+
+    @Override
+    public void cleanEpoch(long offset) {
+        if (enable_recovery_dependency) {
+            RecoveryDependency RD = new RecoveryDependency(partition_num, this.currentMarkerId);
+            this.recoveryDependency.put(currentMarkerId, RD);
+        } else if (enable_determinants_log) {
+           for (CausalService causalService:this.causalService.values()) {
+               causalService.cleanDeterminant();
+           }
+        }
+        if (Exactly_Once) {
+            twoPC_CommitTuple(offset);
+        }
+    }
+
+    @Override
+    public RecoveryDependency returnRecoveryDependency() {
+        return this.recoveryDependency.get(currentMarkerId);
+    }
+
+    @Override
+    public ConcurrentHashMap<Integer, CausalService> returnCausalService() {
+        return this.causalService;
+    }
+
+    protected abstract Logger getLogger();
+    protected abstract void PRE_EXECUTE(Tuple in);
+    protected abstract void execute_ts_normal(Tuple in);
+    protected abstract void EXECUTE(Tuple in);
+    protected abstract void twoPC_CommitTuple(long bid);
+    protected abstract void BUFFER_EXECUTE() throws IOException, InterruptedException;
     @Override
     protected Fields getDefaultFields() {
         return new Fields("");
@@ -60,7 +127,6 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
     protected void killTopology(){
         LOG.info("Killing application");
     }
-
     @Override
     public boolean marker() throws InterruptedException, BrokenBarrierException {
         return false;
@@ -68,21 +134,17 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
 
     @Override
     public void forward_marker(int sourceId, long bid, Marker marker, String msg) throws InterruptedException {
-
     }
 
     @Override
     public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
-
     }
 
     @Override
     public void ack_marker(Marker marker) {
-
     }
 
     @Override
     public void earlier_ack_marker(Marker marker) {
-
     }
 }

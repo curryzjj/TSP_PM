@@ -29,7 +29,7 @@ public final class logCommitRunner {
     }
     public final RunnableFuture<LogResult> commitLog(long globalLSN, long timestamp, LogStreamFactory logStreamFactory) throws IOException {
         long startTime=System.currentTimeMillis();
-        if (walManager.isEmpty()){
+        if (walManager.isEmpty(globalLSN)){
             LOG.info("There is no update log to commit");
             return null;
         }

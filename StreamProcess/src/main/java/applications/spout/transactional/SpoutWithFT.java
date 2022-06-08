@@ -99,7 +99,7 @@ public class SpoutWithFT extends TransactionalSpoutFT {
                 inputData=(List<AbstractInputTuple>) inputQueue.poll();
             }
             if(inputData.size()!=0){
-                if(enable_snapshot||enable_clr||enable_wal){
+                if(enable_checkpoint ||enable_clr||enable_wal){
                     MeasureTools.Input_store_begin(System.nanoTime());
                     this.inputDataGenerator.storeInput(inputData);
                     MeasureTools.Input_store_finish();

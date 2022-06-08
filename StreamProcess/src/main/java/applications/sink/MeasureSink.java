@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 import streamprocess.components.operators.base.BaseSink;
+import streamprocess.controller.output.Determinant.InsideDeterminant;
+import streamprocess.controller.output.Determinant.OutsideDeterminant;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.Tuple;
@@ -40,9 +42,9 @@ public class MeasureSink extends BaseSink {
     /** <bid,timestamp> */
 
     //2PC
-    protected HashMap<Long, Tuple2<Long,Long>> perCommitTuple=new HashMap<>();
-    //no_commit
-    protected final List<Double> no_commit_latency_map=new ArrayList<>();
+    protected HashMap<Long, Tuple2<Long,Long>> perCommitTuple = new HashMap<>();
+    //no_Exactly_once
+    protected final List<Double> No_Exactly_Once_latency_map =new ArrayList<>();
     protected int abortTransaction=0;
     protected static long count;
     protected static long  p_count;
@@ -79,36 +81,34 @@ public class MeasureSink extends BaseSink {
             startTime = System.nanoTime();
         }
         if(in.isMarker()){
+            if (enable_recovery_dependency) {
+                addRecoveryDependency(in.getBID());
+                this.recoveryDependency.get(in.getBID()).addDependency(in.getMarker().getEpochInfo());
+            }
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                this.currentMarkerId = in.getBID();
+                if (enable_determinants_log) {
+                    for (Integer id:this.causalService.keySet()){
+                        causalService.get(id).setCurrentMarkerId(currentMarkerId);
+                    }
+                }
                 if(Objects.equals(in.getMarker().getValue(), "recovery")){
                     MeasureTools.finishRecovery(System.nanoTime());
-                }else {
+                } else if(Objects.equals(in.getMarker().getValue(), "snapshot")) {
+                    this.FTM.sinkRegister(in.getBID());
+                } else if(Objects.equals(in.getMarker().getValue(), "finish")){
                     if(Exactly_Once){
-                        CommitTuple(in.getBID());
-                    }else{
-                        addLatency();
+                        twoPC_CommitTuple(in.getBID());
                     }
-                    if(Objects.equals(in.getMarker().getValue(), "finish")){
-                        timer.cancel();
-                        measure_end();
-                        context.stop_running();
-                    }
+                    timer.cancel();
+                    measure_end();
+                    context.stop_running();
+                } else {
+                    BUFFER_EXECUTE();
                 }
             }
         }else{
-            boolean finish= (boolean) in.getValue(0);
-            if(!finish){
-                LOG.info("The tuple ("+in.getBID()+ ") is abort");
-                abortTransaction++;
-            }else{
-                if(Exactly_Once){
-                    perCommitTuple.put(in.getBID(),new Tuple2<>((long)in.getValue(1),System.nanoTime()));
-                }else{
-                    long latency=System.nanoTime()-(long)in.getValue(1);
-                    no_commit_latency_map.add(latency/1E6);
-                    count++;
-                }
-            }
+           execute_ts_normal(in);
         }
     }
 
@@ -123,7 +123,8 @@ public class MeasureSink extends BaseSink {
         }
     }
 
-    private void CommitTuple(long bid) {
+    @Override
+    protected void twoPC_CommitTuple(long bid) {
         if(enable_latency_measurement&&perCommitTuple.size()!=0){
             commitStartTime = System.nanoTime();
             double totalLatency=0;
@@ -157,14 +158,80 @@ public class MeasureSink extends BaseSink {
             twoPC_commit_time.addValue((System.nanoTime()-commitStartTime)/1E6);
         }
     }
+
+    @Override
+    protected void BUFFER_EXECUTE() throws IOException, InterruptedException {
+        for (Queue<Tuple> tuples : bufferedTuples.values()) {
+            if (tuples.size() !=0) {
+                boolean isMarker = false;
+                while (!isMarker) {
+                    Tuple tuple = tuples.poll();
+                    if (tuple != null) {
+                        execute(tuple);
+                        if (tuple.isMarker()) {
+                            isMarker =true;
+                        }
+                    } else {
+                        isMarker = true;
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void execute_ts_normal(Tuple in) {
+        if (status.isMarkerArrived(in.getSourceTask())) {
+            PRE_EXECUTE(in);
+        } else {
+            EXECUTE(in);
+        }
+    }
+    @Override
+    protected void PRE_EXECUTE(Tuple in) {
+        bufferedTuples.get(in.getSourceTask()).add(in);
+    }
+
+    @Override
+    protected void EXECUTE(Tuple in) {
+        boolean finish = (boolean) in.getValue(0);
+        if (!finish) {
+            LOG.info("The tuple ("+in.getBID()+ ") is abort");
+            if (enable_determinants_log) {
+                if (in.getValue(1) != null) {
+                    this.causalService.get(in.getSourceTask()).addAbortEvent(((InsideDeterminant) in.getValue(1)).input);
+                }
+            }
+            abortTransaction++;
+        } else {
+            if (Exactly_Once) {
+                perCommitTuple.put(in.getBID(),new Tuple2<>((long)in.getValue(2),System.nanoTime()));
+            } else {
+                if (enable_determinants_log) {
+                    if (in.getValue(1) != null) {
+                        if (in.getValue(1) instanceof InsideDeterminant) {
+                            this.causalService.get(in.getSourceTask()).addInsideDeterminant((InsideDeterminant) in.getValue(1));
+                        } else {
+                            for (int target:((OutsideDeterminant) in.getValue(1)).targetIds) {
+                                this.causalService.get(target).addOutsideDeterminant((OutsideDeterminant) in.getValue(1));
+                            }
+                        }
+                    }
+                }
+                long latency = System.nanoTime() - (long)in.getValue(2);
+                No_Exactly_Once_latency_map.add(latency/1E6);
+                count++;
+            }
+        }
+    }
     private void addLatency() {
-        if(no_commit_latency_map.size()!=0){
+        if(No_Exactly_Once_latency_map.size()!=0){
             double totalLatency=0;
-            for (double latency:no_commit_latency_map){
+            for (double latency: No_Exactly_Once_latency_map){
                 totalLatency=totalLatency+latency;
             }
-            latency_map.add(totalLatency/no_commit_latency_map.size());
-            no_commit_latency_map.clear();
+            latency_map.add(totalLatency/ No_Exactly_Once_latency_map.size());
+            No_Exactly_Once_latency_map.clear();
         }
     }
     private void measure_end() {
@@ -187,10 +254,6 @@ public class MeasureSink extends BaseSink {
         return count;
     }
 
-    @Override
-    protected Logger getLogger() {
-        return LOG;
-    }
     public void startThroughputMeasure(){
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -202,5 +265,8 @@ public class MeasureSink extends BaseSink {
             }
         },  1000, 1000);//ms
     }
-
+    @Override
+    protected Logger getLogger() {
+        return LOG;
+    }
 }

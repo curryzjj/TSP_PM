@@ -35,7 +35,7 @@ public class UpdateLogAsyncWrite implements UpdateLogWrite {
         logCloseableRegistry.registerCloseable(logStreamWithResultProvider);
         commitLog();
         for(WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
-            for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.values()){
+            for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.get(globalLSN).values()){
               logRecords.clear();
             }
             logRecordsInRange.hasKey.clear();
@@ -50,7 +50,7 @@ public class UpdateLogAsyncWrite implements UpdateLogWrite {
     private void commitLog() throws IOException {
         final DataOutputView outputView=new DataOutputViewStreamWrapper(logStreamWithResultProvider.getLogOutputStream());
         for(WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
-            for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.values()){
+            for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.get(globalLSN).values()){
                 Iterator<LogRecord> logRecordIterator=logRecords.iterator();
                 while (logRecordIterator.hasNext()){
                     LogRecord logRecord =logRecordIterator.next();

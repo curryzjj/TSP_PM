@@ -41,7 +41,6 @@ public class OBBolt_TStream_NoFT extends OBBolt_TStream{
         REQUEST_POST();
         EventsHolder.clear();
         BUFFER_PROCESS();
-        bufferedTuple.clear();
         return true;
     }
 }

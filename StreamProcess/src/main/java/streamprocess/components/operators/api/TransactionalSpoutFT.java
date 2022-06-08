@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.grouping.Grouping;
 import streamprocess.components.topology.TopologyComponent;
-import streamprocess.controller.output.MultiStreamInFlightLog;
+import streamprocess.controller.output.InFlightLog.MultiStreamInFlightLog;
 import streamprocess.faulttolerance.FaultToleranceConstants;
 import streamprocess.faulttolerance.checkpoint.emitMarker;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
@@ -15,6 +15,7 @@ import streamprocess.execution.runtime.tuple.msgs.Marker;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
@@ -30,9 +31,13 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected int element=0;
     protected ArrayList<String> array;
     protected boolean startClock=false;
+
     protected long offset;
-    protected HashMap<Integer,Iterator<Object>> recoveryEvents = new HashMap<>();
+    protected long AlignMarkerId;
+    protected HashMap<Long,MultiStreamInFlightLog.BatchEvents> recoveryEvents;
     protected List<Integer> recoveryIDs = new ArrayList<>();
+    protected List<Integer> downExecutorIds = new ArrayList<>();
+
     boolean rt = false;
     protected int total_children_tasks=0;
     protected int tthread;
@@ -89,37 +94,23 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     }
     @Override
     public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
-        String msg1=msg;
         if (this.marker()) {//emit marker tuple
             if(enable_snapshot){
                 if(snapshot()){
                     if(this.getContext().getFTM().spoutRegister(bid)){
-                        msg1="snapshot";
+                        msg="snapshot";
                         checkpoint_counter++;
                     }
-                }
-            } else if (enable_wal) {
-                if(this.getContext().getFTM().spoutRegister(bid)){
-                    if (snapshot()){
-                        msg1="snapshot";
-                        checkpoint_counter++;
-                    }
-                }
-            }else if(enable_clr){
-                if (!this.getContext().getFTM().spoutRegister(bid)){
-                    return;
                 }
             }
-            LOG.info(executor.getOP_full() + " emit marker of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + bid);
+            LOG.info(executor.getOP_full() + " emit " + msg + " of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + bid);
             boardcast_time = System.nanoTime();
-            collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration,msg1);
+            collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration,msg);
             if(enable_upstreamBackup) {
-                multiStreamInFlightLog.addEvent(streamId,new Marker(streamId,boardcast_time,bid,myiteration,msg1));
-                if (msg1.equals("snapshot")) {
-                    multiStreamInFlightLog.addEpoch(bid, DEFAULT_STREAM_ID);
-                } else if (enable_wal) {
+                if (msg.equals("snapshot")) {
                     multiStreamInFlightLog.addEpoch(bid, DEFAULT_STREAM_ID);
                 }
+                multiStreamInFlightLog.addBatch(bid,DEFAULT_STREAM_ID);
             }
             myiteration++;
             success = false;
@@ -133,8 +124,12 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
             this.getContext().getFTM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
             try {
                 if (enable_upstreamBackup){
-                    for (int ID:recoveryIDs){
-                        this.collector.clean(DEFAULT_STREAM_ID,ID);
+                    if (enable_align_wait) {
+                        this.collector.cleanAll();
+                    } else {
+                        for (int ID:recoveryIDs){
+                            this.collector.clean(DEFAULT_STREAM_ID,ID);
+                        }
                     }
                     this.loadInFlightLog();
                 } else{
@@ -168,7 +163,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         double actual_system_throughput = epoch_size * 1E9 / elapsed_time;//events/ s
     }
     public void stopRunning() throws InterruptedException {
-        if(enable_wal||enable_snapshot||enable_clr){
+        if(enable_wal|| enable_checkpoint ||enable_clr){
             this.getContext().getFTM().spoutRegister(bid);
         }
         collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"finish");
@@ -184,19 +179,19 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     }
 
     @Override
-    public void recoveryInput(long offset, List<Integer> recoveryExecutorIds) throws FileNotFoundException, InterruptedException {
-        this.needWaitReplay =true;
-        this.replay=true;
-        this.offset=offset;
-        if (recoveryExecutorIds != null){
-           recoveryIDs=recoveryExecutorIds;
-        } else {
-          Map<TopologyComponent, Grouping> children=this.executor.operator.getChildrenOfStream(DEFAULT_STREAM_ID);
-          for (TopologyComponent child:children.keySet()){
-              for (int ID : child.getExecutorIDList()){
-                  recoveryIDs.add(ID);
-              }
-          }
+    public void recoveryInput(long offset, List<Integer> recoveryPartitionIds, long alignOffset) throws FileNotFoundException, InterruptedException {
+        this.needWaitReplay = true;
+        this.replay = true;
+        this.offset = offset;
+        this.AlignMarkerId = alignOffset;
+        if (enable_upstreamBackup) {
+            Map<TopologyComponent, Grouping> children = this.executor.operator.getChildrenOfStream(DEFAULT_STREAM_ID);
+            for (TopologyComponent child:children.keySet()){
+                downExecutorIds.addAll(child.getExecutorIDList());
+            }
+            for (int partitionId:recoveryPartitionIds) {
+                recoveryIDs.add(downExecutorIds.get(partitionId));
+            }
         }
     }
 
@@ -209,47 +204,69 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
 
     @Override
     public void loadInFlightLog() {
-        for (int ID:recoveryIDs){
-            recoveryEvents.put(ID,multiStreamInFlightLog.getInFightEventsForExecutor(DEFAULT_STREAM_ID,graph.getExecutionNode(ID).getOP(),ID,offset).iterator());
-        }
+        int ID = recoveryIDs.get(0);
+        recoveryEvents = multiStreamInFlightLog.getInFlightEvents(DEFAULT_STREAM_ID,graph.getExecutionNode(ID).getOP(),offset);
     }
 
     @Override
     public void replayEvents() throws InterruptedException {
-        int currentID=0;
-        while (replay) {
-            int targetId = getTargetID(currentID);
-            if (targetId !=-1){
-                Object o = getInFlightLog(targetId);
-                if (o!=null){
-                    if (o instanceof Marker){
-                        collector.single_marker(DEFAULT_STREAM_ID,((Marker) o).msgId,targetId, (Marker) o);
-                    } else {
-                        collector.emit_single_ID(DEFAULT_STREAM_ID,targetId,((TxnEvent)o).getBid(),o);
+        for (long checkpointId: this.recoveryEvents.keySet()){
+            MultiStreamInFlightLog.BatchEvents batchEvents = recoveryEvents.get(checkpointId);
+            if (checkpointId > offset){
+                collector.create_marker_boardcast(System.nanoTime(),DEFAULT_STREAM_ID,checkpointId,myiteration,"snapshot");
+            }
+            for (long markerIds : batchEvents.getMarkerId()){
+                replay = true;
+                int currentID=0;
+                int flag = 0;
+                ConcurrentHashMap<Integer, Iterator<Object>> iterators = batchEvents.getBatchEvents(markerIds);
+                if (markerIds > offset){
+                    collector.create_marker_boardcast(System.nanoTime(),DEFAULT_STREAM_ID,markerIds,myiteration,"marker");
+                }
+                if (markerIds < AlignMarkerId || !enable_align_wait) {
+                    while(replay) {
+                        int targetId = getTargetID(currentID,false);
+                        if (iterators.get(targetId).hasNext()){
+                            Object o = iterators.get(targetId).next();
+                            collector.emit_single_ID(DEFAULT_STREAM_ID,targetId,((TxnEvent)o).getBid(),o);
+                        } else {
+                            flag ++;
+                            if (flag == recoveryIDs.size()){
+                                replay = false;
+                            }
+                        }
+                        currentID ++;
+                        if (currentID > recoveryIDs.size()) {
+                            currentID = 0;
+                        }
                     }
-                    currentID ++;
-                    if (currentID == recoveryIDs.size()){
-                        currentID = 0;
+                } else {
+                    while (replay) {
+                        int targetId = getTargetID(currentID, true);
+                        if (iterators.get(targetId).hasNext()){
+                            Object o = iterators.get(targetId).next();
+                            collector.emit_single_ID(DEFAULT_STREAM_ID,targetId,((TxnEvent)o).getBid(),o);
+                        } else {
+                            flag ++;
+                            if (flag == downExecutorIds.size()){
+                                replay = false;
+                            }
+                        }
+                        currentID ++;
+                        if (currentID > downExecutorIds.size()) {
+                            currentID = 0;
+                        }
                     }
                 }
             }
         }
     }
 
-    public int getTargetID(int currentID){
-        if (recoveryIDs.size() == 0){
-            replay = false;
-            return -1;
+    public int getTargetID(int currentID, boolean isAlign){
+        if (isAlign) {
+            return downExecutorIds.get(currentID);
         } else {
             return recoveryIDs.get(currentID);
-        }
-    }
-    public Object getInFlightLog(int targetID) {
-        if(recoveryEvents.get(targetID).hasNext()){
-            return recoveryEvents.get(targetID).next();
-        } else {
-            recoveryIDs.removeIf(id -> id.intValue() == targetID);
-            return null;
         }
     }
 

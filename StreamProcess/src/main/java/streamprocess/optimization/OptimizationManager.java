@@ -66,7 +66,7 @@ public class OptimizationManager extends Thread {
         boolean parallelism_tune = conf.getBoolean("parallelism_tune", false);
         EM=new ExecutionManager(g,conf,this,db,p);
         latch = new CountDownLatch(g.getExecutionNodeArrayList().size() + 1 - 1);//+1:OM -1:virtual
-        if(enable_snapshot){
+        if(enable_checkpoint){
            FTM=new CheckpointManager(g,conf,db);
         }else if(enable_wal){
             FTM=new LoggerManager(g,conf,db);

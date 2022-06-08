@@ -20,14 +20,14 @@ public class RecoveryHelperProvider {
     private static final Logger LOG= LoggerFactory.getLogger(RecoveryHelperProvider.class);
     public static SnapshotResult getLastCommitSnapshotResult(File recoveryFile) throws IOException, ClassNotFoundException {
         List<SnapshotResult> SnapshotResults = new ArrayList<>();
-        LocalDataInputStream localDataInputStream=new LocalDataInputStream(recoveryFile);
-        DataInputStream inputStream=new DataInputStream(localDataInputStream);
-        String s=inputStream.readUTF();
+        LocalDataInputStream localDataInputStream = new LocalDataInputStream(recoveryFile);
+        DataInputStream inputStream = new DataInputStream(localDataInputStream);
+        String s = inputStream.readUTF();
         LOG.info("Last Time: "+s);
         int len=0;
         try{
             while(true){
-                len=inputStream.readInt();
+                len = inputStream.readInt();
                 byte[] lastSnapResultBytes=new byte[len];
                 inputStream.readFully(lastSnapResultBytes);
                 SnapshotResult snapResult= Deserialize.Deserialize2Object(lastSnapResultBytes,SnapshotResult.class.getClassLoader());

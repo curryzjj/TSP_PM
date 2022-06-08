@@ -14,7 +14,7 @@ import applications.events.ob.ToppingEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.TransactionalSpoutFT;
-import streamprocess.controller.output.MultiStreamInFlightLog;
+import streamprocess.controller.output.InFlightLog.MultiStreamInFlightLog;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.faulttolerance.checkpoint.Status;
 
@@ -98,6 +98,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 for (TxnEvent input : events) {
                     int targetId = collector.emit_single(DEFAULT_STREAM_ID, bid, input);
                     if (enable_upstreamBackup) {
+                        //TODO: clone the input
                         multiStreamInFlightLog.addEvent(targetId,DEFAULT_STREAM_ID,input);
                     }
                     bid++;
@@ -114,10 +115,10 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     @Override
     protected void loadInputFromSSD() throws FileNotFoundException {
         MeasureTools.startReloadInput(System.nanoTime());
-        long msg=offset;
-        bid=0;
+        long msg = offset;
+        bid = 0;
         openFile(Data_path);
-        while (offset!=0){
+        while (offset != 0){
             scanner.nextLine();
             offset--;
             bid++;
@@ -158,7 +159,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             Integer.parseInt(split[3]),//num_of_partition
                             split[5],//key_array
                             Boolean.parseBoolean(split[6]),//flag
-                            Long.parseLong(split[7])
+                            Long.parseLong(split[7])//timestamp
                     );
                     break;
                 case "BuyingEvent":

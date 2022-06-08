@@ -42,7 +42,6 @@ public class TPBolt_TStream_NoFT extends TPBolt_TStream{
         REQUEST_POST();
         LREvents.clear();//clear stored events.
         BUFFER_PROCESS();
-        bufferedTuple.clear();
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         return true;
     }

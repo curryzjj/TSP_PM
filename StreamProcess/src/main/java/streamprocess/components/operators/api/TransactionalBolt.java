@@ -6,20 +6,22 @@ import engine.transaction.TxnContext;
 import engine.transaction.TxnManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.components.topology.TopologyComponent;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.faulttolerance.checkpoint.emitMarker;
+import streamprocess.faulttolerance.clr.CausalService;
 import utils.SOURCE_CONTROL;
 
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.combo_bid_size;
+import static UserApplications.CONTROL.enable_determinants_log;
 
 public abstract class TransactionalBolt extends AbstractBolt implements emitMarker {
     protected static final Logger LOG= LoggerFactory.getLogger(TransactionalBolt.class);
@@ -30,7 +32,8 @@ public abstract class TransactionalBolt extends AbstractBolt implements emitMark
     protected int POST_COMPUTE_COMPLEXITY;
     private int i=0;
     private int NUM_ITEMS;
-    public List<Tuple> bufferedTuple=new ArrayList<>();
+    //<UpstreamId,bufferQueue>
+    public HashMap<Integer, Queue<Tuple>> bufferedTuples = new HashMap<>();
     public TxnContext[] txn_context = new TxnContext[combo_bid_size];
 
     public TransactionalBolt(Logger log,int fid) {
@@ -43,6 +46,13 @@ public abstract class TransactionalBolt extends AbstractBolt implements emitMark
         tthread = config.getInt("tthread", 1);
         COMPUTE_COMPLEXITY = 10;
         POST_COMPUTE_COMPLEXITY = 1;
+        for (String stream:this.executor.operator.getParents().keySet()) {
+            for (TopologyComponent topologyComponent:this.executor.operator.getParentsOfStream(stream).keySet()) {
+                for (int id:topologyComponent.getExecutorIDList()) {
+                    this.bufferedTuples.put(id, new ArrayDeque<>());
+                }
+            }
+        }
         SOURCE_CONTROL.getInstance().config(tthread);
     }
     @Override
@@ -68,7 +78,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements emitMark
     @Override
     public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException;
     protected void PRE_EXECUTE(Tuple in){
-        bufferedTuple.add(in);
+        bufferedTuples.get(in.getSourceTask()).add(in);
         _bid = in.getBID();
         input_event = in.getValue(0);
         TxnContext temp=new TxnContext(thread_Id, this.fid, _bid);

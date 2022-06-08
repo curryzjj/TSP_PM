@@ -45,7 +45,7 @@ public class TP_txn extends TransactionalTopology {
 //                    new DispatcherBolt(),
 //                    1,
 //                    new ShuffleGrouping(Component.SPOUT));
-            if(enable_snapshot){
+            if(enable_checkpoint){
                 builder.setBolt(Component.EXECUTOR,
                         new TPBolt_TStream_Snapshot(0),
                         config.getInt(Executor_Threads,1),

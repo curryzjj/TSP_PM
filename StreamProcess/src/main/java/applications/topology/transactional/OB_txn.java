@@ -1,9 +1,7 @@
 package applications.topology.transactional;
 
 import System.util.Configuration;
-import UserApplications.constants.GrepSumConstants;
 import UserApplications.constants.OnlineBidingSystemConstants;
-import UserApplications.constants.PKConstants;
 import applications.bolts.transactional.ob.OBBolt_TStream_Clr;
 import applications.bolts.transactional.ob.OBBolt_TStream_NoFT;
 import applications.bolts.transactional.ob.OBBolt_TStream_Snapshot;
@@ -17,7 +15,6 @@ import streamprocess.components.topology.Topology;
 import streamprocess.components.topology.TransactionalTopology;
 import streamprocess.controller.input.scheduler.SequentialScheduler;
 import streamprocess.execution.Initialize.TableInitilizer;
-import streamprocess.execution.Initialize.impl.GSInitializer;
 import streamprocess.execution.Initialize.impl.OBInitiallizer;
 import streamprocess.execution.runtime.tuple.Fields;
 import utils.SpinLock;
@@ -45,7 +42,7 @@ public class OB_txn extends TransactionalTopology {
            spout.setFields(new Fields(OnlineBidingSystemConstants.Field.TEXT));
            spout.setInputDataGenerator(new OBDataGenerator());
            builder.setSpout(OnlineBidingSystemConstants.Component.SPOUT,spout,spoutThreads);
-           if(enable_snapshot){
+           if(enable_checkpoint){
                builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
                        new OBBolt_TStream_Snapshot(0),
                        config.getInt(Executor_Threads),

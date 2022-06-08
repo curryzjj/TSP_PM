@@ -36,12 +36,12 @@ public class SPSCController extends QueueController{
                 System.gc();
             }
             if(OsUtils.isWindows()||OsUtils.isMac()){
-                outputQueue.put(executor,new SpscArrayQueue(1024));
+                outputQueue.put(executor,new SpscArrayQueue(1000000));
             }else{
                 if(linked){
                     outputQueue.put(executor,new SpscLinkedQueue());
                 }else{
-                    outputQueue.put(executor,new SpscArrayQueue(desired_elements_epoch_per_core/2));
+                    outputQueue.put(executor,new SpscArrayQueue(100000000));
                 }
             }
         }
