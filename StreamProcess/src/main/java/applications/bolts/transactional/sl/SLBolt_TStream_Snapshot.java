@@ -18,15 +18,16 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
             if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                //this.collector.ack(in,in.getMarker());
                 switch (in.getMarker().getValue()){
                     case "recovery":
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "marker":
+                        this.markerId = in.getBID();
                         TXN_PROCESS();
                         break;
                     case "finish":
+                        this.markerId = in.getBID();
                         if(TXN_PROCESS()){
                             /* All the data has been executed */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
@@ -34,10 +35,9 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
                         this.context.stop_running();
                         break;
                     case "snapshot":
-                        this.needcheckpoint=true;
-                        this.checkpointId=in.getBID();
+                        this.markerId = in.getBID();
+                        this.isSnapshot = true;
                         if(TXN_PROCESS_FT()){
-                            /* When the snapshot is completed, the data can be consumed by the outside world */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         }
                         break;
@@ -51,13 +51,14 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT=transactionManager.start_evaluate(thread_Id,this.fid);
+        int FT = transactionManager.start_evaluate(thread_Id, this.markerId);
         MeasureTools.finishTransaction(this.thread_Id, System.nanoTime());
+        boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
                 MeasureTools.startPost(this.thread_Id,System.nanoTime());
-                REQUEST_REQUEST_CORE();
+                REQUEST_CORE();
                 REQUEST_POST();
                 MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 this.SyncCommitLog();
@@ -65,6 +66,10 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
                 BUFFER_PROCESS();
                 break;
             case 1:
+                this.SyncRegisterUndo();
+                this.AsyncReConstructRequest();
+                transactionSuccess = this.TXN_PROCESS_FT();
+                break;
             case 2:
                 this.SyncRegisterRecovery();
                 this.collector.cleanAll();
@@ -74,18 +79,19 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
                 }
                 break;
         }
-        return FT==0;
+        return transactionSuccess;
     }
 
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT=transactionManager.start_evaluate(thread_Id,this.fid);
+        int FT=transactionManager.start_evaluate(thread_Id, this.markerId);
         MeasureTools.finishTransaction(this.thread_Id, System.nanoTime());
+        boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
                 MeasureTools.startPost(this.thread_Id,System.nanoTime());
-                REQUEST_REQUEST_CORE();
+                REQUEST_CORE();
                 /* When the transaction is successful, the data can be pre-commit to the outside world */
                 REQUEST_POST();
                 MeasureTools.finishPost(this.thread_Id,System.nanoTime());
@@ -93,6 +99,10 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
                 BUFFER_PROCESS();
                 break;
             case 1:
+                this.SyncRegisterUndo();
+                this.AsyncReConstructRequest();
+                transactionSuccess = this.TXN_PROCESS_FT();
+                break;
             case 2:
                 this.SyncRegisterRecovery();
                 this.collector.cleanAll();
@@ -102,6 +112,6 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
                 }
                 break;
         }
-        return FT==0;
+        return transactionSuccess;
     }
 }

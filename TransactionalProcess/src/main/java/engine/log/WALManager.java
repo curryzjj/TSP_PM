@@ -24,14 +24,14 @@ public class WALManager {
     private long globalLSN;
     public class LogRecords_in_range{
         //<partitionId,<markId,Vector>>
-        public ConcurrentHashMap<Integer,ConcurrentHashMap<Long,Vector<LogRecord>>> holder_by_range=new ConcurrentHashMap<>();
+        public ConcurrentHashMap<Integer,ConcurrentHashMap<Long,Vector<LogRecord>>> holder_by_range = new ConcurrentHashMap<>();
         public ConcurrentHashMap<String,Boolean> hasKey;
         public LogRecords_in_range(Integer num_op){
             int i;
             for (i=0;i<num_op;i++){
                 ConcurrentHashMap<Long,Vector<LogRecord>> logRecords = new ConcurrentHashMap<>();
                 holder_by_range.put(i,logRecords);
-                this.hasKey=new ConcurrentHashMap<>();
+                this.hasKey = new ConcurrentHashMap<>();
             }
         }
         public void addUndoLog(long g) {
@@ -47,11 +47,11 @@ public class WALManager {
         this.holder_by_tableName = new ConcurrentHashMap<>();
     }
     public boolean isEmpty(long offset){
-        boolean flag=true;
+        boolean flag = true;
         for(LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
-            for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.get(offset).values()){
-                if (!logRecords.isEmpty()){
-                    flag=false;
+            for (ConcurrentHashMap<Long,Vector<LogRecord>> vectors : logRecordsInRange.holder_by_range.values()) {
+                if (!vectors.get(offset).isEmpty()) {
+                    flag = false;
                 }
             }
         }
@@ -74,7 +74,7 @@ public class WALManager {
     }
     public UpdateLogWrite asyncCommitLog(long globalLSN, long timestamp, LogStreamFactory logStreamFactory) throws IOException {
         if(enable_parallel){
-            List<LogStreamWithResultProvider> providers=LogStreamWithResultProvider.createMultipleStream(logStreamFactory, partitionNum);
+            List<LogStreamWithResultProvider> providers = LogStreamWithResultProvider.createMultipleStream(logStreamFactory, partitionNum);
             return new ParallelUpdateLogWrite(holder_by_tableName,providers,timestamp,globalLSN);
         }else{
             LogStreamWithResultProvider logStreamWithResultProvider=LogStreamWithResultProvider.createSimpleStream(logStreamFactory);
@@ -124,7 +124,6 @@ public class WALManager {
             for(ConcurrentHashMap<Long, Vector<LogRecord>> logRecords: logRecordsInRange.holder_by_range.values()){
                 logRecords.entrySet().removeIf(longVectorEntry -> longVectorEntry.getKey() <= offset);
             }
-            logRecordsInRange.hasKey.clear();
         }
         return true;
     }

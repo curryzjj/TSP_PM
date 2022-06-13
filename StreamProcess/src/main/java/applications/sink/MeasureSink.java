@@ -28,9 +28,9 @@ public class MeasureSink extends BaseSink {
     private static final long serialVersionUID = 6249684803036342603L;
     private static final Logger LOG = LoggerFactory.getLogger(MeasureSink.class);
     private final DescriptiveStatistics latency = new DescriptiveStatistics();
-    private final DescriptiveStatistics waitTime=new DescriptiveStatistics();
-    private final DescriptiveStatistics throughput=new DescriptiveStatistics();
-    private DescriptiveStatistics twoPC_commit_time=new DescriptiveStatistics();
+    private final DescriptiveStatistics waitTime = new DescriptiveStatistics();
+    private final DescriptiveStatistics throughput = new DescriptiveStatistics();
+    private DescriptiveStatistics twoPC_commit_time = new DescriptiveStatistics();
     private long commitStartTime;
     protected long startTime;
     private FileSystem localFS;
@@ -199,7 +199,8 @@ public class MeasureSink extends BaseSink {
             LOG.info("The tuple ("+in.getBID()+ ") is abort");
             if (enable_determinants_log) {
                 if (in.getValue(1) != null) {
-                    this.causalService.get(in.getSourceTask()).addAbortEvent(((InsideDeterminant) in.getValue(1)).input);
+                    InsideDeterminant insideDeterminant = (InsideDeterminant) in.getValue(1);
+                    this.causalService.get(insideDeterminant.partitionId).addAbortEvent(insideDeterminant.input);
                 }
             }
             abortTransaction++;
@@ -210,10 +211,11 @@ public class MeasureSink extends BaseSink {
                 if (enable_determinants_log) {
                     if (in.getValue(1) != null) {
                         if (in.getValue(1) instanceof InsideDeterminant) {
-                            this.causalService.get(in.getSourceTask()).addInsideDeterminant((InsideDeterminant) in.getValue(1));
+                            InsideDeterminant insideDeterminant = (InsideDeterminant) in.getValue(1);
+                            this.causalService.get(insideDeterminant.partitionId).addInsideDeterminant(insideDeterminant);
                         } else {
-                            for (int target:((OutsideDeterminant) in.getValue(1)).targetIds) {
-                                this.causalService.get(target).addOutsideDeterminant((OutsideDeterminant) in.getValue(1));
+                            for (int targetPartition:((OutsideDeterminant) in.getValue(1)).targetPartitionIds) {
+                                this.causalService.get(targetPartition).addOutsideDeterminant((OutsideDeterminant) in.getValue(1));
                             }
                         }
                     }

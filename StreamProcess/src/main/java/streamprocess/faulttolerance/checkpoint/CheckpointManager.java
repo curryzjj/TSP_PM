@@ -133,7 +133,7 @@ public class CheckpointManager extends FTManager {
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, lastSnapshotResult.getCheckpointId());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     this.db.getTxnProcessingEngine().isTransactionAbort = false;
-                    LOG.info("Reload state complete!");
+                    LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     synchronized (lock){
                         while (callRecovery.containsValue(NULL)){
                             lock.wait();

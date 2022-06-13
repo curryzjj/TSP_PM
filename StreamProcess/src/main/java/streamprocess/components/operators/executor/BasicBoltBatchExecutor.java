@@ -17,6 +17,7 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BasicBoltBatchExecutor extends BoltExecutor{
+    private static final long serialVersionUID = 1985999225079889049L;
     private final AbstractBolt _op;
 
     public BasicBoltBatchExecutor(AbstractBolt op) {

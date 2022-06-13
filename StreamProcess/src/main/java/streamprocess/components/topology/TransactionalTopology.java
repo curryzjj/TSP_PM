@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import streamprocess.execution.Initialize.TableInitilizer;
 import utils.SpinLock;
 
+import java.io.IOException;
+
 import static System.constants.BaseConstants.DBOptions.In_Memory;
 import static System.constants.BaseConstants.DBOptions.RocksDB;
 
@@ -34,5 +36,5 @@ public abstract class TransactionalTopology extends BasicTopology{
             break;
         }
     }
-    public abstract TableInitilizer createDB(SpinLock[] spinlock);
+    public abstract TableInitilizer createDB(SpinLock[] spinlock) throws IOException;
 }

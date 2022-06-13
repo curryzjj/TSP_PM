@@ -10,6 +10,7 @@ public class EpochInfo implements Serializable {
     private long offset;
     private boolean isCommit;
     private int executorId;
+    //<PartitionID, DependencyPartitionID>
     private final HashMap<Integer, List<Integer>> ModifyDependency;
     private final HashMap<Integer, List<Integer>> ReadOnlyDependency;
     public EpochInfo(long offset, int executorId){

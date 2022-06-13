@@ -21,7 +21,7 @@ import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
 
 public abstract class TransactionalSpoutFT extends AbstractSpout implements emitMarker {
-    private static final Logger LOG= LoggerFactory.getLogger(TransactionalSpoutFT.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TransactionalSpoutFT.class);
     protected InputDataGenerator inputDataGenerator;
     protected Queue inputQueue;
     protected long previous_bid=-1;
@@ -67,7 +67,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public abstract void nextTuple(int batch) throws InterruptedException, IOException;
     public boolean marker(){
-        if(bid%batch_number_per_wm==0){
+        if( bid % batch_number_per_wm==0){
             return true;
         }else {
             return false;
@@ -97,15 +97,16 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         if (this.marker()) {//emit marker tuple
             if(enable_snapshot){
                 if(snapshot()){
-                    if(this.getContext().getFTM().spoutRegister(bid)){
-                        msg="snapshot";
-                        checkpoint_counter++;
-                    }
+                    msg = "snapshot";
+                    checkpoint_counter++;
                 }
+            }
+            if (msg.equals("snapshot") || enable_wal) {
+                this.getContext().getFTM().spoutRegister(bid);
             }
             LOG.info(executor.getOP_full() + " emit " + msg + " of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + bid);
             boardcast_time = System.nanoTime();
-            collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration,msg);
+            collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration, msg);
             if(enable_upstreamBackup) {
                 if (msg.equals("snapshot")) {
                     multiStreamInFlightLog.addEpoch(bid, DEFAULT_STREAM_ID);
@@ -158,7 +159,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
 
     @Override
     public void ack_marker(Marker marker) {
-        success=true;
+        success = true;
         long elapsed_time = System.nanoTime() - boardcast_time;//the time elapsed for the system to handle the previous epoch.
         double actual_system_throughput = epoch_size * 1E9 / elapsed_time;//events/ s
     }
@@ -217,18 +218,18 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
             }
             for (long markerIds : batchEvents.getMarkerId()){
                 replay = true;
-                int currentID=0;
+                int currentID = 0;
                 int flag = 0;
                 ConcurrentHashMap<Integer, Iterator<Object>> iterators = batchEvents.getBatchEvents(markerIds);
                 if (markerIds > offset){
                     collector.create_marker_boardcast(System.nanoTime(),DEFAULT_STREAM_ID,markerIds,myiteration,"marker");
                 }
-                if (markerIds < AlignMarkerId || !enable_align_wait) {
+                if (enable_align_wait && markerIds < AlignMarkerId) {
                     while(replay) {
                         int targetId = getTargetID(currentID,false);
                         if (iterators.get(targetId).hasNext()){
                             Object o = iterators.get(targetId).next();
-                            collector.emit_single_ID(DEFAULT_STREAM_ID,targetId,((TxnEvent)o).getBid(),o);
+                            collector.emit_single(DEFAULT_STREAM_ID,((TxnEvent)o).getBid(),o);
                         } else {
                             flag ++;
                             if (flag == recoveryIDs.size()){
@@ -236,7 +237,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                             }
                         }
                         currentID ++;
-                        if (currentID > recoveryIDs.size()) {
+                        if (currentID == recoveryIDs.size()) {
                             currentID = 0;
                         }
                     }
@@ -245,7 +246,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                         int targetId = getTargetID(currentID, true);
                         if (iterators.get(targetId).hasNext()){
                             Object o = iterators.get(targetId).next();
-                            collector.emit_single_ID(DEFAULT_STREAM_ID,targetId,((TxnEvent)o).getBid(),o);
+                            collector.emit_single(DEFAULT_STREAM_ID,((TxnEvent)o).getBid(),o);
                         } else {
                             flag ++;
                             if (flag == downExecutorIds.size()){
@@ -253,7 +254,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                             }
                         }
                         currentID ++;
-                        if (currentID > downExecutorIds.size()) {
+                        if (currentID == downExecutorIds.size()) {
                             currentID = 0;
                         }
                     }

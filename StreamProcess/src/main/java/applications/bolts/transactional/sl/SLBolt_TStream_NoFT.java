@@ -35,7 +35,7 @@ public class SLBolt_TStream_NoFT extends SLBolt_TStream {
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         transactionManager.start_evaluate(thread_Id,this.fid);
-        REQUEST_REQUEST_CORE();
+        REQUEST_CORE();
         REQUEST_POST();
         EventsHolder.clear();
         BUFFER_PROCESS();

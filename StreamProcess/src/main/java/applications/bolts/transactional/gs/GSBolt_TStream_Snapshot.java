@@ -34,6 +34,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                         }
                         break;
                     case "finish":
+                        this.markerId = in.getBID();
                         if(TXN_PROCESS()){
                             /* All the data has been executed */
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
@@ -86,7 +87,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
         int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
-        boolean transactionSuccess=FT==0;
+        boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
                 MeasureTools.startPost(this.thread_Id,System.nanoTime());

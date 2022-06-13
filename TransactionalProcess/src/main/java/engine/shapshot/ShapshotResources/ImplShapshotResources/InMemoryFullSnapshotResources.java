@@ -57,9 +57,9 @@ public class InMemoryFullSnapshotResources implements FullSnapshotResources {
 
     @Override
     public kvStateIterator createKVStateIterator() throws IOException {
-        CloseableRegistry closeableRegistry=new CloseableRegistry();
+        CloseableRegistry closeableRegistry = new CloseableRegistry();
         try{
-            List<Tuple2<InMemoryTableIteratorWrapper,Integer>> kvStateIterators=createKVStateIterators(closeableRegistry);
+            List<Tuple2<InMemoryTableIteratorWrapper,Integer>> kvStateIterators = createKVStateIterators(closeableRegistry);
             return new TableStatePerKeyGroupMerageIterator(closeableRegistry,kvStateIterators);
         } catch (IOException e) {
             // If anything goes wrong, clean up our stuff. If things went smoothly the
@@ -73,10 +73,10 @@ public class InMemoryFullSnapshotResources implements FullSnapshotResources {
                 new ArrayList<>(Meta.size());
         int kvStateId = 0;
         for (StorageManager.InMemoryKvStateInfo stateInfo:Meta){
-            InMemoryTableIteratorWrapper IteratorWrapper=createInMemoryIteratorWrapper(tables,stateInfo.metaInfo.getName());
-            kvStateIterators.add(new Tuple2<>(IteratorWrapper,kvStateId));
+            InMemoryTableIteratorWrapper IteratorWrapper = createInMemoryIteratorWrapper(tables, stateInfo.metaInfo.getName());
+            kvStateIterators.add(new Tuple2<>(IteratorWrapper, kvStateId));
             closeableRegistry.registerCloseable(IteratorWrapper);
-            ++kvStateId;
+            kvStateId ++;
         }
         return kvStateIterators;
     }

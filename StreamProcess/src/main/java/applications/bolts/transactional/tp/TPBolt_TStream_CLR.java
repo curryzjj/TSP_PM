@@ -1,4 +1,4 @@
-package applications.bolts.transactional.ob;
+package applications.bolts.transactional.tp;
 
 import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
@@ -12,11 +12,12 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.*;
+import static UserApplications.CONTROL.enable_align_wait;
 
-public class OBBolt_TStream_Clr extends OBBolt_TStream{
-    private static final long serialVersionUID = 2185341632820954575L;
+public class TPBolt_TStream_CLR extends TPBolt_TStream{
+    private static final long serialVersionUID = -4232559854879123393L;
 
-    public OBBolt_TStream_Clr(int fid) {
+    public TPBolt_TStream_CLR(int fid) {
         super(fid);
     }
 
@@ -93,7 +94,7 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                 REQUEST_POST();
                 MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 this.SyncCommitLog();
-                EventsHolder.clear();//clear stored events.
+                LREvents.clear();//clear stored events.
                 BUFFER_PROCESS();
                 break;
             case 1:
@@ -113,7 +114,7 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                     }
                 }
                 this.SyncRegisterRecovery();
-                this.EventsHolder.clear();
+                this.LREvents.clear();
                 for (Queue<Tuple> tuples : bufferedTuples.values()) {
                     tuples.clear();
                 }
@@ -134,7 +135,7 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                 REQUEST_CORE();
                 REQUEST_POST();
                 MeasureTools.finishPost(this.thread_Id,System.nanoTime());
-                EventsHolder.clear();//clear stored events.
+                LREvents.clear();//clear stored events.
                 BUFFER_PROCESS();
                 break;
             case 1:
@@ -154,7 +155,7 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                     }
                 }
                 this.SyncRegisterRecovery();
-                this.EventsHolder.clear();
+                this.LREvents.clear();
                 for (Queue<Tuple> tuples : bufferedTuples.values()) {
                     tuples.clear();
                 }
@@ -162,4 +163,5 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
         }
         return transactionSuccess;
     }
+
 }

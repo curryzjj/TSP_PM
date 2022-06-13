@@ -25,8 +25,8 @@ public abstract class BasicTopology extends AbstractTopology {
         boolean profile = config.getBoolean("profile");
         boolean benchmark = config.getBoolean("benchmark");
         if (!benchmark) {
-            spoutThreads = config.getInt( String.format(BaseConstants.BaseConf.SPOUT_THREADS,getConfigPrefix()), 1);//now read from parameters.
-            sinkThreads = config.getInt( String.format(BaseConstants.BaseConf.SINK_THREADS,getConfigPrefix()), 1);
+            spoutThreads = config.getInt("spoutThread", 1);//now read from parameters.
+            sinkThreads = config.getInt( "sinkThread", 1);
         } else {
             spoutThreads = 1;
             sinkThreads = 1;

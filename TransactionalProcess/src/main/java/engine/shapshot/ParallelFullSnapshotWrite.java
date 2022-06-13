@@ -71,9 +71,9 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
         }
         return new SnapshotResult(results,timestamp,checkpointId);
     }
-    private void initTasks(Collection<SnapshotTask> callables,CloseableRegistry closeableRegistry) {
-        for(int i=0;i<options.rangeNum;i++){
-            callables.add(new SnapshotTask(i,snapshotResources.get(i),closeableRegistry,providers.get(i)));
+    private void initTasks(Collection<SnapshotTask> callables, CloseableRegistry closeableRegistry) {
+        for(int i = 0; i < options.rangeNum; i ++){
+            callables.add(new SnapshotTask( i, snapshotResources.get(i), closeableRegistry, providers.get(i)));
         }
     }
     private class SnapshotTask implements Callable<Tuple2<Path,KeyGroupRangeOffsets>>{
@@ -88,7 +88,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
             this.taskId = taskId;
             this.snapshotResources = snapshotResources;
             this.snapshotCloseableRegistry=snapshotCloseableRegistry;
-            this.provider=provider;
+            this.provider = provider;
         }
 
         @Override
@@ -96,7 +96,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
             final KeyGroupRangeOffsets keyGroupRangeOffsets =
                     new KeyGroupRangeOffsets(snapshotResources.getKeyGroupRange());
             snapshotCloseableRegistry.registerCloseable(provider);
-            writeSnapshotToOutputStream(provider,snapshotResources, keyGroupRangeOffsets,this.taskId);
+            writeSnapshotToOutputStream(provider, snapshotResources, keyGroupRangeOffsets, this.taskId);
             if (snapshotCloseableRegistry.unregisterCloseable(provider)) {
                  Path path = provider.closeAndFinalizeCheckpointStreamResult();
                  return new Tuple2<Path, KeyGroupRangeOffsets>(path,keyGroupRangeOffsets);
@@ -131,20 +131,20 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
         OutputStream kgOutStream = null;
         CheckpointStreamFactory.CheckpointStateOutputStream checkpointOutputStream =
                 checkpointStreamWithResultProvider.getCheckpointOutputStream();
-        kgOutStream =checkpointOutputStream;
+        kgOutStream = checkpointOutputStream;
         kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
         try{
             while(mergeIterator.isValid()){
                 if(mergeIterator.isNewKeyValueState()){
                     kgOutStream = checkpointOutputStream;
                     kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
-                    kgOutView.writeShort(mergeIterator.kvStateId());
+                    kgOutView.writeInt(mergeIterator.kvStateId());
                     keyGroupRangeOffsets.setKeyGroupOffset(
                             mergeIterator.kvStateId(), checkpointOutputStream.getPos());
                 }
-                writeKeyValuePair(mergeIterator.nextkey(),mergeIterator.nextvalue(),kgOutView);
+                writeKeyValuePair(mergeIterator.nextkey(),mergeIterator.nextvalue(), kgOutView);
                 if(!mergeIterator.isIteratorValid()){
-                    kgOutView.writeShort(END_OF_KEY_GROUP_MARK);
+                    kgOutView.writeInt(END_OF_KEY_GROUP_MARK);
                     mergeIterator.switchIterator();
                 }
             }
@@ -154,9 +154,9 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
     }
 
     private void writeKVStateMetaData(DataOutputView outputView,FullSnapshotResources snapshotResources) throws IOException {
-        outputView.writeShort(snapshotResources.getMetaInfoSnapshots().size());
+        outputView.writeInt(snapshotResources.getMetaInfoSnapshots().size());
         for (StateMetaInfoSnapshot metaInfoSnapshot : snapshotResources.getMetaInfoSnapshots()) {
-            StateMetaInfoSnapshotReadersWriters.getWriter().writeStateMetaInfoSnapshot(metaInfoSnapshot,outputView);
+            StateMetaInfoSnapshotReadersWriters.getWriter().writeStateMetaInfoSnapshot(metaInfoSnapshot, outputView);
         }
     }
     private void writeRocksDBKVStateData(final RocksDBStateIterator mergeIterator,

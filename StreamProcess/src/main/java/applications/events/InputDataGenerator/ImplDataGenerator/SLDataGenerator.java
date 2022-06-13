@@ -3,6 +3,7 @@ package applications.events.InputDataGenerator.ImplDataGenerator;
 import System.FileSystem.ImplFS.LocalFileSystem;
 import System.FileSystem.Path;
 import System.tools.FastZipfGenerator;
+import System.tools.randomNumberGenerator;
 import System.util.Configuration;
 import applications.DataTypes.AbstractInputTuple;
 import applications.events.InputDataGenerator.InputDataGenerator;
@@ -27,7 +28,9 @@ import static UserApplications.CONTROL.RATIO_OF_READ;
 import static UserApplications.constants.StreamLedgerConstants.Constant.*;
 
 public class SLDataGenerator extends InputDataGenerator {
-    private final static Logger LOG= LoggerFactory.getLogger(SLDataGenerator.class);
+    private final static Logger LOG = LoggerFactory.getLogger(SLDataGenerator.class);
+    private static final long serialVersionUID = -2917472754514204127L;
+
     @Override
     public List<AbstractInputTuple> generateData(int batch) {
         return null;
@@ -45,6 +48,14 @@ public class SLDataGenerator extends InputDataGenerator {
         }
         recordNum=recordNum-Math.min(recordNum,batch);
         return batch_event;
+    }
+
+    @Override
+    public void generateEvent() {
+        for(int i = 0; i < recordNum; i++){
+            TxnEvent event= (TxnEvent) this.create_new_event(current_bid);
+            events.add(event);
+        }
     }
 
     @Override
@@ -76,6 +87,8 @@ public class SLDataGenerator extends InputDataGenerator {
                 sb.append(((DepositEvent) event).getBookEntryTransfer());//8
                 sb.append(split_exp);
                 sb.append(((DepositEvent) event).getTimestamp());
+                sb.append(split_exp);
+                sb.append(((DepositEvent) event).isAbort());
             } else if (event instanceof TransactionEvent) {
                 sb.append(((TransactionEvent) event).getBid());//0 -- bid
                 sb.append(split_exp);
@@ -100,6 +113,8 @@ public class SLDataGenerator extends InputDataGenerator {
                 sb.append(((TransactionEvent) event).getBookEntryTransfer());//10
                 sb.append(split_exp);
                 sb.append(((TransactionEvent) event).getTimestamp());
+                sb.append(split_exp);
+                sb.append(((TransactionEvent) event).isAbort());
             }
             bw.write(sb.toString() + "\n");
         }
@@ -109,8 +124,8 @@ public class SLDataGenerator extends InputDataGenerator {
     }
 
     @Override
-    public void initialize(String dataPath, int recordNum, int range, double zipSkew, Configuration config) {
-        super.initialize(dataPath,recordNum,range,zipSkew,config);
+    public void initialize(String dataPath, Configuration config) {
+        super.initialize(dataPath,config);
     }
 
     @Override
@@ -138,17 +153,15 @@ public class SLDataGenerator extends InputDataGenerator {
         randomKeys(param,keys,2);
         final int account = param.keys()[0];
         final int book = param.keys()[1];
-        final long accountsDeposit= rnd.nextLong(MAX_ACCOUNT_TRANSFER);
-        final long deposit= rnd.nextLong(MAX_BOOK_TRANSFER);
+        final long accountsDeposit = rnd.nextLong(MAX_ACCOUNT_DEPOSIT) + 500;
+        final long deposit= rnd.nextLong(MAX_BOOK_DEPOSIT) + 500;
         current_bid++;
-        return new DepositEvent(bid,
-                current_pid,
-                bid_array,
-                partition_num,
-                ACCOUNT_ID_PREFIX+account,
-                BOOK_ENTRY_ID_PREFIX+book,
-                accountsDeposit,
-                deposit);
+        if (random.nextInt(1000) < RATIO_OF_ABORT) {
+            return new DepositEvent(bid, current_pid, bid_array, partition_num, String.valueOf(account), String.valueOf(book), MAX_BALANCE, MAX_BALANCE, true);
+        } else {
+            return new DepositEvent(bid, current_pid, bid_array, partition_num, String.valueOf(account), String.valueOf(book), accountsDeposit, deposit, false);
+        }
+
     }
     private Object randomTransferEvent(long[] bid_array,long bid){
         SLParam param = new SLParam(4);
@@ -162,17 +175,10 @@ public class SLDataGenerator extends InputDataGenerator {
         final int sourceBook = param.keys()[2];
         final int targetBook = param.keys()[3];
         current_bid++;
-        return new TransactionEvent(
-                bid,
-                current_pid,
-                bid_array,
-                partition_num,
-                ACCOUNT_ID_PREFIX + sourceAcct,
-                BOOK_ENTRY_ID_PREFIX + sourceBook,
-                ACCOUNT_ID_PREFIX + targetAcct,
-                BOOK_ENTRY_ID_PREFIX + targetBook,
-                accountsTransfer,
-                transfer,
-                MIN_BALANCE);
+        if (random.nextInt(1000) < RATIO_OF_ABORT) {
+            return new TransactionEvent(bid, current_pid, bid_array, partition_num, String.valueOf(sourceAcct),  String.valueOf(sourceBook), String.valueOf(targetAcct), String.valueOf(targetBook), accountsTransfer, transfer, MAX_BALANCE,true);
+        } else {
+            return new TransactionEvent(bid, current_pid, bid_array, partition_num, String.valueOf(sourceAcct),  String.valueOf(sourceBook), String.valueOf(targetAcct), String.valueOf(targetBook), accountsTransfer, transfer, MIN_BALANCE,false);
+        }
     }
 }

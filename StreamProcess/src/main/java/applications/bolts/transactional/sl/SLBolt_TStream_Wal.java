@@ -60,7 +60,7 @@ public class SLBolt_TStream_Wal extends SLBolt_TStream{
             case 0:
                 this.AsyncRegisterPersist();
                 MeasureTools.startPost(this.thread_Id,System.nanoTime());
-                REQUEST_REQUEST_CORE();
+                REQUEST_CORE();
                 REQUEST_POST();
                 MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 this.SyncCommitLog();
@@ -93,7 +93,7 @@ public class SLBolt_TStream_Wal extends SLBolt_TStream{
         switch (FT){
             case 0:
                 MeasureTools.startPost(this.thread_Id,System.nanoTime());
-                REQUEST_REQUEST_CORE();
+                REQUEST_CORE();
                 REQUEST_POST();
                 MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 EventsHolder.clear();//clear stored events.

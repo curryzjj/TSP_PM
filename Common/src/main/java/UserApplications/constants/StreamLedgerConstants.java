@@ -36,8 +36,11 @@ public interface StreamLedgerConstants extends BaseConstants {
         int NUM_BOOK_ENTRIES = 100_000;
         String ACCOUNT_ID_PREFIX = "";//ACCT-
         String BOOK_ENTRY_ID_PREFIX = "";//BOOK-
-        long MAX_ACCOUNT_TRANSFER = 10_000;
-        long MAX_BOOK_TRANSFER = 1_000;
+        long MAX_ACCOUNT_DEPOSIT = 1000;
+        long MAX_BOOK_DEPOSIT = 1000;
+        long MAX_ACCOUNT_TRANSFER = 10;
+        long MAX_BOOK_TRANSFER = 10;
         long MIN_BALANCE = 0;
+        long MAX_BALANCE = -1;
     }
 }

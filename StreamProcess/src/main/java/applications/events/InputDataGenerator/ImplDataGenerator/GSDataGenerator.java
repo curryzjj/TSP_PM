@@ -30,11 +30,11 @@ public class GSDataGenerator extends InputDataGenerator {
 
     @Override
     public List<TxnEvent> generateEvent(int batch) {
-        List<TxnEvent> batch_event=new ArrayList<>();
+        List<TxnEvent> batch_event = new ArrayList<>();
         if(recordNum == 0){
             return null;
         }
-        for(int i=0;i<Math.min(recordNum,batch);i++){
+        for(int i = 0; i < Math.min(recordNum,batch); i++){
             MicroEvent microEvent= (MicroEvent) this.create_new_event(current_bid);
             batch_event.add(microEvent);
         }
@@ -43,15 +43,23 @@ public class GSDataGenerator extends InputDataGenerator {
     }
 
     @Override
+    public void generateEvent() {
+        for(int i = 0; i < recordNum; i++){
+            MicroEvent microEvent= (MicroEvent) this.create_new_event(current_bid);
+            events.add(microEvent);
+        }
+    }
+
+    @Override
     public void storeInput(Object input) throws IOException {
         List<TxnEvent> inputs = (List<TxnEvent>) input;
-        File file=new File(dataPath);
+        File file = new File(dataPath);
         FileWriter Fw= null;
         Fw = new FileWriter(file,true);
         BufferedWriter bw= new BufferedWriter(Fw);
         for(TxnEvent e:inputs){
-            MicroEvent microEvent= (MicroEvent) e;
-            String str=microEvent.getBid()+//0--bid long
+            MicroEvent microEvent = (MicroEvent) e;
+            String str = microEvent.getBid()+//0--bid long
                     split_exp+
                     microEvent.getPid()+//1--pid int
                     split_exp+
@@ -65,7 +73,9 @@ public class GSDataGenerator extends InputDataGenerator {
                     split_exp+
                     microEvent.READ_EVENT()+//6 is read_event boolean
                     split_exp+
-                    microEvent.getTimestamp();//7 timestamp long
+                    microEvent.getTimestamp()+
+                    split_exp+
+                    microEvent.isAbort();//7 timestamp long
             bw.write(str+"\n");
         }
         bw.flush();
@@ -74,8 +84,8 @@ public class GSDataGenerator extends InputDataGenerator {
     }
 
     @Override
-    public void initialize(String dataPath, int recordNum, int range, double zipSkew, Configuration config) {
-        super.initialize(dataPath,recordNum,range,zipSkew,config);
+    public void initialize(String dataPath, Configuration config) {
+        super.initialize(dataPath,config);
     }
 
     @Override
@@ -87,7 +97,11 @@ public class GSDataGenerator extends InputDataGenerator {
         randomKeys(param, keys, NUM_ACCESSES);
         assert !enable_states_partition|| verify(keys,current_pid, partition_num);
         current_bid++;
-        return new MicroEvent(param.getKeys(), flag, NUM_ACCESSES, bid, current_pid, p_bid, partition_num);
+        if (random.nextInt(1000) < RATIO_OF_ABORT) {
+            return new MicroEvent(param.getKeys(), flag, NUM_ACCESSES, bid, current_pid, p_bid, partition_num,true);
+        } else {
+            return new MicroEvent(param.getKeys(), flag, NUM_ACCESSES, bid, current_pid, p_bid, partition_num,false);
+        }
     }
 
     @Override

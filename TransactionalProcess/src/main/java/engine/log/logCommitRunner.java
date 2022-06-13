@@ -24,16 +24,16 @@ public final class logCommitRunner {
                            WALManager walManager,
                            CommitLogExecutionType type) {
         this.cancelStreamRegistry = cancelStreamRegistry;
-        this.walManager=walManager;
+        this.walManager = walManager;
         executionType = type;
     }
     public final RunnableFuture<LogResult> commitLog(long globalLSN, long timestamp, LogStreamFactory logStreamFactory) throws IOException {
-        long startTime=System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         if (walManager.isEmpty(globalLSN)){
             LOG.info("There is no update log to commit");
             return null;
         }
-        UpdateLogWrite updateWrite=walManager.asyncCommitLog(globalLSN,timestamp,logStreamFactory);
+        UpdateLogWrite updateWrite = walManager.asyncCommitLog(globalLSN,timestamp,logStreamFactory);
         FutureTask<LogResult> asyncCommitLogTask= new AsyncLogCommitCallable<LogResult>() {
             @Override
             protected LogResult callInternal() throws Exception {

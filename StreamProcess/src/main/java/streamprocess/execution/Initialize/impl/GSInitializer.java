@@ -1,6 +1,7 @@
 package streamprocess.execution.Initialize.impl;
 
 import System.util.Configuration;
+import applications.events.InputDataGenerator.ImplDataGenerator.GSDataGenerator;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.table.RecordSchema;
@@ -9,6 +10,8 @@ import engine.table.datatype.DataBoxImpl.IntDataBox;
 import engine.table.datatype.DataBoxImpl.StringDataBox;
 import engine.table.tableRecords.SchemaRecord;
 import engine.table.tableRecords.TableRecord;
+import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyContext;
@@ -22,21 +25,23 @@ import java.util.List;
 import static UserApplications.CONTROL.NUM_ITEMS;
 import static UserApplications.CONTROL.enable_states_partition;
 import static UserApplications.constants.GrepSumConstants.Constant.VALUE_LEN;
-import static applications.events.gs.MicroEvent.GenerateValue;
 import static utils.PartitionHelper.getPartition_interval;
 
 public class GSInitializer extends TableInitilizer{
     private static final Logger LOG = LoggerFactory.getLogger(GSInitializer.class);
     protected int partition_interval;
     protected int range_interval;
+
     public GSInitializer(Database db, double scale_factor, double theta, int partition_num, Configuration config) {
         super(db, scale_factor, theta, partition_num, config);
         partition_interval=getPartition_interval();
         range_interval = (int) Math.ceil(NUM_ITEMS / (double) config.getInt("tthread"));//NUM_ITEMS / tthread;
+        this.dataGenerator = new GSDataGenerator();
+        dataGenerator.initialize(dataRootPath,config);
     }
 
     @Override
-    public void creates_Table(Configuration config) {
+    public void creates_Table(Configuration config) throws IOException {
         if(enable_states_partition){
             for(int i = 0; i< partition_num; i++){
                 RecordSchema s = MicroTableSchema();
@@ -47,6 +52,7 @@ public class GSInitializer extends TableInitilizer{
             db.createTable(s, "MicroTable", TransactionalProcessConstants.DataBoxTypes.STRING);
         }
         db.createTableRange(1);
+        this.Prepare_input_event();
     }
     private RecordSchema MicroTableSchema() {
         List<DataBox> dataBoxes = new ArrayList<>();
@@ -101,5 +107,12 @@ public class GSInitializer extends TableInitilizer{
                 insertMicroRecord(key, value);
             }
         }
+    }
+    public static String GenerateValue(int key) {
+        return rightpad(String.valueOf(key), VALUE_LEN);
+    }
+    private static String rightpad(@NotNull String text, int length) {
+        return StringUtils.rightPad(text, length); // Returns "****foobar"
+//        return String.format("%-" + length + "." + length + "s", text);
     }
 }

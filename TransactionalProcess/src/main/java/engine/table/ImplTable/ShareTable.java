@@ -30,8 +30,8 @@ public class ShareTable extends BaseTable {
 
     @Override
     public boolean InsertRecord(TableRecord record) throws DatabaseException {
-        SchemaRecord record_ptr=record.record_;
-        assert record.record_!=null;
+        SchemaRecord record_ptr = record.record_;
+        assert record.record_ != null;
         if(primary_index_.InsertRecord(record_ptr.GetPrimaryKey(),record)){
             int records=numRecords.getAndIncrement();
             record.setID(new RowID(records));//which row

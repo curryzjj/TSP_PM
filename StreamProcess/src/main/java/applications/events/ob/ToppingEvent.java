@@ -23,8 +23,8 @@ public class ToppingEvent extends TxnEvent {
     public ToppingEvent(
             int num_access, int[] itemId,
             SplittableRandom rnd,
-            int partition_id, long[] bid_array, long bid, int number_of_partitions) {
-        super(bid, partition_id, bid_array, number_of_partitions);
+            int partition_id, long[] bid_array, long bid, int number_of_partitions,boolean isAbort) {
+        super(bid, partition_id, bid_array, number_of_partitions,isAbort);
 
         record_refs = new SchemaRecordRef[num_access];
         this.num_access = num_access;
@@ -47,8 +47,8 @@ public class ToppingEvent extends TxnEvent {
      * @param top_array
      */
     public ToppingEvent(int bid, String bid_array, int partition_id, int number_of_partitions,
-                        int num_access, String key_array, String top_array,long timestamp) {
-        super(bid, partition_id, bid_array, number_of_partitions);
+                        int num_access, String key_array, String top_array,long timestamp, boolean isAbort) {
+        super(bid, partition_id, bid_array, number_of_partitions,isAbort);
         this.num_access = num_access;
 
         record_refs = new SchemaRecordRef[num_access];
@@ -85,7 +85,11 @@ public class ToppingEvent extends TxnEvent {
     }
 
     private void set_values(int access_id, SplittableRandom rnd) {
-        itemTopUp[access_id] = rnd.nextLong(MAX_TOP_UP);
+        if (isAbort) {
+            itemTopUp[access_id] = -1;
+        } else {
+            itemTopUp[access_id] = rnd.nextLong(MAX_TOP_UP);
+        }
     }
 
     public int[] getItemId() {
@@ -96,7 +100,7 @@ public class ToppingEvent extends TxnEvent {
         return timestamp;
     }
 
-    public void setTimestamp(long timestamp) {
+    public void UpdateTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -114,5 +118,10 @@ public class ToppingEvent extends TxnEvent {
                 + "itemId=" + Arrays.toString(itemId)
                 + ", itemTopUp=" + Arrays.toString(itemTopUp)
                 + '}';
+    }
+
+    @Override
+    public ToppingEvent cloneEvent() {
+        return new ToppingEvent((int) bid, Arrays.toString(bid_array),pid,number_of_partitions,num_access,Arrays.toString(itemId),Arrays.toString(itemTopUp),timestamp,isAbort);
     }
 }

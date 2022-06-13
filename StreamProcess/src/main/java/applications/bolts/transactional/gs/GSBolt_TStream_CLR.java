@@ -2,6 +2,7 @@ package applications.bolts.transactional.gs;
 
 import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
+import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
@@ -13,6 +14,8 @@ import java.util.concurrent.ExecutionException;
 import static UserApplications.CONTROL.*;
 
 public class GSBolt_TStream_CLR extends GSBolt_TStream {
+    private static final long serialVersionUID = -4551395740059450342L;
+
     public GSBolt_TStream_CLR(int fid) {
         super(fid);
     }
@@ -36,7 +39,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                                     Marker marker = in.getMarker().clone();
                                     marker.setEpochInfo(this.epochInfo);
                                     forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                    epochInfo.Init(in.getBID());
+                                    this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
                                 } else {
                                     forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                                 }
@@ -62,7 +65,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                                     Marker marker = in.getMarker().clone();
                                     marker.setEpochInfo(this.epochInfo);
                                     forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                    epochInfo.Init(in.getBID());
+                                    this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
                                 } else {
                                     forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                                 }

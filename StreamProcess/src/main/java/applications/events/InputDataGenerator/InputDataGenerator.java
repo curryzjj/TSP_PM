@@ -5,33 +5,40 @@ import System.util.Configuration;
 import applications.DataTypes.AbstractInputTuple;
 import applications.events.TxnEvent;
 import applications.events.TxnParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
+import static System.tools.randomNumberGenerator.generateRandom;
 import static UserApplications.CONTROL.*;
 import static UserApplications.CONTROL.NUM_ITEMS;
 
 public abstract class InputDataGenerator implements Serializable {
+    private static final Logger LOG = LoggerFactory.getLogger(InputDataGenerator.class);
     private static final long serialVersionUID = 6230560242079070217L;
     /**
      * Generate data in batch and store in the input store
      * @param batch
      * @return
      */
-    private final Random random = new Random(0); // the transaction type decider
+    protected final Random random = new Random(0); // the transaction type decider
     protected long[] p_bid;//used for partition.
     protected int current_bid;
     protected int current_pid;
     protected String dataPath;
     protected int recordNum;
     protected double zipSkew;
-    protected int range;
-    protected int access_per_partition;
     protected int floor_interval;
     protected int partition_num;
     protected int partition_num_per_txn;
+    protected ArrayList<TxnEvent> events;
     //<partitionId, dependencyId>
     protected HashMap<Integer,List<Integer>> partitionDependency;
     protected final String split_exp = ";";
@@ -40,14 +47,14 @@ public abstract class InputDataGenerator implements Serializable {
     public static FastZipfGenerator partitionId_generator;
     public abstract List<AbstractInputTuple> generateData(int batch);
     public abstract List<TxnEvent> generateEvent(int batch);
+    public abstract void generateEvent();
     public abstract void storeInput(Object input) throws IOException;
     public abstract Object create_new_event(int bid);
     public abstract void close();
-    public void initialize(String dataPath, int recordNum, int range, double zipSkew, Configuration config){
-        this.recordNum = recordNum;
+    public void initialize(String dataPath, Configuration config){
+        this.recordNum = config.getInt("NUM_EVENTS");
         this.dataPath = dataPath;
-        this.zipSkew = zipSkew;
-        this.range = range;
+        this.zipSkew = config.getDouble("ZIP_SKEW");
         this.current_pid = 0;
         this.partition_num = config.getInt("partition_num");
         this.partition_num_per_txn = config.getInt("partition_num_per_txn");
@@ -57,13 +64,28 @@ public abstract class InputDataGenerator implements Serializable {
         for (int i = 0; i < partition_num; i++) {
             p_bid[i] = 0;
         }
+        events = new ArrayList<>(recordNum);
+    }
+    public void generateStream() {
+        this.generateEvent();
+    }
+    public void dumpGeneratedDataToFile() throws IOException {
+        LOG.info("Dumping transactions...");
+        File file = new File(dataPath);
+        storeInput(events);
+    }
+    public void cleanDataStructures(){
+        if (events != null) {
+            events.clear();
+        }
+        events = new ArrayList<>();
     }
 
     protected void randomKeys(TxnParam param, Set<Integer> keys, int numAccessesPerEvent){
-        int i = 0;
+        int i;
         int p_id = current_pid;
         boolean isDependency = random.nextInt(1000) < RATIO_OF_DEPENDENCY;
-        for (int access_id = 0; access_id<numAccessesPerEvent; ++access_id){
+        for (int access_id = 0; access_id < numAccessesPerEvent; ++access_id){
             FastZipfGenerator generator;
             if(enable_states_partition){
                 generator = partitioned_store[p_id];
@@ -77,13 +99,14 @@ public abstract class InputDataGenerator implements Serializable {
             keys.add(res);
             param.set_keys(access_id,res);
             if (isDependency) {
-                i = random.nextInt(this.partitionDependency.get(current_pid).size());
+                i = generateRandom(1, this.partitionDependency.get(current_pid).size() -1);
+                //i = random.nextInt(this.partitionDependency.get(current_pid).size());
                 p_id = this.partitionDependency.get(current_pid).get(i);
             }
         }
     }
     protected boolean next_decision() {
-        return random.nextInt(100) < RATIO_OF_READ;
+        return random.nextInt(1000) < RATIO_OF_READ;
     }
     protected void createDependency(){
         this.partitionDependency = new HashMap<>();
@@ -118,7 +141,7 @@ public abstract class InputDataGenerator implements Serializable {
         }else{
             shared_store = new FastZipfGenerator(NUM_ITEMS, zipSkew,0);
         }
-        partitionId_generator = new FastZipfGenerator(NUM_ITEMS,zipSkew,0);
+        partitionId_generator = new FastZipfGenerator(NUM_ITEMS, zipSkew,0);
     }
     public int key_to_partition(int key) {
         return (int) Math.floor((double) key / floor_interval);

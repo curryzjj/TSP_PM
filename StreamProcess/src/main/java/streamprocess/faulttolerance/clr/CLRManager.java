@@ -36,7 +36,7 @@ public class CLRManager extends FTManager {
 
     private Path Current_Path;
     private File SnapshotFile;
-    private HashMap<Long,SnapshotResult> snapshotResults = new HashMap<>();
+    private HashMap<Long, SnapshotResult> snapshotResults = new HashMap<>();
     private ExecutionGraph g;
     private Database db;
     private Configuration conf;
@@ -48,8 +48,8 @@ public class CLRManager extends FTManager {
     public CLRManager(ExecutionGraph g,Configuration conf,Database db){
         this.callFaultTolerance = new ConcurrentHashMap<>();
         this.callRecovery = new ConcurrentHashMap<>();
-        this.lock=new Object();
-        this.conf=conf;
+        this.lock = new Object();
+        this.conf = conf;
         this.g=g;
         this.db=db;
         this.close=false;
@@ -71,7 +71,7 @@ public class CLRManager extends FTManager {
         if (parent != null && !localFS.mkdirs(parent)) {
             throw new IOException("Mkdirs failed to create " + parent);
         }
-        SnapshotFile =localFS.pathToFile(Current_Path);
+        SnapshotFile = localFS.pathToFile(Current_Path);
         if(!needRecovery){
             LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(SnapshotFile);
             DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
@@ -123,7 +123,7 @@ public class CLRManager extends FTManager {
                     } else {
                         RecoveryDependency recoveryDependency = this.g.getSink().ackRecoveryDependency();
                         alignOffset = recoveryDependency.currentMarkId;
-                        recoveryIds = recoveryDependency.getDependencyByExecutorId(this.db.getTxnProcessingEngine().getRecoveryRangeId());
+                        recoveryIds = recoveryDependency.getDependencyByPatitionId(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     }
                     //undo to align offset
                     if (enable_align_wait) {
@@ -132,7 +132,7 @@ public class CLRManager extends FTManager {
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),recoveryIds, alignOffset);
                     this.db.recoveryFromTargetSnapshot(lastSnapshotResult,recoveryIds);
                     this.db.getTxnProcessingEngine().isTransactionAbort=false;
-                    LOG.debug("Reload state complete!");
+                    LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     synchronized (lock){
                         while (callRecovery.containsValue(NULL)){
                             lock.wait();

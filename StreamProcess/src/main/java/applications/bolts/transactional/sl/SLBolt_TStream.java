@@ -4,7 +4,6 @@ import applications.events.SL.TransactionEvent;
 import applications.events.SL.TransactionResult;
 import applications.events.TxnEvent;
 import engine.Exception.DatabaseException;
-import engine.table.datatype.DataBox;
 import engine.transaction.TxnContext;
 import engine.transaction.function.Condition;
 import engine.transaction.function.DEC;
@@ -12,21 +11,26 @@ import engine.transaction.function.INC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
+import streamprocess.controller.output.Determinant.InsideDeterminant;
+import streamprocess.controller.output.Determinant.OutsideDeterminant;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
+import streamprocess.faulttolerance.clr.CausalService;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
+import static UserApplications.CONTROL.*;
 
 public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG= LoggerFactory.getLogger(SLBolt_TStream.class);
-    List<TxnEvent> EventsHolder=new ArrayList<>();
+    List<TxnEvent> EventsHolder = new ArrayList<>();
     public SLBolt_TStream(int fid) {
         super(LOG, fid);
-        this.configPrefix="tpsl";
-        status=new Status();
+        this.configPrefix = "tpsl";
+        status = new Status();
         this.setStateful();
     }
 
@@ -35,82 +39,218 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         TxnContext txnContext = new TxnContext(thread_Id, this.fid,in.getBID());
         TxnEvent event = (TxnEvent) in.getValue(0);
         if (event instanceof DepositEvent) {
-            DEPOSITE_REQUEST_CONSTRUCT((DepositEvent) event, txnContext,false);
+            if (enable_determinants_log) {
+                DeterminantDepositRequestConstruct((DepositEvent) event, txnContext);
+            } else {
+                Deposit_Request_Construct((DepositEvent) event, txnContext,false);
+            }
         } else {
-            TRANSFER_REQUEST_CONSTRUCT((TransactionEvent) event, txnContext,false);
+            if (enable_determinants_log) {
+                DeterminantTransferRequestConstruct((TransactionEvent) event, txnContext);
+            } else {
+                TransferRequestConstruct((TransactionEvent) event, txnContext,false);
+            }
         }
     }
-    protected boolean DEPOSITE_REQUEST_CONSTRUCT(DepositEvent event, TxnContext txnContext,boolean isReConstruct) throws DatabaseException, InterruptedException {
-        boolean flag=transactionManager.Asy_ModifyRecord(txnContext,"accounts",event.getAccountId(),new INC(event.getAccountTransfer()));
+    protected boolean Deposit_Request_Construct(DepositEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
+        boolean flag = transactionManager.Asy_ModifyRecord(txnContext,"T_accounts",event.getAccountId(),new INC(event.getAccountTransfer()));
         if(!flag){
-            collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
-            return flag;
+            if (enable_determinants_log) {
+                InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
+                insideDeterminant.setAbort(true);
+                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+            } else {
+                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,null, event.getTimestamp());//the tuple is finished.//the tuple is abort.
+            }
+            return false;
         }
-        transactionManager.Asy_ModifyRecord(txnContext,"bookEntries",event.getBookEntryId(),new INC(event.getBookEntryTransfer()));
+        transactionManager.Asy_ModifyRecord(txnContext,"T_assets",event.getBookEntryId(),new INC(event.getBookEntryTransfer()));
         if(!isReConstruct){
             EventsHolder.add(event);
+            if (enable_recovery_dependency) {
+                String[] keys = new String[]{event.getAccountId(), event.getBookEntryId()};
+                this.updateRecoveryDependency(keys,true);
+            }
         }
-        return flag;
+        return true;
     }
-    protected boolean TRANSFER_REQUEST_CONSTRUCT(TransactionEvent event, TxnContext txnContext,boolean isReConstruct) throws DatabaseException, InterruptedException {
-        String[] srcTable = new String[]{"accounts", "bookEntries"};
-        String[] srcID = new String[]{event.getSourceAccountId(), event.getSourceBookEntryId()};
-        boolean flag=transactionManager.Asy_ModifyRecord_Read(txnContext,
-                "accounts",
-                event.getSourceAccountId()
-                , event.src_account_value,//to be fill up.
+    protected boolean TransferRequestConstruct(TransactionEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
+        String[] accTable = new String[]{"T_accounts"};
+        String[] astTable = new String[]{"T_assets"};
+        String[] accID = new String[]{event.getSourceAccountId()};
+        String[] astID = new String[]{event.getSourceBookEntryId()};
+        boolean flag = transactionManager.Asy_ModifyRecord_Read(txnContext,
+                "T_accounts",
+                event.getSourceAccountId(),
+                event.src_account_value,//to be fill up.
                 new DEC(event.getAccountTransfer()),
-                srcTable, srcID,//condition source, condition id.
+                accTable,
+                accID,//condition source, condition id.
                 new Condition(
                         event.getMinAccountBalance(),
-                        event.getAccountTransfer(),
-                        event.getBookEntryTransfer()),
+                        event.getAccountTransfer()),
                 event.success);
         if(!flag){
-            collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
-            return flag;
+            if (enable_determinants_log) {
+                InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
+                insideDeterminant.setAbort(true);
+                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+            } else {
+                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
+            }
+            return false;
         }
         transactionManager.Asy_ModifyRecord(txnContext,
-                "bookEntries", event.getSourceBookEntryId()
-                , new DEC(event.getBookEntryTransfer()), srcTable, srcID,
+                "T_assets",
+                event.getSourceBookEntryId(),
+                new DEC(event.getBookEntryTransfer()),
+                astTable,
+                astID,
                 new Condition(event.getMinAccountBalance(),
-                        event.getAccountTransfer(), event.getBookEntryTransfer()),
+                        event.getBookEntryTransfer()),
                 event.success);   //asynchronously return.
-
         transactionManager.Asy_ModifyRecord_Read(txnContext,
-                "accounts",
-                event.getTargetAccountId()
-                , event.dst_account_value,//to be fill up.
+                "T_accounts",
+                event.getTargetAccountId(),
+                event.src_account_value,//to be fill up.
                 new INC(event.getAccountTransfer()),
-                srcTable, srcID//condition source, condition id.
-                , new Condition(event.getMinAccountBalance(),
-                        event.getAccountTransfer(), event.getBookEntryTransfer()),
-                event.success);          //asynchronously return.
-
-        transactionManager.Asy_ModifyRecord(txnContext,
-                "bookEntries",
-                event.getTargetBookEntryId()
-                , new INC(event.getBookEntryTransfer()), srcTable, srcID,
+                accTable,
+                accID,//condition source, condition id.
                 new Condition(event.getMinAccountBalance(),
-                        event.getAccountTransfer(), event.getBookEntryTransfer()),
+                        event.getAccountTransfer()),
+                event.success);          //asynchronously return.
+        transactionManager.Asy_ModifyRecord_Read(txnContext,
+                "T_assets",
+                event.getTargetBookEntryId(),
+                event.src_asset_value,
+                new INC(event.getBookEntryTransfer()),
+                astTable,
+                astID,
+                new Condition(event.getMinAccountBalance(),
+                        event.getBookEntryTransfer()),
                 event.success);   //asynchronously return.
         if(!isReConstruct){
             EventsHolder.add(event);
+            if (enable_recovery_dependency) {
+                String[] keys = new String[]{event.getSourceAccountId(),event.getTargetAccountId(),event.getSourceBookEntryId(), event.getTargetBookEntryId()};
+                this.updateRecoveryDependency(keys,true);
+            }
         }
-        return flag;
+        return true;
     }
+
+    protected void DeterminantDepositRequestConstruct(DepositEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
+        if (event.getBid() < recoveryId) {
+            for (CausalService c:this.causalService.values()) {
+                if (c.abortEvent.contains(event.getBid())){
+                    return;
+                }
+            }
+            if (this.recoveryPartitionIds.contains(this.getPartitionId(event.getAccountId()))) {
+                transactionManager.Asy_ModifyRecord(txnContext,"T_accounts",event.getAccountId(),new INC(event.getAccountTransfer()));
+            }
+            if (this.recoveryPartitionIds.contains(this.getPartitionId(event.getBookEntryId()))) {
+                transactionManager.Asy_ModifyRecord(txnContext,"T_assets",event.getBookEntryId(),new INC(event.getBookEntryTransfer()));
+            }
+        } else {
+            Deposit_Request_Construct(event, txnContext, false);
+        }
+    }
+
+    protected void DeterminantTransferRequestConstruct(TransactionEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
+        if (event.getBid() < recoveryId) {
+            for (CausalService c:this.causalService.values()) {
+                if (c.abortEvent.contains(event.getBid())){
+                    return;
+                }
+            }
+            String[] accTable = new String[]{"T_accounts"};
+            String[] astTable = new String[]{"T_assets"};
+            String[] accID = new String[]{event.getSourceAccountId()};
+            String[] astID = new String[]{event.getSourceBookEntryId()};
+            if (this.recoveryPartitionIds.contains(this.getPartitionId(event.getSourceAccountId()))) {
+                transactionManager.Asy_ModifyRecord(txnContext,
+                        "T_accounts",
+                        event.getSourceAccountId(),
+                        new DEC(event.getAccountTransfer()),
+                        accTable,
+                        accID,//condition source, condition id.
+                        new Condition(
+                                event.getMinAccountBalance(),
+                                event.getAccountTransfer()),
+                        event.success);
+            }
+            if (this.recoveryPartitionIds.contains(this.getPartitionId(event.getSourceBookEntryId()))) {
+                transactionManager.Asy_ModifyRecord(txnContext,
+                        "T_assets",
+                        event.getSourceBookEntryId(),
+                        new DEC(event.getBookEntryTransfer()),
+                        astTable,
+                        astID,
+                        new Condition(event.getMinAccountBalance(),
+                                event.getBookEntryTransfer()),
+                        event.success);   //asynchronously return.
+            }
+            if (this.recoveryPartitionIds.contains(this.getPartitionId(event.getTargetAccountId()))) {
+                transactionManager.Asy_ModifyRecord_Read(txnContext,
+                        "T_accounts",
+                        event.getTargetAccountId(),
+                        event.src_account_value,//to be fill up.
+                        new INC(event.getAccountTransfer()),
+                        accTable,
+                        accID,//condition source, condition id.
+                        new Condition(event.getMinAccountBalance(),
+                                event.getAccountTransfer()),
+                        event.success);
+            }
+            if (this.recoveryPartitionIds.contains(this.getPartitionId(event.getTargetBookEntryId()))) {
+                transactionManager.Asy_ModifyRecord_Read(txnContext,
+                        "T_assets",
+                        event.getTargetBookEntryId(),
+                        event.src_asset_value,
+                        new INC(event.getBookEntryTransfer()),
+                        astTable,
+                        astID,
+                        new Condition(event.getMinAccountBalance(),
+                                event.getBookEntryTransfer()),
+                        event.success);
+            }
+        } else {
+            TransferRequestConstruct(event, txnContext, false);
+        }
+    }
+
     protected void AsyncReConstructRequest() throws InterruptedException, DatabaseException {
-        Iterator<TxnEvent> it=EventsHolder.iterator();
+        Iterator<TxnEvent> it = EventsHolder.iterator();
         while (it.hasNext()) {
             TxnEvent event = it.next();
             TxnContext txnContext = new TxnContext(thread_Id, this.fid, event.getBid());
             if(event instanceof DepositEvent){
-                if(!DEPOSITE_REQUEST_CONSTRUCT((DepositEvent) event,txnContext,true)){
+                if(!Deposit_Request_Construct((DepositEvent) event,txnContext,true)){
                     it.remove();
                 }
             }else{
-                if(!TRANSFER_REQUEST_CONSTRUCT((TransactionEvent) event,txnContext,true)){
+                if(!TransferRequestConstruct((TransactionEvent) event,txnContext,true)){
                     it.remove();
+                }
+            }
+        }
+    }
+
+    protected void CommitOutsideDeterminant(long markId) throws DatabaseException, InterruptedException {
+        if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
+            for (CausalService c:this.causalService.values()) {
+                for (OutsideDeterminant outsideDeterminant:c.outsideDeterminant) {
+                    if (outsideDeterminant.outSideEvent.getBid() < markId) {
+                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,outsideDeterminant.outSideEvent.getBid());
+                        if (outsideDeterminant.outSideEvent instanceof DepositEvent) {
+                            DeterminantDepositRequestConstruct((DepositEvent) outsideDeterminant.outSideEvent, txnContext);
+                        } else {
+                            DeterminantTransferRequestConstruct((TransactionEvent) outsideDeterminant.outSideEvent, txnContext);
+                        }
+                    } else {
+                        break;
+                    }
                 }
             }
         }
@@ -118,17 +258,37 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
 
     @Override
     protected void REQUEST_POST() throws InterruptedException {
-        for (TxnEvent event:EventsHolder){
-            if(event instanceof TransactionEvent){
-                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, event.getTimestamp(),((TransactionEvent) event).transaction_result);//the tuple is finished.
-            }else{
-                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, event.getTimestamp());//the tuple is finished.
+        //deduplication at upstream
+        if (this.markerId > recoveryId) {
+            for (TxnEvent event:EventsHolder){
+                OutsideDeterminant outsideDeterminant = null;
+                if (enable_determinants_log) {
+                    outsideDeterminant = new OutsideDeterminant();
+                    outsideDeterminant.setOutSideEvent(event);
+                    String[] keys;
+                    if(event instanceof TransactionEvent){
+                        keys = new String[]{((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent)event).getSourceAccountId(),
+                                ((TransactionEvent)event).getTargetAccountId(), ((TransactionEvent)event).getTargetBookEntryId()};
+                    }else{
+                        keys = new String[]{((DepositEvent)event).getAccountId(), ((DepositEvent)event).getBookEntryId()};
+                    }
+                    for (String id : keys) {
+                        if (this.getPartitionId(id) != event.getPid()) {
+                            outsideDeterminant.setTargetPartitionId(this.getPartitionId(id));
+                        }
+                    }
+                }
+                if (outsideDeterminant!=null && !outsideDeterminant.targetPartitionIds.isEmpty()) {
+                    collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished.
+                } else {
+                    collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
+                }
             }
         }
     }
 
     @Override
-    protected void REQUEST_REQUEST_CORE() throws InterruptedException {
+    protected void REQUEST_CORE() throws InterruptedException {
         for (TxnEvent event:EventsHolder){
             if(event instanceof TransactionEvent){
                 TRANSFER_REQUEST_CORE((TransactionEvent) event);
@@ -139,14 +299,9 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     }
 
     private void TRANSFER_REQUEST_CORE(TransactionEvent event) throws InterruptedException {
-        event.transaction_result = new TransactionResult(event, event.success[0],event.src_account_value.getRecord().getValues().get(1).getLong(), event.dst_account_value.getRecord().getValues().get(1).getLong());
+        event.transaction_result = new TransactionResult(event, event.success[0],event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
     }
     protected void DEPOSITE_REQUEST_CORE(DepositEvent event) {
-//        List<DataBox> values = event.account_value.getRecord().getValues();
-//        long newAccountValue = values.get(1).getLong() + event.getAccountTransfer();
-//        values.get(1).setLong(newAccountValue);
-//        List<DataBox> asset_values = event.asset_value.getRecord().getValues();
-//        long newAssetValue = values.get(1).getLong() + event.getBookEntryTransfer();
-//        asset_values.get(1).setLong(newAssetValue);
+
     }
 }

@@ -22,6 +22,8 @@ import streamprocess.execution.Initialize.impl.GSInitializer;
 import streamprocess.execution.runtime.tuple.Fields;
 import utils.SpinLock;
 
+import java.io.IOException;
+
 import static UserApplications.CONTROL.*;
 import static UserApplications.constants.GrepSumConstants.Conf.Executor_Threads;
 import static UserApplications.constants.GrepSumConstants.PREFIX;
@@ -93,11 +95,11 @@ public class GS_txn extends TransactionalTopology {
     }
 
     @Override
-    public TableInitilizer createDB(SpinLock[] spinlock) {
+    public TableInitilizer createDB(SpinLock[] spinlock) throws IOException {
         double scale_factor = config.getDouble("scale_factor", 1);
         double theta = config.getDouble("theta", 1);
-        setPartition_interval((int) (Math.ceil(NUM_ITEMS / (double) partition_num)), partition_num);
-        TableInitilizer ini = new GSInitializer(db, scale_factor, theta, partition_num, config);
+        setPartition_interval((int) (Math.ceil(NUM_ITEMS / (double) PARTITION_NUM)), PARTITION_NUM);
+        TableInitilizer ini = new GSInitializer(db, scale_factor, theta, PARTITION_NUM, config);
         ini.creates_Table(config);
         return ini;
     }

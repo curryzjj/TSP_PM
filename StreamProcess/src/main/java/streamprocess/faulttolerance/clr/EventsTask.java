@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static UserApplications.CONTROL.partition_num;
+import static UserApplications.CONTROL.PARTITION_NUM;
 /**
  * One task access the shared state, tasks may influence each other
  * So, we combine the tasks in one EventTask
@@ -23,7 +23,7 @@ public class EventsTask implements Serializable {
         taskQueues=new ConcurrentHashMap<>();
         bidQueues = new ConcurrentHashMap<>();
         computationLogicsQueues =new ConcurrentLinkedQueue<ComputationLogic>();
-        for (int i=0;i<partition_num;i++){
+        for (int i = 0; i< PARTITION_NUM; i++){
             taskQueues.put(i,new ConcurrentLinkedQueue<>());
             bidQueues.put(i,new ConcurrentLinkedQueue<>());
         }
@@ -36,7 +36,7 @@ public class EventsTask implements Serializable {
     }
     public void addComputationLogic(List<ComputationLogic> logics){
         for (ComputationLogic logic:logics){
-            for (int i=0;i<partition_num;i++){
+            for (int i = 0; i< PARTITION_NUM; i++){
                 if (!logic.haveTaskOnPartition(i)){
                     this.bidQueues.get(i).add(logic.getBid());
                 }

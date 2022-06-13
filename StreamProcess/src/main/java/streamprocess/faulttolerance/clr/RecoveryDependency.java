@@ -26,6 +26,7 @@ public class RecoveryDependency {
             List<Integer> dependencyId = new ArrayList<>(lastDependency.get(id));
             this.recoveryDependency.put(id,dependencyId);
         }
+        this.currentMarkId = currentMarkId;
     }
     public ConcurrentHashMap<Integer, List<Integer>> getRecoveryDependency(){
         return this.recoveryDependency;
@@ -49,9 +50,9 @@ public class RecoveryDependency {
             }
         }
     }
-    public List<Integer> getDependencyByExecutorId(List<Integer> targetIds){
-        List<Integer> dependencyIds = new ArrayList<>(targetIds);
-        for (int id : dependencyIds) {
+    public List<Integer> getDependencyByPatitionId(List<Integer> targetIds){
+        List<Integer> dependencyIds = new ArrayList<>();
+        for (int id : targetIds) {
             dependencyIds.addAll(this.recoveryDependency.get(id));
         }
         return dependencyIds;

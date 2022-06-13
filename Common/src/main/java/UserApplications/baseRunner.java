@@ -78,7 +78,7 @@ public abstract class baseRunner {
 
     //Workload Configuration
     @Parameter(names = {"--Arrival_Control"}, description = "is Arrival_Control", required = false)
-    public int Arrival_Control = 0;
+    public int Arrival_Control = 1;
     @Parameter(names = {"--targetHz"}, description = "Arrive rate(events / s)", required = false)
     public double targetHz = 200000.0;
     @Parameter(names = {"--NUM_ITEMS"}, description = "Number of items in the table", required = false)
@@ -94,7 +94,13 @@ public abstract class baseRunner {
     @Parameter(names = {"--ZIP_SKEW"}, description = "ZIP_SKEW", required = false)
     public double ZIP_SKEW = 0.4;
     @Parameter(names = {"--RATIO_OF_READ"}, description = "RATIO_OF_READ", required = false)
-    public double RATIO_OF_READ = 0.4;
+    public int RATIO_OF_READ = 750;
+    @Parameter(names = {"--RATIO_OF_ABORT"}, description = "RATIO_OF_ABORT", required = false)
+    public int RATIO_OF_ABORT = 100;
+    @Parameter(names = {"--RATIO_OF_DEPENDENCY"}, description = "RATIO_OF_DEPENDENCY", required = false)
+    public int RATIO_OF_DEPENDENCY = 1000;
+    @Parameter(names = {"--complexity"}, description = "complexity", required = false)
+    public int complexity = 100000;
 
     //System Configuration
     @Parameter(names = {"--tthreads"}, description = "parallelism", required = false)
@@ -107,6 +113,10 @@ public abstract class baseRunner {
     public int batch_number_per_wm = 5000;
     @Parameter(names = {"--isParallel"}, description = "isParallel to store", required = false)
     public int isParallel = 0;
+    @Parameter(names = {"--spoutThread"}, description = "Number of spout", required = false)
+    public int spoutThread = 1;
+    @Parameter(names = {"--spoutThread"}, description = "Number of sink", required = false)
+    public int sinkThread = 1;
 
     //Algorithm Configuration
     @Parameter(names = {"--enable_time_Interval"}, description = "time interval or number interval", required = false)
@@ -120,10 +130,10 @@ public abstract class baseRunner {
 
     public  baseRunner() {
         if(OsUtils.isMac()){
-            CFG_PATH = Mac_Project_Path+"/Common/src/main/resources/config/%s.properties";
+            CFG_PATH = Mac_Project_Path + "/Common/src/main/resources/config/%s.properties";
             metric_path = Mac_Measure_Path;
         }else{
-            CFG_PATH = Node22_Project_Path+"/Common/src/main/resources/config/%s.properties";
+            CFG_PATH = Node22_Project_Path + "/Common/src/main/resources/config/%s.properties";
             metric_path = Node22_Measure_Path;
         }
     }
@@ -146,6 +156,7 @@ public abstract class baseRunner {
         config.put("linked", linked);
         config.put("shared",shared);
         config.put("common",common);
+        config.put("batch",1);
 
 
         config.put("microbenchmark", microbenchmark);
@@ -178,11 +189,16 @@ public abstract class baseRunner {
         config.put("partition_num_per_txn",partition_num_per_txn);
         config.put("ZIP_SKEW",ZIP_SKEW);
         config.put("RATIO_OF_READ",RATIO_OF_READ);
+        config.put("RATIO_OF_ABORT",RATIO_OF_ABORT);
+        config.put("RATIO_OF_DEPENDENCY",RATIO_OF_DEPENDENCY);
+        config.put("complexity",complexity);
         //System Configuration
         config.put("tthreads",tthreads);
         config.put("timeSliceLengthMs",timeSliceLengthMs);
         config.put("input_store_batch",input_store_batch);
         config.put("batch_number_per_wm",batch_number_per_wm);
+        config.put("spoutThread",spoutThread);
+        config.put("sinkThread",sinkThread);
         if (isParallel == 1){
             config.put("isParallel",true);
         } else {

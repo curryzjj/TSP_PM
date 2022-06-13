@@ -3,7 +3,6 @@ package streamprocess.components.operators.base;
 import System.constants.BaseConstants;
 import System.util.ClassLoaderUtils;
 import System.util.Configuration;
-import UserApplications.CONTROL;
 import applications.sink.formatter.BasicFormatter;
 import applications.sink.formatter.Formatter;
 import org.slf4j.Logger;
@@ -33,7 +32,7 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
     //<MarkerId,RD>
     public ConcurrentHashMap<Long, RecoveryDependency> recoveryDependency = new ConcurrentHashMap<>();
     public long currentMarkerId = 0;
-    //<UpstreamId,CausalService>
+    //<PartitionId, CausalService>
     public ConcurrentHashMap<Integer, CausalService> causalService = new ConcurrentHashMap<>();
     //<UpstreamId,bufferQueue>
     public HashMap<Integer, Queue<Tuple>> bufferedTuples = new HashMap<>();
@@ -65,11 +64,13 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
         for (String stream:this.executor.operator.getParents().keySet()) {
             for (TopologyComponent topologyComponent:this.executor.operator.getParentsOfStream(stream).keySet()) {
                 for (int id:topologyComponent.getExecutorIDList()) {
-                    if (enable_determinants_log) {
-                        this.causalService.put(id,new CausalService());
-                    }
                     this.bufferedTuples.put(id, new ArrayDeque<>());
                 }
+            }
+        }
+        if (enable_determinants_log) {
+            for (int i = 0; i < config.getInt("partition_num"); i++) {
+                this.causalService.put(i, new CausalService());
             }
         }
     }
@@ -80,7 +81,7 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
             if (recoveryDependency.get(currentMarkerId) != null) {
                 RD = new RecoveryDependency(this.recoveryDependency.get(currentMarkerId).getRecoveryDependency(),markerId);
             } else {
-                RD = new RecoveryDependency(partition_num,markerId);
+                RD = new RecoveryDependency(PARTITION_NUM, markerId);
             }
             this.recoveryDependency.put(markerId,RD);
         }
@@ -89,7 +90,7 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
     @Override
     public void cleanEpoch(long offset) {
         if (enable_recovery_dependency) {
-            RecoveryDependency RD = new RecoveryDependency(partition_num, this.currentMarkerId);
+            RecoveryDependency RD = new RecoveryDependency(PARTITION_NUM, this.currentMarkerId);
             this.recoveryDependency.put(currentMarkerId, RD);
         } else if (enable_determinants_log) {
            for (CausalService causalService:this.causalService.values()) {

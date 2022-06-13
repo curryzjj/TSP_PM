@@ -5,22 +5,16 @@ import engine.table.datatype.DataBox;
 import engine.table.tableRecords.SchemaRecordRef;
 import engine.table.tableRecords.TableRecordRef;
 
+import java.util.Arrays;
 import java.util.List;
 
+import static UserApplications.constants.StreamLedgerConstants.Constant.MAX_BALANCE;
 import static UserApplications.constants.StreamLedgerConstants.Constant.MIN_BALANCE;
 
 public class TransactionEvent extends TxnEvent {
     //embeded state.
     public volatile SchemaRecordRef src_account_value = new SchemaRecordRef();
-    public volatile SchemaRecordRef dst_account_value = new SchemaRecordRef();
     public volatile SchemaRecordRef src_asset_value = new SchemaRecordRef();
-    public volatile SchemaRecordRef dst_asset_value = new SchemaRecordRef();
-
-
-    public volatile TableRecordRef src_account_values = new TableRecordRef();
-    public volatile TableRecordRef dst_account_values = new TableRecordRef();
-    public volatile TableRecordRef src_asset_values = new TableRecordRef();
-    public volatile TableRecordRef dst_asset_values = new TableRecordRef();
 
     public TransactionResult transaction_result;
 
@@ -44,9 +38,9 @@ public class TransactionEvent extends TxnEvent {
             String targetBookEntryId,
             long accountTransfer,
             long bookEntryTransfer,
-            long minAccountBalance) {
-        super(bid, partition_id, bid_array, number_of_partitions);
-
+            long minAccountBalance,
+            boolean isAbort) {
+        super(bid, partition_id, bid_array, number_of_partitions,isAbort);
         this.sourceAccountId = sourceAccountId;
         this.targetAccountId = targetAccountId;
         this.sourceBookEntryId = sourceBookEntryId;
@@ -54,7 +48,7 @@ public class TransactionEvent extends TxnEvent {
         this.accountTransfer = accountTransfer;
         this.bookEntryTransfer = bookEntryTransfer;
         this.minAccountBalance = minAccountBalance;
-        this.timestamp=System.nanoTime();
+        this.timestamp = System.nanoTime();
     }
 
     public TransactionEvent(int bid, int partition_id, String bid_array, int num_of_partition,
@@ -63,17 +57,23 @@ public class TransactionEvent extends TxnEvent {
                             String targetAccountId,
                             String targetBookEntryId,
                             long accountTransfer,
-                            long bookEntryTransfer,long timestamp) {
+                            long bookEntryTransfer,
+                            long timestamp,
+                            boolean isAbort) {
 
-        super(bid, partition_id, bid_array, num_of_partition);
+        super(bid, partition_id, bid_array, num_of_partition,isAbort);
         this.sourceAccountId = sourceAccountId;
         this.targetAccountId = targetAccountId;
         this.sourceBookEntryId = sourceBookEntryId;
         this.targetBookEntryId = targetBookEntryId;
         this.accountTransfer = accountTransfer;
         this.bookEntryTransfer = bookEntryTransfer;
-        this.minAccountBalance = MIN_BALANCE;
-        this.timestamp=timestamp;
+        if (isAbort) {
+            this.minAccountBalance = MAX_BALANCE;
+        } else {
+            this.minAccountBalance = MIN_BALANCE;
+        }
+        this.timestamp = timestamp;
     }
 
     public String getSourceAccountId() {
@@ -105,24 +105,6 @@ public class TransactionEvent extends TxnEvent {
         return minAccountBalance;
     }
 
-
-    public List<DataBox> getUpdatedSourceBalance() {
-        return null;
-    }
-
-    public List<DataBox> getUpdatedTargetBalance() {
-        return null;
-    }
-
-    public List<DataBox> getUpdatedSourceAsset_value() {
-        return null;
-    }
-
-    public List<DataBox> getUpdatedTargetAsset_value() {
-        return null;
-    }
-
-
     // ------------------------------------------------------------------------
     //  miscellaneous
     // ------------------------------------------------------------------------
@@ -138,5 +120,10 @@ public class TransactionEvent extends TxnEvent {
                 + ", bookEntryTransfer=" + bookEntryTransfer
                 + ", minAccountBalance=" + minAccountBalance
                 + '}';
+    }
+
+    @Override
+    public TransactionEvent cloneEvent() {
+        return new TransactionEvent((int)bid,pid, Arrays.toString(bid_array),number_of_partitions,sourceAccountId,sourceBookEntryId,targetAccountId,targetBookEntryId,accountTransfer,bookEntryTransfer,timestamp,isAbort);
     }
 }

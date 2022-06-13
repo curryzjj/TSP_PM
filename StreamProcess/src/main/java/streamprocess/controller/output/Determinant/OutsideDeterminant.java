@@ -12,14 +12,14 @@ import java.util.List;
 public class OutsideDeterminant implements Serializable {
     private static final long serialVersionUID = 1697109885782459412L;
     public TxnEvent outSideEvent;
-    public List<Integer> targetIds = new ArrayList<>();
+    public List<Integer> targetPartitionIds = new ArrayList<>();
     public void setOutSideEvent(TxnEvent outSideEvent) {
         this.outSideEvent = outSideEvent;
     }
-    public void setTargetId(int targetIds) {
-        if (this.targetIds.contains(targetIds)){
+    public void setTargetPartitionId(int targetIds) {
+        if (this.targetPartitionIds.contains(targetIds)){
             return;
         }
-        this.targetIds.add(targetIds);
+        this.targetPartitionIds.add(targetIds);
     }
 }

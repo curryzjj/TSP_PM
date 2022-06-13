@@ -58,7 +58,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
             case 0:
                 this.AsyncRegisterPersist();
                 MeasureTools.startPost(this.thread_Id,System.nanoTime());
-                REQUEST_REQUEST_CORE();
+                REQUEST_CORE();
                 REQUEST_POST();
                 MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 this.SyncCommitLog();
@@ -91,7 +91,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
         switch (FT){
             case 0:
                 MeasureTools.startPost(this.thread_Id,System.nanoTime());
-                REQUEST_REQUEST_CORE();
+                REQUEST_CORE();
                 /* When the transaction is successful, the data can be pre-commit to the outside world */
                 REQUEST_POST();
                 MeasureTools.finishPost(this.thread_Id,System.nanoTime());

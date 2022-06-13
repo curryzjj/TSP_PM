@@ -61,8 +61,8 @@ public class StorageManager extends AbstractStorageManager {
         if (tables.containsKey(tableName)) {
             throw new DatabaseException("Table name already exists");
         }
-        tables.put(tableName, new ShareTable(s,tableName,true));//here we decide which table to use.
-        this.RegisterState(tableName,s);
+        tables.put(tableName, new ShareTable(s, tableName,true));//here we decide which table to use.
+        this.RegisterState(tableName, s);
         table_count++;
     }
     public synchronized void cleanTable(String tableName) throws IOException {
@@ -124,10 +124,10 @@ public class StorageManager extends AbstractStorageManager {
         BaseTable tab = getTable(tableName);
         tab.InsertRecord(record);
     }
-    public void RegisterState(String tablename,RecordSchema r){
-        RegisteredKeyValueStateBackendMetaInfo MetaInfo=new RegisteredKeyValueStateBackendMetaInfo(TransactionalProcessConstants.BackendStateType.KEY_VALUE,tablename,r);
-        InMemoryKvStateInfo inMemoryKvStateInfo=new InMemoryKvStateInfo(MetaInfo);
-        this.kvStateInformation.put(tablename,inMemoryKvStateInfo);
+    public void RegisterState(String tableName,RecordSchema r){
+        RegisteredKeyValueStateBackendMetaInfo MetaInfo = new RegisteredKeyValueStateBackendMetaInfo(TransactionalProcessConstants.BackendStateType.KEY_VALUE, tableName, r);
+        InMemoryKvStateInfo inMemoryKvStateInfo = new InMemoryKvStateInfo(MetaInfo);
+        this.kvStateInformation.put(tableName, inMemoryKvStateInfo);
     }
 
     /**In-Memory specific information about the K/V states */

@@ -27,7 +27,7 @@ public class SchemaRecord implements Serializable {
         single_value = null;
     }
     public SchemaRecord(SchemaRecord _record_ptr){
-        this.id=_record_ptr.id;
+        this.id = _record_ptr.id;
         this.values= Utils.memcpy(_record_ptr.values);
         single_value=null;
     }

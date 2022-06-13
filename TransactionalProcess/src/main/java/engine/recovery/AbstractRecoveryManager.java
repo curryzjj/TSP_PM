@@ -65,27 +65,27 @@ public class AbstractRecoveryManager {
         }
     }
     public static void recoveryFromSnapshot(Database db, SnapshotResult snapshotResult) throws IOException, ClassNotFoundException, DatabaseException {
-        File snapshotFile=db.getFs().pathToFile(snapshotResult.getSnapshotPath());
-        LocalDataInputStream inputStream=new LocalDataInputStream(snapshotFile);
-        DataInputViewStreamWrapper inputViewStreamWrapper=new DataInputViewStreamWrapper(inputStream);
-        int metaLength=inputViewStreamWrapper.readShort();
-        List<String> tables=new ArrayList<>();
-        List<Integer> backendType=new ArrayList<>();
-        for(int i=0;i<metaLength;i++){
+        File snapshotFile = db.getFs().pathToFile(snapshotResult.getSnapshotPath());
+        LocalDataInputStream inputStream = new LocalDataInputStream(snapshotFile);
+        DataInputViewStreamWrapper inputViewStreamWrapper = new DataInputViewStreamWrapper(inputStream);
+        int metaLength = inputViewStreamWrapper.readInt();
+        List<String> tables = new ArrayList<>();
+       // List<Integer> backendType = new ArrayList<>();
+        for(int i = 0; i < metaLength; i++){
             tables.add(inputViewStreamWrapper.readUTF());
-            backendType.add(inputViewStreamWrapper.readInt());
+           // backendType.add(inputViewStreamWrapper.readInt());
         }
         for(int i = 0; i < metaLength; i++){
             inputStream.seek(snapshotResult.getKeyGroupRangeOffsets().getKeyGroupOffset(i));
             boolean isNewGroup = false;
             try{
                 while (!isNewGroup){
-                    int len=inputViewStreamWrapper.readInt();
-                    if(Math.abs(len)==END_OF_KEY_GROUP_MARK){
-                        isNewGroup=true;
+                    int len = inputViewStreamWrapper.readInt();
+                    if(Math.abs(len) == END_OF_KEY_GROUP_MARK){
+                        isNewGroup = true;
                     }else {
-                       // String key = getKey(inputViewStreamWrapper,len);
-                        TableRecord value=getValue(inputViewStreamWrapper,len);
+                        //String key = getKey(inputViewStreamWrapper,len);
+                        TableRecord value = getValue(inputViewStreamWrapper,len);
                         db.InsertRecord(tables.get(i),value);
                     }
                 }
@@ -203,7 +203,7 @@ public class AbstractRecoveryManager {
         inputViewStreamWrapper.readFully(re);
         Object tableRecord = Deserialize.Deserialize(re);
         return (TableRecord) tableRecord;
-        // return Deserialize.Deserialize2Object(re,TableRecord.class.getClassLoader());
+        //return Deserialize.Deserialize2Object(re,TableRecord.class.getClassLoader());
     }
     private static TableRecord getValue(DataInputViewStreamWrapper inputViewStreamWrapper) throws IOException, ClassNotFoundException {
         int len = inputViewStreamWrapper.readInt();
@@ -211,7 +211,7 @@ public class AbstractRecoveryManager {
         inputViewStreamWrapper.readFully(re);
         Object tableRecord = Deserialize.Deserialize(re);
         return (TableRecord) tableRecord;
-       // return Deserialize.Deserialize2Object(re,TableRecord.class.getClassLoader());
+        //return Deserialize.Deserialize2Object(re,TableRecord.class.getClassLoader());
     }
     private static LogRecord getLogRecord(DataInputViewStreamWrapper inputViewStreamWrapper,int len) throws IOException, ClassNotFoundException {
         byte[] re=new byte[len];

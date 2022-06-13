@@ -77,7 +77,7 @@ public abstract class PartitionController implements IPartitionController,Serial
             collections=new Collections[operator.getExecutorList().size()];
             context=new TopologyContext[operator.getExecutorList().size()];
             for(ExecutionNode src:operator.getExecutorList()){
-                collections[(src.getExecutorID()-firt_executor_Id)]=new Collections(src.getExecutorID(),downExecutor_list,batch_size);
+                collections[(src.getExecutorID()-firt_executor_Id)] = new Collections(src.getExecutorID(),downExecutor_list,batch_size);
             }
             LOG.trace("MPSC implementation -- Queue is shared among multiple executors of the same producer.");
             controller=new MPSCController(downExecutor_list);

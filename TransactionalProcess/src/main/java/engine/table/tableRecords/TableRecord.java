@@ -2,10 +2,12 @@ package engine.table.tableRecords;
 
 import engine.table.RowID;
 import engine.table.content.Content;
+import engine.table.datatype.serialize.Serialize;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -46,5 +48,8 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
     }
     public void clean_map() {
         versions.headMap(versions.lastKey(), false).clear();
+    }
+    public TableRecord cloneTableRecord() throws IOException, ClassNotFoundException {
+        return (TableRecord) Serialize.cloneObject(this);
     }
 }

@@ -10,13 +10,13 @@ public class RegisteredKeyValueStateBackendMetaInfo extends RegisteredStateMetaI
     private final RecordSchema recordSchema;
     public RegisteredKeyValueStateBackendMetaInfo(StateMetaInfoSnapshot snapshot) {
         super(snapshot.getName());
-        this.stateType=snapshot.getBackendStateType();
-        this.recordSchema=snapshot.getRecordSchema();
+        this.stateType = snapshot.getBackendStateType();
+        this.recordSchema = snapshot.getRecordSchema();
     }
-    public RegisteredKeyValueStateBackendMetaInfo(TransactionalProcessConstants.BackendStateType type, String name,RecordSchema recordSchema){
+    public RegisteredKeyValueStateBackendMetaInfo(TransactionalProcessConstants.BackendStateType type, String name, RecordSchema recordSchema){
         super(name);
-        this.stateType=type;
-        this.recordSchema=recordSchema;
+        this.stateType = type;
+        this.recordSchema = recordSchema;
     }
     @NotNull
     @Override

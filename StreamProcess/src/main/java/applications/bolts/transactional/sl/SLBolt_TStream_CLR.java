@@ -1,46 +1,71 @@
-package applications.bolts.transactional.ob;
+package applications.bolts.transactional.sl;
 
 import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
+import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
-public class OBBolt_TStream_Wal extends OBBolt_TStream{
-    public OBBolt_TStream_Wal(int fid) {
-        super(fid);
-    }
+import static UserApplications.CONTROL.*;
 
+public class SLBolt_TStream_CLR extends SLBolt_TStream {
+    public SLBolt_TStream_CLR(int fid) {super(fid);}
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
+            //this.collector.ack(in,in.getMarker());
             if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
                 switch (in.getMarker().getValue()){
                     case "recovery":
                         forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "marker":
+                        this.markerId = in.getBID();
+                        if (enable_determinants_log && this.markerId < recoveryId) {
+                            this.CommitOutsideDeterminant(this.markerId);
+                        }
+                        if (TXN_PROCESS()){
+                            if (enable_recovery_dependency) {
+                                Marker marker = in.getMarker().clone();
+                                marker.setEpochInfo(this.epochInfo);
+                                forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                this.epochInfo = new EpochInfo(in.getBID(),executor.getExecutorID());
+                            } else {
+                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            }
+                        }
+                        break;
+                    case "snapshot":
+                        this.markerId = in.getBID();
+                        this.isSnapshot = true;
                         if (TXN_PROCESS_FT()){
-                            /* When the wal is completed, the data can be consumed by the outside world */
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            Marker marker = in.getMarker();
+                            marker.setEpochInfo(this.epochInfo);
+                            forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
                         }
                         break;
                     case "finish":
+                        this.markerId = in.getBID();
+                        if (enable_determinants_log && this.markerId < recoveryId) {
+                            this.CommitOutsideDeterminant(this.markerId);
+                        }
                         if(TXN_PROCESS()){
                             /* All the data has been executed */
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            if (enable_recovery_dependency) {
+                                Marker marker = in.getMarker().clone();
+                                marker.setEpochInfo(this.epochInfo);
+                                forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                this.epochInfo = new EpochInfo(in.getBID(),executor.getExecutorID());
+                            } else {
+                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            }
                         }
                         this.context.stop_running();
-                        break;
-                    case "snapshot" :
-                        this.isSnapshot = true;
-                        if (TXN_PROCESS_FT()){
-                            /* When the wal is completed, the data can be consumed by the outside world */
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        }
                         break;
                 }
             }
@@ -52,7 +77,7 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT=transactionManager.start_evaluate(thread_Id,this.fid);
+        int FT=transactionManager.start_evaluate(thread_Id,this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         boolean transactionSuccess=FT==0;
         switch (FT){
@@ -72,8 +97,17 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                 transactionSuccess=this.TXN_PROCESS_FT();
                 break;
             case 2:
+                if (enable_align_wait){
+                    this.collector.cleanAll();
+                } else {
+                    for (int partitionId:this.db.getTxnProcessingEngine().getRecoveryRangeId()) {
+                        if(executor.getExecutorID() == executor.operator.getExecutorIDList().get(partitionId)) {
+                            this.collector.cleanAll();
+                            break;
+                        }
+                    }
+                }
                 this.SyncRegisterRecovery();
-                this.collector.cleanAll();
                 this.EventsHolder.clear();
                 for (Queue<Tuple> tuples : bufferedTuples.values()) {
                     tuples.clear();
@@ -86,9 +120,9 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT= transactionManager.start_evaluate(thread_Id,this.fid);
+        int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
-        boolean transactionSuccess=FT==0;
+        boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
                 MeasureTools.startPost(this.thread_Id,System.nanoTime());
@@ -104,8 +138,17 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                 transactionSuccess=this.TXN_PROCESS_FT();
                 break;
             case 2:
+                if (enable_align_wait){
+                    this.collector.cleanAll();
+                } else {
+                    for (int partitionId:this.db.getTxnProcessingEngine().getRecoveryRangeId()) {
+                        if(executor.getExecutorID() == executor.operator.getExecutorIDList().get(partitionId)) {
+                            this.collector.cleanAll();
+                            break;
+                        }
+                    }
+                }
                 this.SyncRegisterRecovery();
-                this.collector.cleanAll();
                 this.EventsHolder.clear();
                 for (Queue<Tuple> tuples : bufferedTuples.values()) {
                     tuples.clear();

@@ -54,7 +54,7 @@ public class InMemoryDataBase extends Database {
     @Override
     public void createTable(RecordSchema tableSchema, String tableName, DataBoxTypes type) {
         try {
-            storageManager.createTable(tableSchema, tableName,type);
+            storageManager.createTable(tableSchema, tableName, type);
         } catch (DatabaseException | RocksDBException e) {
             e.printStackTrace();
         }

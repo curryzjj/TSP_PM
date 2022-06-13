@@ -36,9 +36,9 @@ public class MultiStreamInFlightLog {
         }
         return InFlightEvents;
     }
-    public void addEvent(int targetId, String stream,Object o){
+    public void addEvent(int partitionId, String stream,Object o){
         for (InFlightLog inFlightLog:InFightLogForStream.get(stream).values()){
-            inFlightLog.addEvents(targetId,o);
+            inFlightLog.addEvents(partitionId,o);
         }
     }
     public void addEpoch(long offset, String stream){
@@ -69,8 +69,9 @@ public class MultiStreamInFlightLog {
             BatchEvents batchEvents = new BatchEvents(executorID,currentOffset);
             InFlightEvents.put(currentOffset,batchEvents);
         }
-        public void addEvents(int executorID,Object o){
-            InFlightEvents.get(currentOffset).addEvent(o,executorID);
+        public void addEvents(int partitionID,Object o){
+            int executorId = executorID.get(partitionID);
+            InFlightEvents.get(currentOffset).addEvent(o,executorId);
         }
         public void addBatch(long markerId) {
             InFlightEvents.get(currentOffset).addMarkerId(markerId);

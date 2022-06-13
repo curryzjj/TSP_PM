@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static UserApplications.CONTROL.partition_num;
+import static UserApplications.CONTROL.PARTITION_NUM;
 
 /**
  * ComputationLogic record the operation logic to partitioned states
@@ -18,7 +18,7 @@ public class ComputationLogic implements Serializable {
     public ComputationLogic(long bid){
         this.bid=bid;
         this.indexByPartition=new HashMap<>();
-        for (int i=0;i<partition_num;i++){
+        for (int i = 0; i< PARTITION_NUM; i++){
             this.indexByPartition.put(i,new ArrayList<>());
         }
     }

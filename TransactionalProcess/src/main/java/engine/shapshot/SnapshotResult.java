@@ -18,6 +18,7 @@ public class SnapshotResult implements Serializable {
         return (SnapshotResult) EMPTY;
     }
     /** Use in the parallel snapshot */
+    //<partitionId, Tuple2>
     private HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResults;
     private int taskId;
 

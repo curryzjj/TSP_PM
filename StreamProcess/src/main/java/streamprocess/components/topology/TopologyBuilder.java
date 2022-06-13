@@ -49,10 +49,10 @@ public class TopologyBuilder {
         }
         idSet.add(id);
         HashMap<String,streaminfo> output_streams;
-        OutputFieldsDeclarer declarer=new OutputFieldsDeclarer();
+        OutputFieldsDeclarer declarer = new OutputFieldsDeclarer();
         s.declareOutputFields(declarer);
-        output_streams=declarer.getFieldsDeclaration();
-        TopologyComponent topologyComponent=new MultiStreamComponent(id,spoutType,new BasicSpoutBatchExecutor(s),numTasks,null,output_streams,null);
+        output_streams = declarer.getFieldsDeclaration();
+        TopologyComponent topologyComponent = new MultiStreamComponent(id,spoutType,new BasicSpoutBatchExecutor(s),numTasks,null,output_streams,null);
         topology.addRecord(topologyComponent);
         return this;
     }
