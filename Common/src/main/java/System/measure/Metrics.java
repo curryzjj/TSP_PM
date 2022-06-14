@@ -81,6 +81,6 @@ public class Metrics {
             snapshot_file_size[i] = new DescriptiveStatistics();
             wal_file_size[i]=new DescriptiveStatistics();
         }
-        FT=FT_;
+        FT = FT_;
     }
 }

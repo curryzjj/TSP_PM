@@ -13,7 +13,9 @@ import engine.table.keyGroup.KeyGroupRangeOffsets;
 import engine.table.tableRecords.TableRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 
+import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -63,27 +65,27 @@ public class AbstractRecoveryManager {
         }
     }
     public static void recoveryFromSnapshot(Database db, SnapshotResult snapshotResult) throws IOException, ClassNotFoundException, DatabaseException {
-        File snapshotFile=db.getFs().pathToFile(snapshotResult.getSnapshotPath());
-        LocalDataInputStream inputStream=new LocalDataInputStream(snapshotFile);
-        DataInputViewStreamWrapper inputViewStreamWrapper=new DataInputViewStreamWrapper(inputStream);
-        int metaLength=inputViewStreamWrapper.readShort();
-        List<String> tables=new ArrayList<>();
-        List<Integer> backendType=new ArrayList<>();
-        for(int i=0;i<metaLength;i++){
+        File snapshotFile = db.getFs().pathToFile(snapshotResult.getSnapshotPath());
+        LocalDataInputStream inputStream = new LocalDataInputStream(snapshotFile);
+        DataInputViewStreamWrapper inputViewStreamWrapper = new DataInputViewStreamWrapper(inputStream);
+        int metaLength = inputViewStreamWrapper.readInt();
+        List<String> tables = new ArrayList<>();
+       // List<Integer> backendType = new ArrayList<>();
+        for(int i = 0; i < metaLength; i++){
             tables.add(inputViewStreamWrapper.readUTF());
-            backendType.add(inputViewStreamWrapper.readInt());
+           // backendType.add(inputViewStreamWrapper.readInt());
         }
-        for(int i=0;i<metaLength;i++){
+        for(int i = 0; i < metaLength; i++){
             inputStream.seek(snapshotResult.getKeyGroupRangeOffsets().getKeyGroupOffset(i));
-            boolean isNewGroup=false;
+            boolean isNewGroup = false;
             try{
                 while (!isNewGroup){
-                    int len=inputViewStreamWrapper.readInt();
-                    if(Math.abs(len)==END_OF_KEY_GROUP_MARK){
-                        isNewGroup=true;
+                    int len = inputViewStreamWrapper.readInt();
+                    if(Math.abs(len) == END_OF_KEY_GROUP_MARK){
+                        isNewGroup = true;
                     }else {
-                        String key=getKey(inputViewStreamWrapper,len);
-                        TableRecord value=getValue(inputViewStreamWrapper);
+                        //String key = getKey(inputViewStreamWrapper,len);
+                        TableRecord value = getValue(inputViewStreamWrapper,len);
                         db.InsertRecord(tables.get(i),value);
                     }
                 }
@@ -163,46 +165,59 @@ public class AbstractRecoveryManager {
         return theLastLSN;
     }
     public static long parallelRecoveryFromWAL(Database db,Path WALPath,List<Integer> rangeIds,long globalLSN) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
-        List<recoveryFromWalTask> callables=new ArrayList<>();
+        List<recoveryFromWalTask> callables = new ArrayList<>();
         for(int id:rangeIds){
             callables.add(new recoveryFromWalTask(db,WALPath,id, globalLSN));
         }
-        List<Future<Long>> futures=writeExecutor.invokeAll(callables);
+        List<Future<Long>> futures = writeExecutor.invokeAll(callables);
         return 1L;
     }
     public static void parallelRecoveryFromSnapshot(Database db,SnapshotResult snapshotResult) throws InterruptedException {
+        List<recoveryFromSnapshot> callables = new ArrayList<>();
+        for (Tuple2<Path, KeyGroupRangeOffsets> entry:snapshotResult.getSnapshotResults().values()){
+            callables.add(new recoveryFromSnapshot(db,new SnapshotResult(entry._1,entry._2)));
+        }
+        snapshotExecutor.invokeAll(callables);
+    }
+    public static void parallelRecoveryTargetPartitionFromSnapshot(Database db, SnapshotResult snapshotResult, List<Integer> targetId) throws InterruptedException {
         List<recoveryFromSnapshot> callables=new ArrayList<>();
-        for (Map.Entry<Path, KeyGroupRangeOffsets> entry:snapshotResult.getSnapshotResults().entrySet()){
-            callables.add(new recoveryFromSnapshot(db,new SnapshotResult(entry.getKey(),entry.getValue())));
+        HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResults = snapshotResult.getSnapshotResults();
+        for (int id:targetId) {
+            callables.add(new recoveryFromSnapshot(db,new SnapshotResult(snapshotResults.get(id)._1,snapshotResults.get(id)._2)));
         }
         snapshotExecutor.invokeAll(callables);
     }
     private static String getKey(DataInputViewStreamWrapper inputViewStreamWrapper) throws IOException {
-        int len=inputViewStreamWrapper.readInt();
-        byte[] re=new byte[len];
+        int len = inputViewStreamWrapper.readInt();
+        byte[] re = new byte[len];
         inputViewStreamWrapper.readFully(re);
-        String s=new String(re);
-        return s;
+        return new String(re);
     }
     private static String getKey(DataInputViewStreamWrapper inputViewStreamWrapper,int len) throws IOException {
         byte[] re=new byte[len];
         inputViewStreamWrapper.readFully(re);
-        String s=new String(re);
-        return s;
+        return new String(re);
+    }
+    private static TableRecord getValue(DataInputViewStreamWrapper inputViewStreamWrapper, int len) throws IOException, ClassNotFoundException {
+        byte[] re = new byte[len];
+        inputViewStreamWrapper.readFully(re);
+        Object tableRecord = Deserialize.Deserialize(re);
+        return (TableRecord) tableRecord;
+        //return Deserialize.Deserialize2Object(re,TableRecord.class.getClassLoader());
     }
     private static TableRecord getValue(DataInputViewStreamWrapper inputViewStreamWrapper) throws IOException, ClassNotFoundException {
-        int len=inputViewStreamWrapper.readInt();
-        byte[] re=new byte[len];
+        int len = inputViewStreamWrapper.readInt();
+        byte[] re = new byte[len];
         inputViewStreamWrapper.readFully(re);
-        TableRecord tableRecord= Deserialize.Deserialize2Object(re,TableRecord.class.getClassLoader());
-        return tableRecord;
+        Object tableRecord = Deserialize.Deserialize(re);
+        return (TableRecord) tableRecord;
+        //return Deserialize.Deserialize2Object(re,TableRecord.class.getClassLoader());
     }
     private static LogRecord getLogRecord(DataInputViewStreamWrapper inputViewStreamWrapper,int len) throws IOException, ClassNotFoundException {
         byte[] re=new byte[len];
         inputViewStreamWrapper.readFully(re);
         String str= new String(re, UTF_8);
         LogRecord logRecord=new LogRecord(str);
-//      LogRecord logRecord=Deserialize.Deserialize2Object(re,LogRecord.class.getClassLoader());
         return logRecord;
     }
 }

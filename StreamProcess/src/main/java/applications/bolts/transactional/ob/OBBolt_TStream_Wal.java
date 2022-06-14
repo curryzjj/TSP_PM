@@ -5,6 +5,7 @@ import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
 
 import java.io.IOException;
+import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
@@ -58,13 +59,12 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
             case 0:
                 this.AsyncRegisterPersist();
                 MeasureTools.startPost(this.thread_Id,System.nanoTime());
-                REQUEST_REQUEST_CORE();
+                REQUEST_CORE();
                 REQUEST_POST();
                 MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 this.SyncCommitLog();
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
-                bufferedTuple.clear();
                 break;
             case 1:
                 this.SyncRegisterUndo();
@@ -75,7 +75,9 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                 this.SyncRegisterRecovery();
                 this.collector.cleanAll();
                 this.EventsHolder.clear();
-                this.bufferedTuple.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
                 break;
         }
         return transactionSuccess;
@@ -90,12 +92,11 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
         switch (FT){
             case 0:
                 MeasureTools.startPost(this.thread_Id,System.nanoTime());
-                REQUEST_REQUEST_CORE();
+                REQUEST_CORE();
                 REQUEST_POST();
                 MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
-                bufferedTuple.clear();
                 break;
             case 1:
                 this.SyncRegisterUndo();
@@ -106,7 +107,9 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                 this.SyncRegisterRecovery();
                 this.collector.cleanAll();
                 this.EventsHolder.clear();
-                this.bufferedTuple.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
                 break;
         }
         return transactionSuccess;

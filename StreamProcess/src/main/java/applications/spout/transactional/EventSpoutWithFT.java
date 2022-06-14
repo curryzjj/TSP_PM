@@ -8,13 +8,14 @@ import applications.events.SL.DepositEvent;
 import applications.events.SL.TransactionEvent;
 import applications.events.gs.MicroEvent;
 import applications.events.TxnEvent;
+import applications.events.lr.TollProcessingEvent;
 import applications.events.ob.AlertEvent;
 import applications.events.ob.BuyingEvent;
 import applications.events.ob.ToppingEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.TransactionalSpoutFT;
-import streamprocess.controller.output.MultiStreamInFlightLog;
+import streamprocess.controller.output.InFlightLog.MultiStreamInFlightLog;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.faulttolerance.checkpoint.Status;
 
@@ -31,12 +32,13 @@ import static UserApplications.CONTROL.*;
 
 public class EventSpoutWithFT extends TransactionalSpoutFT {
     private static final Logger LOG= LoggerFactory.getLogger(SpoutWithFT.class);
+    private static final long serialVersionUID = 5206772865951921120L;
     private Scanner scanner;
     private String Data_path;
     public EventSpoutWithFT(){
         super(LOG);
         this.scalable=false;
-        status=new Status();
+        status = new Status();
     }
 
     @Override
@@ -55,20 +57,19 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             OS_prefix="unix.";
         }
         if(OsUtils.isMac()){
-            path=config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_TEST_PATH)));
-            Data_path=Mac_Data_Path;
+            path = config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_TEST_PATH)));
+            Data_path = Mac_Data_Path;
         }else{
             path = config.getString(getConfigKey(OS_prefix.concat(BaseConstants.BaseConf.SPOUT_PATH)));
-            Data_path=Node22_Data_Path;
+            Data_path = Node22_Data_Path;
         }
-        this.exe=NUM_EVENTS;
-        this.batch_number_per_wm=config.getInt("batch_number_per_wm");
+        this.exe = NUM_EVENTS;
+        this.batch_number_per_wm = config.getInt("batch_number_per_wm");
         this.checkpoint_interval = config.getInt("snapshot");
         Data_path = Data_path.concat(path);
-        inputDataGenerator.initialize(Data_path,this.exe,NUM_ITEMS-1,ZIP_SKEW,config);
-        this.getContext().getEventGenerator().setInputDataGenerator(inputDataGenerator);
-        this.inputQueue=this.getContext().getEventGenerator().getEventsQueue();
-        this.start_time=System.currentTimeMillis();
+        inputDataGenerator.initialize(Data_path,config);
+        this.inputQueue = this.getContext().getEventGenerator().getEventsQueue();
+        this.start_time = System.currentTimeMillis();
         this.time_Interval=config.getInt("time_Interval");
         if (enable_upstreamBackup){
             multiStreamInFlightLog = new MultiStreamInFlightLog(this.executor.operator);
@@ -85,11 +86,11 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 replayInput();
             }
         } else{
-            List<TxnEvent> events= (List<TxnEvent>) inputQueue.poll();
-            while(events==null){
-                events=(List<TxnEvent>) inputQueue.poll();
+            List<TxnEvent> events = (List<TxnEvent>) inputQueue.poll();
+            while(events == null){
+                events = (List<TxnEvent>) inputQueue.poll();
             }
-            if(events.size()!=0){
+            if(events.size() != 0){
                 if(enable_input_store){
                     MeasureTools.Input_store_begin(System.nanoTime());
                     this.inputDataGenerator.storeInput(events);
@@ -98,7 +99,9 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 for (TxnEvent input : events) {
                     int targetId = collector.emit_single(DEFAULT_STREAM_ID, bid, input);
                     if (enable_upstreamBackup) {
-                        multiStreamInFlightLog.addEvent(targetId,DEFAULT_STREAM_ID,input);
+                        //TODO: clone the input
+                        TxnEvent event = input.cloneEvent();
+                        multiStreamInFlightLog.addEvent(event.getPid(), DEFAULT_STREAM_ID, input);
                     }
                     bid++;
                     forward_marker(this.taskId, bid, null, "marker");
@@ -114,13 +117,13 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     @Override
     protected void loadInputFromSSD() throws FileNotFoundException {
         MeasureTools.startReloadInput(System.nanoTime());
-        long msg=offset;
-        bid=0;
+        long msg = offset;
+        bid = 0;
         openFile(Data_path);
-        while (offset!=0){
+        while (offset != 0){
             scanner.nextLine();
-            offset--;
-            bid++;
+            offset --;
+            bid ++;
         }
         MeasureTools.finishReloadInput(System.nanoTime());
         LOG.info("The input data have been load to the offset "+msg);
@@ -132,12 +135,12 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             TxnEvent event = replayInputFromSSD();
             if (event != null) {
                 collector.emit_single(DEFAULT_STREAM_ID, bid, event);
-                lostData++;
-                if(bid==failureTime){
+                lostData ++;
+                if(bid == failureTime){
                     collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "recovery");
                     MeasureTools.setReplayData(lostData);
                 }
-                bid++;
+                bid ++;
                 forward_marker(this.taskId, bid, null, "marker");
             }
         }
@@ -151,14 +154,15 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             String[] split = read.split(";");
             switch (split[4]){
                 case "MicroEvent":
-                    event=new MicroEvent(
+                    event = new MicroEvent(
                             Integer.parseInt(split[0]), //bid
                             Integer.parseInt(split[1]), //pid
                             split[2], //bid_array
                             Integer.parseInt(split[3]),//num_of_partition
                             split[5],//key_array
                             Boolean.parseBoolean(split[6]),//flag
-                            Long.parseLong(split[7])
+                            Long.parseLong(split[7]),//timestamp
+                            Boolean.parseBoolean(split[8])//isAbort
                     );
                     break;
                 case "BuyingEvent":
@@ -170,7 +174,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             split[5],//key_array
                             split[6],//price_array
                             split[7]  ,//qty_array
-                            Long.parseLong(split[8])
+                            Long.parseLong(split[8]),
+                            Boolean.parseBoolean(split[9])
                     );
                     break;
                 case "AlertEvent":
@@ -182,7 +187,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             Integer.parseInt(split[5]), //num_access
                             split[6],//key_array
                             split[7],//price_array
-                            Long.parseLong(split[8])
+                            Long.parseLong(split[8]),
+                            Boolean.parseBoolean(split[9])
                     );
                     break;
                 case "ToppingEvent":
@@ -194,7 +200,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             Integer.parseInt(split[5]), //num_access
                             split[6],//key_array
                             split[7] , //top_array
-                            Long.parseLong(split[8])
+                            Long.parseLong(split[8]),
+                            Boolean.parseBoolean(split[9])
                     );
                     break;
                 case "DepositEvent":
@@ -207,7 +214,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             split[6],//getBookEntryId
                             Integer.parseInt(split[7]),  //getAccountTransfer
                             Integer.parseInt(split[8]),  //getBookEntryTransfer
-                            Long.parseLong(split[9])
+                            Long.parseLong(split[9]),
+                            Boolean.parseBoolean(split[10])
                     );
                     break;
                 case "TransactionEvent":
@@ -222,7 +230,21 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                             split[8],//getTargetBookEntryId
                             Integer.parseInt(split[9]),  //getAccountTransfer
                             Integer.parseInt(split[10]),  //getBookEntryTransfer
-                            Long.parseLong(split[11])
+                            Long.parseLong(split[11]),
+                            Boolean.parseBoolean(split[12])
+                    );
+                    break;
+                case "TollProcessEvent" :
+                    event = new TollProcessingEvent(
+                            Integer.parseInt(split[0]), //bid
+                            Integer.parseInt(split[1]), //pid
+                            split[2], //bid_array
+                            Integer.parseInt(split[3]),//num_of_partition
+                            split[5],
+                            Integer.parseInt(split[6]),
+                            Integer.parseInt(split[7]),
+                            Long.parseLong(split[8]),
+                            Boolean.parseBoolean(split[9])
                     );
                     break;
                 default:
@@ -231,8 +253,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             return event;
         }else{
             scanner.close();
-            LOG.info("The number of lost data is "+lostData);
-            replay=false;
+            LOG.info("The number of lost data is " + lostData);
+            replay = false;
             return null;
         }
     }
@@ -241,6 +263,6 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     }
     @Override
     public void setInputDataGenerator(InputDataGenerator inputDataGenerator) {
-        this.inputDataGenerator=inputDataGenerator;
+        this.inputDataGenerator = inputDataGenerator;
     }
 }

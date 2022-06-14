@@ -33,13 +33,13 @@ public class TopologySubmitter {
         Collection<TopologyComponent> topologyComponents=g.topology.getRecords().values();
         //TODO:Some Metrics code
         //launch
-        OM=new OptimizationManager(g,conf,conf.getBoolean("profile",false),conf.getDouble("relax",1),topology.getPlatform());
+        OM = new OptimizationManager(g,conf,conf.getBoolean("profile",false),conf.getDouble("relax",1),topology.getPlatform());
         if(enable_shared_state){
             LOG.info("DB initialize starts @" + DateTime.now());
             long start = System.nanoTime();
             SequentialBindingDB();
             //TODO:implement spinlock, used in the partition
-            g.topology.tableinitilizer=topology.txnTopology.createDB(null);
+            g.topology.tableinitilizer = topology.txnTopology.createDB(null);
             long end = System.nanoTime();
             LOG.info("DB initialize takes:" + (end - start) / 1E6 + " ms");
             OM.launch(g.topology,topology.getPlatform(),topology.db);

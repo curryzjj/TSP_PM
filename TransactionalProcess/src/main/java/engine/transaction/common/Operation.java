@@ -84,15 +84,12 @@ public class Operation implements Comparable<Operation>{
         this.table_name = table_name;
         this.s_record = s_record;
         this.d_record = d_record;
-
         this.bid = bid;
         this.accessType = accessType;
         this.txn_context = txn_context;
-
         this.condition_records = condition_records;
         this.function = function;
         this.condition = condition;
-
         this.success = success;
         this.record_ref = record_ref;
     }
@@ -102,14 +99,10 @@ public class Operation implements Comparable<Operation>{
         this.bid = bid;
         this.accessType = accessType;
         this.txn_context = txn_context;
-
         this.value = value;
-
         this.column_id = column_id;
-
         this.s_record = d_record;
         this.function = null;
-
         this.record_ref = null;
     }
     /**

@@ -2,10 +2,7 @@ package engine.table.datatype.serialize;
 
 import System.FileSystem.DataIO.DataOutputView;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 public final class Serialize {
     public static byte[] serializeObject(Object o) throws IOException{
@@ -33,5 +30,16 @@ public final class Serialize {
     }
     public static byte[] serializeKey(){
 return null;
+    }
+
+    public static Object cloneObject(Object o) throws IOException, ClassNotFoundException {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+            oos.writeObject(o);
+            oos.flush();
+            ByteArrayInputStream bis = new ByteArrayInputStream(baos.toByteArray());
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            return ois.readObject();
+        }
     }
 }

@@ -5,19 +5,20 @@ import engine.Exception.DatabaseException;
 import engine.transaction.impl.TxnManagerTStream;
 import org.slf4j.Logger;
 import streamprocess.components.operators.api.TransactionalBolt;
+import streamprocess.components.topology.TopologyComponent;
 import streamprocess.components.topology.TopologyContext;
+import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.ExecutionGraph;
+import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.FaultToleranceConstants;
+import streamprocess.faulttolerance.clr.CausalService;
 import streamprocess.faulttolerance.clr.ComputationLogic;
 import streamprocess.faulttolerance.clr.ComputationTask;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
@@ -28,7 +29,13 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public int partition_delta;
     public List<ComputationTask> tasks;
     public List<ComputationLogic> computationLogics;
+    public EpochInfo epochInfo;
+    //<DownStreamId,causalService>
+    protected HashMap<Integer,CausalService> causalService = new HashMap<>();
+    protected long recoveryId = -1;
+    protected List<Integer> recoveryPartitionIds = new ArrayList<>();
     protected boolean isSnapshot;
+    protected long markerId = 0;
     public TransactionalBoltTStream(Logger log,int fid){
         super(log,fid);
     }
@@ -36,10 +43,11 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public void initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
         super.initialize(thread_Id, thisTaskId, graph);
         transactionManager=new TxnManagerTStream(db.getStorageManager(),this.context.getThisComponentId(),thread_Id,NUM_SEGMENTS,this.context.getThisComponent().getNumTasks());
-        partition_delta=(int) Math.ceil(NUM_ITEMS / (double) partition_num);//NUM_ITEMS / partition_num;
+        partition_delta=(int) Math.ceil(NUM_ITEMS / (double) PARTITION_NUM);//NUM_ITEMS / partition_num;
         if(enable_clr){
             this.tasks=new ArrayList<>();
             this.computationLogics=new ArrayList<>();
+            this.epochInfo = new EpochInfo(0L,this.executor.getExecutorID());
         }
     }
     public void loadDB(Map conf, TopologyContext context, OutputCollector collector){
@@ -50,12 +58,30 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     protected abstract boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
     protected abstract boolean TXN_PROCESS()throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
     protected void REQUEST_POST() throws InterruptedException{};//implement in the application
-    protected void REQUEST_REQUEST_CORE() throws InterruptedException{};//implement in the application
+    protected void REQUEST_CORE() throws InterruptedException{};//implement in the application
     protected void execute_ts_normal(Tuple in) throws DatabaseException, InterruptedException {
         if(status.isMarkerArrived(in.getSourceTask())){
             PRE_EXECUTE(in);
         }else{
             PRE_TXN_PROCESS(in);
+        }
+    }
+    public void BUFFER_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
+        for (Queue<Tuple> tuples : bufferedTuples.values()) {
+            if (tuples.size() !=0) {
+                boolean isMarker = false;
+                while (!isMarker) {
+                    Tuple tuple = tuples.poll();
+                    if (tuple != null) {
+                        execute(tuple);
+                        if (tuple.isMarker()) {
+                            isMarker =true;
+                        }
+                    } else {
+                        isMarker = true;
+                    }
+                }
+            }
         }
     }
     /**
@@ -115,7 +141,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
      * @throws InterruptedException
      */
     protected void SyncRegisterRecovery() throws InterruptedException {
-        this.lock=this.FTM.getLock();
+        this.lock = this.FTM.getLock();
         synchronized (lock){
             this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
             lock.notifyAll();
@@ -125,8 +151,24 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
                 LOG.debug("Wait for the database to recovery");
                 lock.wait();
             }
-            this.isCommit =false;
+            this.isCommit = false;
         }
+        this.recoveryPartitionIds = this.db.getTxnProcessingEngine().getRecoveryRangeId();
+        for (TopologyComponent child:this.executor.getChildren_keySet()) {
+            for (ExecutionNode e:child.getExecutorList()) {
+                if (enable_determinants_log) {
+                    for (int lostPartitionId : this.recoveryPartitionIds) {
+                        if (!enable_key_based || this.executor.operator.getExecutorIDList().get(lostPartitionId) == this.executor.getExecutorID()) {
+                            this.causalService.put(e.getExecutorID(),e.askCausalService().get(lostPartitionId));
+                            this.recoveryId = this.causalService.get(e.getExecutorID()).currentMarkerId;
+                        }
+                    }
+                } else if (enable_recovery_dependency){
+                    this.recoveryId = e.ackRecoveryDependency().currentMarkId;
+                }
+            }
+        }
+
     }
     /**
      * To register recovery when there is a failure(snapshot)
@@ -146,5 +188,19 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public int getPartitionId(String key){
         Integer _key = Integer.valueOf(key);
         return _key / partition_delta;
+    }
+    public void updateRecoveryDependency(int[] key, boolean isModify){
+        int[] partitionId = new int[key.length];
+        for (int i = 0; i < key.length; i++){
+            partitionId[i] = getPartitionId(String.valueOf(key[i]));
+        }
+        this.epochInfo.addDependency(partitionId,isModify);
+    }
+    public void updateRecoveryDependency(String[] key, boolean isModify){
+        int[] partitionId = new int[key.length];
+        for (int i = 0; i < key.length; i++){
+            partitionId[i] = getPartitionId(key[i]);
+        }
+        this.epochInfo.addDependency(partitionId,isModify);
     }
 }

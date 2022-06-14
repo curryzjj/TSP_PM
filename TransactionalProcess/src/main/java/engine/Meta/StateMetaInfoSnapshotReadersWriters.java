@@ -17,7 +17,7 @@ public class StateMetaInfoSnapshotReadersWriters {
         private static final CurrentWriterImpl INSTANCE = new CurrentWriterImpl();
         public void writeStateMetaInfoSnapshot(StateMetaInfoSnapshot snapshot, DataOutputView outputView) throws IOException {
             outputView.writeUTF(snapshot.getName());
-            outputView.writeInt(snapshot.getBackendStateType().ordinal());
+            //outputView.writeInt(snapshot.getBackendStateType().ordinal());
         }
     }
 }

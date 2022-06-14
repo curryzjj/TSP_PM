@@ -1,6 +1,7 @@
 package streamprocess.execution.Initialize.impl;
 
 import System.util.Configuration;
+import applications.events.InputDataGenerator.ImplDataGenerator.SLDataGenerator;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.table.RecordSchema;
@@ -33,23 +34,26 @@ public class SLInitializer extends TableInitilizer {
         super(db, scale_factor, theta, partition_num, config);
         partition_interval=getPartition_interval();
         range_interval = (int) Math.ceil(NUM_ITEMS / (double) config.getInt("tthread"));//NUM_ITEMS / tthread;
+        this.dataGenerator = new SLDataGenerator();
+        dataGenerator.initialize(dataRootPath,config);
     }
     @Override
-    public void creates_Table(Configuration config) {
+    public void creates_Table(Configuration config) throws IOException {
         if (enable_states_partition){
-            for (int i=0;i<partition_num;i++){
+            for (int i = 0; i < partition_num; i++){
                 RecordSchema s = AccountsScheme();
-                db.createTable(s, "accounts_"+i, TransactionalProcessConstants.DataBoxTypes.LONG);
+                db.createTable(s, "T_accounts_" + i, TransactionalProcessConstants.DataBoxTypes.LONG);
                 RecordSchema b = BookEntryScheme();
-                db.createTable(b, "bookEntries_"+i,TransactionalProcessConstants.DataBoxTypes.LONG);
+                db.createTable(b, "T_assets_" + i,TransactionalProcessConstants.DataBoxTypes.LONG);
             }
         }else {
             RecordSchema s = AccountsScheme();
-            db.createTable(s, "accounts", TransactionalProcessConstants.DataBoxTypes.LONG);
+            db.createTable(s, "T_accounts", TransactionalProcessConstants.DataBoxTypes.LONG);
             RecordSchema b = BookEntryScheme();
-            db.createTable(b, "bookEntries",TransactionalProcessConstants.DataBoxTypes.LONG);
+            db.createTable(b, "T_assets",TransactionalProcessConstants.DataBoxTypes.LONG);
         }
         db.createTableRange(2);
+        this.Prepare_input_event();
     }
     private RecordSchema getRecordSchema() {
         List<DataBox> dataBoxes = new ArrayList<>();
@@ -83,9 +87,9 @@ public class SLInitializer extends TableInitilizer {
         SchemaRecord schemaRecord = new SchemaRecord(values);
         try {
             if (enable_states_partition){
-                db.InsertRecord("accounts_"+getPartitionId(key), new TableRecord(schemaRecord));
+                db.InsertRecord("T_accounts_" + getPartitionId(key), new TableRecord(schemaRecord));
             }else{
-                db.InsertRecord("accounts", new TableRecord(schemaRecord));
+                db.InsertRecord("T_accounts", new TableRecord(schemaRecord));
             }
         } catch (DatabaseException | IOException e) {
             e.printStackTrace();
@@ -102,9 +106,9 @@ public class SLInitializer extends TableInitilizer {
         SchemaRecord schemaRecord= new SchemaRecord(values);
         try {
             if (enable_states_partition){
-                db.InsertRecord("bookEntries_"+getPartitionId(key), new TableRecord(schemaRecord));
+                db.InsertRecord("T_assets_"+getPartitionId(key), new TableRecord(schemaRecord));
             }else {
-                db.InsertRecord("bookEntries", new TableRecord(schemaRecord));
+                db.InsertRecord("T_assets", new TableRecord(schemaRecord));
             }
         } catch (DatabaseException | IOException e) {
             e.printStackTrace();
@@ -112,34 +116,34 @@ public class SLInitializer extends TableInitilizer {
     }
     @Override
     public void loadDB(int thread_id, TopologyContext context) {
-        int left_bound=thread_id*range_interval;
+        int left_bound = thread_id * range_interval;
         int right_bound;
-        if(thread_id==context.getNUMTasks()-1){//last executor need to handle right-over
-            right_bound=NUM_ITEMS;
+        if(thread_id == context.getNUMTasks()-1){//last executor need to handle right-over
+            right_bound = NUM_ITEMS;
         }else{
-            right_bound=(thread_id+1)*range_interval;
+            right_bound=(thread_id+1) * range_interval;
         }
         for (int key = left_bound; key < right_bound ; key++) {
-            String _key = GenerateKey(ACCOUNT_ID_PREFIX, key);
-            insertAccountRecord(_key, 0);
-            _key = GenerateKey(BOOK_ENTRY_ID_PREFIX, key);
-            insertAssetRecord(_key, 0);
+            String _key = GenerateKey(key);
+            insertAccountRecord(_key, 10000);
+            _key = GenerateKey(key);
+            insertAssetRecord(_key, 10000);
         }
         LOG.info("Thread:" + thread_id + " finished loading data from: " + left_bound + " to: " + right_bound);
     }
-    private String GenerateKey(String prefix, int key) {
+    private String GenerateKey(int key) {
 //        return rightpad(prefix + String.valueOf(key), VALUE_LEN);
-        return prefix + String.valueOf(key);
+        return String.valueOf(key);
     }
 
     @Override
     public void reloadDB(List<Integer> rangeId) {
-        for (int key = 0; key < NUM_SEGMENTS ; key++) {
-            String _key = GenerateKey(ACCOUNT_ID_PREFIX, key);
+        for (int key = 0; key < NUM_ITEMS ; key++) {
+            String _key = GenerateKey(key);
             if(rangeId.contains(getPartitionId(_key))){
                 insertAccountRecord(_key, 0);
             }
-            _key = GenerateKey(BOOK_ENTRY_ID_PREFIX, key);
+            _key = GenerateKey(key);
             if(rangeId.contains(getPartitionId(_key))){
                 insertAssetRecord(_key, 0);
             }

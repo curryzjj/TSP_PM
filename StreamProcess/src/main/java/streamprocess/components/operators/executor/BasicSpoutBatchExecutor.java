@@ -8,11 +8,14 @@ import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
+import streamprocess.faulttolerance.clr.CausalService;
+import streamprocess.faulttolerance.clr.RecoveryDependency;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BasicSpoutBatchExecutor extends SpoutExecutor{
     private static final Logger LOG= LoggerFactory.getLogger(BasicSpoutBatchExecutor.class);
@@ -100,11 +103,19 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
     }
 
     @Override
-    public void recoveryInput(long offset, List<Integer> recoveryExecutorIDs) throws FileNotFoundException, InterruptedException {
-        this._op.recoveryInput(offset, recoveryExecutorIDs);
-
+    public RecoveryDependency ackRecoveryDependency() {
+        return this._op.returnRecoveryDependency();
     }
 
+    @Override
+    public void recoveryInput(long offset, List<Integer> recoveryExecutorIDs, long alignOffset) throws FileNotFoundException, InterruptedException {
+        this._op.recoveryInput(offset, recoveryExecutorIDs, alignOffset);
+
+    }
+    @Override
+    public ConcurrentHashMap<Integer, CausalService> ackCausalService() {
+        return this._op.returnCausalService();
+    }
 
     @Override
     public void cleanup() {

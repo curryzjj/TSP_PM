@@ -4,11 +4,8 @@ package streamprocess.faulttolerance.clr;
 import System.FileSystem.ImplFS.LocalFileSystem;
 import System.FileSystem.ImplFSDataOutputStream.LocalDataOutputStream;
 import System.FileSystem.Path;
-import com.ning.compress.lzf.util.LZFFileOutputStream;
-import org.checkerframework.checker.units.qual.C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Int;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -64,7 +61,7 @@ public class EventManager {
         Fw.close();
     }
     private void Init_PersistEventLogic(List<PersistLogicTask> callables,Path current,EventsTask eventsTask){
-        for (int i=0;i<partition_num;i++){
+        for (int i = 0; i< PARTITION_NUM; i++){
             callables.add(new PersistLogicTask(i,eventsTask.getTaskId(), eventsTask.getComputationLogicsQueues(), current));
         }
     }
@@ -99,7 +96,7 @@ public class EventManager {
         }
     }
     private void Init_PersistEventTask(List<PersistEventTask> callables,Path current,EventsTask eventsTask){
-        for (int i=0;i<partition_num;i++){
+        for (int i = 0; i< PARTITION_NUM; i++){
             callables.add(new PersistEventTask(i,eventsTask.getTaskId(),eventsTask.getComputationTasksByPartitionId(i),current));
         }
     }

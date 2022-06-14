@@ -39,7 +39,7 @@ public abstract class TxnManagerDedicated implements TxnManager{
         this.thread_id = thread_Id;
         this.num_tasks = num_tasks;
         delta = (int) Math.ceil(NUM_ITEMS / (double) num_tasks);//NUM_ITEMS / tthread;
-        partition_delta=(int) Math.ceil(NUM_ITEMS / (double) partition_num);//NUM_ITEMS / partition_num;
+        partition_delta=(int) Math.ceil(NUM_ITEMS / (double) PARTITION_NUM);//NUM_ITEMS / partition_num;
     }
     @Override
     public boolean Asy_ModifyRecord_Read(TxnContext txn_context, String srcTable, String key, SchemaRecordRef record_ref, Function function) throws DatabaseException {
@@ -51,7 +51,7 @@ public abstract class TxnManagerDedicated implements TxnManager{
         }else{
             tableName=srcTable;
         }
-        tableRecord=storageManager.getTableRecords(tableName,key);
+        tableRecord = storageManager.getTableRecords(tableName,key);
         if(tableRecord!=null){
             return Asy_ModifyRecord_ReadCC(txn_context,srcTable,tableRecord,record_ref,function,accessType);
         }
@@ -62,11 +62,11 @@ public abstract class TxnManagerDedicated implements TxnManager{
         MetaTypes.AccessType accessType = MetaTypes.AccessType.READ_WRITE_COND_READ;
         TableRecord[] condition_records = new TableRecord[condition_source.length];
         for (int i = 0; i < condition_source.length; i++) {
-            String tableName="";
+            String tableName = "";
             if(enable_states_partition){
-                tableName=condition_sourceTable[i]+"_"+ getPartitionId(condition_source[i]);
+                tableName = condition_sourceTable[i]+"_"+ getPartitionId(condition_source[i]);
             }else{
-                tableName=condition_sourceTable[i];
+                tableName = condition_sourceTable[i];
             }
             condition_records[i] = storageManager.getTable(tableName).SelectKeyRecord(condition_source[i]);//TODO: improve this later.
             if (condition_records[i] == null) {

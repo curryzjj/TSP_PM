@@ -1,5 +1,6 @@
 package engine.transaction;
 
+import UserApplications.CONTROL;
 import engine.log.WALManager;
 import engine.table.datatype.DataBox;
 import engine.table.datatype.DataBoxImpl.DoubleDataBox;
@@ -45,32 +46,42 @@ public class TxnProcessingEngine {
     //initialize
     private String app;
     public void initialize(int size,String app){
-        num_op=size;
-        this.app=app;
+        num_op = size;
+        this.app = app;
         holder_by_stage = new ConcurrentHashMap<>();
-        this.walManager=new WALManager(partition_num);
+        if (enable_undo_log || enable_wal) {
+            this.walManager = new WALManager(PARTITION_NUM);
+        }
         this.transactionAbort=new ConcurrentSkipListSet<>();
         this.dropTable=new ArrayList<>();
         switch(app){
             case "TP_txn":
                 holder_by_stage.put("segment_speed", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("segment_speed",partition_num);
                 holder_by_stage.put("segment_cnt", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("segment_cnt",partition_num);
+                if (enable_undo_log || enable_wal) {
+                    this.walManager.setHolder_by_tableName("segment_speed", PARTITION_NUM);
+                    this.walManager.setHolder_by_tableName("segment_cnt", PARTITION_NUM);
+                }
                 break;
             case "GS_txn":
                 holder_by_stage.put("MicroTable", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("MicroTable",partition_num);
+                if (enable_undo_log || enable_wal) {
+                    this.walManager.setHolder_by_tableName("MicroTable", PARTITION_NUM);
+                }
                 break;
             case "OB_txn":
                 holder_by_stage.put("goods", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("goods",partition_num);
+                if (enable_undo_log || enable_wal) {
+                    this.walManager.setHolder_by_tableName("goods", PARTITION_NUM);
+                }
                 break;
             case "SL_txn":
-                holder_by_stage.put("accounts", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("accounts",partition_num);
-                holder_by_stage.put("bookEntries", new Holder_in_range(num_op));
-                this.walManager.setHolder_by_tableName("bookEntries",partition_num);
+                holder_by_stage.put("T_accounts", new Holder_in_range(num_op));
+                holder_by_stage.put("T_assets", new Holder_in_range(num_op));
+                if (enable_undo_log || enable_wal) {
+                    this.walManager.setHolder_by_tableName("T_accounts", PARTITION_NUM);
+                    this.walManager.setHolder_by_tableName("T_assets", PARTITION_NUM);
+                }
                 break;
             default:
                 throw new UnsupportedOperationException("app not recognized");
@@ -83,7 +94,7 @@ public class TxnProcessingEngine {
         public ConcurrentHashMap<String, MyList<Operation>> holder_v1=new ConcurrentHashMap<>();//multi operation support. <key, list of operations>
     }
     public class Holder_in_range{
-        public ConcurrentHashMap<Integer,Holder> rangeMap=new ConcurrentHashMap<>();//multi range support. <rangeId, holder>
+        public ConcurrentHashMap<Integer,Holder> rangeMap = new ConcurrentHashMap<>();//multi range support. <rangeId, holder>
         public Holder_in_range(Integer num_op){
             int i;
             for (i=0;i<num_op;i++){
@@ -182,34 +193,32 @@ public class TxnProcessingEngine {
         }
     }
     private void process(MyList<Operation> operation_chain, int mark_ID){
-        if (operation_chain.size()>0){
-            this.walManager.addLogRecord(operation_chain);
+        if (operation_chain.size() > 0){
             operation_chain.logRecord.setCopyTableRecord(operation_chain.first().s_record);
+            if (enable_undo_log) {
+                this.walManager.addLogRecord(operation_chain);
+            }
         }
         while (true){
-            Operation operation=operation_chain.pollFirst();
+            Operation operation = operation_chain.pollFirst();
             if(operation==null) return;
-            process(operation,mark_ID, operation_chain.getLogRecord());
+            process(operation, mark_ID, operation_chain.getLogRecord());
         }
     }
-    private void process(Operation operation, int mark_id,LogRecord logRecord) {
-        if(operation.bid==failureTime){
-            if(enable_transaction_abort){
-                this.transactionAbort.add(operation.bid);
-                this.isTransactionAbort=true;
-                return;
-            }else if(enable_states_lost){
+    private void process(Operation operation, int mark_id, LogRecord logRecord) {
+        if(operation.bid == failureTime){
+          if(enable_states_lost){
                 if(drop){
-                    if (enable_states_partition&&enable_parallel&&!enable_snapshot){
+                    if (enable_clr){
                         if (!dropTable.contains(mark_id)){
                             this.dropTable.add(mark_id);
-                            this.drop=false;
+                            this.drop = false;
                         }
                     }else{
-                        for(int i=0;i<num_op;i++){
+                        for(int i = 0; i < num_op; i++){
                             this.dropTable.add(i);
                         }
-                        this.drop=false;
+                        this.drop = false;
                     }
                     return;
                 }
@@ -217,53 +226,44 @@ public class TxnProcessingEngine {
         }
         switch (operation.accessType){
             case READ_WRITE_READ:
-                assert operation.record_ref!=null;
-                //read source_data
-                List<DataBox> srcRecord=operation.s_record.record_.getValues();
-                if(operation.function instanceof AVG){
-                    double latestAvgSpeeds = srcRecord.get(1).getDouble();
-                    double lav;
-                    if (latestAvgSpeeds == 0) {//not initialized
-                        lav = operation.function.delta_double;
-                    } else{
-                        lav = (latestAvgSpeeds + operation.function.delta_double) / 2;
-                    }
-                    srcRecord.get(1).setDouble(lav);//write to state.
-                    operation.record_ref.setRecord(new SchemaRecord(new DoubleDataBox(lav)));//return updated record.
-                    operation.record_ref.getRecord().getValue().getDouble();
-                }else{
-                    HashSet cnt_segment = srcRecord.get(1).getHashSet();
-                    cnt_segment.add(operation.function.delta_int);//update hashset; updated state also. TODO: be careful of this.
-                    operation.record_ref.setRecord(new SchemaRecord(new IntDataBox(cnt_segment.size())));//return updated record.
-                    operation.record_ref.getRecord().getValue().getInt();
+                if (app == "TP_txn"){
+                    this.TP_TollProcess_Fun(operation);
                 }
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.s_record);
                 }
             break;
             case READ_ONLY:
-                SchemaRecord schemaRecord = operation.d_record.record_;
-                operation.record_ref.setRecord(new SchemaRecord(schemaRecord.getValues()));//Note that, locking scheme allows directly modifying on original table d_record.
+                if (app == "TP_txn") {
+                    assert operation.record_ref != null;
+                    //read source_data
+                    List<DataBox> srcRecord = operation.s_record.record_.getValues();
+                    if (srcRecord.get(1) instanceof DoubleDataBox) {
+                        operation.record_ref.setRecord(new SchemaRecord(new DoubleDataBox(srcRecord.get(1).getDouble())));
+                    } else {
+                        operation.record_ref.setRecord(new SchemaRecord(new IntDataBox(srcRecord.get(1).getHashSet().size())));
+                    }
+                } else {
+                    SchemaRecord schemaRecord = operation.d_record.record_;
+                    operation.record_ref.setRecord(new SchemaRecord(schemaRecord.getValues()));
+                }
+               //Note that, locking scheme allows directly modifying on original table d_record.
             break;
             case WRITE_ONLY:
-                if(operation.value_list!=null){//directly replace value_list--only used in the GS
-                    operation.d_record.record_.updateValues(operation.value_list);
-                }else{//update by the column id
-                    operation.d_record.record_.getValues().get(operation.column_id).setLong(operation.value);
+                if (app == "OB_txn") {
+                   this.OB_Alert_Fun(operation);
+                } else if(app == "GS_txn") {
+                    this.GS_Write_Fun(operation);
                 }
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.d_record);
                 }
             break;
             case READ_WRITE://read, modify, write
-                if(app=="SL_txn"){
-                    this.CT_Depo_Fun(operation);
-                }else{
-                    SchemaRecord src_record=operation.s_record.record_;
-                    List<DataBox> values=src_record.getValues();
-                    if(operation.function instanceof INC){
-                        values.get(operation.column_id).setLong(values.get(operation.column_id).getLong()+operation.function.delta_long);
-                    }
+                if(app == "SL_txn"){
+                    this.SL_Depo_Fun(operation);
+                }else if (app == "OB_txn"){
+                    this.OB_Topping_Fun(operation);
                 }
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.d_record);
@@ -271,20 +271,9 @@ public class TxnProcessingEngine {
             break;
             case READ_WRITE_COND://read, modify(depends on the condition), write(depend on the condition)
                 if(app=="SL_txn"){
-                    this.CT_Transfer_Fun(operation);
-                }else{
-                    List<DataBox> d_record=operation.condition_records[0].record_.getValues();
-                    long askPrice = d_record.get(1).getLong();//price
-                    long left_qty = d_record.get(2).getLong();//available qty;
-                    long bidPrice = operation.condition.arg1;
-                    long bid_qty = operation.condition.arg2;
-                    // check the preconditions
-                    if (bidPrice < askPrice || bid_qty > left_qty) {
-                        operation.success[0] = false;
-                    } else {
-                        d_record.get(2).setLong(left_qty - operation.function.delta_long);//new quantity.
-                        operation.success[0] = true;
-                    }
+                    this.SL_Transfer_Fun(operation,false);
+                }else if (app == "OB_txn"){
+                    this.OB_Buying_Fun(operation);
                 }
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.d_record);
@@ -293,10 +282,12 @@ public class TxnProcessingEngine {
             case READ_WRITE_COND_READ:
                 assert operation.record_ref != null;
                 if (app == "SL_txn") {//used in SL
-                    CT_Transfer_Fun(operation);
-                    operation.record_ref.setRecord(operation.d_record.readPreValues(operation.bid));//read the resulting tuple.
-                } else
-                    throw new UnsupportedOperationException();
+                    SL_Transfer_Fun(operation,true);
+                    operation.record_ref.setRecord(operation.condition_records[0].readPreValues(operation.bid));
+                }
+                if(enable_wal){
+                    logRecord.setUpdateTableRecord(operation.d_record);
+                }
             break;
             default:throw new UnsupportedOperationException();
         }
@@ -333,6 +324,7 @@ public class TxnProcessingEngine {
     //evaluation
     public void start_evaluation(int thread_id, long mark_ID) throws InterruptedException {//each operation thread called this function
         //implement the SOURCE_CONTROL sync for all threads to come to this line to ensure chains are constructed for the current batch.
+        this.walManager.addLogForBatch(mark_ID);
         SOURCE_CONTROL.getInstance().Wait_Start(thread_id);
         int size=evaluation(thread_id,mark_ID);
         //implement the SOURCE_CONTROL sync for all threads to come to this line.
@@ -368,34 +360,142 @@ public class TxnProcessingEngine {
         return transactionAbort;
     }
     //Functions to process the operation
-    private void CT_Depo_Fun(Operation operation){
-        SchemaRecord srcRecord=operation.s_record.readPreValues(operation.bid);
-        List<DataBox> values=srcRecord.getValues();
-        SchemaRecord tempo_record=new SchemaRecord(values);
+    private void SL_Depo_Fun(Operation operation){
+        if (enable_transaction_abort) {
+            if (operation.function.delta_long < 0) {
+                this.transactionAbort.add(operation.bid);
+                this.isTransactionAbort = true;
+                return;
+            }
+        }
+        SchemaRecord srcRecord = operation.s_record.readPreValues(operation.bid);
+        List<DataBox> values = srcRecord.getValues();
+        SchemaRecord tempo_record = new SchemaRecord(values);
         tempo_record.getValues().get(operation.column_id).incLong(operation.function.delta_long);
         operation.s_record.updateMultiValues(operation.bid, tempo_record);
+        CONTROL.randomDelay();
     }
-    private void CT_Transfer_Fun(Operation operation){
-        SchemaRecord preValues=operation.condition_records[0].readPreValues(operation.bid);
-        SchemaRecord preValues1=operation.condition_records[1].readPreValues(operation.bid);
-        final long sourceAccountBalance = preValues.getValues().get(1).getLong();
-        final long sourceAssetValue = preValues1.getValues().get(1).getLong();
-        if (sourceAccountBalance>operation.condition.arg1&&sourceAccountBalance>operation.condition.arg2&&sourceAssetValue>operation.condition.arg3){
+    private void SL_Transfer_Fun(Operation operation, boolean isRead){
+        SchemaRecord preValues;
+        if (isRead && operation.record_ref.cnt != 0) {
+            preValues = operation.record_ref.getRecord();
+        } else {
+            preValues = operation.condition_records[0].readPreValues(operation.bid);
+        }
+        final long sourceBalance = preValues.getValues().get(1).getLong();
+        if (operation.condition.arg1 > 0 && sourceBalance > operation.condition.arg1 && sourceBalance > operation.condition.arg2){
             SchemaRecord srcRecord=operation.s_record.readPreValues(operation.bid);
             List<DataBox> values=srcRecord.getValues();
             SchemaRecord tempo_record;
             tempo_record = new SchemaRecord(values);//tempo record
             //apply function.
             if (operation.function instanceof INC) {
-                tempo_record.getValues().get(1).incLong(sourceAccountBalance, operation.function.delta_long);//compute.
+                tempo_record.getValues().get(1).incLong(sourceBalance, operation.function.delta_long);//compute.
             } else if (operation.function instanceof DEC) {
-                tempo_record.getValues().get(1).decLong(sourceAccountBalance, operation.function.delta_long);//compute.
+                tempo_record.getValues().get(1).decLong(sourceBalance, operation.function.delta_long);//compute.
             } else
                 throw new UnsupportedOperationException();
-            operation.d_record.updateMultiValues(operation.bid,tempo_record);
+            operation.d_record.updateMultiValues(operation.bid, tempo_record);
             operation.success[0]=true;
+            CONTROL.randomDelay();
         }else {
+            if (enable_transaction_abort) {
+                this.transactionAbort.add(operation.bid);
+                this.isTransactionAbort = true;
+            }
             operation.success[0]=false;
         }
+    }
+    private boolean OB_Buying_Fun(Operation operation) {
+        List<DataBox> d_record = operation.condition_records[0].record_.getValues();
+        long askPrice = d_record.get(1).getLong();//price
+        long left_qty = d_record.get(2).getLong();//available qty;
+        long bidPrice = operation.condition.arg1;
+        long bid_qty = operation.condition.arg2;
+        if (enable_transaction_abort) {
+            if (bid_qty < 0) {
+                this.transactionAbort.add(operation.bid);
+                this.isTransactionAbort = true;
+                return false;
+            }
+        }
+        // check the preconditions
+        if (bidPrice < askPrice || bid_qty > left_qty ) {
+            operation.success[0] = false;
+        } else {
+            d_record.get(2).setLong(left_qty - operation.function.delta_long);//new quantity.
+            operation.success[0] = true;
+        }
+        CONTROL.randomDelay();
+        return true;
+    }
+    private boolean OB_Topping_Fun(Operation operation) {
+        SchemaRecord src_record=operation.s_record.record_;
+        List<DataBox> values = src_record.getValues();
+        if (enable_transaction_abort) {
+            if (operation.function.delta_long < 0) {
+                this.transactionAbort.add(operation.bid);
+                this.isTransactionAbort = true;
+                return false;
+            }
+        }
+        if(operation.function instanceof INC){
+            values.get(operation.column_id).setLong(values.get(operation.column_id).getLong()+operation.function.delta_long);
+        }
+        CONTROL.randomDelay();
+        return true;
+    }
+    private boolean OB_Alert_Fun(Operation operation) {
+        if (enable_transaction_abort) {
+            if (operation.value == -1) {
+                this.transactionAbort.add(operation.bid);
+                this.isTransactionAbort = true;
+                return false;
+            }
+        }
+        operation.d_record.record_.getValues().get(operation.column_id).setLong(operation.value);
+        CONTROL.randomDelay();
+        return true;
+    }
+    private boolean GS_Write_Fun(Operation operation) {
+        if (enable_transaction_abort) {
+            if (operation.value_list.size() == 0) {
+                this.transactionAbort.add(operation.bid);
+                this.isTransactionAbort = true;
+                return false;
+            }
+        }
+        operation.d_record.record_.updateValues(operation.value_list);
+        CONTROL.randomDelay();
+        return true;
+    }
+    private boolean TP_TollProcess_Fun(Operation operation) {
+        assert operation.record_ref != null;
+        //read source_data
+        List<DataBox> srcRecord = operation.s_record.record_.getValues();
+        if(operation.function instanceof AVG){
+            if (enable_transaction_abort) {
+                if (operation.function.delta_double >= 180) {
+                    this.transactionAbort.add(operation.bid);
+                    this.isTransactionAbort=true;
+                    return false;
+                }
+            }
+            double latestAvgSpeeds = srcRecord.get(1).getDouble();
+            double lav;
+            if (latestAvgSpeeds == 0) {//not initialized
+                lav = operation.function.delta_double;
+            } else{
+                lav = (latestAvgSpeeds + operation.function.delta_double) / 2;
+            }
+            srcRecord.get(1).setDouble(lav);//write to state.
+            operation.record_ref.setRecord(new SchemaRecord(new DoubleDataBox(lav)));//return updated record.
+        }else{
+            HashSet cnt_segment = srcRecord.get(1).getHashSet();
+            cnt_segment.add(operation.function.delta_int);//update hashset; updated state also. TODO: be careful of this.
+            operation.record_ref.setRecord(new SchemaRecord(new IntDataBox(cnt_segment.size())));//return updated record.
+        }
+        CONTROL.randomDelay();
+        return true;
     }
 }

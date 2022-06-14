@@ -35,7 +35,7 @@ public class TableSingleStateIterator implements SingleStateIterator {
     @Override
     public byte[] value() {
         try {
-            TableRecord tableRecord=iterator.next();
+            TableRecord tableRecord = iterator.next();
             tableRecord.clean_map();
             return Serialize.serializeObject(tableRecord);
         } catch (IOException e) {

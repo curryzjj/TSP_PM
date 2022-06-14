@@ -10,20 +10,23 @@ import applications.DataTypes.AbstractInputTuple;
 import applications.DataTypes.PositionReport;
 import applications.events.InputDataGenerator.InputDataGenerator;
 import applications.events.TxnEvent;
+import applications.events.lr.LRParam;
+import applications.events.lr.TollProcessingEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static UserApplications.CONTROL.*;
 import static UserApplications.CONTROL.enable_wal;
 
 public class TPDataGenerator extends InputDataGenerator {
-    private static final Logger LOG=LoggerFactory.getLogger(TPDataGenerator.class);
-    private String dataPath;
-    private ZipfGenerator zipfGenerator;
+    private static final Logger LOG = LoggerFactory.getLogger(TPDataGenerator.class);
+    private static final long serialVersionUID = 8318425786880652277L;
 
     /**
      * Generate TP data in batch
@@ -31,26 +34,36 @@ public class TPDataGenerator extends InputDataGenerator {
      * @return
      */
     public List<TxnEvent> generateEvent(int batch){
-        return null;
+        List<TxnEvent> batch_event = new ArrayList<>();
+        if(recordNum==0){
+            return null;
+        }
+        for(int i = 0; i < Math.min(recordNum, batch); i++){
+            TollProcessingEvent event = (TollProcessingEvent) this.create_new_event(current_bid);
+            batch_event.add(event);
+        }
+        recordNum = recordNum - Math.min(recordNum,batch);
+        return batch_event;
+    }
+
+    @Override
+    public void generateEvent() {
+        for(int i = 0; i < recordNum; i++){
+            TollProcessingEvent event= (TollProcessingEvent) this.create_new_event(current_bid);
+            events.add(event);
+        }
     }
 
     @Override
     public void storeInput(Object input) throws IOException {
-        List<AbstractInputTuple> inputTuples= (List<AbstractInputTuple>) input;
-        File file=new File(dataPath);
-        FileWriter Fw= null;
+        List<TxnEvent> txnEvents = (List<TxnEvent>) input;
+        File file = new File(dataPath);
+        FileWriter Fw = null;
         Fw = new FileWriter(file,true);
         BufferedWriter bw= new BufferedWriter(Fw);
-        for (AbstractInputTuple tuple:inputTuples){
-            PositionReport report=(PositionReport) tuple;
-            String str=report.getTime()
-                    +split_exp+report.getVid()
-                    +split_exp+report.getSpeed()
-                    +split_exp+report.getXWay()
-                    +split_exp+report.getLane()
-                    +split_exp+report.getDirection()
-                    +split_exp+report.getSegment()
-                    +split_exp+report.getPosition();
+        for (TxnEvent event:txnEvents){
+            TollProcessingEvent tollProcessingEvent = (TollProcessingEvent) event;
+            String str = tollProcessingEvent.toString();
             bw.write(str+"\n");
         }
         bw.flush();
@@ -60,58 +73,26 @@ public class TPDataGenerator extends InputDataGenerator {
 
     @Override
     public List<AbstractInputTuple> generateData(int batch) {
-        List<AbstractInputTuple> batch_event=new ArrayList<>();
-        if(recordNum==0){
-            return null;
-        }
-        for(int i=0;i<Math.min(recordNum,batch);i++){
-            PositionReport report= (PositionReport) this.create_new_event(current_bid);
-            batch_event.add(report);
-        }
-        recordNum=recordNum-Math.min(recordNum,batch);
-        return batch_event;
+       return null;
     }
 
-    public void initialize(String dataPath, int recordNum, int range, double zipSkew, Configuration config){
-        this.recordNum=recordNum;
-        this.dataPath=dataPath;
-        this.zipSkew=zipSkew;
-        this.range=range;
-        this.partition_num =config.getInt("partition_num");
-        this.zipfGenerator=new ZipfGenerator(range, zipSkew);
-        this.current_pid=0;
-        if(enable_states_partition){
-            floor_interval= (int) Math.floor(NUM_ITEMS / (double) partition_num);//NUM_ITEMS / partition_num;
-            partitioned_store =new FastZipfGenerator[partition_num];
-            for (int i = 0; i < partition_num; i++) {
-                partitioned_store[i] = new FastZipfGenerator((int) floor_interval, zipSkew, i * floor_interval);
-            }
-        }else{
-            this.shared_store=new FastZipfGenerator(NUM_ITEMS, zipSkew,0);
-        }
+    public void initialize(String dataPath, Configuration config){
+        super.initialize(dataPath,config);
     }
 
     @Override
     public Object create_new_event(int bid) {
-        FastZipfGenerator generator;
-        if(enable_states_partition){
-            generator= partitioned_store[current_pid];
-        }else {
-            generator=shared_store;
+        LRParam param = new LRParam(NUM_ACCESSES);
+        Set<Integer> keys = new HashSet<>();
+        current_pid = key_to_partition(partitionId_generator.next());
+        randomKeys(param, keys, NUM_ACCESSES);
+        assert !enable_states_partition|| verify(keys,current_pid, partition_num);
+        current_bid++;
+        if (random.nextInt(1000) < RATIO_OF_ABORT) {
+            return new TollProcessingEvent(param.getSegmentIds(),NUM_ACCESSES, bid, current_pid, randomNumberGenerator.generateRandom(180,200),randomNumberGenerator.generateRandom(1,100),p_bid,partition_num,true);
+        } else {
+            return new TollProcessingEvent(param.getSegmentIds(),NUM_ACCESSES, bid, current_pid, randomNumberGenerator.generateRandom(60,180),randomNumberGenerator.generateRandom(1,100),p_bid,partition_num,false);
         }
-        long timestamp = System.nanoTime();
-        current_pid++;
-        if(current_pid== partition_num){
-            current_pid=0;
-        }
-        return new PositionReport(timestamp,
-                randomNumberGenerator.generateRandom(1,100),
-                randomNumberGenerator.generateRandom(60,180),
-                randomNumberGenerator.generateRandom(1,4),
-                (short)randomNumberGenerator.generateRandom(1,4),
-                (short)randomNumberGenerator.generateRandom(1,1),
-                generator.next(),
-                randomNumberGenerator.generateRandom(1,100));
     }
 
     @Override

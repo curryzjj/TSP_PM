@@ -30,10 +30,10 @@ public class OutputCollector<T> {
     private final MetaGroup meta;
     private boolean no_wait=false;
     public OutputCollector(ExecutionNode executor, TopologyContext context){
-        int taskId=context.getThisTaskIndex();
-        this.executor=executor;
-        this.sc=executor.getController();
-        this.meta=new MetaGroup(taskId);
+        int taskId = context.getThisTaskIndex();
+        this.executor = executor;
+        this.sc = executor.getController();
+        this.meta = new MetaGroup(taskId);
         for(TopologyComponent childrenOP:this.executor.getChildren().keySet()){
             this.meta.put(childrenOP,new Meta(taskId));
         }
@@ -133,7 +133,7 @@ public class OutputCollector<T> {
         return sc.force_emitOnStream(meta, streamId, bid, data);
     }
     //emit single to target executor
-    public void emit_single_ID(String streamId,int targetId, long bid,Object... data) throws InterruptedException {
+    public void emit_single_ID(String streamId, int targetId, long bid,Object... data) throws InterruptedException {
         assert data != null && sc != null;
         sc.force_emitOnStream_ID(meta, streamId,targetId,bid,data);
     }

@@ -1,9 +1,7 @@
 package applications.bolts.transactional.ob;
 
 import engine.Exception.DatabaseException;
-import org.slf4j.Logger;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
@@ -37,11 +35,10 @@ public class OBBolt_TStream_NoFT extends OBBolt_TStream{
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         transactionManager.start_evaluate(thread_Id,this.fid);
-        REQUEST_REQUEST_CORE();
+        REQUEST_CORE();
         REQUEST_POST();
         EventsHolder.clear();
         BUFFER_PROCESS();
-        bufferedTuple.clear();
         return true;
     }
 }

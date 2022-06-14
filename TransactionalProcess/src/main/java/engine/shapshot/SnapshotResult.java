@@ -3,6 +3,7 @@ package engine.shapshot;
 
 import System.FileSystem.Path;
 import engine.table.keyGroup.KeyGroupRangeOffsets;
+import scala.Tuple2;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -17,7 +18,8 @@ public class SnapshotResult implements Serializable {
         return (SnapshotResult) EMPTY;
     }
     /** Use in the parallel snapshot */
-    private HashMap<Path,KeyGroupRangeOffsets> snapshotResults;
+    //<partitionId, Tuple2>
+    private HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResults;
     private int taskId;
 
     private Path snapshotPath;
@@ -27,14 +29,14 @@ public class SnapshotResult implements Serializable {
     public SnapshotResult(Path snapshotPath, KeyGroupRangeOffsets keyGroupRangeOffsets,long timestamp,long checkpointId){
         this.snapshotPath = snapshotPath;
         this.keyGroupRangeOffsets = keyGroupRangeOffsets;
-        this.checkpointId=checkpointId;
-        this.timestamp=timestamp;
+        this.checkpointId = checkpointId;
+        this.timestamp = timestamp;
         this.snapshotResults=new HashMap<>();
     }
-    public SnapshotResult(HashMap<Path,KeyGroupRangeOffsets> snapshotResults,long timestamp,long checkpointId){
-        this.checkpointId=checkpointId;
-        this.timestamp=timestamp;
-        this.snapshotResults=snapshotResults;
+    public SnapshotResult(HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResults,long timestamp,long checkpointId){
+        this.checkpointId = checkpointId;
+        this.timestamp = timestamp;
+        this.snapshotResults = snapshotResults;
     }
 
     /**
@@ -43,8 +45,8 @@ public class SnapshotResult implements Serializable {
      * @param keyGroupRangeOffsets
      */
     public SnapshotResult(Path path,KeyGroupRangeOffsets keyGroupRangeOffsets){
-        this.snapshotPath=path;
-        this.keyGroupRangeOffsets=keyGroupRangeOffsets;
+        this.snapshotPath = path;
+        this.keyGroupRangeOffsets = keyGroupRangeOffsets;
     }
     public long getCheckpointId() {
         return checkpointId;
@@ -54,10 +56,11 @@ public class SnapshotResult implements Serializable {
         return timestamp;
     }
 
-    public HashMap<Path, KeyGroupRangeOffsets> getSnapshotResults() {
-        if (snapshotResults.size()==0){
-            HashMap<Path,KeyGroupRangeOffsets> snapshotResult=new HashMap<>();
-            snapshotResult.put(this.snapshotPath,this.keyGroupRangeOffsets);
+    public HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> getSnapshotResults() {
+        if (snapshotResults.size() == 0){
+            HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResult=new HashMap<>();
+            Tuple2 tuple = new Tuple2(this.snapshotPath,this.keyGroupRangeOffsets);
+            snapshotResult.put(0,tuple);
             return snapshotResult;
         }else{
             return snapshotResults;

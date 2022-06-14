@@ -60,8 +60,7 @@ public class SpoutWithFT extends TransactionalSpoutFT {
         this.batch_number_per_wm=config.getInt("batch_number_per_wm");
         this.checkpoint_interval = config.getInt("snapshot");
         Data_path = Data_path.concat(path);
-        inputDataGenerator.initialize(Data_path,this.exe,NUM_ITEMS-1,ZIP_SKEW,config);
-        this.getContext().getEventGenerator().setInputDataGenerator(inputDataGenerator);
+        inputDataGenerator.initialize(Data_path,config);
         this.inputQueue=this.getContext().getEventGenerator().getEventsQueue();
         this.start_time=System.currentTimeMillis();
         this.time_Interval=config.getInt("time_Interval");
@@ -99,7 +98,7 @@ public class SpoutWithFT extends TransactionalSpoutFT {
                 inputData=(List<AbstractInputTuple>) inputQueue.poll();
             }
             if(inputData.size()!=0){
-                if(enable_snapshot||enable_clr||enable_wal){
+                if(enable_checkpoint ||enable_clr||enable_wal){
                     MeasureTools.Input_store_begin(System.nanoTime());
                     this.inputDataGenerator.storeInput(inputData);
                     MeasureTools.Input_store_finish();

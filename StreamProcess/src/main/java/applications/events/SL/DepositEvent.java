@@ -5,6 +5,7 @@ import engine.table.datatype.DataBox;
 import engine.table.tableRecords.SchemaRecordRef;
 import engine.table.tableRecords.TableRecordRef;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class DepositEvent extends TxnEvent {
@@ -33,8 +34,9 @@ public class DepositEvent extends TxnEvent {
             String accountId,
             String bookEntryId,
             long accountTransfer,
-            long bookEntryTransfer) {
-        super(bid, partition_id, bid_array, number_of_partitions);
+            long bookEntryTransfer,
+            boolean isAbort) {
+        super(bid, partition_id, bid_array, number_of_partitions,isAbort);
         this.accountId = accountId;
         this.bookEntryId = bookEntryId;
         this.accountTransfer = accountTransfer;
@@ -59,13 +61,14 @@ public class DepositEvent extends TxnEvent {
                         String bookEntryId,
                         long accountTransfer,
                         long bookEntryTransfer,
-                        long timestamp) {
-        super(bid, pid, bid_array, num_of_partition);
+                        long timestamp,
+                        boolean isAbort) {
+        super(bid, pid, bid_array, num_of_partition,isAbort);
         this.accountId = accountId;
         this.bookEntryId = bookEntryId;
         this.accountTransfer = accountTransfer;
         this.bookEntryTransfer = bookEntryTransfer;
-        this.timestamp=timestamp;
+        this.timestamp = timestamp;
     }
 
 
@@ -85,14 +88,6 @@ public class DepositEvent extends TxnEvent {
         return bookEntryTransfer;
     }
 
-    public List<DataBox> getUpdatedAcount_value() {
-        return null;
-    }
-
-    public List<DataBox> getUpdatedAsset_value() {
-        return null;
-    }
-
 
     @Override
     public String toString() {
@@ -102,5 +97,10 @@ public class DepositEvent extends TxnEvent {
                 + ", accountTransfer=" + accountTransfer
                 + ", bookEntryTransfer=" + bookEntryTransfer
                 + '}';
+    }
+
+    @Override
+    public DepositEvent cloneEvent() {
+        return new DepositEvent((int) bid, pid, Arrays.toString(bid_array),number_of_partitions,accountId,bookEntryId,accountTransfer,bookEntryTransfer,timestamp,isAbort);
     }
 }

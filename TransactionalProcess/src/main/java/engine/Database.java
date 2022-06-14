@@ -14,6 +14,7 @@ import engine.transaction.TxnProcessingEngine;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RunnableFuture;
 
@@ -65,7 +66,7 @@ public abstract class Database {
      * @throws DatabaseException
      */
     public abstract void recoveryFromSnapshot(SnapshotResult lastSnapshotResult) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException;
-
+    public abstract void recoveryFromTargetSnapshot(SnapshotResult lastSnapshotResult, List<Integer> targetIds)throws IOException, ClassNotFoundException, DatabaseException, InterruptedException;
     /**
      * To recovery the DataBase from the WAL, and return the last committed globalLSN
      * @return
@@ -77,7 +78,8 @@ public abstract class Database {
      * @return
      */
     public abstract boolean undoFromWAL() throws IOException, DatabaseException;
-
+    public abstract boolean undoFromWALToTargetOffset(List<Integer> recoveryIds,long targetOffset) throws IOException, DatabaseException;
+    public abstract boolean cleanUndoLog(long offset);
     /**
      * Reload state from the lastSnapshot
      * @param snapshotResult

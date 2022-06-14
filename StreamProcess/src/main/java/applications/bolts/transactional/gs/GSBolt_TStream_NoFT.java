@@ -40,7 +40,6 @@ public class GSBolt_TStream_NoFT extends GSBolt_TStream{
         REQUEST_POST();
         EventsHolder.clear();//clear stored events.
         BUFFER_PROCESS();
-        bufferedTuple.clear();
         return true;
     }
 }

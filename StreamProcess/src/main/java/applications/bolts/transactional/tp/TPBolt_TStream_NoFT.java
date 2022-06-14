@@ -3,7 +3,6 @@ package applications.bolts.transactional.tp;
 import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.faulttolerance.checkpoint.Status;
 
 import java.io.IOException;
 import java.util.concurrent.BrokenBarrierException;
@@ -38,11 +37,10 @@ public class TPBolt_TStream_NoFT extends TPBolt_TStream{
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
         transactionManager.start_evaluate(thread_Id,this.fid);
-        REQUEST_REQUEST_CORE();
+        REQUEST_CORE();
         REQUEST_POST();
         LREvents.clear();//clear stored events.
         BUFFER_PROCESS();
-        bufferedTuple.clear();
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         return true;
     }

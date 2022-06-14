@@ -22,7 +22,7 @@ public abstract class AbstractStorageManager {
     public int table_count = 0;
     public abstract BaseTable getTable(String tableName) throws DatabaseException;
     public abstract TableRecord getTableRecords(String tableName,String key) throws DatabaseException;
-    public synchronized  void createTable(RecordSchema s, String tableName, DataBoxTypes type) throws DatabaseException, RocksDBException {};
+    public synchronized void createTable(RecordSchema s, String tableName, DataBoxTypes type) throws DatabaseException, RocksDBException {};
     /**
      * Delete a table in this database.
      *

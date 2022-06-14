@@ -1,5 +1,7 @@
 package applications.events;
 
+import java.util.Arrays;
+
 public class TxnEvent {
     protected final long bid;//as msg id
     protected final int pid;
@@ -8,8 +10,9 @@ public class TxnEvent {
     public double[] enqueue_time = new double[1];
     public boolean[] success;
     protected long timestamp;
+    protected boolean isAbort;
 
-    public TxnEvent(long bid, int pid, long[] bid_array, int number_of_partitions) {
+    public TxnEvent(long bid, int pid, long[] bid_array, int number_of_partitions, boolean isAbort) {
         this.bid = bid;
         this.pid = pid;
         this.bid_array = bid_array;
@@ -17,7 +20,7 @@ public class TxnEvent {
         success = new boolean[1];
         success[0] = false;
     }
-    public TxnEvent(long bid, int partition_id, String bid_array, int number_of_partitions) {
+    public TxnEvent(long bid, int partition_id, String bid_array, int number_of_partitions, boolean isAbort) {
         this.bid = bid;
         this.pid = partition_id;
         String[] bid_arrays = bid_array.substring(1, bid_array.length() - 1).split(",");
@@ -46,12 +49,19 @@ public class TxnEvent {
         return bid_array;
     }
 
-
     public long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(long timestamp) {
+    public void UpdateTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public boolean isAbort() {
+        return isAbort;
+    }
+
+    public TxnEvent cloneEvent() {
+        return new TxnEvent(bid,pid, Arrays.toString(bid_array),number_of_partitions,isAbort);
     }
 }

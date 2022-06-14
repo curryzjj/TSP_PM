@@ -10,8 +10,10 @@ import engine.log.WALManager;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.CheckpointStreamWithResultProvider;
 import engine.shapshot.ShapshotResources.FullSnapshotResources;
+import engine.table.datatype.serialize.Deserialize;
 import engine.table.datatype.serialize.Serialize;
 import engine.table.keyGroup.KeyGroupRangeOffsets;
+import engine.table.tableRecords.TableRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -55,23 +57,23 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
     public SnapshotResult get(CloseableRegistry snapshotCloseableRegistry) throws Exception {
         Collection<SnapshotTask> callables=new ArrayList<>();
         initTasks(callables,snapshotCloseableRegistry);
-        List<Future<Tuple2<Path,KeyGroupRangeOffsets>>> snapshotPaths=snapshotExecutor.invokeAll(callables);
-        HashMap<Path,KeyGroupRangeOffsets> results=new HashMap<>();
-        for(int i=0;i<snapshotPaths.size();i++){
+        List<Future<Tuple2<Path,KeyGroupRangeOffsets>>> snapshotPaths = snapshotExecutor.invokeAll(callables);
+        HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> results = new HashMap<>();
+        for(int i = 0; i < snapshotPaths.size(); i++){
             try {
-                Tuple2<Path,KeyGroupRangeOffsets> tuple=snapshotPaths.get(i).get();
-                results.put(tuple._1,tuple._2);
+                Tuple2<Path,KeyGroupRangeOffsets> tuple = snapshotPaths.get(i).get();
+                results.put(i, tuple);
             } catch (ExecutionException e) {
                 System.out.println(e.getMessage());
             } catch (CancellationException e) {
-                System.out.println("Cance");
+                System.out.println("Cancel");
             }
         }
         return new SnapshotResult(results,timestamp,checkpointId);
     }
-    private void initTasks(Collection<SnapshotTask> callables,CloseableRegistry closeableRegistry) {
-        for(int i=0;i<options.rangeNum;i++){
-            callables.add(new SnapshotTask(i,snapshotResources.get(i),closeableRegistry,providers.get(i)));
+    private void initTasks(Collection<SnapshotTask> callables, CloseableRegistry closeableRegistry) {
+        for(int i = 0; i < options.rangeNum; i ++){
+            callables.add(new SnapshotTask( i, snapshotResources.get(i), closeableRegistry, providers.get(i)));
         }
     }
     private class SnapshotTask implements Callable<Tuple2<Path,KeyGroupRangeOffsets>>{
@@ -86,7 +88,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
             this.taskId = taskId;
             this.snapshotResources = snapshotResources;
             this.snapshotCloseableRegistry=snapshotCloseableRegistry;
-            this.provider=provider;
+            this.provider = provider;
         }
 
         @Override
@@ -94,9 +96,9 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
             final KeyGroupRangeOffsets keyGroupRangeOffsets =
                     new KeyGroupRangeOffsets(snapshotResources.getKeyGroupRange());
             snapshotCloseableRegistry.registerCloseable(provider);
-            writeSnapshotToOutputStream(provider,snapshotResources, keyGroupRangeOffsets,this.taskId);
+            writeSnapshotToOutputStream(provider, snapshotResources, keyGroupRangeOffsets, this.taskId);
             if (snapshotCloseableRegistry.unregisterCloseable(provider)) {
-                 Path path=provider.closeAndFinalizeCheckpointStreamResult();
+                 Path path = provider.closeAndFinalizeCheckpointStreamResult();
                  return new Tuple2<Path, KeyGroupRangeOffsets>(path,keyGroupRangeOffsets);
             } else {
                 throw new IOException("Stream is already unregistered/closed.");
@@ -129,20 +131,20 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
         OutputStream kgOutStream = null;
         CheckpointStreamFactory.CheckpointStateOutputStream checkpointOutputStream =
                 checkpointStreamWithResultProvider.getCheckpointOutputStream();
-        kgOutStream =checkpointOutputStream;
+        kgOutStream = checkpointOutputStream;
         kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
         try{
             while(mergeIterator.isValid()){
                 if(mergeIterator.isNewKeyValueState()){
-                    kgOutStream =checkpointOutputStream;
+                    kgOutStream = checkpointOutputStream;
                     kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
-                    kgOutView.writeShort(mergeIterator.kvStateId());
+                    kgOutView.writeInt(mergeIterator.kvStateId());
                     keyGroupRangeOffsets.setKeyGroupOffset(
                             mergeIterator.kvStateId(), checkpointOutputStream.getPos());
                 }
-                writeKeyValuePair(mergeIterator.nextkey(),mergeIterator.nextvalue(),kgOutView);
+                writeKeyValuePair(mergeIterator.nextkey(),mergeIterator.nextvalue(), kgOutView);
                 if(!mergeIterator.isIteratorValid()){
-                    kgOutView.writeShort(END_OF_KEY_GROUP_MARK);
+                    kgOutView.writeInt(END_OF_KEY_GROUP_MARK);
                     mergeIterator.switchIterator();
                 }
             }
@@ -152,9 +154,9 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
     }
 
     private void writeKVStateMetaData(DataOutputView outputView,FullSnapshotResources snapshotResources) throws IOException {
-        outputView.writeShort(snapshotResources.getMetaInfoSnapshots().size());
+        outputView.writeInt(snapshotResources.getMetaInfoSnapshots().size());
         for (StateMetaInfoSnapshot metaInfoSnapshot : snapshotResources.getMetaInfoSnapshots()) {
-            StateMetaInfoSnapshotReadersWriters.getWriter().writeStateMetaInfoSnapshot(metaInfoSnapshot,outputView);
+            StateMetaInfoSnapshotReadersWriters.getWriter().writeStateMetaInfoSnapshot(metaInfoSnapshot, outputView);
         }
     }
     private void writeRocksDBKVStateData(final RocksDBStateIterator mergeIterator,
@@ -164,7 +166,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
         OutputStream kgOutStream = null;
         CheckpointStreamFactory.CheckpointStateOutputStream checkpointOutputStream =
                 checkpointStreamWithResultProvider.getCheckpointOutputStream();
-        kgOutStream =checkpointOutputStream;
+        kgOutStream = checkpointOutputStream;
         kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
         try{
             while(mergeIterator.isValid()){
@@ -189,7 +191,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
     }
     private void writeKeyValuePair(byte[] key, byte[] value, DataOutputView out)
             throws IOException {
-        Serialize.writeSerializedKV(key,out);
+        //Serialize.writeSerializedKV(key,out);
         Serialize.writeSerializedKV(value,out);
     }
 

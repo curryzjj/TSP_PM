@@ -25,6 +25,7 @@ import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.RunnableFuture;
 
 import static UserApplications.CONTROL.enable_parallel;
@@ -53,7 +54,7 @@ public class InMemoryDataBase extends Database {
     @Override
     public void createTable(RecordSchema tableSchema, String tableName, DataBoxTypes type) {
         try {
-            storageManager.createTable(tableSchema, tableName,type);
+            storageManager.createTable(tableSchema, tableName, type);
         } catch (DatabaseException | RocksDBException e) {
             e.printStackTrace();
         }
@@ -73,6 +74,11 @@ public class InMemoryDataBase extends Database {
         }
     }
     @Override
+    public void recoveryFromTargetSnapshot(SnapshotResult lastSnapshotResult, List<Integer> targetIds) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
+        AbstractRecoveryManager.parallelRecoveryTargetPartitionFromSnapshot(this, lastSnapshotResult,targetIds);
+    }
+
+    @Override
     public long recoveryFromWAL(long globalLSN) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
         if(enable_parallel){
             return AbstractRecoveryManager.parallelRecoveryFromWAL(this,WalPath,txnProcessingEngine.getRecoveryRangeId(),globalLSN);
@@ -84,6 +90,16 @@ public class InMemoryDataBase extends Database {
     @Override
     public boolean undoFromWAL() throws IOException, DatabaseException {
         return this.txnProcessingEngine.getWalManager().undoLog(this,this.txnProcessingEngine.getRecoveryRangeId());
+    }
+
+    @Override
+    public boolean undoFromWALToTargetOffset(List<Integer> recoveryIds, long targetOffset) throws IOException, DatabaseException {
+        return this.txnProcessingEngine.getWalManager().undoLogToAlignOffset(this,recoveryIds,targetOffset);
+    }
+
+    @Override
+    public boolean cleanUndoLog(long offset) {
+        return this.txnProcessingEngine.getWalManager().cleanUndoLog(offset);
     }
 
     @Override

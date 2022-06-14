@@ -18,6 +18,7 @@ import utils.CloseableRegistry.CloseableRegistry;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.RunnableFuture;
 
 public class RocksDBDatabase extends Database {
@@ -53,12 +54,27 @@ public class RocksDBDatabase extends Database {
     }
 
     @Override
+    public void recoveryFromTargetSnapshot(SnapshotResult lastSnapshotResult, List<Integer> targetIds) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
+        
+    }
+
+    @Override
     public long recoveryFromWAL(long globalLSN) throws IOException {
         return 0;
     }
 
     @Override
     public boolean undoFromWAL() throws IOException, DatabaseException {
+        return false;
+    }
+
+    @Override
+    public boolean undoFromWALToTargetOffset(List<Integer> recoveryIds, long targetOffset) throws IOException, DatabaseException {
+        return false;
+    }
+
+    @Override
+    public boolean cleanUndoLog(long offset) {
         return false;
     }
 

@@ -2,7 +2,9 @@ package streamprocess.components.operators.api;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import System.constants.BaseConstants;
 import System.util.Configuration;
@@ -23,6 +25,9 @@ import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.Fields;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.execution.runtime.tuple.OutputFieldsDeclarer;
+import streamprocess.faulttolerance.clr.CausalService;
+import streamprocess.faulttolerance.clr.RecoveryDependency;
+
 import static System.constants.BaseConstants.BaseField.TEXT;
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 
@@ -60,8 +65,10 @@ public abstract class Operator implements Serializable{
 //    public transient TxnContext[] txn_context = new TxnContext[combo_bid_size];
     public transient Database db;//this is only used if the bolt is transactional bolt. DB is shared by all operators.
     public FTManager FTM;
+
     protected long checkpointId;
     protected boolean needcheckpoint;
+
     public boolean isCommit;
     public boolean replay=false;
     public boolean needWaitReplay = false;
@@ -307,6 +314,12 @@ public abstract class Operator implements Serializable{
     public void cleanEpoch(long offset){
 
     }
+    public RecoveryDependency returnRecoveryDependency(){
+        return null;
+    }
+    public ConcurrentHashMap<Integer, CausalService> returnCausalService(){
+        return null;
+     }
 
     public void loadInFlightLog(){}
     public void replayEvents() throws InterruptedException {}

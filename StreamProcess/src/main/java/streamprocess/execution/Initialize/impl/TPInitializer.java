@@ -1,6 +1,7 @@
 package streamprocess.execution.Initialize.impl;
 
 import System.util.Configuration;
+import applications.events.InputDataGenerator.ImplDataGenerator.TPDataGenerator;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.table.RecordSchema;
@@ -21,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static UserApplications.CONTROL.enable_states_partition;
-import static UserApplications.CONTROL.partition_num;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 import static utils.PartitionHelper.getPartition_interval;
 
@@ -33,16 +33,18 @@ public class TPInitializer extends TableInitilizer {
         super(db, scale_factor, theta, partition_num, config);
         partition_interval=getPartition_interval();
         range_interval = (int) Math.ceil(NUM_SEGMENTS / (double) config.getInt("tthread"));//NUM_ITEMS / tthread;
+        this.dataGenerator = new TPDataGenerator();
+        dataGenerator.initialize(dataRootPath,config);
     }
 
     @Override
-    public void creates_Table(Configuration config) {
+    public void creates_Table(Configuration config) throws IOException {
         if(enable_states_partition){
-            for(int i = 0; i< partition_num; i++){
+            for(int i = 0; i < partition_num; i++){
                 RecordSchema s = SpeedScheme();
-                db.createTable(s, "segment_speed_"+i, DataBoxTypes.DOUBLE);
+                db.createTable(s, "segment_speed_" + i, DataBoxTypes.DOUBLE);
                 RecordSchema b = CntScheme();
-                db.createTable(b, "segment_cnt_"+i,DataBoxTypes.OTHERS);
+                db.createTable(b, "segment_cnt_" + i,DataBoxTypes.OTHERS);
             }
         }else{
             RecordSchema s = SpeedScheme();
@@ -51,16 +53,17 @@ public class TPInitializer extends TableInitilizer {
             db.createTable(b, "segment_cnt",DataBoxTypes.OTHERS);
         }
         db.createTableRange(2);
+        this.Prepare_input_event();
     }
 
     @Override
     public void loadDB(int thread_id, TopologyContext context) {
-        int left_bound=thread_id*range_interval;
+        int left_bound = thread_id * range_interval;
         int right_bound;
-        if(thread_id==context.getNUMTasks()-1){//last executor need to handle right-over
-            right_bound=NUM_SEGMENTS;
+        if(thread_id == context.getNUMTasks()-1){//last executor need to handle right-over
+            right_bound = NUM_SEGMENTS;
         }else{
-            right_bound=(thread_id+1)*range_interval;
+            right_bound = (thread_id+1) * range_interval;
         }
         for (int key = left_bound; key < right_bound ; key++) {
             String _key = String.valueOf(key);
@@ -104,7 +107,7 @@ public class TPInitializer extends TableInitilizer {
         SchemaRecord schemaRecord = new SchemaRecord(values);
         try {
             if(enable_states_partition){
-                db.InsertRecord("segment_speed_"+getPartitionId(key), new TableRecord(schemaRecord));
+                db.InsertRecord("segment_speed_" + getPartitionId(key), new TableRecord(schemaRecord));
             }else {
                 db.InsertRecord("segment_speed", new TableRecord(schemaRecord));
             }

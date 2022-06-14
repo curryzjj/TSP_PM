@@ -57,29 +57,20 @@ public class OptimizationManager extends Thread {
         return EM;
     }
     public ExecutionPlan launch(Topology topology, Platform p, Database db) throws UnhandledCaseException, IOException {
-        this.topology=topology;
-        final String initial_locks= AffinityLock.dumpLocks();
-        boolean nav = conf.getBoolean("NAV", true);
-        boolean benchmark = conf.getBoolean("benchmark", false);
-        boolean manual = conf.getBoolean("manual", false);
-        boolean load = conf.getBoolean("Prepared", false);
-        boolean parallelism_tune = conf.getBoolean("parallelism_tune", false);
-        EM=new ExecutionManager(g,conf,this,db,p);
+        this.topology = topology;
+        EM = new ExecutionManager(g,conf,this,db,p);
         latch = new CountDownLatch(g.getExecutionNodeArrayList().size() + 1 - 1);//+1:OM -1:virtual
-        if(enable_snapshot){
-           FTM=new CheckpointManager(g,conf,db);
+        if(enable_checkpoint){
+            FTM = new CheckpointManager(g,conf,db);
         }else if(enable_wal){
-            FTM=new LoggerManager(g,conf,db);
+            FTM = new LoggerManager(g,conf,db);
         }else if(enable_clr){
-            FTM=new CLRManager(g,conf,db);
+            FTM = new CLRManager(g,conf,db);
         }
-        eventGenerator=new EventGenerator(conf);
-        if(nav){
-            LOG.info("Native execution");
-            executionPlan=new ExecutionPlan(null,null);
-            executionPlan.setProfile();
-            EM.distributeTasks(conf,executionPlan,latch,false,false,db,p,FTM,RM,eventGenerator);
-        }
+        eventGenerator = new EventGenerator(conf);
+        executionPlan = new ExecutionPlan(null,null);
+        executionPlan.setProfile();
+        EM.distributeTasks(conf,executionPlan,latch,false,false, db, p, FTM, RM, eventGenerator);
         final String dumpLocks = AffinityLock.dumpLocks();
         return executionPlan;
     }

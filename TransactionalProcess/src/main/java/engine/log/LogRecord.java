@@ -56,7 +56,11 @@ public class LogRecord implements Serializable {
     }
 
     public void setCopyTableRecord(TableRecord copyTableRecord) {
-        this.copyTableRecord = copyTableRecord;
+        try {
+            this.copyTableRecord = copyTableRecord.cloneTableRecord();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     public String toSerializableString() throws IOException {

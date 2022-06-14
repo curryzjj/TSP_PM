@@ -1,29 +1,28 @@
 package applications.bolts.transactional.tp;
 
-import applications.DataTypes.PositionReport;
-import applications.events.lr.LREvent;
+import applications.events.lr.TollProcessingEvent;
 import engine.Exception.DatabaseException;
 import engine.transaction.TxnContext;
 import engine.transaction.function.AVG;
 import engine.transaction.function.CNT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.controller.output.Determinant.InsideDeterminant;
+import streamprocess.controller.output.Determinant.OutsideDeterminant;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
+import streamprocess.faulttolerance.clr.CausalService;
 
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Iterator;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.ExecutionException;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
-import static UserApplications.CONTROL.enable_snapshot;
+import static UserApplications.CONTROL.*;
 
 public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream.class);
-    ArrayDeque<LREvent> LREvents = new ArrayDeque<>();
+    ArrayDeque<TollProcessingEvent> LREvents = new ArrayDeque<>();
     public TPBolt_TStream(int fid) {
         super(LOG,fid);
         this.configPrefix="tptxn";
@@ -33,78 +32,110 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
 
     @Override
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
-            TxnContext txnContext = new TxnContext(thread_Id, this.fid, in.getBID());
-            LREvent event = new LREvent((PositionReport) in.getValue(0),tthread,in.getBID());
-            REQUEST_CONSTRUCT(event, txnContext);
-    }
-    protected void REQUEST_CONSTRUCT(LREvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
-        //some process used the transactionManager
-        boolean flag=transactionManager.Asy_ModifyRecord_Read(txnContext
-                , "segment_speed"
-                ,String.valueOf(event.getPOSReport().getSegment())
-                ,event.speed_value//holder to be filled up
-                ,new AVG(event.getPOSReport().getSpeed())
-        );
-        if(!flag){
-            collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
-            return;
+        TxnContext txnContext = new TxnContext(thread_Id, this.fid, in.getBID());
+        TollProcessingEvent event = (TollProcessingEvent) in.getValue(0);
+        REQUEST_CONSTRUCT(event, txnContext, false);
+        if (enable_determinants_log) {
+            Determinant_REQUEST_CONSTRUCT(event, txnContext);
+        } else {
+            REQUEST_CONSTRUCT(event, txnContext, false);
         }
-       transactionManager.Asy_ModifyRecord_Read(txnContext
+    }
+    protected boolean REQUEST_CONSTRUCT(TollProcessingEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
+        //some process used the transactionManager
+        boolean flag = transactionManager.Asy_ModifyRecord_Read(txnContext
+                , "segment_speed"
+                ,String.valueOf(event.getSegmentId())
+                ,event.getSpeed_value()[0]//holder to be filled up
+                ,new AVG(event.getSpeedValue()));
+        if(!flag){
+            if (enable_determinants_log) {
+                InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
+                insideDeterminant.setAbort(true);
+                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+            } else {
+                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
+            }
+            return false;
+        }
+        transactionManager.Asy_ModifyRecord_Read(txnContext
                 ,"segment_cnt"
-                ,String.valueOf(event.getPOSReport().getSegment())
-                ,event.count_value
-                ,new CNT(event.getPOSReport().getVid()));
-        LREvents.add(event);
+                ,String.valueOf(event.getSegmentId())
+                ,event.getCount_value()[0]
+                ,new CNT(event.getVid()));
+        for (int i = 1; i < NUM_ACCESSES; i++) {
+            transactionManager.Asy_ReadRecord(txnContext, "segment_speed", String.valueOf(event.getKeys()[i]), event.getSpeed_value()[i], null);
+            transactionManager.Asy_ReadRecord(txnContext, "segment_cnt", String.valueOf(event.getKeys()[i]), event.getCount_value()[i], null);
+        }
+        if (!isReConstruct) {
+            LREvents.add(event);
+            if (enable_recovery_dependency) {
+                this.updateRecoveryDependency(new int[]{event.getSegmentId()}, true);
+            }
+        }
+        return true;
+    }
+    protected void Determinant_REQUEST_CONSTRUCT(TollProcessingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
+        if (event.getBid() < recoveryId) {
+            for (CausalService c:this.causalService.values()) {
+                if (c.abortEvent.contains(event.getBid())){
+                    return;
+                }
+            }
+            transactionManager.Asy_ModifyRecord_Read(txnContext
+                    , "segment_speed"
+                    ,String.valueOf(event.getSegmentId())
+                    ,event.getSpeed_value()[0]//holder to be filled up
+                    ,new AVG(event.getSpeedValue()));
+            transactionManager.Asy_ModifyRecord_Read(txnContext
+                    ,"segment_cnt"
+                    ,String.valueOf(event.getSegmentId())
+                    ,event.getSpeed_value()[0]
+                    ,new CNT(event.getVid()));
+        } else {
+            REQUEST_CONSTRUCT(event, txnContext, false);
+        }
     }
     protected void AsyncReConstructRequest() throws DatabaseException, InterruptedException {
-        for (Iterator<LREvent> it = LREvents.iterator(); it.hasNext(); ) {
-            LREvent event = it.next();
+        for (Iterator<TollProcessingEvent> it = LREvents.iterator(); it.hasNext(); ) {
+            TollProcessingEvent event = it.next();
             TxnContext txnContext = new TxnContext(thread_Id, this.fid, event.getBid());
-            boolean flag=transactionManager.Asy_ModifyRecord_Read(txnContext
-                    , "segment_speed"
-                    ,String.valueOf(event.getPOSReport().getSegment())
-                    ,event.speed_value//holder to be filled up
-                    ,new AVG(event.getPOSReport().getSpeed())
-            );
+            boolean flag = REQUEST_CONSTRUCT(event, txnContext, true);
             if(!flag){
                 it.remove();
-                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,event.getTimestamp());//the tuple is finished.//the tuple is abort.
-                continue;
-            }
-            boolean flag1=transactionManager.Asy_ModifyRecord_Read(txnContext
-                    ,"segment_cnt"
-                    ,String.valueOf(event.getPOSReport().getSegment())
-                    ,event.count_value
-                    ,new CNT(event.getPOSReport().getVid()));
-        }
-    }
-    public void BUFFER_PROCESS() throws DatabaseException, InterruptedException {
-        if(bufferedTuple.isEmpty()){
-            return;
-        }else{
-            Iterator<Tuple> bufferedTuples=bufferedTuple.iterator();
-            while (bufferedTuples.hasNext()){
-                PRE_TXN_PROCESS(bufferedTuples.next());
             }
         }
     }
-    protected void REQUEST_REQUEST_CORE() {
-        for (LREvent event : LREvents) {
+    protected void REQUEST_CORE() {
+        for (TollProcessingEvent event : LREvents) {
             TS_REQUEST_CORE(event);
         }
     }
-    private void TS_REQUEST_CORE(LREvent event) {
-        event.count=event.count_value.getRecord().getValue().getInt();
-        event.lav=event.speed_value.getRecord().getValue().getDouble();
+    private void TS_REQUEST_CORE(TollProcessingEvent event) {
+       for (int i = 0; i < NUM_ACCESSES; i++) {
+           event.spendValues[i] = event.getSpeed_value()[i].getRecord().getValue().getDouble();
+           event.cntValues[i] = event.getCount_value()[i].getRecord().getValue().getInt();
+       }
     }
     protected void REQUEST_POST() throws InterruptedException {
-        for (LREvent event : LREvents) {
+        for (TollProcessingEvent event : LREvents) {
             TP_REQUEST_POST(event);
         }
     }
-    void TP_REQUEST_POST(LREvent event) throws InterruptedException {
-        //TODO:some process to Post the event to the sink or emit
-        collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true,event.getTimestamp());//the tuple is finished.
+    void TP_REQUEST_POST(TollProcessingEvent event) throws InterruptedException {
+        //Nothing to determinant log
+        double spendValue = 0;
+        int cntValue = 0;
+        for (int i =0; i < NUM_ACCESSES; i++) {
+            spendValue = spendValue + event.spendValues[i];
+            cntValue = cntValue + event.cntValues[i];
+        }
+        //Some UDF function
+        double toll = 0;
+        collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), toll);//the tuple is finished.
     }
 
+    protected void CommitOutsideDeterminant(long markerId) {
+        //No outsideDeterminant
+    }
 }

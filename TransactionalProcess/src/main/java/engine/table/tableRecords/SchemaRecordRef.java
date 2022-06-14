@@ -10,7 +10,7 @@ public class SchemaRecordRef {
     public int cnt=0;
     private String name;
     public void setRecord(SchemaRecord record){
-        this.record=record;
+        this.record = record;
         cnt++;//what is this for
     }
     public boolean isEmpty() {

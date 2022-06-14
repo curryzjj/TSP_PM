@@ -21,18 +21,17 @@ public abstract class FTManager extends Thread {
     }
 
     /**
+     * To register the commit of the WAL or Snapshot
+     * @param id
+     * @return
+     */
+    public boolean sinkRegister(long id) throws IOException, InterruptedException {return true;}
+
+    /**
      * To register the commit after finish the transaction group or to notify the recoveryManager to start recovery
      * @param executorId
      */
     public abstract void boltRegister(int executorId, FaultToleranceConstants.FaultToleranceStatus status);
     public abstract Object getLock();
     public abstract void close();
-    public void commitComputationTasks(List<ComputationTask> tasks){
-    }
-    public void commitComputationLogics(List<ComputationLogic> logics){
-
-    }
-    public Queue getComputationTasks(int executorId){
-        return null;
-    }
 }

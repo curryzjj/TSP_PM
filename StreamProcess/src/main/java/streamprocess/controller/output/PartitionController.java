@@ -4,6 +4,7 @@ import System.util.Configuration;
 import System.util.DataTypes.StreamValues;
 import System.util.OsUtils;
 import org.jctools.queues.MpscArrayQueue;
+import org.jctools.queues.SpscArrayQueue;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import streamprocess.components.topology.TopologyComponent;
@@ -76,7 +77,7 @@ public abstract class PartitionController implements IPartitionController,Serial
             collections=new Collections[operator.getExecutorList().size()];
             context=new TopologyContext[operator.getExecutorList().size()];
             for(ExecutionNode src:operator.getExecutorList()){
-                collections[(src.getExecutorID()-firt_executor_Id)]=new Collections(src.getExecutorID(),downExecutor_list,batch_size);
+                collections[(src.getExecutorID()-firt_executor_Id)] = new Collections(src.getExecutorID(),downExecutor_list,batch_size);
             }
             LOG.trace("MPSC implementation -- Queue is shared among multiple executors of the same producer.");
             controller=new MPSCController(downExecutor_list);
@@ -163,8 +164,14 @@ public abstract class PartitionController implements IPartitionController,Serial
     //actually offer method
     private boolean bounded_offer(Queue queue,final Object e){
         do{
-        if (((MpscArrayQueue) queue).offerIfBelowThreshold(e,threashold)) {
-                return true;
+            if ( queue instanceof MpscArrayQueue) {
+                if (((MpscArrayQueue) queue).offerIfBelowThreshold(e,threashold)) {
+                    return true;
+                }
+            } else {
+                if (((SpscArrayQueue) queue).offer(e)) {
+                    return true;
+                }
             }
             int timestamp_counter=SPIN_TRIES;
             applyWaitMethod(timestamp_counter);

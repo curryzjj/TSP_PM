@@ -1,6 +1,8 @@
 package applications.topology.transactional;
 
 import System.util.Configuration;
+import UserApplications.constants.GrepSumConstants;
+import applications.bolts.transactional.tp.TPBolt_TStream_CLR;
 import applications.bolts.transactional.tp.TPBolt_TStream_NoFT;
 import applications.events.InputDataGenerator.ImplDataGenerator.TPDataGenerator;
 import UserApplications.constants.TP_TxnConstants.Component;
@@ -10,6 +12,8 @@ import applications.bolts.transactional.tp.TPBolt_TStream_Wal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.exception.InvalidIDException;
+import streamprocess.components.grouping.Grouping;
+import streamprocess.components.grouping.KeyBasedGrouping;
 import streamprocess.components.grouping.ShuffleGrouping;
 import streamprocess.components.topology.Topology;
 import streamprocess.components.topology.TransactionalTopology;
@@ -18,6 +22,8 @@ import streamprocess.execution.Initialize.TableInitilizer;
 import streamprocess.execution.Initialize.impl.TPInitializer;
 import streamprocess.execution.runtime.tuple.Fields;
 import utils.SpinLock;
+
+import java.io.IOException;
 
 import static UserApplications.CONTROL.*;
 import static UserApplications.constants.TP_TxnConstants.Conf.Executor_Threads;
@@ -41,27 +47,35 @@ public class TP_txn extends TransactionalTopology {
             spout.setFields(new Fields(Field.TEXT));
             spout.setInputDataGenerator(new TPDataGenerator());
             builder.setSpout(Component.SPOUT,spout,spoutThreads);
-//            builder.setBolt(Component.DISPATCHER,
-//                    new DispatcherBolt(),
-//                    1,
-//                    new ShuffleGrouping(Component.SPOUT));
-            if(enable_snapshot){
+            Grouping grouping;
+            if (enable_key_based) {
+                grouping = new KeyBasedGrouping(GrepSumConstants.Component.SPOUT);
+            } else {
+                grouping = new ShuffleGrouping(GrepSumConstants.Component.SPOUT);
+            }
+            if(enable_checkpoint){
                 builder.setBolt(Component.EXECUTOR,
                         new TPBolt_TStream_Snapshot(0),
                         config.getInt(Executor_Threads,1),
-                        new ShuffleGrouping(Component.SPOUT)
+                        grouping
                 );
             }else if(enable_wal){
                 builder.setBolt(Component.EXECUTOR,
                         new TPBolt_TStream_Wal(0),
                         config.getInt(Executor_Threads,1),
-                        new ShuffleGrouping(Component.SPOUT)
+                        grouping
                 );
-            }else {
+            }else if (enable_clr) {
+                builder.setBolt(Component.EXECUTOR,
+                        new TPBolt_TStream_CLR(0),
+                        config.getInt(Executor_Threads,1),
+                        grouping
+                );
+            } else {
                 builder.setBolt(Component.EXECUTOR,
                         new TPBolt_TStream_NoFT(0),
                         config.getInt(Executor_Threads,1),
-                        new ShuffleGrouping(Component.SPOUT)
+                        grouping
                 );
             }
             builder.setSink(Component.SINK, sink, sinkThreads
@@ -85,11 +99,11 @@ public class TP_txn extends TransactionalTopology {
     }
 
     @Override
-    public TableInitilizer createDB(SpinLock[] spinlock) {
+    public TableInitilizer createDB(SpinLock[] spinlock) throws IOException {
         double scale_factor = config.getDouble("scale_factor", 1);
         double theta = config.getDouble("theta", 1);
-        setPartition_interval((int) (Math.ceil(NUM_SEGMENTS / (double) partition_num)), partition_num);
-        TableInitilizer ini = new TPInitializer(db, scale_factor, theta, partition_num, config);
+        setPartition_interval((int) (Math.ceil(NUM_SEGMENTS / (double) PARTITION_NUM)), PARTITION_NUM);
+        TableInitilizer ini = new TPInitializer(db, scale_factor, theta, PARTITION_NUM, config);
         ini.creates_Table(config);
         return ini;
     }

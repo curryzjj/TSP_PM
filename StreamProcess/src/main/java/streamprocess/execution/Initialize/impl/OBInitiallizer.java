@@ -1,6 +1,7 @@
 package streamprocess.execution.Initialize.impl;
 
 import System.util.Configuration;
+import applications.events.InputDataGenerator.ImplDataGenerator.OBDataGenerator;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.table.RecordSchema;
@@ -33,6 +34,8 @@ public class OBInitiallizer extends TableInitilizer {
         super(db, scale_factor, theta, partition_num, config);
         range_interval=(int) Math.ceil(NUM_ITEMS / (double) config.getInt("tthread"));//NUM_ITEMS / tthread;
         partition_interval = (int) Math.ceil(NUM_ITEMS / (double) partition_num);//NUM_ITEMS / tthread;
+        this.dataGenerator = new OBDataGenerator();
+        dataGenerator.initialize(dataRootPath,config);
     }
     private RecordSchema Goods() {
         List<DataBox> dataBoxes = new ArrayList<>();
@@ -49,7 +52,7 @@ public class OBInitiallizer extends TableInitilizer {
         return new RecordSchema(fieldNames, dataBoxes);
     }
     @Override
-    public void creates_Table(Configuration config) {
+    public void creates_Table(Configuration config) throws IOException {
         if(enable_states_partition){
             for (int i = 0; i< partition_num; i++){
                 RecordSchema s = Goods();
@@ -60,6 +63,7 @@ public class OBInitiallizer extends TableInitilizer {
             db.createTable(s, "goods", TransactionalProcessConstants.DataBoxTypes.LONG);
         }
         db.createTableRange(1);
+        this.Prepare_input_event();
     }
 
     @Override

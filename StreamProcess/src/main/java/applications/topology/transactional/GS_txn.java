@@ -3,7 +3,7 @@ package applications.topology.transactional;
 import System.util.Configuration;
 import UserApplications.constants.GrepSumConstants;
 import UserApplications.constants.GrepSumConstants.Component;
-import UserApplications.constants.TP_TxnConstants;
+import applications.bolts.transactional.gs.GSBolt_TStream_CLR;
 import applications.bolts.transactional.gs.GSBolt_TStream_NoFT;
 import applications.bolts.transactional.gs.GSBolt_TStream_Snapshot;
 import applications.bolts.transactional.gs.GSBolt_TStream_Wal;
@@ -11,6 +11,8 @@ import applications.events.InputDataGenerator.ImplDataGenerator.GSDataGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.exception.InvalidIDException;
+import streamprocess.components.grouping.Grouping;
+import streamprocess.components.grouping.KeyBasedGrouping;
 import streamprocess.components.grouping.ShuffleGrouping;
 import streamprocess.components.topology.Topology;
 import streamprocess.components.topology.TransactionalTopology;
@@ -19,6 +21,8 @@ import streamprocess.execution.Initialize.TableInitilizer;
 import streamprocess.execution.Initialize.impl.GSInitializer;
 import streamprocess.execution.runtime.tuple.Fields;
 import utils.SpinLock;
+
+import java.io.IOException;
 
 import static UserApplications.CONTROL.*;
 import static UserApplications.constants.GrepSumConstants.Conf.Executor_Threads;
@@ -44,23 +48,32 @@ public class GS_txn extends TransactionalTopology {
             spout.setFields(new Fields(GrepSumConstants.Field.TEXT));
             spout.setInputDataGenerator(new GSDataGenerator());
             builder.setSpout(Component.SPOUT,spout,spoutThreads);
-            if (enable_snapshot){
+            Grouping grouping;
+            if (enable_key_based) {
+                grouping = new KeyBasedGrouping(Component.SPOUT);
+            } else {
+                grouping = new ShuffleGrouping(Component.SPOUT);
+            }
+            if (enable_checkpoint){
                 builder.setBolt(Component.EXECUTOR,
                         new GSBolt_TStream_Snapshot(0),
                         config.getInt(Executor_Threads),
-                        new ShuffleGrouping(Component.SPOUT));
+                        grouping);
             }else if(enable_wal){
                 builder.setBolt(Component.EXECUTOR,
                         new GSBolt_TStream_Wal(0),
                         config.getInt(Executor_Threads),
-                        new ShuffleGrouping(Component.SPOUT));
+                        grouping);
             }else if(enable_clr){
-
+                builder.setBolt(Component.EXECUTOR,
+                        new GSBolt_TStream_CLR(0),
+                        config.getInt(Executor_Threads),
+                        grouping);
             }else {
                 builder.setBolt(Component.EXECUTOR,
                         new GSBolt_TStream_NoFT(0),
                         config.getInt(Executor_Threads),
-                        new ShuffleGrouping(Component.SPOUT));
+                        grouping);
             }
             builder.setSink(Component.SINK, sink, sinkThreads
                     , new ShuffleGrouping(Component.EXECUTOR));
@@ -82,11 +95,11 @@ public class GS_txn extends TransactionalTopology {
     }
 
     @Override
-    public TableInitilizer createDB(SpinLock[] spinlock) {
+    public TableInitilizer createDB(SpinLock[] spinlock) throws IOException {
         double scale_factor = config.getDouble("scale_factor", 1);
         double theta = config.getDouble("theta", 1);
-        setPartition_interval((int) (Math.ceil(NUM_ITEMS / (double) partition_num)), partition_num);
-        TableInitilizer ini = new GSInitializer(db, scale_factor, theta, partition_num, config);
+        setPartition_interval((int) (Math.ceil(NUM_ITEMS / (double) PARTITION_NUM)), PARTITION_NUM);
+        TableInitilizer ini = new GSInitializer(db, scale_factor, theta, PARTITION_NUM, config);
         ini.creates_Table(config);
         return ini;
     }

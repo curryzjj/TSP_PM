@@ -10,10 +10,12 @@ import org.jetbrains.annotations.NotNull;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static UserApplications.CONTROL.NUM_ACCESSES;
 import static UserApplications.constants.GrepSumConstants.Constant.VALUE_LEN;
+import static streamprocess.execution.Initialize.impl.GSInitializer.GenerateValue;
 
 public class MicroEvent extends TxnEvent {
     private final SchemaRecordRef[] recordRefs;
@@ -34,9 +36,9 @@ public class MicroEvent extends TxnEvent {
      * @param number_of_partitions
      */
     public MicroEvent(int[] keys, boolean flag, int numAccess, long bid
-            , int partition_id, long[] bid_array, int number_of_partitions) {
-        super(bid, partition_id, bid_array, number_of_partitions);
-        this.timestamp=System.nanoTime();
+            , int partition_id, long[] bid_array, int number_of_partitions , boolean isAbort) {
+        super(bid, partition_id, bid_array, number_of_partitions,isAbort);
+        this.timestamp = System.nanoTime();
         this.flag = flag;
         this.keys = keys;
         recordRefs = new SchemaRecordRef[numAccess];
@@ -56,8 +58,8 @@ public class MicroEvent extends TxnEvent {
      * @param key_array
      */
     public MicroEvent(int bid, int pid, String bid_array, int num_of_partition,
-                      String key_array, boolean flag,long timestamp ) {
-        super(bid, pid, bid_array, num_of_partition);
+                      String key_array, boolean flag,long timestamp, boolean isAbort) {
+        super(bid, pid, bid_array, num_of_partition, isAbort);
         recordRefs = new SchemaRecordRef[NUM_ACCESSES];
         for (int i = 0; i < NUM_ACCESSES; i++) {
             recordRefs[i] = new SchemaRecordRef();
@@ -70,7 +72,7 @@ public class MicroEvent extends TxnEvent {
             this.keys[i] = Integer.parseInt(key_arrays[i].trim());
         }
         setValues(keys);
-        this.timestamp=timestamp;
+        this.timestamp = timestamp;
     }
     public int[] getKeys() {
         return keys;
@@ -88,13 +90,8 @@ public class MicroEvent extends TxnEvent {
     public boolean READ_EVENT() {
         return flag;
     }
-    private static String rightpad(@NotNull String text, int length) {
-        return StringUtils.rightPad(text, length); // Returns "****foobar"
-//        return String.format("%-" + length + "." + length + "s", text);
-    }
-    public static String GenerateValue(int key) {
-        return rightpad(String.valueOf(key), VALUE_LEN);
-    }
+
+
     public void setValues(int[] keys) {
         value = new ArrayList[NUM_ACCESSES];//Note, it should be arraylist instead of linkedlist as there's no add/remove later.
         for (int access_id = 0; access_id < NUM_ACCESSES; ++access_id) {
@@ -103,8 +100,29 @@ public class MicroEvent extends TxnEvent {
     }
     private void set_values(int access_id, int key) {
         List<DataBox> values = new ArrayList<>();
-        values.add(new IntDataBox(key));//key  4 bytes
-        values.add(new StringDataBox(GenerateValue(key), VALUE_LEN));//value_list   32 bytes..
-        value[access_id] = values;
+        if (isAbort) {
+            value[access_id] = values;
+        } else {
+            values.add(new IntDataBox(key));//key  4 bytes
+            values.add(new StringDataBox(GenerateValue(key), VALUE_LEN));//value_list   32 bytes..
+            value[access_id] = values;
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        String split_exp = ";";
+        sb.append(bid).append(split_exp);//0-bid
+        sb.append(pid).append(split_exp);//1-pid
+        sb.append(Arrays.toString(keys)).append(split_exp);//2-keys
+        sb.append(flag);//3-isRead
+        sb.append(isAbort);//4-isAbort
+        return sb.toString();
+    }
+
+    @Override
+    public MicroEvent cloneEvent() {
+        return new MicroEvent((int) bid,pid, Arrays.toString(bid_array),number_of_partitions,Arrays.toString(keys),flag,timestamp,isAbort);
     }
 }

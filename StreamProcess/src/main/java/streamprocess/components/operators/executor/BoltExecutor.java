@@ -10,10 +10,12 @@ import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.faulttolerance.checkpoint.emitMarker;
+import streamprocess.faulttolerance.clr.CausalService;
+import streamprocess.faulttolerance.clr.RecoveryDependency;
 
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class BoltExecutor implements IExecutor {
     private final Operator op;
@@ -105,6 +107,15 @@ public abstract class BoltExecutor implements IExecutor {
     @Override
     public void ackCommit(long offset) {
         this.op.cleanEpoch(offset);
+    }
+
+    @Override
+    public RecoveryDependency ackRecoveryDependency() {
+        return this.op.returnRecoveryDependency();
+    }
+    @Override
+    public ConcurrentHashMap<Integer, CausalService> ackCausalService() {
+        return this.op.returnCausalService();
     }
 
     @Override

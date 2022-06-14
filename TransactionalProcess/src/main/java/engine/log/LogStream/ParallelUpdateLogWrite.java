@@ -37,20 +37,19 @@ public class ParallelUpdateLogWrite implements UpdateLogWrite {
         List<CommitLogTask> callables=new ArrayList<>();
         initTasks(callables,logCloseableRegistry);
         initIterator(callables);
-        List<Future<Boolean>> futures=writeExecutor.invokeAll(callables);
+        List<Future<Boolean>> futures = writeExecutor.invokeAll(callables);
         for(WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
-            for(Vector<LogRecord> logRecords:logRecordsInRange.holder_by_range.values()){
-                logRecords.clear();
+            for(ConcurrentHashMap<Long, Vector<LogRecord>> logRecords: logRecordsInRange.holder_by_range.values()){
+                logRecords.entrySet().removeIf(longVectorEntry -> longVectorEntry.getKey() == globalLSN);
             }
-            logRecordsInRange.hasKey.clear();
         }
         return new LogResult();
     }
 
     private void initIterator(List<CommitLogTask> callables) {
         for (WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
-            for(int i=0;i<logRecordsInRange.holder_by_range.size();i++){
-                Iterator<LogRecord> logs=logRecordsInRange.holder_by_range.get(i).iterator();
+            for(int i=0; i<logRecordsInRange.holder_by_range.size(); i++){
+                Iterator<LogRecord> logs = logRecordsInRange.holder_by_range.get(i).get(globalLSN).iterator();
                 callables.get(i).setIterators(logs);
             }
         }

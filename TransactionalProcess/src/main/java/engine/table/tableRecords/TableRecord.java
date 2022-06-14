@@ -2,10 +2,12 @@ package engine.table.tableRecords;
 
 import engine.table.RowID;
 import engine.table.content.Content;
+import engine.table.datatype.serialize.Serialize;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -14,10 +16,11 @@ import static utils.TransactionalProcessConstants.content_type;
 
 public class TableRecord implements Comparable<TableRecord>, Serializable {
     private static final Logger LOG= LoggerFactory.getLogger(TableRecord.class);
+    private static final long serialVersionUID = -6940843588636593468L;
     public ConcurrentSkipListMap<Long, SchemaRecord> versions = new ConcurrentSkipListMap<>();//TODO: In fact... there can be at most only one write to the d_record concurrently. It is safe to just use sorted hashmap.
     public SchemaRecord record_;
     public TableRecord(SchemaRecord record){
-        record_=record;
+        record_ = record;
         this.updateMultiValues(0,record);
     }
     @Override
@@ -45,5 +48,8 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
     }
     public void clean_map() {
         versions.headMap(versions.lastKey(), false).clear();
+    }
+    public TableRecord cloneTableRecord() throws IOException, ClassNotFoundException {
+        return (TableRecord) Serialize.cloneObject(this);
     }
 }

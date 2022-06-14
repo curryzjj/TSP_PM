@@ -11,8 +11,6 @@ import applications.topology.transactional.GS_txn;
 import applications.topology.transactional.OB_txn;
 import applications.topology.transactional.SL_txn;
 import applications.topology.transactional.TP_txn;
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.exception.UnhandledCaseException;
@@ -20,7 +18,6 @@ import streamprocess.components.topology.Topology;
 import streamprocess.components.topology.TopologySubmitter;
 import streamprocess.execution.runtime.threads.executorThread;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -71,29 +68,52 @@ public class  AppRunner extends baseRunner {
             case 0:
                 break;
             case 1:
-                CONTROL.enable_wal=true;
+                CONTROL.enable_wal = true;
+                CONTROL.enable_input_store = true;
+                CONTROL.enable_snapshot = true;
+                CONTROL.enable_undo_log = true;
+                CONTROL.enable_parallel = true;
                 break;
             case 2:
-                CONTROL.enable_snapshot=true;
+                CONTROL.enable_checkpoint = true;
+                CONTROL.enable_snapshot = true;
+                CONTROL.enable_input_store = true;
+                CONTROL.enable_undo_log = true;
+                CONTROL.enable_parallel = true;
                 break;
             case 3:
-                CONTROL.enable_clr=true;
+                CONTROL.enable_clr = true;
+                CONTROL.enable_snapshot = true;
+                CONTROL.enable_input_store = true;
+                CONTROL.enable_upstreamBackup = true;
+                CONTROL.enable_undo_log = true;
+                CONTROL.enable_parallel = true;
+                CONTROL.enable_align_wait = true;
+                CONTROL.enable_recovery_dependency = true;
+                break;
+            case 4:
+                CONTROL.enable_clr = true;
+                CONTROL.enable_snapshot = true;
+                CONTROL.enable_input_store = true;
+                CONTROL.enable_upstreamBackup = true;
+                CONTROL.enable_undo_log = true;
+                CONTROL.enable_parallel = true;
+                CONTROL.enable_align_wait = true;
+                CONTROL.enable_determinants_log = true;
                 break;
         }
-        //Set the parallel
-        CONTROL.enable_parallel=CONTROL.enable_states_partition=config.getBoolean("isParallel");
         //Set the failure model
         switch (config.getInt("failureModel",0)){
             case 0:
                 break;
             case 1:
-                CONTROL.enable_transaction_abort=true;
+                CONTROL.enable_transaction_abort = true;
                 break;
             case 2:
-                CONTROL.enable_states_lost=true;
+                CONTROL.enable_states_lost = true;
                 break;
             case 3:
-                CONTROL.enable_transaction_abort=CONTROL.enable_states_lost=true;
+                CONTROL.enable_transaction_abort = CONTROL.enable_states_lost=true;
                 break;
         }
         CONTROL.Time_Control=config.getBoolean("enable_time_Interval");
@@ -107,14 +127,15 @@ public class  AppRunner extends baseRunner {
             }
         }
         //Set the application
-        CONTROL.Arrival_Control=config.getBoolean("Arrival_Control");
-        CONTROL.RATIO_OF_READ=config.getDouble("RATIO_OF_READ");
-        CONTROL.NUM_ACCESSES=config.getInt("NUM_ACCESSES");
-        CONTROL.NUM_ITEMS=config.getInt("NUM_ITEMS");
-        CONTROL.NUM_EVENTS=config.getInt("NUM_EVENTS");
-        CONTROL.ZIP_SKEW=config.getDouble("ZIP_SKEW");
-        CONTROL.partition_num=config.getInt("partition_num");
-        CONTROL.Exactly_Once=config.getBoolean("Exactly_Once");
+       CONTROL.Arrival_Control = config.getBoolean("Arrival_Control");
+       CONTROL.RATIO_OF_READ = config.getInt("RATIO_OF_READ");
+       CONTROL.NUM_ACCESSES = config.getInt("NUM_ACCESSES");
+       CONTROL.NUM_ITEMS = config.getInt("NUM_ITEMS");
+       CONTROL.NUM_EVENTS = config.getInt("NUM_EVENTS");
+       CONTROL.ZIP_SKEW = config.getDouble("ZIP_SKEW");
+       CONTROL.PARTITION_NUM = config.getInt("partition_num");
+       CONTROL.Exactly_Once = config.getBoolean("Exactly_Once");
+       CONTROL.COMPLEXITY = config.getInt("complexity");
     }
 
     private static double runTopologyLocally(Topology topology,Configuration conf) throws UnhandledCaseException, InterruptedException, IOException {
@@ -132,7 +153,7 @@ public class  AppRunner extends baseRunner {
         submitter.getOM().join();
         try {
             final_topology.db.close();
-            if(enable_wal||enable_snapshot||enable_clr){
+            if(enable_wal|| enable_checkpoint ||enable_clr){
                 submitter.getOM().getEM().closeFTM();
             }
             submitter.getOM().getEM().exit();
@@ -157,7 +178,7 @@ public class  AppRunner extends baseRunner {
         Topology topology=app.getTopology(topologyName,config);
         topology.addMachine(p);
         //Run the topology
-        double rt=runTopologyLocally(topology,config);
+        double rt = runTopologyLocally(topology,config);
         // decide the output path of metrics.
         String directory;
         String statsFolderPattern = OsUtils.osWrapperPostFix(config.getString("metrics.output"))

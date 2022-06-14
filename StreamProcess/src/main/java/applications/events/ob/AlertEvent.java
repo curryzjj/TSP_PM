@@ -3,6 +3,7 @@ package applications.events.ob;
 import applications.events.TxnEvent;
 import engine.table.tableRecords.SchemaRecordRef;
 
+import java.util.Arrays;
 import java.util.SplittableRandom;
 
 import static UserApplications.constants.OnlineBidingSystemConstants.Constant.MAX_Price;
@@ -13,8 +14,8 @@ public class AlertEvent extends TxnEvent {
     private int[] itemId;//keys.
     private long[] ask_price;//new ask price
     public SchemaRecordRef[] record_refs;
-    public AlertEvent(int num_access, int[] itemId, SplittableRandom rnd,int partition_id,long[] bid_array,long bid,int number_of_partitions){
-        super(bid,partition_id,bid_array,number_of_partitions);
+    public AlertEvent(int num_access, int[] itemId, SplittableRandom rnd,int partition_id,long[] bid_array,long bid,int number_of_partitions,boolean isAbort){
+        super(bid,partition_id,bid_array,number_of_partitions,isAbort);
         this.num_access=num_access;
         record_refs=new SchemaRecordRef[num_access];
         for (int i=0;i<num_access;i++){
@@ -36,8 +37,8 @@ public class AlertEvent extends TxnEvent {
      * @param alert_array
      */
     public AlertEvent(int bid, String bid_array, int partition_id, int number_of_partitions,
-                      int num_access, String key_array, String alert_array,long timestamp) {
-        super(bid, partition_id, bid_array, number_of_partitions);
+                      int num_access, String key_array, String alert_array,long timestamp,boolean isAbort) {
+        super(bid, partition_id, bid_array, number_of_partitions,isAbort);
         this.num_access = num_access;
         record_refs = new SchemaRecordRef[num_access];
         for (int i = 0; i < num_access; i++) {
@@ -60,7 +61,11 @@ public class AlertEvent extends TxnEvent {
     private void setValues(int num_access,SplittableRandom rnd){
         ask_price=new long[num_access];
         for (int access_id=0;access_id<num_access;++access_id){
-            ask_price[access_id]=rnd.nextLong(MAX_Price);
+            if (isAbort) {
+                ask_price[access_id] = -1;
+            } {
+                ask_price[access_id] = rnd.nextLong(MAX_Price);
+            }
         }
     }
     private void set_values(int access_id, SplittableRandom rnd) {
@@ -78,10 +83,14 @@ public class AlertEvent extends TxnEvent {
     public int getNum_access() {
         return num_access;
     }
-    public void setTimestamp(long timestamp) {
+    public void UpdateTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
     public long getTimestamp() {
         return timestamp;
+    }
+    @Override
+    public AlertEvent cloneEvent() {
+        return new AlertEvent((int) bid, Arrays.toString(bid_array),pid,number_of_partitions,num_access,Arrays.toString(itemId),Arrays.toString(ask_price),timestamp,isAbort);
     }
 }
