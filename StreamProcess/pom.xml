@@ -111,16 +111,6 @@
                 </goals>
             </execution>
         </executions>
-        <configuration>
-            <executable>java</executable>
-            <arguments>
-                <argument>-classpath</argument> <!-- 这是classpath属性，其值就是下面的<classpath/> -->
-                <classpath/> <!-- 这是exec插件最有价值的地方，工程的classpath并不需要手动指定，由exec自动计算得出 -->
-                <argument>applications.AppRunner</argument> <!-- 程序入口，主类名称 -->
-<!--                <argument>-X:Xmx=128g</argument>-->
-                <commandlineArgs>GS_txn</commandlineArgs>
-            </arguments>
-            </configuration>
         </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -132,7 +122,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>applications.AppRunner</mainClass>
+                            <mainClass>runners.AppRunner</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

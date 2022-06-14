@@ -33,9 +33,6 @@ public abstract class baseRunner {
 
     @Parameter(names = {"--measure"}, description = "measure enable")
     public boolean measure = false;
-    @Parameter(names = {"--rootFilePath"}, description = "Root path for data files.")
-    public String rootPath = System.getProperty("user.home") + OsUtils.OS_wrapper("data");
-
 
     @Parameter(names = {"--shared"}, description = "shared by multi producers")
     public boolean shared = false;
@@ -67,8 +64,8 @@ public abstract class baseRunner {
     public String DataBase= "in-memory";
 
     //FaultTolerance
-    @Parameter(names = {"--FTOption"}, description = "Which fault tolerance option, 0: no FT, 1: Wal, 2: Checkpoint, 3: CLR", required = false)
-    public int FTOption= 0;
+    @Parameter(names = {"--FTOptions"}, description = "Which fault tolerance option, 0: no FT, 1: Wal, 2: Checkpoint, 3: CLR", required = false)
+    public int FTOptions = 0;
     @Parameter(names = {"--failureModel"}, description = "No failure(0), Transaction Abort(1), State lost(2), Both(3)", required = false)
     public int failureModel= 0;
     @Parameter(names = {"--failureFrequency"}, description = "Failure Frequency", required = false)
@@ -167,7 +164,7 @@ public abstract class baseRunner {
         config.put("Sequential_Binding",true);
 
         //Fault tolerance
-        config.put("FTOption",FTOption);
+        config.put("FTOption", FTOptions);
         config.put("failureModel",failureModel);
         config.put("failureFrequency",failureFrequency);
         if (Exactly_Once == 1){
@@ -194,6 +191,7 @@ public abstract class baseRunner {
         config.put("complexity",complexity);
         //System Configuration
         config.put("tthreads",tthreads);
+        config.put("executor.threads",tthreads);
         config.put("timeSliceLengthMs",timeSliceLengthMs);
         config.put("input_store_batch",input_store_batch);
         config.put("batch_number_per_wm",batch_number_per_wm);
