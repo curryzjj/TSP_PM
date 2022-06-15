@@ -3,9 +3,9 @@ package System;
 public interface Constants {
     //System constants
     String Mac_Project_Path = System.getProperty("user.home").concat("/hair-loss/TSP_PM");
-    String Node22_Project_Path = System.getProperty("user.home").concat("/TSP_PM");
+    String Node22_Project_Path = "/home/jjzhao/TSP_PM";
     String Mac_Data_Path = System.getProperty("user.home").concat("/hair-loss/app/benchmarks/");
-    String SSD_Path = "/mnt/nvme0n1p1";
+    String SSD_Path = "/mnt/nvme0n1p1/jjzhao";
     String Node22_Data_Path = SSD_Path.concat("/app/benchmarks/");
     //PM constants
     String Default_Heap_Path = "/mnt/persist-memory/pmem0/jjzhao";
