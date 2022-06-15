@@ -4,16 +4,11 @@ import System.FileSystem.DataIO.DataOutputView;
 import System.FileSystem.DataIO.DataOutputViewStreamWrapper;
 import System.FileSystem.Path;
 import engine.Meta.StateMetaInfoSnapshotReadersWriters;
-import engine.log.LogRecord;
-import engine.log.LogStream.ParallelUpdateLogWrite;
-import engine.log.WALManager;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.CheckpointStreamWithResultProvider;
 import engine.shapshot.ShapshotResources.FullSnapshotResources;
-import engine.table.datatype.serialize.Deserialize;
 import engine.table.datatype.serialize.Serialize;
 import engine.table.keyGroup.KeyGroupRangeOffsets;
-import engine.table.tableRecords.TableRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -24,7 +19,6 @@ import utils.TransactionalProcessConstants.CheckpointType;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigDecimal;
 import java.util.*;
 
 import java.util.concurrent.Callable;
@@ -55,7 +49,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
 
     @Override
     public SnapshotResult get(CloseableRegistry snapshotCloseableRegistry) throws Exception {
-        Collection<SnapshotTask> callables=new ArrayList<>();
+        Collection<SnapshotTask> callables = new ArrayList<>();
         initTasks(callables,snapshotCloseableRegistry);
         List<Future<Tuple2<Path,KeyGroupRangeOffsets>>> snapshotPaths = snapshotExecutor.invokeAll(callables);
         HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> results = new HashMap<>();
@@ -64,15 +58,15 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
                 Tuple2<Path,KeyGroupRangeOffsets> tuple = snapshotPaths.get(i).get();
                 results.put(i, tuple);
             } catch (ExecutionException e) {
-                System.out.println(e.getMessage());
+               // System.out.println(e.getMessage());
             } catch (CancellationException e) {
                 System.out.println("Cancel");
             }
         }
-        return new SnapshotResult(results,timestamp,checkpointId);
+        return new SnapshotResult(results, timestamp, checkpointId);
     }
     private void initTasks(Collection<SnapshotTask> callables, CloseableRegistry closeableRegistry) {
-        for(int i = 0; i < options.rangeNum; i ++){
+        for(int i = 0; i < options.partitionNum; i ++){
             callables.add(new SnapshotTask( i, snapshotResources.get(i), closeableRegistry, providers.get(i)));
         }
     }

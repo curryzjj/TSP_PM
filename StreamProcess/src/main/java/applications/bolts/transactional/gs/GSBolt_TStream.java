@@ -53,12 +53,17 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
         for (int i = 0; i < NUM_ACCESSES; i++) {
             boolean flag = transactionManager.Asy_ReadRecord(txnContext, "MicroTable", String.valueOf(event.getKeys()[i]), event.getRecord_refs()[i], event.enqueue_time);
             if(!flag){
+                int targetId;
                 if (enable_determinants_log) {
                     InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(),event.getPid());
                     insideDeterminant.setAbort(true);
-                    collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, event.getTimestamp());//the tuple is finished.//the tuple is abort.
+
                 } else {
-                    collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
                 }
                 return false;
             }
@@ -74,12 +79,16 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
             //it simply construct the operations and return.
             boolean flag = transactionManager.Asy_WriteRecord(txnContext, "MicroTable", String.valueOf(event.getKeys()[i]), event.getValues()[i], event.enqueue_time);//asynchronously return.
             if(!flag){
+                int targetId;
                 if (enable_determinants_log) {
                     InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(),event.getPid());
                     insideDeterminant.setAbort(true);
-                    collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
                 } else {
-                    collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,null,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,null,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
                 }
                 return false;
             }
@@ -163,10 +172,14 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     protected void REQUEST_POST() throws InterruptedException {
         if (this.markerId > recoveryId) {
             for (MicroEvent event : EventsHolder) {
+                int targetId;
                 if(event.READ_EVENT()){
-                    READ_POST(event);
+                    targetId = READ_POST(event);
                 }else {
-                    WRITE_POST(event);
+                    targetId = WRITE_POST(event);
+                }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
                 }
             }
         }
@@ -182,14 +195,14 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
         }
     }
 
-    protected void READ_POST(MicroEvent event) throws InterruptedException {
+    protected int READ_POST(MicroEvent event) throws InterruptedException {
         int sum  = 0;
         for (int i = 0; i < NUM_ACCESSES;i++){
             sum += event.result[i];
         }
-        collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp(),sum);//the tuple is finished finally.
+        return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp(),sum);//the tuple is finished finally.
     }
-    protected void WRITE_POST(MicroEvent event) throws InterruptedException {
+    protected int WRITE_POST(MicroEvent event) throws InterruptedException {
         if (enable_determinants_log) {
             OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
             outsideDeterminant.setOutSideEvent(event);
@@ -200,12 +213,12 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                 }
             }
             if (outsideDeterminant.targetPartitionIds.size() !=0 ) {
-                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished finally.
             } else {
-                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
             }
         } else {
-            collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
+            return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
         }
     }
 }

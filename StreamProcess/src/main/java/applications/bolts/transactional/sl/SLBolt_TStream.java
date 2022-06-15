@@ -55,12 +55,16 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     protected boolean Deposit_Request_Construct(DepositEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
         boolean flag = transactionManager.Asy_ModifyRecord(txnContext,"T_accounts",event.getAccountId(),new INC(event.getAccountTransfer()));
         if(!flag){
+            int targetId;
             if (enable_determinants_log) {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
-                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
             } else {
-                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,null, event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,null, event.getTimestamp());//the tuple is finished.//the tuple is abort.
+            }
+            if (enable_upstreamBackup) {
+                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
             }
             return false;
         }
@@ -90,12 +94,16 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                         event.getAccountTransfer()),
                 event.success);
         if(!flag){
+            int targetId;
             if (enable_determinants_log) {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
-                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
             } else {
-                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
+            }
+            if (enable_upstreamBackup) {
+                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
             }
             return false;
         }
@@ -277,10 +285,14 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                         }
                     }
                 }
+                int targetId;
                 if (outsideDeterminant!=null && !outsideDeterminant.targetPartitionIds.isEmpty()) {
-                    collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished.
                 } else {
-                    collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
+                }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
                 }
             }
         }

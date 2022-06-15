@@ -83,7 +83,7 @@ public final class SnapshotStrategyRunner<SR extends SnapshotResources> {
                                                          @Nonnull CheckpointStreamFactory streamFactory,
                                                          @Nonnull CheckpointOptions checkpointOptions) throws Exception {
         long startTime=System.currentTimeMillis();
-        List<SR> snapshotResources=snapshotStrategy.syncPrepareResources(checkpointId,checkpointOptions.rangeNum);
+        List<SR> snapshotResources = snapshotStrategy.syncPrepareResources(checkpointId,checkpointOptions.partitionNum);
         SnapshotStrategy.SnapshotResultSupplier parallelSnapshot=
                 snapshotStrategy.parallelSnapshot(snapshotResources,
                         checkpointId,

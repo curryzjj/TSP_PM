@@ -8,15 +8,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Metrics {
     static class Performance {
-        public static ConcurrentHashMap<Integer,Double> Avg_throughput;
-        public static ConcurrentHashMap<Integer,Double> Avg_latency;
-        public static ConcurrentHashMap<Integer,Double> Tail_latency;
+        public static ConcurrentHashMap<Integer,Double> AvgThroughput;
+        public static ConcurrentHashMap<Integer,DescriptiveStatistics> Latency;
         public static ConcurrentHashMap<Integer, List<Double>> latency_map;
         public static ConcurrentHashMap<Integer,List<Double>> throughput_map;
         public static void Initialize() {
-            Avg_throughput = new ConcurrentHashMap<>();
-            Tail_latency = new ConcurrentHashMap<>();
-            Avg_latency = new ConcurrentHashMap<>();
+            AvgThroughput = new ConcurrentHashMap<>();
+            Latency = new ConcurrentHashMap<>();
             latency_map = new ConcurrentHashMap<>();
             throughput_map = new ConcurrentHashMap<>();
         }

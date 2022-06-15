@@ -49,12 +49,16 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                 ,event.getSpeed_value()[0]//holder to be filled up
                 ,new AVG(event.getSpeedValue()));
         if(!flag){
+            int targetId;
             if (enable_determinants_log) {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
-                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
             } else {
-                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
+            }
+            if (enable_upstreamBackup) {
+                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
             }
             return false;
         }
@@ -119,10 +123,13 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     }
     protected void REQUEST_POST() throws InterruptedException {
         for (TollProcessingEvent event : LREvents) {
-            TP_REQUEST_POST(event);
+            int targetId = TP_REQUEST_POST(event);
+            if (enable_upstreamBackup) {
+                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+            }
         }
     }
-    void TP_REQUEST_POST(TollProcessingEvent event) throws InterruptedException {
+    int TP_REQUEST_POST(TollProcessingEvent event) throws InterruptedException {
         //Nothing to determinant log
         double spendValue = 0;
         int cntValue = 0;
@@ -132,7 +139,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
         }
         //Some UDF function
         double toll = 0;
-        collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), toll);//the tuple is finished.
+        return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), toll);//the tuple is finished.
     }
 
     protected void CommitOutsideDeterminant(long markerId) {

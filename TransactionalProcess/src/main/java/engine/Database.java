@@ -114,9 +114,9 @@ public abstract class Database {
         return fs;
     }
 
-    public void setCheckpointOptions(int rangeNum,int delta) {
+    public void setCheckpointOptions(int partitionNum, int delta) {
         if(enable_parallel){
-            this.checkpointOptions = new CheckpointOptions(rangeNum,delta);
+            this.checkpointOptions = new CheckpointOptions(partitionNum, delta);
         }else{
             this.checkpointOptions = new CheckpointOptions();
         }

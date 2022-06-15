@@ -4,10 +4,12 @@ import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import engine.transaction.impl.TxnManagerTStream;
 import org.slf4j.Logger;
+import streamprocess.components.grouping.Grouping;
 import streamprocess.components.operators.api.TransactionalBolt;
 import streamprocess.components.topology.TopologyComponent;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.controller.output.Epoch.EpochInfo;
+import streamprocess.controller.output.InFlightLog.MultiStreamInFlightLog;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
@@ -22,13 +24,12 @@ import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
 public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public int partition_delta;
-    public List<ComputationTask> tasks;
-    public List<ComputationLogic> computationLogics;
     public EpochInfo epochInfo;
     //<DownStreamId,causalService>
     protected HashMap<Integer,CausalService> causalService = new HashMap<>();
@@ -36,6 +37,8 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     protected List<Integer> recoveryPartitionIds = new ArrayList<>();
     protected boolean isSnapshot;
     protected long markerId = 0;
+    protected MultiStreamInFlightLog multiStreamInFlightLog;
+    protected int firstDownTask;
     public TransactionalBoltTStream(Logger log,int fid){
         super(log,fid);
     }
@@ -44,10 +47,17 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         super.initialize(thread_Id, thisTaskId, graph);
         transactionManager=new TxnManagerTStream(db.getStorageManager(),this.context.getThisComponentId(),thread_Id,NUM_SEGMENTS,this.context.getThisComponent().getNumTasks());
         partition_delta=(int) Math.ceil(NUM_ITEMS / (double) PARTITION_NUM);//NUM_ITEMS / partition_num;
-        if(enable_clr){
-            this.tasks=new ArrayList<>();
-            this.computationLogics=new ArrayList<>();
+        if(enable_recovery_dependency){
             this.epochInfo = new EpochInfo(0L,this.executor.getExecutorID());
+        }
+        if (enable_upstreamBackup) {
+            multiStreamInFlightLog = new MultiStreamInFlightLog(this.executor.operator);
+            for (String streamId : this.executor.operator.get_childrenStream()) {
+                Map<TopologyComponent, Grouping> children = this.executor.operator.getChildrenOfStream(streamId);
+                for (TopologyComponent child:children.keySet()){
+                    this.firstDownTask = child.getExecutorIDList().get(0);
+                }
+            }
         }
     }
     public void loadDB(Map conf, TopologyContext context, OutputCollector collector){
@@ -112,10 +122,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
                 LOG.debug("Wait for the log to commit");
                 lock.wait();
             }
-            if (enable_measure){
-                MeasureTools.bolt_receive_ack_time(this.thread_Id,System.nanoTime());
-            }
-            this.isCommit =false;
+            this.isCommit = false;
         }
     }
 
@@ -202,5 +209,10 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
             partitionId[i] = getPartitionId(key[i]);
         }
         this.epochInfo.addDependency(partitionId,isModify);
+    }
+
+    @Override
+    public void cleanEpoch(long offset) {
+        this.multiStreamInFlightLog.cleanEpoch(offset, DEFAULT_STREAM_ID);
     }
 }

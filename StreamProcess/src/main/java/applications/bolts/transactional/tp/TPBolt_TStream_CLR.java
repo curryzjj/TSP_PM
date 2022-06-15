@@ -11,6 +11,7 @@ import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
 import static UserApplications.CONTROL.enable_align_wait;
 
@@ -24,7 +25,6 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
-            //this.collector.ack(in,in.getMarker());
             if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
                 switch (in.getMarker().getValue()){
                     case "recovery":
@@ -44,6 +44,9 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
                             } else {
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                             }
+                            if (enable_upstreamBackup && this.markerId > recoveryId) {
+                                this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                            }
                         }
                         break;
                     case "snapshot":
@@ -53,6 +56,10 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
                             Marker marker = in.getMarker();
                             marker.setEpochInfo(this.epochInfo);
                             forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                        }
+                        if (enable_upstreamBackup && this.markerId > recoveryId) {
+                            this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
+                            this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                         }
                         break;
                     case "finish":
@@ -70,6 +77,9 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
                             } else {
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                             }
+                        }
+                        if (enable_upstreamBackup && this.markerId > recoveryId) {
+                            this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                         }
                         this.context.stop_running();
                         break;
@@ -113,6 +123,9 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
                         }
                     }
                 }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
+                }
                 this.SyncRegisterRecovery();
                 this.LREvents.clear();
                 for (Queue<Tuple> tuples : bufferedTuples.values()) {
@@ -153,6 +166,9 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
                             break;
                         }
                     }
+                }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
                 }
                 this.SyncRegisterRecovery();
                 this.LREvents.clear();

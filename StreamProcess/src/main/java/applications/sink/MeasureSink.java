@@ -270,8 +270,7 @@ public class MeasureSink extends BaseSink {
         }
         MeasureTools.setThroughputMap(thisTaskId, throughput_map);
         MeasureTools.setLatencyMap(thisTaskId, No_Exactly_Once_latency_map);
-        MeasureTools.setAvgLatency(thisTaskId, latency.getMean());
-        MeasureTools.setTailLatency(thisTaskId, latency.getPercentile(99));
+        MeasureTools.setLatency(thisTaskId, latency);
         MeasureTools.setAvgWaitTime(thisTaskId, waitTime.getMean());
         MeasureTools.setAvgCommitTime(thisTaskId, twoPC_commit_time.getMean());
     }

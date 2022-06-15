@@ -113,7 +113,7 @@ public class CLRManager extends FTManager {
                     return;
                 }
                 if(callFaultTolerance.containsValue(Recovery)){
-                    LOG.debug("CLRManager received all bolt register and start recovery");
+                    LOG.info("CLRManager received all bolt register and start recovery");
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(SnapshotFile);
                     List<Integer> recoveryIds;
                     long alignOffset;
@@ -143,15 +143,15 @@ public class CLRManager extends FTManager {
                     notifyAllComplete();
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Snapshot)) {
-                    LOG.debug("CLRManager received all bolt register and start snpshot");
+                    LOG.info("CLRManager received all bolt register and start snpshot");
                     SnapshotResult snapshotResult = this.db.parallelSnapshot(this.SnapshotOffset.poll(),00000L);
                     this.snapshotResults.put(snapshotResult.getCheckpointId(),snapshotResult);
                     notifySnapshotComplete(snapshotResult.getCheckpointId());
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Undo)){
-                    LOG.debug("CLRManager received all register and start undo");
+                    LOG.info("CLRManager received all register and start undo");
                     this.db.undoFromWAL();
-                    LOG.debug("Undo log complete!");
+                    LOG.info("Undo log complete!");
                     this.db.getTxnProcessingEngine().isTransactionAbort=false;
                     notifyAllComplete();
                     lock.notifyAll();
@@ -170,6 +170,9 @@ public class CLRManager extends FTManager {
         LOG.debug("CLRManager commit the checkpoint to the current.log");
         g.getSpout().ackCommit(checkpointId);
         g.getSink().ackCommit(checkpointId);
+        for (int eId : this.callFaultTolerance.keySet()) {
+            g.getExecutionNode(eId).ackCommit(checkpointId);
+        }
         db.cleanUndoLog(checkpointId);
         return true;
     }

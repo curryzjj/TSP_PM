@@ -1,6 +1,7 @@
 package System.measure;
 
 import System.FileSystem.Path;
+import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,13 +91,10 @@ public class MeasureTools {
     }
     //Sink Measure
     public static void setAvgThroughput(int threadId, double result) {
-        Performance.Avg_throughput.put(threadId,result);
+        Performance.AvgThroughput.put(threadId,result);
     }
-    public static void setAvgLatency(int threadId, double result) {
-        Performance.Avg_latency.put(threadId, result);
-    }
-    public static void setTailLatency(int threadId, double result) {
-        Performance.Tail_latency.put(threadId,result);
+    public static void setLatency(int threadId, DescriptiveStatistics result) {
+        Performance.Latency.put(threadId, result);
     }
     public static void setThroughputMap(int threadId, List<Double> result) {
         Performance.throughput_map.put(threadId,result);
@@ -202,24 +200,33 @@ public class MeasureTools {
         double totalThroughput = 0;
         double totalAvgLatency = 0;
         double totalTailLatency = 0;
-        for (double rt : Performance.Avg_throughput.values()) {
+        for (double rt : Performance.AvgThroughput.values()) {
             totalThroughput = totalThroughput+rt;
         }
-        for (double rt : Performance.Avg_latency.values()) {
-            totalAvgLatency = totalAvgLatency + rt;
+        for (DescriptiveStatistics rt : Performance.Latency.values()) {
+            totalAvgLatency = totalAvgLatency + rt.getMean();
         }
-        for (double rt : Performance.Tail_latency.values()) {
-            totalTailLatency = totalTailLatency + rt;
+        for (DescriptiveStatistics rt : Performance.Latency.values()) {
+            totalTailLatency = totalTailLatency + rt.getPercentile(0.5);
         }
         fileWriter.write("Throughput: " + totalThroughput + "\n");
-        fileWriter.write("Avg_latency: " + totalAvgLatency / Performance.Avg_latency.size() + "\n");
-        fileWriter.write("Tail_latency: " + totalTailLatency / Performance.Tail_latency.size() + "\n");
+        fileWriter.write("Avg_latency: " + totalAvgLatency / Performance.Latency.size() + "\n");
+        fileWriter.write("Percentile\t Latency\n");
+        double percentile[] = new double[]{0.5, 20, 40, 60, 80, 99};
+        for (int i = 0; i < percentile.length; i ++){
+            totalTailLatency = 0;
+            for (DescriptiveStatistics rt : Performance.Latency.values()) {
+                totalTailLatency = totalTailLatency + rt.getPercentile(percentile[i]);
+            }
+            String output = String.format("%f\t" +
+                            "%-10.4f\t"
+                    , percentile[i], totalTailLatency / Performance.Latency.size());
+            fileWriter.write(output + "\n");
+        }
         sb.append("=======Throughput=======");
         sb.append("\n" + totalThroughput + "\n");
         sb.append("=======Avg_latency=======");
-        sb.append("\n" + totalAvgLatency/Performance.Avg_latency.size() + "\n");
-        sb.append("=======Tail_latency=======");
-        sb.append("\n" + totalTailLatency/Performance.Tail_latency.size()  + "\n");
+        sb.append("\n" + totalAvgLatency/Performance.Latency.size() + "\n");
         fileWriter.close();
     }
     private static void RuntimeLatencyReport(String baseDirectory) throws IOException {

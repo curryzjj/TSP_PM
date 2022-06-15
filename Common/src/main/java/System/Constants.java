@@ -18,7 +18,7 @@ public interface Constants {
     String Node22_RocksDB_Path = System.getProperty("user.home").concat("/app/RocksDB/");
     //Result constants
     String Mac_Measure_Path = System.getProperty("user.home").concat("/hair-loss/app/results/");
-    String Node22_Measure_Path = System.getProperty("user.home").concat("/app/results/");
+    String Node22_Measure_Path = "/home/jjzhao".concat("/app/results/");
 
 }
 

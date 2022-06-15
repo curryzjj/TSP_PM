@@ -19,8 +19,6 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.*;
 
-import static UserApplications.CONTROL.enable_parallel;
-
 public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullSnapshotResources> {
     private static final Logger LOG= LoggerFactory.getLogger(InMemorySnapshotStrategy.class);
     private static final String DESCRIPTION="Asynchronous full In-Memory snapshot";
@@ -78,7 +76,7 @@ public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullS
 
     @Override
     public SnapshotResultSupplier parallelSnapshot(List<FullSnapshotResources> snapshotResources, long checkpointId, long timestamp, @NotNull CheckpointStreamFactory streamFactory, @NotNull CheckpointOptions checkpointOptions) throws IOException {
-           return new ParallelFullSnapshotWrite(CheckpointStreamWithResultProvider.createMultipleStream(streamFactory,checkpointOptions.rangeNum),
+           return new ParallelFullSnapshotWrite(CheckpointStreamWithResultProvider.createMultipleStream(streamFactory,checkpointOptions.partitionNum),
                 snapshotResources,
                 timestamp,
                 checkpointId,

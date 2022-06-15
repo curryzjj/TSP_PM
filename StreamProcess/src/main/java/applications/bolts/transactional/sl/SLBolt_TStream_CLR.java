@@ -11,6 +11,7 @@ import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
 
 public class SLBolt_TStream_CLR extends SLBolt_TStream {
@@ -18,7 +19,6 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
-            //this.collector.ack(in,in.getMarker());
             if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
                 switch (in.getMarker().getValue()){
                     case "recovery":
@@ -34,9 +34,12 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                                 Marker marker = in.getMarker().clone();
                                 marker.setEpochInfo(this.epochInfo);
                                 forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                this.epochInfo = new EpochInfo(in.getBID(),executor.getExecutorID());
+                                this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
                             } else {
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            }
+                            if (enable_upstreamBackup && this.markerId > recoveryId) {
+                                this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                             }
                         }
                         break;
@@ -47,6 +50,10 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                             Marker marker = in.getMarker();
                             marker.setEpochInfo(this.epochInfo);
                             forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                        }
+                        if (enable_upstreamBackup && this.markerId > recoveryId) {
+                            this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
+                            this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                         }
                         break;
                     case "finish":
@@ -60,10 +67,13 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                                 Marker marker = in.getMarker().clone();
                                 marker.setEpochInfo(this.epochInfo);
                                 forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                this.epochInfo = new EpochInfo(in.getBID(),executor.getExecutorID());
+                                this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
                             } else {
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                             }
+                        }
+                        if (enable_upstreamBackup && this.markerId > recoveryId) {
+                            this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                         }
                         this.context.stop_running();
                         break;
@@ -107,6 +117,9 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                         }
                     }
                 }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
+                }
                 this.SyncRegisterRecovery();
                 this.EventsHolder.clear();
                 for (Queue<Tuple> tuples : bufferedTuples.values()) {
@@ -147,6 +160,9 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                             break;
                         }
                     }
+                }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
                 }
                 this.SyncRegisterRecovery();
                 this.EventsHolder.clear();

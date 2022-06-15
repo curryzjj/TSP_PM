@@ -176,7 +176,7 @@ public class  AppRunner extends baseRunner {
             topologyName = application;
         }
         //Get the topology
-        Topology topology=app.getTopology(topologyName,config);
+        Topology topology = app.getTopology(topologyName,config);
         topology.addMachine(p);
         //Run the topology
         double rt = runTopologyLocally(topology,config);

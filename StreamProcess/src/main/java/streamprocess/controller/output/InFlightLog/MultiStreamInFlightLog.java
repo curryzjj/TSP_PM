@@ -21,7 +21,7 @@ public class MultiStreamInFlightLog {
                InFlightLog inFlightLog = new InFlightLog(child.getExecutorIDList());
                inFlightLogHashMap.put(child.getId(),inFlightLog);
             }
-            InFightLogForStream.put(streamId,inFlightLogHashMap);
+            InFightLogForStream.put(streamId, inFlightLogHashMap);
         }
     }
     public BatchEvents getInFightEventsByOffset(String stream,String id,long offset){
@@ -57,6 +57,11 @@ public class MultiStreamInFlightLog {
             inFlightLog.cleanEpoch(offset);
         }
     }
+    public void cleanAll(String stream){
+        for (InFlightLog inFlightLog:InFightLogForStream.get(stream).values()){
+            inFlightLog.cleanAll();
+        }
+    }
 
     private class InFlightLog{
         //<EpochId,BatchEvent>
@@ -66,10 +71,10 @@ public class MultiStreamInFlightLog {
         public InFlightLog(ArrayList<Integer> executorID){
             this.executorID = executorID;
             currentOffset = 0L;
-            BatchEvents batchEvents = new BatchEvents(executorID,currentOffset);
+            BatchEvents batchEvents = new BatchEvents(executorID, currentOffset);
             InFlightEvents.put(currentOffset,batchEvents);
         }
-        public void addEvents(int partitionID,Object o){
+        public void addEvents(int partitionID, Object o){
             int executorId = executorID.get(partitionID);
             InFlightEvents.get(currentOffset).addEvent(o,executorId);
         }
@@ -89,6 +94,9 @@ public class MultiStreamInFlightLog {
             InFlightEvents.entrySet().removeIf(entry -> entry.getKey() < offset);
             LOG.info("Clean epoch at "+ offset);
         }
+        public void cleanAll(){
+            InFlightEvents.clear();
+        }
     }
 
     public class BatchEvents{
@@ -97,7 +105,7 @@ public class MultiStreamInFlightLog {
         private long currentMarkerId;
         private final List<Integer> executorID;
         public BatchEvents(List<Integer> executorID,long currentMarkerId) {
-            this.executorID =executorID;
+            this.executorID = executorID;
             ConcurrentHashMap<Integer,List<Object>> eventsForExecutor = new ConcurrentHashMap<>();
             for (int id:executorID){
               List<Object> Events = new ArrayList<>();

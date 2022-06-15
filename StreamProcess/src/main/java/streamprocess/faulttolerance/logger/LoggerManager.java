@@ -200,7 +200,7 @@ public class LoggerManager extends FTManager {
                     if(enable_measure){
                         MeasureTools.startPersist(System.nanoTime());
                     }
-                    LOG.info("LoggerManager received all register and start commit log");
+                    LOG.info("LoggerManager received all register and start snapshot");
                     long offset = commitLog();
                     SnapshotResult snapshotResult;
                     if(enable_parallel){
@@ -256,14 +256,14 @@ public class LoggerManager extends FTManager {
         return true;
     }
     public boolean commitCurrentLog(long snapshotOffset) throws IOException, InterruptedException {
-        LocalDataOutputStream localDataOutputStream =new LocalDataOutputStream(snapshotFile);
+        LocalDataOutputStream localDataOutputStream = new LocalDataOutputStream(snapshotFile);
         DataOutputStream dataOutputStream = new DataOutputStream(localDataOutputStream);
         byte[] result= Serialize.serializeObject(this.snapshotResults.get(snapshotOffset));
         int len = result.length;
         dataOutputStream.writeInt(len);
         dataOutputStream.write(result);
         dataOutputStream.close();
-        LOG.info("CheckpointManager commit the checkpoint " + snapshotOffset +" to the current.log");
+        LOG.info("LoggerManager commit the checkpoint " + snapshotOffset +" to the current.log");
         return true;
     }
     public Object getLock(){

@@ -11,6 +11,7 @@ import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
+import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
 
 public class GSBolt_TStream_CLR extends GSBolt_TStream {
@@ -42,6 +43,9 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                                 } else {
                                     forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                                 }
+                                if (enable_upstreamBackup && this.markerId > recoveryId) {
+                                    this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                }
                             }
                             break;
                         case "snapshot":
@@ -51,6 +55,10 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                                 Marker marker = in.getMarker();
                                 marker.setEpochInfo(this.epochInfo);
                                 forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                            }
+                            if (enable_upstreamBackup && this.markerId > recoveryId) {
+                                this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
+                                this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                             }
                             break;
                         case "finish":
@@ -68,6 +76,9 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                                 } else {
                                     forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                                 }
+                            }
+                            if (enable_upstreamBackup && this.markerId > recoveryId) {
+                                this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                             }
                             this.context.stop_running();
                             break;
@@ -111,6 +122,9 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                         }
                     }
                 }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
+                }
                 this.SyncRegisterRecovery();
                 this.EventsHolder.clear();
                 for (Queue<Tuple> tuples : bufferedTuples.values()) {
@@ -151,6 +165,9 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                             break;
                         }
                     }
+                }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
                 }
                 this.SyncRegisterRecovery();
                 this.EventsHolder.clear();

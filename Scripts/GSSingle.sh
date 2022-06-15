@@ -28,7 +28,7 @@ function ResetParameters() {
   partition_num=16
 }
 function runFTStream() {
-  echo "java -Xms300g -Xmx300g -jar -d64 /home/jjzhao/TSP_PM/StreamProcess/target/StreamProcess-1.0-SNAPSHOT-jar-with-dependencies.jar \
+  echo "java -Xms100g -Xmx100g -jar -d64 /home/jjzhao/TSP_PM/StreamProcess/target/StreamProcess-1.0-SNAPSHOT-jar-with-dependencies.jar \
             --app $app \
             --FTOptions $FTOptions \
             --failureModel $failureModel \
@@ -51,7 +51,7 @@ function runFTStream() {
             --partition_num_per_txn $partition_num_per_txn \
             --partition_num $partition_num
             "
-  java -Xms100g -Xmx100g -jar -XX:+UseG1GC -d64 /home/jjzhao/TSP_PM/StreamProcess/target/StreamProcess-1.0-SNAPSHOT-jar-with-dependencies \
+  java -Xms100g -Xmx100g -jar -XX:+UseG1GC -d64 /home/jjzhao/TSP_PM/StreamProcess/target/StreamProcess-1.0-SNAPSHOT-jar-with-dependencies.jar \
               --app $app \
               --FTOptions $FTOptions \
               --failureModel $failureModel \
