@@ -97,7 +97,6 @@
         </dependency>
     </dependencies>
     <build>
-        <pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -109,7 +108,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>runners.AppRunner</mainClass>
+                            <mainClass>applications.AppRunner</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -123,7 +122,29 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/target/classes</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../common/src/main/resources</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
-        </pluginManagement>
-        </build>
+    </build>
 </project>
