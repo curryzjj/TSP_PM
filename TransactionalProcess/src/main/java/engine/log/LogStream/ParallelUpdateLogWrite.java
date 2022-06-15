@@ -9,6 +9,7 @@ import engine.table.datatype.serialize.Serialize;
 import utils.CloseableRegistry.CloseableRegistry;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -78,12 +79,12 @@ public class ParallelUpdateLogWrite implements UpdateLogWrite {
         @Override
         public Boolean call() throws Exception {
             logCloseableRegistry.registerCloseable(provider);
-            final DataOutputView outputView=new DataOutputViewStreamWrapper(provider.getLogOutputStream());
-            for(int i=0;i<iterators.size();i++){
-                Iterator<LogRecord> logs=iterators.get(i);
+            final DataOutputView outputView = new DataOutputViewStreamWrapper(provider.getLogOutputStream());
+            for(int i = 0; i < iterators.size(); i++){
+                Iterator<LogRecord> logs = iterators.get(i);
                 while (logs.hasNext()){
                     LogRecord logRecord = logs.next();
-                    writeLogRecord(outputView,logRecord);
+                    writeLogRecord(outputView, logRecord);
                 }
             }
             outputView.writeInt(END_OF_GLOBAL_LSN_MARK);
@@ -98,11 +99,14 @@ public class ParallelUpdateLogWrite implements UpdateLogWrite {
         }
     }
     private void writeLogRecord(DataOutputView outputView,LogRecord logRecord) throws IOException {
-        if(logRecord.getUpdateTableRecord()!=null){//only commit update log
-            byte[] serializeObject= Serialize.serializeObject(logRecord);
-            int len=serializeObject.length;
-            outputView.writeInt(len);
-            outputView.write(serializeObject);
+        if(logRecord.getUpdateTableRecord() != null){//only commit update log
+//            byte[] serializeObject= Serialize.serializeObject(logRecord);
+//            int len = serializeObject.length;
+//            outputView.writeInt(len);
+//            outputView.write(serializeObject);
+            String str=logRecord.toSerializableString();
+            outputView.writeInt(str.getBytes(StandardCharsets.UTF_8).length);
+            outputView.write(str.getBytes(StandardCharsets.UTF_8));
         }
     }
 }

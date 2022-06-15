@@ -101,27 +101,6 @@
                         </descriptorRefs>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>exec-maven-plugin</artifactId>
-                    <version>1.2.1</version>
-                    <executions>
-                        <execution>
-                            <phase>install</phase>
-                            <goals>
-                                <goal>exec</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <executable>java</executable>
-                        <arguments>
-                            <argument>-classpath</argument> <!-- 这是classpath属性，其值就是下面的<classpath/> -->
-                            <classpath/> <!-- 这是exec插件最有价值的地方，工程的classpath并不需要手动指定，由exec自动计算得出 -->
-                            <argument>StreamProcess.applications.AppRunner</argument> <!-- 程序入口，主类名称 -->
-                        </arguments>
-                    </configuration>
-                </plugin>
             </plugins>
         </pluginManagement>
     </build>

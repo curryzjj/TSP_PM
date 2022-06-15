@@ -4,6 +4,7 @@ import System.FileSystem.FileSystem;
 import System.FileSystem.ImplFS.LocalFileSystem;
 import System.measure.MeasureTools;
 import System.util.Configuration;
+import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
@@ -28,6 +29,10 @@ public class MeasureSink extends BaseSink {
     private static final long serialVersionUID = 6249684803036342603L;
     private static final Logger LOG = LoggerFactory.getLogger(MeasureSink.class);
     private final DescriptiveStatistics latency = new DescriptiveStatistics();
+    //Exactly_Once
+    protected final List<Double> latency_map = new ArrayList<>();
+    //no_Exactly_Once
+    protected final List<Double> No_Exactly_Once_latency_map = new ArrayList<>();
     private final DescriptiveStatistics waitTime = new DescriptiveStatistics();
     private final DescriptiveStatistics throughput = new DescriptiveStatistics();
     private DescriptiveStatistics twoPC_commit_time = new DescriptiveStatistics();
@@ -36,15 +41,14 @@ public class MeasureSink extends BaseSink {
     private FileSystem localFS;
     protected static boolean profile = false;
     private int exe;
-    protected final List<Double> latency_map = new ArrayList<>();
+
     protected static final List<Double> throughput_map = new ArrayList<>();
     public int batch_number_per_wm;
     /** <bid,timestamp> */
 
     //2PC
     protected HashMap<Long, Tuple2<Long,Long>> perCommitTuple = new HashMap<>();
-    //no_Exactly_once
-    protected final List<Double> No_Exactly_Once_latency_map =new ArrayList<>();
+
     protected int abortTransaction=0;
     protected static long count;
     protected static long  p_count;
@@ -52,11 +56,11 @@ public class MeasureSink extends BaseSink {
         super(new HashMap<>());
         this.input_selectivity.put(DEFAULT_STREAM_ID, 1.0);
         this.input_selectivity.put("tn", 1.0);
-        status=new Status();
-        this.localFS=new LocalFileSystem();
+        status = new Status();
+        this.localFS = new LocalFileSystem();
         if(enable_measure){
-            count=0;
-            p_count=0;
+            count = 0;
+            p_count = 0;
         }
         this.startThroughputMeasure();
     }
@@ -74,6 +78,7 @@ public class MeasureSink extends BaseSink {
     }
 
     protected int tthread;
+    private int flag = 0;
 
     @Override
     public void execute(Tuple in) throws InterruptedException, IOException {
@@ -85,26 +90,39 @@ public class MeasureSink extends BaseSink {
                 addRecoveryDependency(in.getBID());
                 this.recoveryDependency.get(in.getBID()).addDependency(in.getMarker().getEpochInfo());
             }
-            if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
+            if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
                 this.currentMarkerId = in.getBID();
                 if (enable_determinants_log) {
                     for (Integer id:this.causalService.keySet()){
                         causalService.get(id).setCurrentMarkerId(currentMarkerId);
                     }
                 }
-                if(Objects.equals(in.getMarker().getValue(), "recovery")){
-                    MeasureTools.finishRecovery(System.nanoTime());
-                } else if(Objects.equals(in.getMarker().getValue(), "snapshot")) {
-                    this.FTM.sinkRegister(in.getBID());
-                } else if(Objects.equals(in.getMarker().getValue(), "finish")){
-                    if(Exactly_Once){
-                        twoPC_CommitTuple(in.getBID());
-                    }
-                    timer.cancel();
-                    measure_end();
-                    context.stop_running();
-                } else {
-                    BUFFER_EXECUTE();
+                switch (in.getMarker().getValue()) {
+                    case "recovery" :
+                        MeasureTools.finishRecovery(System.nanoTime());
+                        BUFFER_EXECUTE();
+                        break;
+                    case "snapshot" :
+                        this.FTM.sinkRegister(in.getBID());
+                        BUFFER_EXECUTE();
+                        break;
+                    case "marker" :
+                        if (enable_wal) {
+                            this.FTM.sinkRegister(in.getBID());
+                        }
+                        BUFFER_EXECUTE();
+                        break;
+                    case "finish" :
+                        if(CONTROL.Exactly_Once){
+                            twoPC_CommitTuple(in.getBID());
+                        }
+                        timer.cancel();
+                        measure_end();
+                        BUFFER_EXECUTE();
+                        context.stop_running();
+                        break;
+                    default:
+                        throw new IllegalStateException("Unexpected value: " + in.getMarker().getValue());
                 }
             }
         }else{
@@ -127,8 +145,8 @@ public class MeasureSink extends BaseSink {
     protected void twoPC_CommitTuple(long bid) {
         if(enable_latency_measurement&&perCommitTuple.size()!=0){
             commitStartTime = System.nanoTime();
-            double totalLatency=0;
-            double totalWaitTime=0;
+            double totalLatency = 0;
+            double totalWaitTime = 0;
             long size=5000;//Latency is calculated every 'size' events
             long commitSize=0;
             Iterator<Map.Entry<Long, Tuple2<Long, Long>>> events = perCommitTuple.entrySet().iterator();
@@ -144,14 +162,14 @@ public class MeasureSink extends BaseSink {
                     count++;
                     commitSize++;
                     events.remove();
-                    if(size==0){
+                    if(size == 0){
                         latency_map.add(totalLatency/5000);
                         totalLatency=0;
                         size=5000;
                     }
                 }
             }
-            if (size !=0) {
+            if (size != 0) {
                 latency_map.add(totalLatency/(5000-size));
             }
             waitTime.addValue(totalWaitTime/commitSize);
@@ -162,17 +180,17 @@ public class MeasureSink extends BaseSink {
     @Override
     protected void BUFFER_EXECUTE() throws IOException, InterruptedException {
         for (Queue<Tuple> tuples : bufferedTuples.values()) {
-            if (tuples.size() !=0) {
-                boolean isMarker = false;
-                while (!isMarker) {
+            if (tuples.size() != 0) {
+                boolean nextUpstream = false;
+                while (!nextUpstream) {
                     Tuple tuple = tuples.poll();
                     if (tuple != null) {
                         execute(tuple);
                         if (tuple.isMarker()) {
-                            isMarker =true;
+                            nextUpstream = true;
                         }
                     } else {
-                        isMarker = true;
+                        nextUpstream = true;
                     }
                 }
             }
@@ -221,8 +239,8 @@ public class MeasureSink extends BaseSink {
                     }
                 }
                 long latency = System.nanoTime() - (long)in.getValue(2);
-                No_Exactly_Once_latency_map.add(latency/1E6);
-                count++;
+                No_Exactly_Once_latency_map.add(latency / 1E6);
+                count ++;
             }
         }
     }
@@ -237,19 +255,25 @@ public class MeasureSink extends BaseSink {
         }
     }
     private void measure_end() {
-        MeasureTools.setAvgThroughput(thisTaskId,count*1E6/(System.nanoTime()-startTime));
-        for (double a:latency_map){
-            latency.addValue(a);
+        MeasureTools.setAvgThroughput(thisTaskId,count * 1E6 / (System.nanoTime()-startTime));
+        if (Exactly_Once) {
+            for (double a:latency_map){
+                latency.addValue(a);
+            }
+        } else {
+            for (double a:No_Exactly_Once_latency_map){
+                latency.addValue(a);
+            }
         }
         for (double a:throughput_map){
             throughput.addValue(a);//k events/s
         }
-        MeasureTools.setThroughputMap(thisTaskId,throughput_map);
-        MeasureTools.setLatencyMap(thisTaskId,latency_map);
-        MeasureTools.setAvgLatency(thisTaskId,latency.getMean());
-        MeasureTools.setTailLatency(thisTaskId,latency.getPercentile(0.9));
-        MeasureTools.setAvgWaitTime(thisTaskId,waitTime.getMean());
-        MeasureTools.setAvgCommitTime(thisTaskId,twoPC_commit_time.getMean());
+        MeasureTools.setThroughputMap(thisTaskId, throughput_map);
+        MeasureTools.setLatencyMap(thisTaskId, No_Exactly_Once_latency_map);
+        MeasureTools.setAvgLatency(thisTaskId, latency.getMean());
+        MeasureTools.setTailLatency(thisTaskId, latency.getPercentile(99));
+        MeasureTools.setAvgWaitTime(thisTaskId, waitTime.getMean());
+        MeasureTools.setAvgCommitTime(thisTaskId, twoPC_commit_time.getMean());
     }
 
     public long getCount() {
@@ -261,7 +285,7 @@ public class MeasureSink extends BaseSink {
             @Override
             public void run() {
                 long current_count=getCount();
-                double throughput=(current_count-p_count)/1000.0;
+                double throughput=(current_count-p_count) / 1000.0;
                 p_count=current_count;
                 throughput_map.add(throughput);
             }

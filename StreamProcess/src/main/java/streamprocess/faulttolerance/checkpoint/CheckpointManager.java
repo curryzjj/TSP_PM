@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 
+import static System.Constants.SSD_Path;
 import static UserApplications.CONTROL.*;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
 import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastCommitSnapshotResult;
@@ -56,11 +57,11 @@ public class CheckpointManager extends FTManager {
         this.db=db;
         this.close=false;
         if(OsUtils.isMac()){
-            this.Current_Path=new Path(System.getProperty("user.home").concat(conf.getString("checkpointTestPath")),"CURRENT");
-            this.localFS=new LocalFileSystem();
+            this.Current_Path = new Path(System.getProperty("user.home").concat(conf.getString("checkpointTestPath")),"CURRENT");
+            this.localFS = new LocalFileSystem();
         }else {
-            this.Current_Path=new Path(System.getProperty("user.home").concat(conf.getString("checkpointPath")),"CURRENT");
-            this.localFS=new LocalFileSystem();
+            this.Current_Path = new Path(SSD_Path.concat(conf.getString("checkpointPath")),"CURRENT");
+            this.localFS = new LocalFileSystem();
         }
         this.callSnapshot_ini();
         this.callRecovery_ini();
@@ -71,7 +72,7 @@ public class CheckpointManager extends FTManager {
         if (parent != null && !localFS.mkdirs(parent)) {
             throw new IOException("Mkdirs failed to create " + parent);
         }
-        checkpointFile =localFS.pathToFile(Current_Path);
+        checkpointFile = localFS.pathToFile(Current_Path);
         if(!needRecovery){
             LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(checkpointFile);
             DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);

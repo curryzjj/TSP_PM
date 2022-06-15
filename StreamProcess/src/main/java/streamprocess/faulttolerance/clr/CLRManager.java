@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static System.Constants.SSD_Path;
 import static UserApplications.CONTROL.*;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
 import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastCommitSnapshotResult;
@@ -59,7 +60,7 @@ public class CLRManager extends FTManager {
             this.Current_Path=new Path(System.getProperty("user.home").concat(conf.getString("checkpointTestPath")),"CURRENT");
             this.localFS=new LocalFileSystem();
         }else {
-            this.Current_Path=new Path(System.getProperty("user.home").concat(conf.getString("checkpointPath")),"CURRENT");
+            this.Current_Path=new Path(SSD_Path.concat(conf.getString("checkpointPath")),"CURRENT");
             this.localFS=new LocalFileSystem();
         }
         this.callFaultTolerance_ini();

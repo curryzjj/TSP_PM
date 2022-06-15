@@ -35,7 +35,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     public OBBolt_TStream(int fid) {
         super(LOG, fid);
         this.configPrefix="tpob";
-        status=new Status();
+        status = new Status();
         this.setStateful();
     }
 

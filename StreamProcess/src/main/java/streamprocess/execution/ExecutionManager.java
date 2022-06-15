@@ -33,13 +33,10 @@ import static engine.log.WALManager.writeExecutor;
 
 public class ExecutionManager {
     private final static Logger LOG = LoggerFactory.getLogger(ExecutionManager.class);
-    private final static long migration_gaps = 10000;
     public static Clock clock = null;//used in the shapshot
     TxnProcessingEngine tp_engine;
     FTManager FTM;
-    RecoveryManager RM;
     private static Thread FTManagerThread;
-    private static Thread recoveryManagerThread;
     public final HashMap<Integer, executorThread> ThreadMap = new HashMap<>();
     //public final AffinityController AC;//not sure
     private final OptimizationManager optimizationManager;
@@ -68,7 +65,7 @@ public class ExecutionManager {
         timeSliceLengthMs = conf.getInt("timeSliceLengthMs");
         g.build_inputSchedule();
         clock = new Clock(conf.getDouble("time_Interval", 1));
-        if(enable_checkpoint ||enable_wal||enable_clr){
+        if(enable_checkpoint ||enable_wal || enable_clr){
             this.startFaultTolerance(RM,FTM);
         }
         if (enable_shared_state){
@@ -79,7 +76,7 @@ public class ExecutionManager {
             }
             int stage = 0;//currently only stage 0 is required..
             List<Integer> integers = stage_map.get(stage);
-            tp_engine=TxnProcessingEngine.getInstance();
+            tp_engine = TxnProcessingEngine.getInstance();
             tp_engine.initialize(integers.size(), conf.getString("application"));
             tp_engine.engine_init(
                     integers.get(0),
@@ -93,15 +90,15 @@ public class ExecutionManager {
                 snapshotExecutor = Executors.newFixedThreadPool(PARTITION_NUM);
             }
             int delta = (int) Math.ceil(NUM_ITEMS / (double) PARTITION_NUM);
-            db.setCheckpointOptions(PARTITION_NUM,delta);
+            db.setCheckpointOptions(PARTITION_NUM, delta);
         }
         executorThread thread = null;
         for (ExecutionNode e : g.getExecutionNodeArrayList()) {
             switch(e.operator.type){
-                case spoutType:thread=launchSpout_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM,RM,eventGenerator),conf,plan.toSocket(e.getExecutorID()),latch);
+                case spoutType:thread = launchSpout_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM,RM,eventGenerator),conf,plan.toSocket(e.getExecutorID()),latch);
                 break;
                 case boltType:
-                case sinkType:thread=launchBolt_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM,RM,eventGenerator),conf,plan.toSocket(e.getExecutorID()),latch);
+                case sinkType:thread = launchBolt_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM,RM,eventGenerator),conf,plan.toSocket(e.getExecutorID()),latch);
                 break;
                 case virtualType:
                     LOG.info("Won't launch virtual ground");
@@ -141,7 +138,7 @@ public class ExecutionManager {
     }
     private executorThread launchBolt_InCore(ExecutionNode e,TopologyContext context,Configuration conf,int node,long[] cores,CountDownLatch latch){
         boltThread bt;
-        bt=new boltThread(e,context,conf,cores,node,latch,HPCMonotor,optimizationManager,ThreadMap,clock);
+        bt = new boltThread(e,context,conf,cores,node,latch,HPCMonotor,optimizationManager,ThreadMap,clock);
         bt.setDaemon(true);
         if (!(conf.getBoolean("monte", false) || conf.getBoolean("simulation", false))) {
             bt.start();
@@ -153,7 +150,7 @@ public class ExecutionManager {
         long cpu[];
         if (!conf.getBoolean("NAV", true)) {
             //implement after AC
-            cpu=new long[2];
+            cpu = new long[2];
         } else {
             cpu = new long[1];
         }
@@ -165,7 +162,7 @@ public class ExecutionManager {
         if(clock!=null){
             clock.close();
         }
-        if(CONTROL.enable_shared_state&&tp_engine!=null){
+        if(CONTROL.enable_shared_state && tp_engine!=null){
             tp_engine.engine_shutdown();
         }
         this.getSinkThread().getContext().Sequential_stopAll();
@@ -175,9 +172,9 @@ public class ExecutionManager {
         return ThreadMap.get(g.getSpoutThread());
     }
     public void startFaultTolerance(RecoveryManager RM,FTManager FTM) throws IOException {
-        this.FTM=FTM;
+        this.FTM = FTM;
         FTM.initialize(false);
-        FTManagerThread =new Thread(FTM);
+        FTManagerThread = new Thread(FTM);
         FTM.start();
     }
     public void closeFTM() {

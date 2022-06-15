@@ -125,11 +125,11 @@ public class TopologyContext {
         }
     }
     public void stop_running(){
-        threadMap.get(getThisTaskId()).running=false;
+        threadMap.get(getThisTaskId()).running = false;
         threadMap.get(getThisTaskId()).interrupt();
     }
     public void stop_running(int TaskId){
-        threadMap.get(TaskId).running=false;
+        threadMap.get(TaskId).running = false;
         threadMap.get(TaskId).interrupt();
     }
     public HashMap<Integer, executorThread> getThreadMap(){

@@ -21,8 +21,8 @@ public class SequentialBinding {
     }
     public static int next_cpu(){
         if(OsUtils.isMac()){
-            if(cpu==6){//skip first cpu--> it is reserved by OS.
-                cpu=0;
+            if(cpu == 6){//skip first cpu--> it is reserved by OS.
+                cpu = 0;
             }
             ArrayList[] mapping_node = Platform.getNodes(0);
             ArrayList<Integer> list = mapping_node[socket];

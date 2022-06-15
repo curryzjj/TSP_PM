@@ -70,7 +70,7 @@ public class OptimizationManager extends Thread {
         eventGenerator = new EventGenerator(conf);
         executionPlan = new ExecutionPlan(null,null);
         executionPlan.setProfile();
-        EM.distributeTasks(conf,executionPlan,latch,false,false, db, p, FTM, RM, eventGenerator);
+        EM.distributeTasks(conf, executionPlan, latch,false,false, db, p, FTM, RM, eventGenerator);
         final String dumpLocks = AffinityLock.dumpLocks();
         return executionPlan;
     }

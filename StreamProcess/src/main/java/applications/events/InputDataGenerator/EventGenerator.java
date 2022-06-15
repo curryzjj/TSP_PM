@@ -1,9 +1,6 @@
 package applications.events.InputDataGenerator;
 
 import System.util.Configuration;
-import System.util.OsUtils;
-import applications.DataTypes.AbstractInputTuple;
-import applications.events.InputDataGenerator.ImplDataGenerator.TPDataGenerator;
 import applications.events.TxnEvent;
 import net.openhft.affinity.AffinityLock;
 import org.jctools.queues.MpscArrayQueue;
@@ -36,7 +33,7 @@ public class EventGenerator extends Thread {
     //<ExecutorId, inputQueue>
     public HashMap<Integer, Queue<TxnEvent>> EventsQueues = new HashMap<>();
     public Queue<List<TxnEvent>> EventsQueue;
-    private long exe;
+    private final long exe;
     private Configuration configuration;
     public EventGenerator(Configuration configuration){
         this.configuration = configuration;
@@ -71,17 +68,16 @@ public class EventGenerator extends Thread {
     private boolean seedDataWithControl(){
         boolean finish = false;
         long emitStartTime = System.currentTimeMillis();
-        int circle = elements/batch;
+        int circle = elements / batch;
         while (circle != 0){
             List<TxnEvent> events = DataHolder.ArrivalData(batch);
             if(events.size() == batch){
                 this.EventsQueue.offer(events);
-                circle--;
+                circle --;
             }else{
                 this.EventsQueue.offer(events);
-                finish = true;
                 this.finishTime = System.nanoTime();
-                return finish;
+                return true;
             }
         }
         // Sleep for the rest of time slice if needed
@@ -108,7 +104,7 @@ public class EventGenerator extends Thread {
             }
             sleep_time ++;
         } else{
-            this.busyTime = busyTime+emitTime-timeSliceLengthMs;
+            this.busyTime = busyTime + emitTime - timeSliceLengthMs;
             lastFinishTime = System.currentTimeMillis();
             busy_time ++;
         }
@@ -134,15 +130,14 @@ public class EventGenerator extends Thread {
         return loadTargetHz * timeSliceLengthMs/1000;//make each spout thread independent
     }
 
-    public Queue getEventsQueue() {
+    public Queue<List<TxnEvent>> getEventsQueue() {
         return EventsQueue;
     }
     //bind Thread
-    protected long[] sequential_binding(){
+    protected void sequential_binding(){
         setLocalAlloc();
         int cpu = next_cpu();
         AffinityLock.acquireLock(cpu);
         LOG.info( "Event Generator binding to cpu:"+ cpu);
-        return null;
     }
 }

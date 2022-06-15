@@ -12,8 +12,9 @@ import java.util.HashMap;
 
 import static UserApplications.CONTROL.enable_debug;
 
-public class Status<E extends Serializable> implements Serializable {
-    private static final Logger LOG= LoggerFactory.getLogger(Status.class);
+public class Status implements Serializable {
+    private static final Logger LOG = LoggerFactory.getLogger(Status.class);
+    private static final long serialVersionUID = -6190161913336090702L;
     private transient HashMap<Integer,Boolean> source_ready;
     private transient HashMap<Integer,Boolean> consumer_ack;
     public Status(){
@@ -28,9 +29,7 @@ public class Status<E extends Serializable> implements Serializable {
                 }
             }
         } else {
-            for (Integer integer : source_ready.keySet()) {
-                source_ready.put(integer, false);
-            }
+            source_ready.replaceAll((i, v) -> false);
         }
     }
 
@@ -43,13 +42,11 @@ public class Status<E extends Serializable> implements Serializable {
                 }
             }
         } else {
-            for (Integer integer : consumer_ack.keySet()) {
-                consumer_ack.put(integer, false);
-            }
+            consumer_ack.replaceAll((i, v) -> false);
         }
     }
     public synchronized boolean allMarkerArrived(int callee,ExecutionNode executor){
-        source_ready.put(callee,true);
+        source_ready.put(callee, true);
         if(all_src_arrived()){
             source_status_ini(executor);
             return true;

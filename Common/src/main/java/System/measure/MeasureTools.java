@@ -93,7 +93,7 @@ public class MeasureTools {
         Performance.Avg_throughput.put(threadId,result);
     }
     public static void setAvgLatency(int threadId, double result) {
-        Performance.Avg_latency.put(threadId,result);
+        Performance.Avg_latency.put(threadId, result);
     }
     public static void setTailLatency(int threadId, double result) {
         Performance.Tail_latency.put(threadId,result);
@@ -206,14 +206,14 @@ public class MeasureTools {
             totalThroughput = totalThroughput+rt;
         }
         for (double rt : Performance.Avg_latency.values()) {
-            totalAvgLatency = totalAvgLatency+rt;
+            totalAvgLatency = totalAvgLatency + rt;
         }
         for (double rt : Performance.Tail_latency.values()) {
-            totalTailLatency = totalTailLatency+rt;
+            totalTailLatency = totalTailLatency + rt;
         }
         fileWriter.write("Throughput: " + totalThroughput + "\n");
-        fileWriter.write("Avg_latency: " + totalAvgLatency/Performance.Avg_latency.size() + "\n");
-        fileWriter.write("Tail_latency: " + totalTailLatency/Performance.Tail_latency.size() + "\n");
+        fileWriter.write("Avg_latency: " + totalAvgLatency / Performance.Avg_latency.size() + "\n");
+        fileWriter.write("Tail_latency: " + totalTailLatency / Performance.Tail_latency.size() + "\n");
         sb.append("=======Throughput=======");
         sb.append("\n" + totalThroughput + "\n");
         sb.append("=======Avg_latency=======");
@@ -237,7 +237,13 @@ public class MeasureTools {
         }
         BufferedWriter fileWriter = Files.newBufferedWriter(Paths.get(file.getPath()), APPEND);
         fileWriter.write("time_id\t latency\n");
-        for (int i=0;i<Performance.latency_map.get(0).size();i++){
+        int size = 0;
+        for (List<Double> list : Performance.latency_map.values()){
+            if (list.size() > size) {
+                size = list.size();
+            }
+        }
+        for (int i = 0; i < size; i++){
             double latency = 0;
             for (List<Double> list : Performance.latency_map.values()){
                 latency = latency + list.get(i);
@@ -264,8 +270,14 @@ public class MeasureTools {
             e.printStackTrace();
         }
         BufferedWriter fileWriter = Files.newBufferedWriter(Paths.get(file.getPath()), APPEND);
-        fileWriter.write("time_id\t throughput\n");
-        for (int i=0;i<Performance.throughput_map.get(0).size();i++){
+        fileWriter.write("time_id\t  throughput\n");
+        int size = 0;
+        for (List<Double> list : Performance.throughput_map.values()){
+            if (list.size() > size) {
+                size = list.size();
+            }
+        }
+        for (int i = 0 ; i < size; i++){
             double latency = 0;
             for (List<Double> list : Performance.throughput_map.values()){
                 latency = latency + list.get(i);

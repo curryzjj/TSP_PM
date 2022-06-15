@@ -106,23 +106,23 @@ public class AbstractRecoveryManager {
             filePath=new Path(WALPath,"WAL-"+rangeId);
             walFile=db.getFs().pathToFile(filePath);
         }
-        LocalDataInputStream inputStream=new LocalDataInputStream(walFile);
-        DataInputViewStreamWrapper inputViewStreamWrapper=new DataInputViewStreamWrapper(inputStream);
-        List<LogRecord> commitLogRecords=new ArrayList<>();
-        boolean isNewLSN=false;
+        LocalDataInputStream inputStream = new LocalDataInputStream(walFile);
+        DataInputViewStreamWrapper inputViewStreamWrapper = new DataInputViewStreamWrapper(inputStream);
+        List<LogRecord> commitLogRecords = new ArrayList<>();
+        boolean isNewLSN = false;
         long theLastLSN = 0L;
         try{
             while(true){
                 while (!isNewLSN){
-                    int len=inputViewStreamWrapper.readInt();
-                    if(len==END_OF_GLOBAL_LSN_MARK){
-                        long gLSN=inputViewStreamWrapper.readLong();
-                        if(gLSN<=globalLSN||globalLSN==-1){
-                            theLastLSN=gLSN;
-                            isNewLSN=true;
+                    int len = inputViewStreamWrapper.readInt();
+                    if( len == END_OF_GLOBAL_LSN_MARK){
+                        long gLSN = inputViewStreamWrapper.readLong();
+                        if( gLSN <= globalLSN|| globalLSN == -1){
+                            theLastLSN = gLSN;
+                            isNewLSN = true;
                         }
                     }else {
-                        LogRecord value=getLogRecord(inputViewStreamWrapper,len);
+                        LogRecord value = getLogRecord(inputViewStreamWrapper,len);
                         commitLogRecords.add(value);
                     }
                 }
@@ -130,9 +130,9 @@ public class AbstractRecoveryManager {
                 if(isNewLSN){
                     for (Iterator<LogRecord> it = commitLogRecords.iterator(); it.hasNext(); ) {
                         LogRecord logRecord = it.next();
-                        RecordSchema schema=db.getStorageManager().tables.get(logRecord.getTableName()).getSchema();
-                        List<DataBox> boxes=schema.getFieldTypes();
-                        String[] values=logRecord.getValues();
+                        RecordSchema schema = db.getStorageManager().tables.get(logRecord.getTableName()).getSchema();
+                        List<DataBox> boxes = schema.getFieldTypes();
+                        String[] values = logRecord.getValues();
                         for(int i=0;i<boxes.size();i++){
                             switch (boxes.get(i).type()){
                                 case INT:boxes.get(i).setInt(Integer.parseInt(values[i]));
@@ -154,7 +154,7 @@ public class AbstractRecoveryManager {
                         db.getStorageManager().getTable(logRecord.getTableName()).SelectKeyRecord(logRecord.getKey()).record_.updateValues(boxes);
                     }
                     commitLogRecords.clear();
-                    isNewLSN=false;
+                    isNewLSN = false;
                 }
             }
         } catch (EOFException e){
@@ -217,7 +217,7 @@ public class AbstractRecoveryManager {
         byte[] re=new byte[len];
         inputViewStreamWrapper.readFully(re);
         String str= new String(re, UTF_8);
-        LogRecord logRecord=new LogRecord(str);
+        LogRecord logRecord = new LogRecord(str);
         return logRecord;
     }
 }

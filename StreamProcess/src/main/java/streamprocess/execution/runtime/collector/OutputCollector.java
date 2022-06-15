@@ -28,14 +28,14 @@ public class OutputCollector<T> {
     public final OutputController sc;
     private final ExecutionNode executor;
     private final MetaGroup meta;
-    private boolean no_wait=false;
+    private boolean no_wait = false;
     public OutputCollector(ExecutionNode executor, TopologyContext context){
         int taskId = context.getThisTaskIndex();
         this.executor = executor;
         this.sc = executor.getController();
         this.meta = new MetaGroup(taskId);
         for(TopologyComponent childrenOP:this.executor.getChildren().keySet()){
-            this.meta.put(childrenOP,new Meta(taskId));
+            this.meta.put(childrenOP, new Meta(taskId));
         }
         if (OsUtils.isMac()) {
             LogManager.getLogger(LOG.getName()).setLevel(Level.DEBUG);

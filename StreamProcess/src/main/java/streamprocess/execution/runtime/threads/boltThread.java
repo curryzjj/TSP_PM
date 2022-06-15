@@ -104,11 +104,11 @@ public class boltThread extends executorThread{
             bolt.prepare(conf,context,collector);
             long[] binding=null;
             if (!conf.getBoolean("NAV",true)){
-                binding=binding();
+                binding = binding();
             }
-            if(enable_numa_placement&&enable_shared_state&&!this.executor.isLeafNode()){
+            if(enable_numa_placement && enable_shared_state){
                 if(conf.getBoolean("Sequential_Binding",true)){
-                    binding=sequential_binding();
+                    binding = sequential_binding();
                 }
             }
             this.Ready(LOG);

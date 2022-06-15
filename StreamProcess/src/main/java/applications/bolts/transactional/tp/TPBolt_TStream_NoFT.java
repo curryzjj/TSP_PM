@@ -16,11 +16,14 @@ public class TPBolt_TStream_NoFT extends TPBolt_TStream{
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if (in.isMarker()){
-            if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                TXN_PROCESS();
-                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                if(in.getMarker().getValue()=="finish"){
+            if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
+                if(in.getMarker().getValue().equals("finish")){
+                    TXN_PROCESS();
+                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                     this.context.stop_running();
+                } else {
+                    TXN_PROCESS();
+                    //forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                 }
             }
         }else{
@@ -35,13 +38,11 @@ public class TPBolt_TStream_NoFT extends TPBolt_TStream{
 
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
         transactionManager.start_evaluate(thread_Id,this.fid);
         REQUEST_CORE();
         REQUEST_POST();
         LREvents.clear();//clear stored events.
         BUFFER_PROCESS();
-        MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         return true;
     }
 }

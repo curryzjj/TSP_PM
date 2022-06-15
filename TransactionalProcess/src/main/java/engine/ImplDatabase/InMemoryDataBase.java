@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.RunnableFuture;
 
+import static System.Constants.SSD_Path;
 import static UserApplications.CONTROL.enable_parallel;
 import static utils.TransactionalProcessConstants.CommitLogExecutionType.SYNCHRONOUS;
 
@@ -36,17 +37,17 @@ public class InMemoryDataBase extends Database {
         CloseableRegistry closeableRegistry=new CloseableRegistry();
         storageManager = new StorageManager(closeableRegistry,configuration);
         if(OsUtils.isMac()){
-            String snapshotPath=configuration.getString("snapshotTestPath");
-            this.snapshotPath=new Path(System.getProperty("user.home").concat(snapshotPath));
-            WalBathPath=configuration.getString("WALTestPath");
-            this.WalPath=new Path(System.getProperty("user.home").concat(WalBathPath));
-            WalBathPath=WalPath.toString();
+            String snapshotPath = configuration.getString("snapshotTestPath");
+            this.snapshotPath = new Path(System.getProperty("user.home").concat(snapshotPath));
+            WalBathPath = configuration.getString("WALTestPath");
+            this.WalPath = new Path(System.getProperty("user.home").concat(WalBathPath));
+            WalBathPath = WalPath.toString();
         }else {
-            String snapshotPath=configuration.getString("snapshotPath");
-            this.snapshotPath=new Path(System.getProperty("user.home").concat(snapshotPath));
-            WalBathPath=configuration.getString("WALPath");
-            this.WalPath=new Path(System.getProperty("user.home").concat(WalBathPath));
-            WalBathPath=WalPath.toString();
+            String snapshotPath = configuration.getString("snapshotPath");
+            this.snapshotPath = new Path(SSD_Path.concat(snapshotPath));
+            WalBathPath = configuration.getString("WALPath");
+            this.WalPath = new Path(SSD_Path.concat(WalBathPath));
+            WalBathPath = WalPath.toString();
         }
         this.fs=new LocalFileSystem();
         this.txnProcessingEngine= TxnProcessingEngine.getInstance();

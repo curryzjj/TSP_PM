@@ -173,7 +173,7 @@ public abstract class PartitionController implements IPartitionController,Serial
                     return true;
                 }
             }
-            int timestamp_counter=SPIN_TRIES;
+            int timestamp_counter = SPIN_TRIES;
             applyWaitMethod(timestamp_counter);
        } while(!Thread.interrupted());
         return true;
@@ -365,7 +365,7 @@ public abstract class PartitionController implements IPartitionController,Serial
         return _offer_marker(marker_tuple, targetId);
     }
     //emit_marker uses the offer_maker method
-    public int marker_boardcast(Meta meta, String streamId,long bid,Marker marker){
+    public int marker_boardcast(Meta meta, String streamId,long bid, Marker marker){
         for (int target : targetTasks) {
             offer_marker(meta.src_id, target, streamId, bid, marker);
         }

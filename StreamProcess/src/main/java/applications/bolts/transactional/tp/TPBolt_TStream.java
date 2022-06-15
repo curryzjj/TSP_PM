@@ -26,7 +26,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     public TPBolt_TStream(int fid) {
         super(LOG,fid);
         this.configPrefix="tptxn";
-        status=new Status();
+        status = new Status();
         this.setStateful();
     }
 

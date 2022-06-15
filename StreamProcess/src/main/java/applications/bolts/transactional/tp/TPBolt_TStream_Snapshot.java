@@ -30,6 +30,7 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
                     case "marker":
                         this.markerId = in.getBID();
                         TXN_PROCESS();
+                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "finish":
                         this.markerId = in.getBID();
