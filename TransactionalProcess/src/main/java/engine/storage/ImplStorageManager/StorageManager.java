@@ -24,12 +24,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.RunnableFuture;
 
-import static UserApplications.CONTROL.enable_parallel;
-import static engine.log.WALManager.writeExecutor;
-import static utils.TransactionalProcessConstants.SnapshotExecutionType.ASYNCHRONOUS;
 import static utils.TransactionalProcessConstants.SnapshotExecutionType.SYNCHRONOUS;
 
 public class StorageManager extends AbstractStorageManager {

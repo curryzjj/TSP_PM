@@ -31,7 +31,7 @@ import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
 
 public class EventSpoutWithFT extends TransactionalSpoutFT {
-    private static final Logger LOG= LoggerFactory.getLogger(SpoutWithFT.class);
+    private static final Logger LOG= LoggerFactory.getLogger(EventSpoutWithFT.class);
     private static final long serialVersionUID = 5206772865951921120L;
     private Scanner scanner;
     private String Data_path;
@@ -86,9 +86,9 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 replayInput();
             }
         } else{
-            List<TxnEvent> events = (List<TxnEvent>) inputQueue.poll();
+            List<TxnEvent> events = inputQueue.poll();
             while(events == null){
-                events = (List<TxnEvent>) inputQueue.poll();
+                events = inputQueue.poll();
             }
             if(events.size() != 0){
                 if(enable_input_store){
@@ -103,7 +103,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                         TxnEvent event = input.cloneEvent();
                         multiStreamInFlightLog.addEvent(event.getPid(), DEFAULT_STREAM_ID, input);
                     }
-                    bid++;
+                    bid ++;
                     forward_marker(this.taskId, bid, null, "marker");
                 }
             }else{
@@ -136,10 +136,6 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             if (event != null) {
                 collector.emit_single(DEFAULT_STREAM_ID, bid, event);
                 lostData ++;
-                if(bid == failureTime){
-                    collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "recovery");
-                    MeasureTools.setReplayData(lostData);
-                }
                 bid ++;
                 forward_marker(this.taskId, bid, null, "marker");
             }

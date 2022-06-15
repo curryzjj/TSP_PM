@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 
+import static System.Constants.SSD_Path;
 import static UserApplications.CONTROL.enable_measure;
 import static UserApplications.CONTROL.enable_parallel;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
@@ -47,11 +48,11 @@ public class LoggerManager extends FTManager {
     private ExecutionGraph g;
     private Database db;
     private Configuration conf;
-    private Object lock;
+    private final Object lock;
     private LogResult logResult;
     private HashMap<Long, SnapshotResult> snapshotResults = new HashMap<>();
     private boolean close;
-    private final Queue<Long> SnapshotOffset;
+    private Queue<Long> SnapshotOffset;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callLog;
     private ConcurrentHashMap<Integer,FaultToleranceConstants.FaultToleranceStatus> callRecovery;
     public LoggerManager(ExecutionGraph g,Configuration conf,Database db){
@@ -67,8 +68,8 @@ public class LoggerManager extends FTManager {
             this.WAL_Path = new Path(System.getProperty("user.home").concat(conf.getString("WALTestPath")),"CURRENT");
             this.Snapshot_Path = new Path(System.getProperty("user.home").concat(conf.getString("checkpointTestPath")),"CURRENT");
         }else {
-            this.WAL_Path = new Path(System.getProperty("user.home").concat(conf.getString("WALPath")),"CURRENT");
-            this.Snapshot_Path = new Path(System.getProperty("user.home").concat(conf.getString("checkpointPath")),"CURRENT");
+            this.WAL_Path = new Path(SSD_Path.concat(conf.getString("WALPath")),"CURRENT");
+            this.Snapshot_Path = new Path(SSD_Path.concat(conf.getString("checkpointPath")),"CURRENT");
         }
         this.localFS = new LocalFileSystem();
         this.callLog_ini();
@@ -110,13 +111,17 @@ public class LoggerManager extends FTManager {
     }
     public boolean spoutRegister(long globalLSN){
         SnapshotOffset.add(globalLSN);
-        LOG.debug("Spout register the wal with the globalLSN= "+globalLSN);
+        LOG.info("Spout register the wal with the globalLSN= " + globalLSN);
         return true;
     }
 
     @Override
     public boolean sinkRegister(long id) throws IOException, InterruptedException {
-        return this.commitCurrentLog(id);
+        commitGlobalLSN(id);
+        if (snapshotResults.containsKey(id)) {
+            this.commitCurrentLog(id);
+        }
+        return true;
     }
 
     private void callLog_ini() {
@@ -159,25 +164,25 @@ public class LoggerManager extends FTManager {
                         MeasureTools.finishUndoTransaction(System.nanoTime());
                     }
                 }else if(callLog.containsValue(Recovery)){
-                    LOG.debug("LoggerManager received all register and start recovery");
-                    LOG.debug("Reload database from lastSnapshot");
+                    LOG.info("LoggerManager received all register and start recovery");
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(snapshotFile);
+                    long theLastLSN = getLastGlobalLSN(walFile);
+                    this.g.getSpout().recoveryInput(theLastLSN,null, theLastLSN);
+                    LOG.info("Reload database from lastSnapshot");
                     if (lastSnapshotResult == null){
                         this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     } else {
                         this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     }
-                    LOG.debug("Replay committed transactions");
-                    long theLastLSN = getLastGlobalLSN(walFile);
+                    LOG.info("Replay committed transactions");
                     if(enable_parallel){
                         this.db.recoveryFromWAL(theLastLSN);
                     }else{
                         theLastLSN = this.db.recoveryFromWAL(-1);
                     }
-                    LOG.debug("Replay committed transactions complete!");
-                    this.g.getSpout().recoveryInput(theLastLSN,null, theLastLSN);
-                    this.SnapshotOffset.clear();
+                    LOG.info("Replay committed transactions complete!");
                     this.db.undoFromWAL();
+                    this.SnapshotOffset = new ArrayDeque<>();
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     synchronized (lock){
                         while (callRecovery.containsValue(NULL)){
@@ -234,12 +239,11 @@ public class LoggerManager extends FTManager {
         this.callRecovery_ini();
     }
     private long commitLog() throws IOException, ExecutionException, InterruptedException {
-        long LSN = SnapshotOffset.poll();
+        long LSN = this.SnapshotOffset.poll();
         RunnableFuture<LogResult> commitLog = this.db.commitLog(LSN, 00000L);
         if(commitLog != null){
             commitLog.get();
         }
-        commitGlobalLSN(LSN);
         LOG.info("Update log commit!");
         return LSN;
     }
@@ -248,7 +252,7 @@ public class LoggerManager extends FTManager {
         DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
         dataOutputStream.writeLong(globalLSN);
         dataOutputStream.close();
-        LOG.debug("LoggerManager commit the globalLSN to the current.log");
+        LOG.info("LoggerManager commit the globalLSN "+ globalLSN +" to the current.log");
         return true;
     }
     public boolean commitCurrentLog(long snapshotOffset) throws IOException, InterruptedException {
@@ -259,7 +263,7 @@ public class LoggerManager extends FTManager {
         dataOutputStream.writeInt(len);
         dataOutputStream.write(result);
         dataOutputStream.close();
-        LOG.debug("CheckpointManager commit the checkpoint to the current.log");
+        LOG.info("CheckpointManager commit the checkpoint " + snapshotOffset +" to the current.log");
         return true;
     }
     public Object getLock(){
@@ -279,6 +283,8 @@ public class LoggerManager extends FTManager {
             try {
                 /* Delete the current and wal log file */
                 localFS.delete(WAL_Path.getParent(),true);
+                localFS.delete(Snapshot_Path.getParent(),true);
+
             } catch (IOException e) {
                 e.printStackTrace();
             }

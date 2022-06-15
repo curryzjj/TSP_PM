@@ -41,7 +41,7 @@ public class TxnProcessingEngine {
     private ConcurrentSkipListSet<Long> transactionAbort;
     public Boolean isTransactionAbort=false;
     private List<Integer> dropTable;
-    public boolean drop=true;
+    public boolean drop = true;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
     //initialize
     private String app;
@@ -226,7 +226,7 @@ public class TxnProcessingEngine {
         }
         switch (operation.accessType){
             case READ_WRITE_READ:
-                if (app == "TP_txn"){
+                if (app.equals("TP_txn")){
                     this.TP_TollProcess_Fun(operation);
                 }
                 if(enable_wal){
@@ -234,7 +234,7 @@ public class TxnProcessingEngine {
                 }
             break;
             case READ_ONLY:
-                if (app == "TP_txn") {
+                if (app.equals("TP_txn")) {
                     assert operation.record_ref != null;
                     //read source_data
                     List<DataBox> srcRecord = operation.s_record.record_.getValues();
@@ -250,9 +250,9 @@ public class TxnProcessingEngine {
                //Note that, locking scheme allows directly modifying on original table d_record.
             break;
             case WRITE_ONLY:
-                if (app == "OB_txn") {
+                if (app.equals("OB_txn")) {
                    this.OB_Alert_Fun(operation);
-                } else if(app == "GS_txn") {
+                } else if(app.equals("GS_txn")) {
                     this.GS_Write_Fun(operation);
                 }
                 if(enable_wal){
@@ -260,9 +260,9 @@ public class TxnProcessingEngine {
                 }
             break;
             case READ_WRITE://read, modify, write
-                if(app == "SL_txn"){
+                if(app.equals("SL_txn")){
                     this.SL_Depo_Fun(operation);
-                }else if (app == "OB_txn"){
+                }else if (app.equals("OB_txn")){
                     this.OB_Topping_Fun(operation);
                 }
                 if(enable_wal){
@@ -270,9 +270,9 @@ public class TxnProcessingEngine {
                 }
             break;
             case READ_WRITE_COND://read, modify(depends on the condition), write(depend on the condition)
-                if(app=="SL_txn"){
+                if(app.equals("SL_txn")){
                     this.SL_Transfer_Fun(operation,false);
-                }else if (app == "OB_txn"){
+                }else if (app.equals("OB_txn")){
                     this.OB_Buying_Fun(operation);
                 }
                 if(enable_wal){
@@ -281,7 +281,7 @@ public class TxnProcessingEngine {
             break;
             case READ_WRITE_COND_READ:
                 assert operation.record_ref != null;
-                if (app == "SL_txn") {//used in SL
+                if (app.equals("SL_txn")) {//used in SL
                     SL_Transfer_Fun(operation,true);
                     operation.record_ref.setRecord(operation.condition_records[0].readPreValues(operation.bid));
                 }
@@ -324,9 +324,11 @@ public class TxnProcessingEngine {
     //evaluation
     public void start_evaluation(int thread_id, long mark_ID) throws InterruptedException {//each operation thread called this function
         //implement the SOURCE_CONTROL sync for all threads to come to this line to ensure chains are constructed for the current batch.
-        this.walManager.addLogForBatch(mark_ID);
+        if (enable_wal || enable_undo_log) {
+            this.walManager.addLogForBatch(mark_ID);
+        }
         SOURCE_CONTROL.getInstance().Wait_Start(thread_id);
-        int size=evaluation(thread_id,mark_ID);
+        int size = evaluation(thread_id,mark_ID);
         //implement the SOURCE_CONTROL sync for all threads to come to this line.
         SOURCE_CONTROL.getInstance().Wait_End(thread_id);
     }
@@ -384,8 +386,8 @@ public class TxnProcessingEngine {
         }
         final long sourceBalance = preValues.getValues().get(1).getLong();
         if (operation.condition.arg1 > 0 && sourceBalance > operation.condition.arg1 && sourceBalance > operation.condition.arg2){
-            SchemaRecord srcRecord=operation.s_record.readPreValues(operation.bid);
-            List<DataBox> values=srcRecord.getValues();
+            SchemaRecord srcRecord = operation.s_record.readPreValues(operation.bid);
+            List<DataBox> values = srcRecord.getValues();
             SchemaRecord tempo_record;
             tempo_record = new SchemaRecord(values);//tempo record
             //apply function.
@@ -403,7 +405,7 @@ public class TxnProcessingEngine {
                 this.transactionAbort.add(operation.bid);
                 this.isTransactionAbort = true;
             }
-            operation.success[0]=false;
+            operation.success[0] = false;
         }
     }
     private boolean OB_Buying_Fun(Operation operation) {

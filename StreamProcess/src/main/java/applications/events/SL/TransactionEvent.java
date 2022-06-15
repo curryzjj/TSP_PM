@@ -1,20 +1,17 @@
 package applications.events.SL;
 
 import applications.events.TxnEvent;
-import engine.table.datatype.DataBox;
 import engine.table.tableRecords.SchemaRecordRef;
-import engine.table.tableRecords.TableRecordRef;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static UserApplications.constants.StreamLedgerConstants.Constant.MAX_BALANCE;
 import static UserApplications.constants.StreamLedgerConstants.Constant.MIN_BALANCE;
 
 public class TransactionEvent extends TxnEvent {
     //embeded state.
-    public volatile SchemaRecordRef src_account_value = new SchemaRecordRef();
-    public volatile SchemaRecordRef src_asset_value = new SchemaRecordRef();
+    public SchemaRecordRef src_account_value = new SchemaRecordRef();
+    public SchemaRecordRef src_asset_value = new SchemaRecordRef();
 
     public TransactionResult transaction_result;
 

@@ -11,6 +11,8 @@ import applications.topology.transactional.GS_txn;
 import applications.topology.transactional.OB_txn;
 import applications.topology.transactional.SL_txn;
 import applications.topology.transactional.TP_txn;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.exception.UnhandledCaseException;
@@ -49,15 +51,15 @@ public class  AppRunner extends baseRunner {
         // configuration
         // Prepared default configuration
         setConfiguration(config);
-        if (configStr==null){
-            String cfg=String.format(CFG_PATH,application);
-            String ftcfg=String.format(CFG_PATH,"FTConfig");
+        if (configStr == null){
+            String cfg = String.format(CFG_PATH,application);
+            //String ftcfg = String.format(CFG_PATH,"FTConfig");
             Properties p = null;
             try {
                 p = loadProperties(cfg);
                 config.putAll(Configuration.fromProperties(p));
-                p=loadProperties(ftcfg);
-                config.putAll(Configuration.fromProperties(p));
+                //p=loadProperties(ftcfg);
+                //config.putAll(Configuration.fromProperties(p));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -116,14 +118,14 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_transaction_abort = CONTROL.enable_states_lost=true;
                 break;
         }
-        CONTROL.Time_Control=config.getBoolean("enable_time_Interval");
+        CONTROL.Time_Control = config.getBoolean("enable_time_Interval");
         if(CONTROL.MAX_RECOVERY_TIME){
-            CONTROL.failureTime= (int) (config.getInt("snapshot")*config.getInt("batch_number_per_wm")*config.getDouble("failureFrequency")-1);
+            CONTROL.failureTime = (int) (config.getInt("snapshot") * config.getInt("batch_number_per_wm") * config.getDouble("failureFrequency")-1);
         }else {
             if(OsUtils.isMac()){
-                CONTROL.failureTime=(int)(config.getInt("TEST_NUM_EVENTS")*config.getDouble("failureFrequency"));
+                CONTROL.failureTime = (int)(config.getInt("TEST_NUM_EVENTS") * config.getDouble("failureFrequency"));
             }else {
-                CONTROL.failureTime=(int)(config.getInt("NUM_EVENTS")*config.getDouble("failureFrequency"));
+                CONTROL.failureTime = (int)(config.getInt("NUM_EVENTS") * config.getDouble("failureFrequency"));
             }
         }
         //Set the application
@@ -140,7 +142,7 @@ public class  AppRunner extends baseRunner {
 
     private static double runTopologyLocally(Topology topology,Configuration conf) throws UnhandledCaseException, InterruptedException, IOException {
         TopologySubmitter submitter=new TopologySubmitter();
-        final_topology=submitter.submitTopology(topology,conf);
+        final_topology = submitter.submitTopology(topology,conf);
         executorThread sinkThread = submitter.getOM().getEM().getSinkThread();
         long start = System.currentTimeMillis();
         sinkThread.join((long) (12 * 1E3 * 60));//sync_ratio for sink thread to stop. Maximally sync_ratio for 10 mins
@@ -157,7 +159,6 @@ public class  AppRunner extends baseRunner {
                 submitter.getOM().getEM().closeFTM();
             }
             submitter.getOM().getEM().exit();
-            MeasureTools.showMeasureResult();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -167,7 +168,7 @@ public class  AppRunner extends baseRunner {
     private void run() throws UnhandledCaseException, InterruptedException, IOException {
         LoadConfiguration();
         //set the MeasureTool
-        MeasureTools tools=new MeasureTools(config.getInt("partition_num"),config.getInt("executor.threads"),config.getInt("FTOptions"));
+        MeasureTools tools = new MeasureTools(config.getInt("partition_num"),config.getInt("executor.threads"),config.getInt("FTOptions"));
         //Get the descriptor for thr given application
         AppDriver.AppDescriptor app=driver.getApp(application);
         // In case topology names is given, create one
@@ -181,27 +182,40 @@ public class  AppRunner extends baseRunner {
         double rt = runTopologyLocally(topology,config);
         // decide the output path of metrics.
         String directory;
-        String statsFolderPattern = OsUtils.osWrapperPostFix(config.getString("metrics.output"))
-                + OsUtils.osWrapperPostFix("%s")
+        String statsFolderPattern = config.getString("metrics.output")
+                + OsUtils.osWrapperPostFix("Application = %s")
                 + OsUtils.osWrapperPostFix("FTOption = %d")
                 + OsUtils.osWrapperPostFix("Exactly_Once = %s")
                 + OsUtils.osWrapperPostFix("Arrival_Control = %s")
-                + OsUtils.osWrapperPostFix("failureTime = %d_targetHz = %d_NUM_EVENTS = %d_NUM_ITEMS = %d_ZIP_SKEW = %d_RATIO_OF_READ = %d_executor.threads = %d");
+                + "failureTime=%f_targetHz=%f_NUM_EVENTS=%d_NUM_ITEMS=%d_NUM_ACCESSES=%d_ZIP=%f_RATIO_OF_READ=%d_RATIO_OF_ABORT=%d_" +
+                "RATIO_OF_DEPENDENCY=%d_partition_num_per_txn=%d_partition_num = %d";
         directory = String.format(statsFolderPattern,
                 config.getString("application"),
                 config.getInt("FTOptions"),
-                config.getInt("Exactly_Once"),
-                config.getInt("Arrival_Control"),
-                config.getInt("failureTime"),
-                config.getInt("targetHz"),
+                config.getBoolean("Exactly_Once"),
+                config.getBoolean("Arrival_Control"),
+                config.getDouble("failureFrequency"),
+                config.getDouble("targetHz"),
                 config.getInt("NUM_EVENTS"),
-                config.getInt("ZIP_SKEW"),
-                config.getInt("RATIO_OF_READ"),
-                config.getInt("executor.threads"));
+                config.getInt("NUM_ITEMS"),
+                config.getInt("NUM_ACCESSES"),
+                config.getDouble("ZIP_SKEW"),
+                config.getInt("RATIO_OF_READ") / 1000,
+                config.getInt("RATIO_OF_ABORT"),
+                config.getInt("RATIO_OF_DEPENDENCY") / 1000,
+                config.getInt("partition_num_per_txn"),
+                config.getInt("partition_num"));
         MeasureTools.METRICS_REPORT(directory);
     }
     public static void main(String[] args) throws UnhandledCaseException, InterruptedException, IOException {
-        AppRunner runner=new AppRunner();
+        AppRunner runner = new AppRunner();
+        JCommander cmd = new JCommander(runner);
+        try {
+            cmd.parse(args);
+        } catch (ParameterException ex) {
+            LOG.error("Argument error: " + ex.getMessage());
+            cmd.usage();
+        }
         try {
             runner.run();
         } catch (InterruptedException ex) {

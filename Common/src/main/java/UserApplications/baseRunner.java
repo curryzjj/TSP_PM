@@ -97,7 +97,7 @@ public abstract class baseRunner {
     @Parameter(names = {"--RATIO_OF_DEPENDENCY"}, description = "RATIO_OF_DEPENDENCY", required = false)
     public int RATIO_OF_DEPENDENCY = 1000;
     @Parameter(names = {"--complexity"}, description = "complexity", required = false)
-    public int complexity = 100000;
+    public int complexity = 0;
 
     //System Configuration
     @Parameter(names = {"--tthreads"}, description = "parallelism", required = false)
@@ -112,7 +112,7 @@ public abstract class baseRunner {
     public int isParallel = 0;
     @Parameter(names = {"--spoutThread"}, description = "Number of spout", required = false)
     public int spoutThread = 1;
-    @Parameter(names = {"--spoutThread"}, description = "Number of sink", required = false)
+    @Parameter(names = {"--sinkThread"}, description = "Number of sink", required = false)
     public int sinkThread = 1;
 
     //Algorithm Configuration
@@ -164,7 +164,7 @@ public abstract class baseRunner {
         config.put("Sequential_Binding",true);
 
         //Fault tolerance
-        config.put("FTOption", FTOptions);
+        config.put("FTOptions", FTOptions);
         config.put("failureModel",failureModel);
         config.put("failureFrequency",failureFrequency);
         if (Exactly_Once == 1){

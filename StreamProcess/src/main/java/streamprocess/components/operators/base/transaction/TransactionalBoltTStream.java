@@ -68,14 +68,14 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     }
     public void BUFFER_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         for (Queue<Tuple> tuples : bufferedTuples.values()) {
-            if (tuples.size() !=0) {
+            if (tuples.size() != 0) {
                 boolean isMarker = false;
                 while (!isMarker) {
                     Tuple tuple = tuples.poll();
                     if (tuple != null) {
                         execute(tuple);
                         if (tuple.isMarker()) {
-                            isMarker =true;
+                            isMarker = true;
                         }
                     } else {
                         isMarker = true;

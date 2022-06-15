@@ -23,7 +23,6 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
-            //this.collector.ack(in,in.getMarker());
             if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
                     switch (in.getMarker().getValue()){
                         case "recovery":

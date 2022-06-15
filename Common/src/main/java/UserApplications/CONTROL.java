@@ -30,10 +30,10 @@ public class CONTROL {
     public static boolean enable_shared_state = true;//this is for transactional state mgmt.
     /**Configure in the appRunner**/
     // fault tolerance related.
-    public static boolean enable_transaction_abort=false;
-    public static boolean enable_states_lost=false;
-    public static int failureTime=0;
-    public static boolean MAX_RECOVERY_TIME=true;
+    public static boolean enable_transaction_abort = false;
+    public static boolean enable_states_lost = false;
+    public static int failureTime = 0;
+    public static boolean MAX_RECOVERY_TIME = true;
     public static boolean Exactly_Once = false;
     //Measure Methods
     public static boolean enable_checkpoint = false;

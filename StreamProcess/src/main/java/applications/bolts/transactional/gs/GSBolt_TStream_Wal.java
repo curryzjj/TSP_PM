@@ -10,6 +10,7 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
 public class  GSBolt_TStream_Wal extends GSBolt_TStream{
+    private static final long serialVersionUID = -7735253055437818414L;
     public GSBolt_TStream_Wal(int fid) {
         super(fid);
     }
@@ -71,7 +72,7 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
             case 1:
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS_FT();
+                transactionSuccess = this.TXN_PROCESS_FT();
                 break;
             case 2:
                 this.SyncRegisterRecovery();

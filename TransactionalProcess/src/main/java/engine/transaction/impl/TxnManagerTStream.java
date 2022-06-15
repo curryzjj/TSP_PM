@@ -159,7 +159,7 @@ public class TxnManagerTStream extends TxnManagerDedicated {
             return 1;
         }else if(instance.getRecoveryRangeId().size()!=0) {
             if(thread_id==0){
-                if(enable_states_partition&&enable_parallel){
+                if(enable_states_partition && enable_parallel){
                     this.storageManager.cleanTable(instance.getRecoveryRangeId());
                 }else{
                     this.storageManager.cleanAllTables();

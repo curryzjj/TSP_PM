@@ -32,7 +32,7 @@ import static UserApplications.constants.TP_TxnConstants.PREFIX;
 import static utils.PartitionHelper.setPartition_interval;
 
 public class TP_txn extends TransactionalTopology {
-    private static final Logger LOG= LoggerFactory.getLogger(TP_txn.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TP_txn.class);
     public TP_txn(String topologyName, Configuration config) {
         super(topologyName, config);
         config.put("tthread",config.getInt(Executor_Threads,1));

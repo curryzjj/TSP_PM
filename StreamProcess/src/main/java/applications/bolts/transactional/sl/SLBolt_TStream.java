@@ -79,10 +79,9 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         String[] astTable = new String[]{"T_assets"};
         String[] accID = new String[]{event.getSourceAccountId()};
         String[] astID = new String[]{event.getSourceBookEntryId()};
-        boolean flag = transactionManager.Asy_ModifyRecord_Read(txnContext,
+        boolean flag = transactionManager.Asy_ModifyRecord(txnContext,
                 "T_accounts",
                 event.getSourceAccountId(),
-                event.src_account_value,//to be fill up.
                 new DEC(event.getAccountTransfer()),
                 accTable,
                 accID,//condition source, condition id.
@@ -94,7 +93,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
             if (enable_determinants_log) {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
-                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
             } else {
                 collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
             }

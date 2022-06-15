@@ -1,6 +1,6 @@
 #!/bin/bash
 function ResetParameters() {
-  app="GS_txn"
+  app="SL_txn"
   FTOptions=0
   failureModel=0
   failureFrequency=0.0
@@ -76,11 +76,8 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-  for app in GS_txn TP_txn SL_txn OB_txn
-  do
     for FTOptions in 0 1 2 3 4
-    do runFTStream
-    done
-  done
+        do runFTStream
+        done
 }
 baselineEvaluation

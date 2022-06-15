@@ -76,11 +76,8 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-  for app in GS_txn TP_txn SL_txn OB_txn
-  do
-    for FTOptions in 0 1 2 3 4
-    do runFTStream
-    done
-  done
+  for FTOptions in 0 1 2 3 4
+      do runFTStream
+      done
 }
 baselineEvaluation

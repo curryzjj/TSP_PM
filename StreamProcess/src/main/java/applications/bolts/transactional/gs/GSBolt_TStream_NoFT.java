@@ -9,18 +9,30 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
 public class GSBolt_TStream_NoFT extends GSBolt_TStream{
+    private static final long serialVersionUID = 5698215001916299700L;
+
     public GSBolt_TStream_NoFT(int fid) {
         super(fid);
     }
-
+    private int flag = 0;
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
             if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                TXN_PROCESS();
-                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                if(in.getMarker().getValue()=="finish"){
-                    this.context.stop_running();
+                switch (in.getMarker().getValue()) {
+                    case "marker":
+                        this.markerId = in.getBID();
+                        TXN_PROCESS();
+                       // forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        break;
+                    case "finish":
+                        this.markerId = in.getBID();
+                        if(TXN_PROCESS()){
+                            /* All the data has been executed */
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        }
+                        this.context.stop_running();
+                        break;
                 }
             }
         }else {
@@ -35,7 +47,7 @@ public class GSBolt_TStream_NoFT extends GSBolt_TStream{
 
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        transactionManager.start_evaluate(thread_Id,this.fid);
+        transactionManager.start_evaluate(thread_Id, this.markerId);
         REQUEST_CORE();
         REQUEST_POST();
         EventsHolder.clear();//clear stored events.

@@ -25,6 +25,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                     case "marker":
                         this.markerId = in.getBID();
                         TXN_PROCESS();
+                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                     case "snapshot":
                         this.markerId = in.getBID();
@@ -41,6 +42,8 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                         }
                         this.context.stop_running();
                         break;
+                    default:
+                        throw new IllegalStateException("Unexpected value: " + in.getMarker().getValue());
                 }
             }
         }else{

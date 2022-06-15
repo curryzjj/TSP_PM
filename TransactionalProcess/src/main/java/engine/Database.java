@@ -118,7 +118,7 @@ public abstract class Database {
         if(enable_parallel){
             this.checkpointOptions = new CheckpointOptions(rangeNum,delta);
         }else{
-            this.checkpointOptions=new CheckpointOptions();
+            this.checkpointOptions = new CheckpointOptions();
         }
     }
 

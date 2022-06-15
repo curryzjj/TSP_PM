@@ -22,8 +22,9 @@ import static UserApplications.CONTROL.*;
 
 public abstract class TransactionalSpoutFT extends AbstractSpout implements emitMarker {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionalSpoutFT.class);
+    private static final long serialVersionUID = 7501673262740197416L;
     protected InputDataGenerator inputDataGenerator;
-    protected Queue inputQueue;
+    protected Queue<List<TxnEvent>> inputQueue;
     protected long previous_bid=-1;
     protected long epoch_size=0;
     protected double target_Hz;
@@ -98,7 +99,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
             if(enable_snapshot){
                 if(snapshot()){
                     msg = "snapshot";
-                    checkpoint_counter++;
+                    checkpoint_counter ++;
                 }
             }
             if (msg.equals("snapshot") || enable_wal) {
@@ -111,7 +112,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 if (msg.equals("snapshot")) {
                     multiStreamInFlightLog.addEpoch(bid, DEFAULT_STREAM_ID);
                 }
-                multiStreamInFlightLog.addBatch(bid,DEFAULT_STREAM_ID);
+                multiStreamInFlightLog.addBatch(bid, DEFAULT_STREAM_ID);
             }
             myiteration++;
             success = false;
@@ -120,7 +121,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         }
     }
     public void registerRecovery() throws InterruptedException {
-        this.lock=this.getContext().getFTM().getLock();
+        this.lock = this.getContext().getFTM().getLock();
         synchronized (lock){
             this.getContext().getFTM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
             try {
@@ -147,8 +148,8 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 LOG.info(this.executor.getOP_full()+" is waiting for the Recovery");
                 lock.wait();
             }
-            this.isCommit =false;
-            this.needWaitReplay =false;
+            this.isCommit = false;
+            this.needWaitReplay = false;
         }
     }
 
@@ -167,15 +168,17 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         if(enable_wal|| enable_checkpoint ||enable_clr){
             this.getContext().getFTM().spoutRegister(bid);
         }
-        collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration,"finish");
+        LOG.info(executor.getOP_full() + " emit " + "finish" + " of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + bid);
+        boardcast_time = System.nanoTime();
+        collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "finish");
         try {
             clock.close();
             inputDataGenerator.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        LOG.info("Spout sent marker "+myiteration);
-        LOG.info("Spout sent snapshot "+checkpoint_counter);
+        LOG.info("Spout sent marker "+ myiteration);
+        LOG.info("Spout sent snapshot " + checkpoint_counter);
         context.stop_running();
     }
 
