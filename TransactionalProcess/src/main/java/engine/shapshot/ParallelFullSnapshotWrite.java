@@ -26,6 +26,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static UserApplications.CONTROL.PARTITION_NUM;
 import static engine.Database.snapshotExecutor;
 import static utils.FullSnapshotUtil.END_OF_KEY_GROUP_MARK;
 
@@ -53,12 +54,12 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
         initTasks(callables,snapshotCloseableRegistry);
         List<Future<Tuple2<Path,KeyGroupRangeOffsets>>> snapshotPaths = snapshotExecutor.invokeAll(callables);
         HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> results = new HashMap<>();
-        for(int i = 0; i < snapshotPaths.size(); i++){
+        for(int i = 0; i < PARTITION_NUM; i++){
             try {
                 Tuple2<Path,KeyGroupRangeOffsets> tuple = snapshotPaths.get(i).get();
                 results.put(i, tuple);
             } catch (ExecutionException e) {
-               // System.out.println(e.getMessage());
+                System.out.println(e.getMessage());
             } catch (CancellationException e) {
                 System.out.println("Cancel");
             }
@@ -136,7 +137,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
                     keyGroupRangeOffsets.setKeyGroupOffset(
                             mergeIterator.kvStateId(), checkpointOutputStream.getPos());
                 }
-                writeKeyValuePair(mergeIterator.nextkey(),mergeIterator.nextvalue(), kgOutView);
+                writeKeyValuePair(mergeIterator.nextkey(), mergeIterator.nextvalue(), kgOutView);
                 if(!mergeIterator.isIteratorValid()){
                     kgOutView.writeInt(END_OF_KEY_GROUP_MARK);
                     mergeIterator.switchIterator();

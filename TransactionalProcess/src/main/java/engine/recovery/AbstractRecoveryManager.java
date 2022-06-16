@@ -46,7 +46,7 @@ public class AbstractRecoveryManager {
 
         @Override
         public Long call() throws Exception {
-            return recoveryFromWAL(db,WALPath,rangeId,globalLSN);
+            return recoveryFromWAL(db , WALPath, rangeId, globalLSN);
         }
     }
     private static class recoveryFromSnapshot implements Callable<Boolean>{
@@ -164,10 +164,10 @@ public class AbstractRecoveryManager {
         inputViewStreamWrapper.close();
         return theLastLSN;
     }
-    public static long parallelRecoveryFromWAL(Database db,Path WALPath,List<Integer> rangeIds,long globalLSN) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
+    public static long parallelRecoveryFromWAL(Database db,Path WALPath, List<Integer> rangeIds,long globalLSN) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
         List<recoveryFromWalTask> callables = new ArrayList<>();
         for(int id:rangeIds){
-            callables.add(new recoveryFromWalTask(db,WALPath,id, globalLSN));
+            callables.add(new recoveryFromWalTask(db, WALPath, id, globalLSN));
         }
         List<Future<Long>> futures = writeExecutor.invokeAll(callables);
         return 1L;

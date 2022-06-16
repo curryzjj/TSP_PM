@@ -159,6 +159,7 @@ public class CheckpointManager extends FTManager {
                     MeasureTools.startSnapshot(System.nanoTime());
                     if(enable_parallel){
                         snapshotResult = this.db.parallelSnapshot(SnapshotOffset.poll(),00000L);
+                        System.out.println(snapshotResult.getSnapshotPaths().size());
                     }else{
                         RunnableFuture<SnapshotResult> getSnapshotResult = this.db.snapshot(SnapshotOffset.poll(),00000L);
                         snapshotResult = getSnapshotResult.get();

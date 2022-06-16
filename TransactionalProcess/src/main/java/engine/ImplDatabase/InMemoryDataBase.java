@@ -82,7 +82,7 @@ public class InMemoryDataBase extends Database {
     @Override
     public long recoveryFromWAL(long globalLSN) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
         if(enable_parallel){
-            return AbstractRecoveryManager.parallelRecoveryFromWAL(this,WalPath,txnProcessingEngine.getRecoveryRangeId(),globalLSN);
+            return AbstractRecoveryManager.parallelRecoveryFromWAL(this, WalPath, txnProcessingEngine.getRecoveryRangeId(), globalLSN);
         }else{
             return AbstractRecoveryManager.recoveryFromWAL(this,WalPath,-1,globalLSN);
         }
@@ -141,7 +141,7 @@ public class InMemoryDataBase extends Database {
     public RunnableFuture<LogResult> commitLog(long globalLSN, long timestamp) throws IOException {
         CloseableRegistry cancelStreamRegistry=new CloseableRegistry();
         LogStreamFactory logStreamFactory=new FsLogStreamFactory(16,16,WalPath,fs);
-        RunnableFuture<LogResult> commitLog=new logCommitRunner(cancelStreamRegistry,
+        RunnableFuture<LogResult> commitLog = new logCommitRunner(cancelStreamRegistry,
                 txnProcessingEngine.getWalManager(),SYNCHRONOUS
         ).commitLog(globalLSN, timestamp, logStreamFactory);
         return commitLog;
