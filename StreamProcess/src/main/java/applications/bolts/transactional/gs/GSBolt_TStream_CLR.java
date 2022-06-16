@@ -47,7 +47,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                                     if (enable_upstreamBackup) {
                                         this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                                     }
-                                    MeasureTools.HelpLog_finish_acc(this.executor.getExecutorID());
+                                    MeasureTools.HelpLog_finish_acc(this.thread_Id);
                                 }
                             }
                             break;
@@ -83,7 +83,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                                     if (enable_upstreamBackup) {
                                         this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                                     }
-                                    MeasureTools.HelpLog_finish_acc(this.executor.getExecutorID());
+                                    MeasureTools.HelpLog_finish_acc(this.thread_Id);
                                 }
                             }
                             this.context.stop_running();
@@ -104,10 +104,8 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
-                MeasureTools.startPost(this.thread_Id,System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
-                MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 this.SyncCommitLog();
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
@@ -149,10 +147,8 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
         boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
-                MeasureTools.startPost(this.thread_Id,System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
-                MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
                 break;

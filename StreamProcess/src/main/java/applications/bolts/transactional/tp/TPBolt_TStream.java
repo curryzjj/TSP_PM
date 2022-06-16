@@ -1,5 +1,6 @@
 package applications.bolts.transactional.tp;
 
+import System.measure.MeasureTools;
 import applications.events.lr.TollProcessingEvent;
 import engine.Exception.DatabaseException;
 import engine.transaction.TxnContext;
@@ -8,7 +9,6 @@ import engine.transaction.function.CNT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.controller.output.Determinant.InsideDeterminant;
-import streamprocess.controller.output.Determinant.OutsideDeterminant;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
@@ -24,7 +24,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream.class);
     ArrayDeque<TollProcessingEvent> LREvents = new ArrayDeque<>();
     public TPBolt_TStream(int fid) {
-        super(LOG,fid);
+        super(LOG, fid);
         this.configPrefix="tptxn";
         status = new Status();
         this.setStateful();
@@ -74,7 +74,9 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
         if (!isReConstruct) {
             LREvents.add(event);
             if (enable_recovery_dependency) {
+                MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
                 this.updateRecoveryDependency(new int[]{event.getSegmentId()}, true);
+                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
             }
         }
         return true;
@@ -125,9 +127,12 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
         for (TollProcessingEvent event : LREvents) {
             int targetId = TP_REQUEST_POST(event);
             if (enable_upstreamBackup) {
+                MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
                 this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
             }
         }
+        MeasureTools.Upstream_backup_finish_acc(this.executor.getExecutorID());
     }
     int TP_REQUEST_POST(TollProcessingEvent event) throws InterruptedException {
         //Nothing to determinant log
@@ -138,7 +143,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
             cntValue = cntValue + event.cntValues[i];
         }
         //Some UDF function
-        double toll = 0;
+        double toll = spendValue / cntValue;
         return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), toll);//the tuple is finished.
     }
 

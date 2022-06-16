@@ -1,4 +1,5 @@
 package applications.bolts.transactional.sl;
+import System.measure.MeasureTools;
 import applications.events.SL.DepositEvent;
 import applications.events.SL.TransactionEvent;
 import applications.events.SL.TransactionResult;
@@ -72,8 +73,10 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         if(!isReConstruct){
             EventsHolder.add(event);
             if (enable_recovery_dependency) {
+                MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
                 String[] keys = new String[]{event.getAccountId(), event.getBookEntryId()};
                 this.updateRecoveryDependency(keys,true);
+                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
             }
         }
         return true;
@@ -139,8 +142,10 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         if(!isReConstruct){
             EventsHolder.add(event);
             if (enable_recovery_dependency) {
+                MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
                 String[] keys = new String[]{event.getSourceAccountId(),event.getTargetAccountId(),event.getSourceBookEntryId(), event.getTargetBookEntryId()};
                 this.updateRecoveryDependency(keys,true);
+                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
             }
         }
         return true;
@@ -270,6 +275,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
             for (TxnEvent event:EventsHolder){
                 OutsideDeterminant outsideDeterminant = null;
                 if (enable_determinants_log) {
+                    MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
                     outsideDeterminant = new OutsideDeterminant();
                     outsideDeterminant.setOutSideEvent(event);
                     String[] keys;
@@ -284,6 +290,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                             outsideDeterminant.setTargetPartitionId(this.getPartitionId(id));
                         }
                     }
+                    MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 }
                 int targetId;
                 if (outsideDeterminant!=null && !outsideDeterminant.targetPartitionIds.isEmpty()) {
@@ -292,9 +299,12 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                     targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
                 }
                 if (enable_upstreamBackup) {
+                    MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
                     this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                 }
             }
+            MeasureTools.Upstream_backup_finish_acc(this.executor.getExecutorID());
         }
     }
 

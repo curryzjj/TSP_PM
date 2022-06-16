@@ -56,7 +56,9 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
 
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        int FT=transactionManager.start_evaluate(thread_Id, this.markerId);
+        MeasureTools.startTransaction(thread_Id, System.nanoTime());
+        int FT = transactionManager.start_evaluate(thread_Id, this.markerId);
+        MeasureTools.finishTransaction(thread_Id, System.nanoTime());
         boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:

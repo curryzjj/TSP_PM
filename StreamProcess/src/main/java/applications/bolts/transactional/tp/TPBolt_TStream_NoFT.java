@@ -38,7 +38,9 @@ public class TPBolt_TStream_NoFT extends TPBolt_TStream{
 
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        transactionManager.start_evaluate(thread_Id,this.fid);
+        MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
+        transactionManager.start_evaluate(thread_Id,this.markerId);
+        MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         REQUEST_CORE();
         REQUEST_POST();
         LREvents.clear();//clear stored events.

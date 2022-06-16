@@ -100,9 +100,6 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     protected void AsyncRegisterPersist(){
         this.lock = this.FTM.getLock();
         synchronized (lock){
-            if (enable_measure){
-                MeasureTools.bolt_register_Ack(this.thread_Id,System.nanoTime());
-            }
             if (isSnapshot) {
                 this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Snapshot);
                 isSnapshot = false;

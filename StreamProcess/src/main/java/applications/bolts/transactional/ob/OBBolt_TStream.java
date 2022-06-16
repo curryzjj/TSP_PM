@@ -1,5 +1,6 @@
 package applications.bolts.transactional.ob;
 
+import System.measure.MeasureTools;
 import applications.events.TxnEvent;
 import applications.events.ob.AlertEvent;
 import applications.events.ob.BidingResult;
@@ -84,7 +85,9 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if(!isReConstruct){
             EventsHolder.add(event);//mark the tuple as ``in-complete"
             if (enable_recovery_dependency) {
+                MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
                 this.updateRecoveryDependency(event.getItemId(), true);
+                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
             }
         }
         return true;
@@ -110,7 +113,9 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if(!isReConstruct){
             EventsHolder.add(event);//mark the tuple as ``in-complete"
             if (enable_recovery_dependency) {
-                this.updateRecoveryDependency(event.getItemId(),true);
+                MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
+                this.updateRecoveryDependency(event.getItemId(), true);
+                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
             }
         }
         return true;
@@ -143,7 +148,9 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if(!isReConstruct){
             EventsHolder.add(event);//mark the tuple as ``in-complete"
             if (enable_recovery_dependency) {
-                this.updateRecoveryDependency(event.getItemId(),true);
+                MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
+                this.updateRecoveryDependency(event.getItemId(), true);
+                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
             }
         }
         return true;
@@ -269,14 +276,18 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     targetId = TOPPING_REQUEST_POST((ToppingEvent) event);
                 }
                 if (enable_upstreamBackup) {
+                    MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
                     this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                 }
             }
+            MeasureTools.Upstream_backup_finish_acc(this.executor.getExecutorID());
         }
     }
     protected int BUYING_REQUEST_POST(BuyingEvent event) throws InterruptedException {
         OutsideDeterminant outsideDeterminant = null;
         if (enable_determinants_log) {
+            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
             outsideDeterminant = new OutsideDeterminant();
             outsideDeterminant.setOutSideEvent(event);
             for (int itemId : event.getItemId()) {
@@ -284,6 +295,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
                 }
             }
+            MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
         }
         if (outsideDeterminant!=null && !outsideDeterminant.targetPartitionIds.isEmpty()) {
             return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true,outsideDeterminant, event.getTimestamp());//the tuple is finished.
@@ -294,6 +306,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected int ALERT_REQUEST_POST(AlertEvent event) throws InterruptedException {
         OutsideDeterminant outsideDeterminant = null;
         if (enable_determinants_log) {
+            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
             outsideDeterminant = new OutsideDeterminant();
             outsideDeterminant.setOutSideEvent(event);
             for (int itemId : event.getItemId()) {
@@ -301,6 +314,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
                 }
             }
+            MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
         }
         if (outsideDeterminant!=null && !outsideDeterminant.targetPartitionIds.isEmpty()) {
             return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true,outsideDeterminant, event.getTimestamp(), event.alert_result);//the tuple is finished.
@@ -312,6 +326,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected int TOPPING_REQUEST_POST(ToppingEvent event) throws InterruptedException {
         OutsideDeterminant outsideDeterminant = null;
         if (enable_determinants_log) {
+            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
             outsideDeterminant = new OutsideDeterminant();
             outsideDeterminant.setOutSideEvent(event);
             for (int itemId : event.getItemId()) {
@@ -319,6 +334,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
                 }
             }
+            MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
         }
         if (outsideDeterminant!=null && !outsideDeterminant.targetPartitionIds.isEmpty()) {
             return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, outsideDeterminant, event.getTimestamp(), event.topping_result);//the tuple is finished.

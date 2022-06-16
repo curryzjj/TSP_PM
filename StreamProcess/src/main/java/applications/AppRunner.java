@@ -78,28 +78,28 @@ public class  AppRunner extends baseRunner {
                 break;
             case 2:
                 CONTROL.enable_checkpoint = true;
-                CONTROL.enable_snapshot = true;
                 CONTROL.enable_input_store = true;
+                CONTROL.enable_snapshot = true;
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
                 break;
             case 3:
                 CONTROL.enable_clr = true;
-                CONTROL.enable_snapshot = true;
                 CONTROL.enable_input_store = true;
-                CONTROL.enable_upstreamBackup = true;
+                CONTROL.enable_snapshot = true;
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
+                CONTROL.enable_upstreamBackup = true;
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_recovery_dependency = true;
                 break;
             case 4:
                 CONTROL.enable_clr = true;
-                CONTROL.enable_snapshot = true;
                 CONTROL.enable_input_store = true;
-                CONTROL.enable_upstreamBackup = true;
+                CONTROL.enable_snapshot = true;
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
+                CONTROL.enable_upstreamBackup = true;
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_determinants_log = true;
                 break;

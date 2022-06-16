@@ -6,7 +6,7 @@ import engine.table.keyGroup.KeyGroupRangeOffsets;
 import scala.Tuple2;
 
 import java.io.Serializable;
-import java.util.HashMap;
+import java.util.*;
 
 public class SnapshotResult implements Serializable {
     private static final long serialVersionUID = 8003076517462798444L;
@@ -69,6 +69,13 @@ public class SnapshotResult implements Serializable {
 
     public Path getSnapshotPath() {
         return snapshotPath;
+    }
+    public List<Path> getSnapshotPaths(){
+        List<Path> paths = new ArrayList<>();
+        for (Tuple2<Path,KeyGroupRangeOffsets> tuple2 : snapshotResults.values()) {
+            paths.add(tuple2._1);
+        }
+        return paths;
     }
 
     public KeyGroupRangeOffsets getKeyGroupRangeOffsets() {

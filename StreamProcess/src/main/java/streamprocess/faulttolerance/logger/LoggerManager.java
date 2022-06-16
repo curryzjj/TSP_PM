@@ -196,11 +196,15 @@ public class LoggerManager extends FTManager {
                     MeasureTools.startWAL(System.nanoTime());
                     commitLog();
                     MeasureTools.finishWAL(System.nanoTime());
+                    MeasureTools.setWalFileSize(new Path(WAL_Path.toString().concat("/").concat(LogFolderName)));
                     notifyLogComplete();
                     lock.notifyAll();
                 } else if (callLog.containsValue(Snapshot)) {
                     LOG.info("LoggerManager received all register and start snapshot");
+                    MeasureTools.startWAL(System.nanoTime());
                     long offset = commitLog();
+                    MeasureTools.finishWAL(System.nanoTime());
+                    MeasureTools.setWalFileSize(new Path(WAL_Path.toString().concat("/").concat(LogFolderName)));
                     SnapshotResult snapshotResult;
                     MeasureTools.startSnapshot(System.nanoTime());
                     if(enable_parallel){
@@ -211,6 +215,7 @@ public class LoggerManager extends FTManager {
                     }
                     this.snapshotResults.put(snapshotResult.getCheckpointId(), snapshotResult);
                     MeasureTools.finishSnapshot(System.nanoTime());
+                    MeasureTools.setSnapshotFileSize(snapshotResult.getSnapshotPaths());
                     notifyLogComplete();
                     this.LogFolderName = UUID.randomUUID().toString();
                     this.db.setWalPath(LogFolderName);
@@ -225,9 +230,6 @@ public class LoggerManager extends FTManager {
             g.getExecutionNode(id).ackCommit();
         }
         this.callLog_ini();
-        if (enable_measure){
-            MeasureTools.FTM_finish_Ack(System.nanoTime());
-        }
     }
     public void notifyAllComplete() throws Exception {
         for(int id:callLog.keySet()){

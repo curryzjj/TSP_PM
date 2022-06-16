@@ -148,6 +148,7 @@ public class CLRManager extends FTManager {
                     SnapshotResult snapshotResult = this.db.parallelSnapshot(this.SnapshotOffset.poll(),00000L);
                     this.snapshotResults.put(snapshotResult.getCheckpointId(),snapshotResult);
                     MeasureTools.finishSnapshot(System.nanoTime());
+                    MeasureTools.setSnapshotFileSize(snapshotResult.getSnapshotPaths());
                     notifySnapshotComplete(snapshotResult.getCheckpointId());
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Undo)){
@@ -193,9 +194,6 @@ public class CLRManager extends FTManager {
             g.getExecutionNode(id).ackCommit();
         }
         this.callRecovery_ini();
-        if (enable_measure){
-            MeasureTools.FTM_finish_Ack(System.nanoTime());
-        }
     }
     private boolean not_all_register(){
         return callFaultTolerance.containsValue(NULL);

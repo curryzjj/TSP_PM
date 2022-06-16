@@ -96,9 +96,9 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
         if(!isReconstruct){
             EventsHolder.add(event);//mark the tuple as ``in-complete"
             if (enable_recovery_dependency) {
-                MeasureTools.HelpLog_backup_begin(this.executor.getExecutorID(), System.nanoTime());
+                MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
                 this.updateRecoveryDependency(event.getKeys(),true);
-                MeasureTools.HelpLog_backup_acc(this.executor.getExecutorID(), System.nanoTime());
+                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
             }
         }
         return true;
@@ -209,7 +209,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     }
     protected int WRITE_POST(MicroEvent event) throws InterruptedException {
         if (enable_determinants_log) {
-            MeasureTools.HelpLog_backup_begin(this.executor.getExecutorID(), System.nanoTime());
+            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
             OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
             outsideDeterminant.setOutSideEvent(event);
             //TODO: just add non-determinant event

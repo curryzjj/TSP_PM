@@ -1,5 +1,6 @@
 package applications.bolts.transactional.gs;
 
+import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
@@ -47,7 +48,9 @@ public class GSBolt_TStream_NoFT extends GSBolt_TStream{
 
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
+        MeasureTools.startTransaction(thread_Id, System.nanoTime());
         transactionManager.start_evaluate(thread_Id, this.markerId);
+        MeasureTools.finishTransaction(thread_Id, System.nanoTime());
         REQUEST_CORE();
         REQUEST_POST();
         EventsHolder.clear();//clear stored events.

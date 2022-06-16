@@ -38,16 +38,18 @@ public class Metrics {
         public static DescriptiveStatistics[] Help_Log;
         public static long[] Help_Log_begin;
         public static double[] Help_Log_backup_acc;
+        //Txn_time
+        public static DescriptiveStatistics[] transaction_run_time;
+        public static long[] transaction_begin_time;
+
 
         public static final DescriptiveStatistics FTM_start_ack_time =new DescriptiveStatistics();
         public static final DescriptiveStatistics FTM_finish_ack_time =new DescriptiveStatistics();
-        public static DescriptiveStatistics[] transaction_run_time;
         public static DescriptiveStatistics[] event_post_time;
         public static ConcurrentHashMap<Integer,Double> Avg_WaitTime;
         public static ConcurrentHashMap<Integer,Double> Avg_CommitTime;
         public static long[] bolt_register_ack_time;
         public static long[] bolt_receive_ack_time;
-        public static long[] transaction_begin_time;
         public static long[] post_begin_time;
         public static long FTM_finish_time;
         public static void Initialize(int tthread_num) {
@@ -62,18 +64,20 @@ public class Metrics {
             Help_Log = new DescriptiveStatistics[tthread_num];
             Help_Log_begin = new long[tthread_num];
             Help_Log_backup_acc = new double[tthread_num];
+            transaction_run_time = new DescriptiveStatistics[tthread_num];
             for (int i = 0 ; i < tthread_num; i++){
                 Help_Log[i] = new DescriptiveStatistics();
                 Help_Log_begin[i] = 0;
                 Help_Log_backup_acc[i] = 0;
+                transaction_run_time[i]=new DescriptiveStatistics();
             }
 
-            transaction_run_time=new DescriptiveStatistics[tthread_num];
+
             event_post_time=new DescriptiveStatistics[tthread_num];
             Avg_WaitTime=new ConcurrentHashMap<>();
             Avg_CommitTime=new ConcurrentHashMap<>();
             for (int i = 0 ; i < tthread_num; i++){
-                transaction_run_time[i]=new DescriptiveStatistics();
+
                 event_post_time[i]=new DescriptiveStatistics();
             }
             bolt_register_ack_time =new long[tthread_num];

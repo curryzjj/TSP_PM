@@ -164,6 +164,7 @@ public class CheckpointManager extends FTManager {
                         snapshotResult = getSnapshotResult.get();
                     }
                     MeasureTools.finishSnapshot(System.nanoTime());
+                    MeasureTools.setSnapshotFileSize(snapshotResult.getSnapshotPaths());
                     this.snapshotResults.put(snapshotResult.getCheckpointId(),snapshotResult);
                     notifyBoltComplete();
                     lock.notifyAll();

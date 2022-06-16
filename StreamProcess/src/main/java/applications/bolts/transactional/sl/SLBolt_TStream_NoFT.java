@@ -1,5 +1,6 @@
 package applications.bolts.transactional.sl;
 
+import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
 
@@ -39,7 +40,9 @@ public class SLBolt_TStream_NoFT extends SLBolt_TStream {
 
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        transactionManager.start_evaluate(thread_Id,this.fid);
+        MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
+        transactionManager.start_evaluate(thread_Id,this.markerId);
+        MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         REQUEST_CORE();
         REQUEST_POST();
         EventsHolder.clear();

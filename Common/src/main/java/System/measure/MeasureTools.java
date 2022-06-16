@@ -16,6 +16,7 @@ import java.util.Set;
 
 import static System.measure.Metrics.*;
 import static System.measure.Metrics.Runtime_Breakdown.*;
+import static UserApplications.CONTROL.PARTITION_NUM;
 import static UserApplications.CONTROL.enable_states_lost;
 import static java.nio.file.StandardOpenOption.APPEND;
 
@@ -63,15 +64,46 @@ public class MeasureTools {
         Wal_time.addValue((time - WAL_begin_time) / 1E6);
     }
     // 2.CLR
-    public static void HelpLog_backup_begin(int executorId, long time) {
-        Help_Log_begin[executorId] = time;
+    public static void HelpLog_backup_begin(int threadId, long time) {
+        Help_Log_begin[threadId] = time;
     }
-    public static void HelpLog_backup_acc(int executorId, long time) {
-        Help_Log_backup_acc[executorId] = Help_Log_backup_acc[executorId] + (time - Help_Log_begin[executorId]) / 1E6;
+    public static void HelpLog_backup_acc(int threadId, long time) {
+        Help_Log_backup_acc[threadId] = Help_Log_backup_acc[threadId] + (time - Help_Log_begin[threadId]) / 1E6;
     }
-    public static void HelpLog_finish_acc(int executorId) {
-        Help_Log[executorId].addValue(Help_Log_backup_acc[executorId]);
-        Help_Log_backup_acc[executorId] = 0;
+    public static void HelpLog_finish_acc(int threadId) {
+        Help_Log[threadId].addValue(Help_Log_backup_acc[threadId]);
+        Help_Log_backup_acc[threadId] = 0;
+    }
+    //Txn_time
+    public static void startTransaction(int threadId,long time){
+        transaction_begin_time[threadId]=time;
+    }
+    public static void finishTransaction(int threadId,long time){
+        transaction_run_time[threadId].addValue((time-transaction_begin_time[threadId])/1E6);
+    }
+
+
+    //FileSize Measure
+    public static void setSnapshotFileSize(List<Path> paths){
+        int i = 0;
+        for (Path path:paths){
+            File snapshotFile = localFileSystem.pathToFile(path);
+            snapshot_file_size[i].addValue(snapshotFile.length() / (1024*1024));
+            i++;
+        }
+    }
+    public static void setWalFileSize(Path path){
+        if(wal_file_size.length == 1){
+            File walFile = localFileSystem.pathToFile(new Path(path,"WAL"));
+            wal_file_size[0].addValue((walFile.length() - previous_wal_file_size[0]) / (1024*1024));
+            previous_wal_file_size[0] = walFile.length();
+        }else{
+            for (int i = 0; i < wal_file_size.length; i++){
+                File walFile = localFileSystem.pathToFile(new Path(path,"WAL_"+i));
+                wal_file_size[i].addValue((walFile.length() - previous_wal_file_size[i]) / (1024*1024));
+                previous_wal_file_size[i] = walFile.length();
+            }
+        }
     }
 
 
@@ -91,12 +123,7 @@ public class MeasureTools {
         bolt_receive_ack_time[thread_id]=time;
         FTM_finish_ack_time.addValue((time-FTM_finish_time)/1E6);
     }
-    public static void startTransaction(int threadId,long time){
-        transaction_begin_time[threadId]=time;
-    }
-    public static void finishTransaction(int threadId,long time){
-        transaction_run_time[threadId].addValue((time-transaction_begin_time[threadId])/1E6);
-    }
+
     public static void startPost(int threadId,long time){
         post_begin_time[threadId]=time;
     }
@@ -146,27 +173,6 @@ public class MeasureTools {
     }
     public static void setAvgCommitTime(int threadId, double result) {
         Avg_CommitTime.put(threadId,result);
-    }
-    public static void setSnapshotFileSize(Set<Path> paths){
-        int i=0;
-        for (Path path:paths){
-            File snapshotFile=localFileSystem.pathToFile(path);
-            snapshot_file_size[i].addValue(snapshotFile.length()/(1024*1024));
-            i++;
-        }
-    }
-    public static void setWalFileSize(Path path){
-        if(wal_file_size.length==1){
-            File walFile=localFileSystem.pathToFile(new Path(path,"WAL"));
-            wal_file_size[0].addValue((walFile.length()-previous_wal_file_size[0])/(1024*1024));
-            previous_wal_file_size[0]=walFile.length();
-        }else{
-            for (int i=0;i<wal_file_size.length;i++){
-                File walFile=localFileSystem.pathToFile(new Path(path,"WAL_"+i));
-                wal_file_size[i].addValue((walFile.length()-previous_wal_file_size[i])/(1024*1024));
-                previous_wal_file_size[i]=walFile.length();
-            }
-        }
     }
     private static long get_begin_time(long[] times){
         Arrays.sort(times,0,times.length-1);
@@ -267,7 +273,26 @@ public class MeasureTools {
             fileWriter.write(output + "\n");
             sb.append("\n" + percentile[i]+ " : " + totalTailLatency / Performance.Latency.size() + "\n");
         }
+        if (FT != 0) {
+            FileSizeReport(fileWriter, sb);
+        }
         fileWriter.close();
+    }
+    public static void FileSizeReport(BufferedWriter fileWriter, StringBuilder sb) throws IOException {
+        double snapshotFileSize = 0;
+        double walFileSize = 0;
+        for (DescriptiveStatistics descriptiveStatistics : snapshot_file_size) {
+            snapshotFileSize = snapshotFileSize + descriptiveStatistics.getMean();
+        }
+        for (DescriptiveStatistics descriptiveStatistics : wal_file_size) {
+            walFileSize = walFileSize + descriptiveStatistics.getMean();
+        }
+        sb.append("=======SnapshotSize=======");
+        sb.append("\n" + snapshotFileSize + " MB" +  "\n");
+        sb.append("=======WALSize=======");
+        sb.append("\n" + walFileSize + " MB" +  "\n");
+        fileWriter.write("SnapshotSize: " + snapshotFileSize + " MB" + "\n");
+        fileWriter.write("WALSize: " + walFileSize + " MB" +  "\n");
     }
     private static void RuntimeLatencyReport(String baseDirectory) throws IOException {
         String statsFolderPath = baseDirectory + "_latency";
@@ -353,11 +378,114 @@ public class MeasureTools {
             e.printStackTrace();
         }
         BufferedWriter fileWriter = Files.newBufferedWriter(Paths.get(file.getPath()), APPEND);
-        fileWriter.write("thread_id\t Txn_time\t Stream_time\t");
+        fileWriter.write("thread_id\t Input-Store\t Snapshot\t HelpLog \t UpStream \t Txn_time");
+        double helpLog = 0;
+        double upstreamBackupTime = 0;
+        double transactionRunTime = 0;
+        double inputStoreTime = 0 ;
+        double snapshotTime = 0;
+        if (FT == 1) {
+            for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
+                String output = String.format("%d\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t"
+                        , threadId
+                        , input_store_time.getMean()
+                        , Snapshot_time.getMean()
+                        , Wal_time.getMean()
+                        , 0.0
+                        , transaction_run_time[threadId].getMean()
+                );
+                inputStoreTime = input_store_time.getMean() + inputStoreTime;
+                snapshotTime = Snapshot_time.getMean() + snapshotTime;
+                helpLog = Wal_time.getMean() + helpLog;
+                transactionRunTime = transaction_run_time[threadId].getMean() + transactionRunTime;
+                fileWriter.write(output + "\n");
+            }
+        } else if (FT == 3 || FT == 4) {
+            for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
+                String output = String.format("%d\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t"
+                        , threadId
+                        , input_store_time.getMean()
+                        , Snapshot_time.getMean()
+                        , Help_Log[threadId].getMean()
+                        , upstream_backup_time[threadId].getMean() + upstream_backup_time[0].getMean()
+                        , transaction_run_time[threadId].getMean()
+                );
+                inputStoreTime = input_store_time.getMean() + inputStoreTime;
+                snapshotTime = Snapshot_time.getMean() + snapshotTime;
+                helpLog = Help_Log[threadId].getMean() + helpLog;
+                upstreamBackupTime = upstream_backup_time[threadId].getMean() + upstream_backup_time[0].getMean() + upstreamBackupTime;
+                transactionRunTime = transaction_run_time[threadId].getMean() + transactionRunTime;
+                fileWriter.write(output + "\n");
+            }
+        } else if (FT == 2){
+            for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
+                String output = String.format("%d\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t"
+                        , threadId
+                        , input_store_time.getMean()
+                        , Snapshot_time.getMean()
+                        , 0.0
+                        , 0.0
+                        , transaction_run_time[threadId].getMean()
+                );
+                inputStoreTime = input_store_time.getMean() + inputStoreTime;
+                snapshotTime = Snapshot_time.getMean() + snapshotTime;
+                transactionRunTime = transaction_run_time[threadId].getMean() + transactionRunTime;
+                fileWriter.write(output + "\n");
+            }
+        } else {
+            for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
+                String output = String.format("%d\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t"
+                        , threadId
+                        , 0.0
+                        , 0.0
+                        , 0.0
+                        , 0.0
+                        , transaction_run_time[threadId].getMean()
+                );
+                transactionRunTime = transaction_run_time[threadId].getMean() + transactionRunTime;
+                fileWriter.write(output + "\n");
+            }
+        }
+        String output = String.format(
+                "%-10.2f\t" +
+                        "%-10.2f\t" +
+                        "%-10.2f\t" +
+                        "%-10.2f\t" +
+                        "%-10.2f\t"
+                , inputStoreTime / PARTITION_NUM
+                , snapshotTime / PARTITION_NUM
+                , helpLog / PARTITION_NUM
+                , upstreamBackupTime / PARTITION_NUM
+                , transactionRunTime / PARTITION_NUM
+        );
+        sb.append("Input-Store\t Snapshot\t HelpLog \t UpStream \t Txn_time \n");
+        sb.append(output);
+        fileWriter.write(output + "\n");
     }
     public static void METRICS_REPORT(String baseDirectory) throws IOException {
         StringBuilder sb = new StringBuilder();
-        PerformanceReport(baseDirectory,sb);
+        PerformanceReport(baseDirectory, sb);
+        RuntimeBreakdownReport(baseDirectory, sb);
         LOG.info(sb.toString());
         if (enable_states_lost) {
             RuntimeThroughputReport(baseDirectory);

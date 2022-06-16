@@ -30,16 +30,19 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                             this.CommitOutsideDeterminant(this.markerId);
                         }
                         if (TXN_PROCESS()){
-                            if (enable_recovery_dependency) {
-                                Marker marker = in.getMarker().clone();
-                                marker.setEpochInfo(this.epochInfo);
-                                forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                            } else {
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                            }
-                            if (enable_upstreamBackup && this.markerId > recoveryId) {
-                                this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                            if (this.markerId > recoveryId) {
+                                if (enable_recovery_dependency) {
+                                    Marker marker = in.getMarker().clone();
+                                    marker.setEpochInfo(this.epochInfo);
+                                    forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                    this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
+                                } else {
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                }
+                                if (enable_upstreamBackup) {
+                                    this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                }
+                                MeasureTools.HelpLog_finish_acc(this.thread_Id);
                             }
                         }
                         break;
@@ -63,17 +66,20 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                         }
                         if(TXN_PROCESS()){
                             /* All the data has been executed */
-                            if (enable_recovery_dependency) {
-                                Marker marker = in.getMarker().clone();
-                                marker.setEpochInfo(this.epochInfo);
-                                forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                            } else {
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            if (this.markerId > recoveryId) {
+                                if (enable_recovery_dependency) {
+                                    Marker marker = in.getMarker().clone();
+                                    marker.setEpochInfo(this.epochInfo);
+                                    forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                    this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
+                                } else {
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                }
+                                if (enable_upstreamBackup) {
+                                    this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                }
+                                MeasureTools.HelpLog_finish_acc(this.thread_Id);
                             }
-                        }
-                        if (enable_upstreamBackup && this.markerId > recoveryId) {
-                            this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                         }
                         this.context.stop_running();
                         break;
