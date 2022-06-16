@@ -60,10 +60,8 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
-                MeasureTools.startPost(this.thread_Id,System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
-                MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 this.SyncCommitLog();
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();

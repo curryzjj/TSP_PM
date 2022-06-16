@@ -98,13 +98,17 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 }
                 for (TxnEvent input : events) {
                     int targetId = collector.emit_single(DEFAULT_STREAM_ID, bid, input);
-                    if (enable_upstreamBackup) {
+                    bid ++;
+                    forward_marker(this.taskId, bid, null, "marker");
+                }
+                if (enable_upstreamBackup) {
+                    MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
+                    for (TxnEvent input : events) {
                         //TODO: clone the input
                         TxnEvent event = input.cloneEvent();
                         multiStreamInFlightLog.addEvent(event.getPid(), DEFAULT_STREAM_ID, input);
                     }
-                    bid ++;
-                    forward_marker(this.taskId, bid, null, "marker");
+                    MeasureTools.Upstream_backup_finish(this.executor.getExecutorID(), System.nanoTime());
                 }
             }else{
                 stopRunning();

@@ -20,10 +20,27 @@ public class Metrics {
         }
     }
     static class Runtime_Breakdown{
+        //Input_Store
+        public static DescriptiveStatistics input_store_time = new DescriptiveStatistics();
+        public static long input_store_begin_time;
+        //Upstream backup
+        public static DescriptiveStatistics[] upstream_backup_time;
+        public static long[] upstream_backup_begin;
+        public static double[] upstream_backup_acc;
+        //Snapshot
+        public static long Snapshot_begin_time;
+        public static final DescriptiveStatistics Snapshot_time = new DescriptiveStatistics();
+        //HelpLog
+        // 1.WAL
+        public static long  WAL_begin_time;
+        public static final DescriptiveStatistics Wal_time = new DescriptiveStatistics();
+        // 2.CLR
+        public static DescriptiveStatistics[] Help_Log;
+        public static long[] Help_Log_begin;
+        public static double[] Help_Log_backup_acc;
+
         public static final DescriptiveStatistics FTM_start_ack_time =new DescriptiveStatistics();
         public static final DescriptiveStatistics FTM_finish_ack_time =new DescriptiveStatistics();
-        public static DescriptiveStatistics input_store_time=new DescriptiveStatistics();
-        public static final DescriptiveStatistics persist_time=new DescriptiveStatistics();
         public static DescriptiveStatistics[] transaction_run_time;
         public static DescriptiveStatistics[] event_post_time;
         public static ConcurrentHashMap<Integer,Double> Avg_WaitTime;
@@ -32,14 +49,30 @@ public class Metrics {
         public static long[] bolt_receive_ack_time;
         public static long[] transaction_begin_time;
         public static long[] post_begin_time;
-        public static long input_store_begin_time;
         public static long FTM_finish_time;
         public static void Initialize(int tthread_num) {
+            upstream_backup_time = new DescriptiveStatistics[tthread_num + 1];
+            upstream_backup_begin = new long[tthread_num + 1];
+            upstream_backup_acc = new double[tthread_num + 1];
+            for (int i = 0 ; i <= tthread_num; i++){
+                upstream_backup_time[i] = new DescriptiveStatistics();
+                upstream_backup_begin[i] = 0;
+                upstream_backup_acc[i] = 0;
+            }
+            Help_Log = new DescriptiveStatistics[tthread_num];
+            Help_Log_begin = new long[tthread_num];
+            Help_Log_backup_acc = new double[tthread_num];
+            for (int i = 0 ; i < tthread_num; i++){
+                Help_Log[i] = new DescriptiveStatistics();
+                Help_Log_begin[i] = 0;
+                Help_Log_backup_acc[i] = 0;
+            }
+
             transaction_run_time=new DescriptiveStatistics[tthread_num];
             event_post_time=new DescriptiveStatistics[tthread_num];
             Avg_WaitTime=new ConcurrentHashMap<>();
             Avg_CommitTime=new ConcurrentHashMap<>();
-            for (int i=0;i<tthread_num;i++){
+            for (int i = 0 ; i < tthread_num; i++){
                 transaction_run_time[i]=new DescriptiveStatistics();
                 event_post_time[i]=new DescriptiveStatistics();
             }
@@ -62,7 +95,6 @@ public class Metrics {
     public static double input_reload_time;
 
     public static long recovery_begin_time;
-    public static long persist_begin_time;
     public static long transaction_abort_begin_time;
     public static double reloadDB;
     public static long reloadDB_start_time;

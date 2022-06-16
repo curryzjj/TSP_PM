@@ -35,16 +35,19 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                                 this.CommitOutsideDeterminant(this.markerId);
                             }
                             if (TXN_PROCESS()){
-                                if (enable_recovery_dependency) {
-                                    Marker marker = in.getMarker().clone();
-                                    marker.setEpochInfo(this.epochInfo);
-                                    forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                    this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                                } else {
-                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                }
-                                if (enable_upstreamBackup && this.markerId > recoveryId) {
-                                    this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                if (this.markerId > recoveryId) {
+                                    if (enable_recovery_dependency) {
+                                        Marker marker = in.getMarker().clone();
+                                        marker.setEpochInfo(this.epochInfo);
+                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                        this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
+                                    } else {
+                                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    }
+                                    if (enable_upstreamBackup) {
+                                        this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                    }
+                                    MeasureTools.HelpLog_finish_acc(this.executor.getExecutorID());
                                 }
                             }
                             break;
@@ -68,17 +71,20 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                             }
                             if(TXN_PROCESS()){
                                 /* All the data has been executed */
-                                if (enable_recovery_dependency) {
-                                    Marker marker = in.getMarker().clone();
-                                    marker.setEpochInfo(this.epochInfo);
-                                    forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                    this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                                } else {
-                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                if (this.markerId > recoveryId) {
+                                    if (enable_recovery_dependency) {
+                                        Marker marker = in.getMarker().clone();
+                                        marker.setEpochInfo(this.epochInfo);
+                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                        this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
+                                    } else {
+                                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    }
+                                    if (enable_upstreamBackup) {
+                                        this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                    }
+                                    MeasureTools.HelpLog_finish_acc(this.executor.getExecutorID());
                                 }
-                            }
-                            if (enable_upstreamBackup && this.markerId > recoveryId) {
-                                this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                             }
                             this.context.stop_running();
                             break;
@@ -92,7 +98,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT=transactionManager.start_evaluate(thread_Id,this.markerId);
+        int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         boolean transactionSuccess=FT==0;
         switch (FT){

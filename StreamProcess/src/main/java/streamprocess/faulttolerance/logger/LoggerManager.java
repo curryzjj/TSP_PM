@@ -193,16 +193,16 @@ public class LoggerManager extends FTManager {
                     lock.notifyAll();
                 } else if (callLog.containsValue(Persist)){
                     LOG.info("LoggerManager received all register and start commit log");
+                    MeasureTools.startWAL(System.nanoTime());
                     commitLog();
+                    MeasureTools.finishWAL(System.nanoTime());
                     notifyLogComplete();
                     lock.notifyAll();
                 } else if (callLog.containsValue(Snapshot)) {
-                    if(enable_measure){
-                        MeasureTools.startPersist(System.nanoTime());
-                    }
                     LOG.info("LoggerManager received all register and start snapshot");
                     long offset = commitLog();
                     SnapshotResult snapshotResult;
+                    MeasureTools.startSnapshot(System.nanoTime());
                     if(enable_parallel){
                         snapshotResult = this.db.parallelSnapshot(offset,00000L);
 
@@ -210,6 +210,7 @@ public class LoggerManager extends FTManager {
                         snapshotResult = this.db.snapshot(offset,00000L).get();
                     }
                     this.snapshotResults.put(snapshotResult.getCheckpointId(), snapshotResult);
+                    MeasureTools.finishSnapshot(System.nanoTime());
                     notifyLogComplete();
                     this.LogFolderName = UUID.randomUUID().toString();
                     this.db.setWalPath(LogFolderName);

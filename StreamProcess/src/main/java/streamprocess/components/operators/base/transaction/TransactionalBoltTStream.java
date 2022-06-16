@@ -98,7 +98,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
      * To register persist when there is no transaction abort
      */
     protected void AsyncRegisterPersist(){
-        this.lock=this.FTM.getLock();
+        this.lock = this.FTM.getLock();
         synchronized (lock){
             if (enable_measure){
                 MeasureTools.bolt_register_Ack(this.thread_Id,System.nanoTime());

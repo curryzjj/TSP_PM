@@ -16,23 +16,67 @@ import java.util.Set;
 
 import static System.measure.Metrics.*;
 import static System.measure.Metrics.Runtime_Breakdown.*;
+import static UserApplications.CONTROL.enable_states_lost;
 import static java.nio.file.StandardOpenOption.APPEND;
 
 public class MeasureTools {
     private static final Logger LOG = LoggerFactory.getLogger(MeasureTools.class);
-    public MeasureTools(int partition_num,int tthread_num,int FT_) {
+    public MeasureTools(int partition_num,int tthread_num , int FT_) {
         Metrics.Initialize(partition_num,tthread_num,FT_);
         Metrics.Performance.Initialize();
         Metrics.Runtime_Breakdown.Initialize(tthread_num);
     }
-    public static void setReplayData(int num){
-        replayData=num;
-    }
+    //Input Store time measure
     public static void Input_store_begin(long time){
-        input_store_begin_time=time;
+        input_store_begin_time = time;
     }
     public static void Input_store_finish(){
-        input_store_time.addValue((System.nanoTime()-input_store_begin_time)/1E6);
+        input_store_time.addValue((System.nanoTime() - input_store_begin_time) / 1E6);
+    }
+    //Upstream backup time measure
+    public static void Upstream_backup_begin(int executorId, long time) {
+        upstream_backup_begin[executorId] = time;
+    }
+    public static void Upstream_backup_acc(int executorId, long time) {
+        upstream_backup_acc[executorId] = upstream_backup_acc[executorId] + (time - upstream_backup_begin[executorId]) / 1E6;
+    }
+    public static void Upstream_backup_finish(int executorId, long time) {
+        upstream_backup_time[executorId].addValue((time - upstream_backup_begin[executorId]) / 1E6);
+    }
+    public static void Upstream_backup_finish_acc(int executorId) {
+        upstream_backup_time[executorId].addValue(upstream_backup_acc[executorId]);
+        upstream_backup_acc[executorId] = 0;
+    }
+    //Snapshot time measure
+    public static void startSnapshot(long time){
+        Snapshot_begin_time = time;
+    }
+    public static void finishSnapshot(long time){
+        Snapshot_time.addValue((time- Snapshot_begin_time) / 1E6);
+    }
+    //HelpLog
+    // 1.Wal
+    public static void startWAL(long time){
+        WAL_begin_time = time;
+    }
+    public static void finishWAL(long time){
+        Wal_time.addValue((time - WAL_begin_time) / 1E6);
+    }
+    // 2.CLR
+    public static void HelpLog_backup_begin(int executorId, long time) {
+        Help_Log_begin[executorId] = time;
+    }
+    public static void HelpLog_backup_acc(int executorId, long time) {
+        Help_Log_backup_acc[executorId] = Help_Log_backup_acc[executorId] + (time - Help_Log_begin[executorId]) / 1E6;
+    }
+    public static void HelpLog_finish_acc(int executorId) {
+        Help_Log[executorId].addValue(Help_Log_backup_acc[executorId]);
+        Help_Log_backup_acc[executorId] = 0;
+    }
+
+
+    public static void setReplayData(int num){
+        replayData = num;
     }
     public static void bolt_register_Ack(int thread_id,long time){
         bolt_register_ack_time[thread_id]=time;
@@ -59,12 +103,7 @@ public class MeasureTools {
     public static void finishPost(int threadId,long time){
         event_post_time[threadId].addValue((time-post_begin_time[threadId])/1E6);
     }
-    public static void startPersist(long time){
-        persist_begin_time=time;
-    }
-    public static void finishPersist(long time){
-        persist_time.addValue((time-persist_begin_time)/1E6);
-    }
+
     public static void startRecovery(long time){
         recovery_begin_time=time;
     }
@@ -143,7 +182,7 @@ public class MeasureTools {
         sb.append("=======Input store Time Details=======");
         sb.append("\n" + input_store_time.toString() + "\n");
         sb.append("=======Persist Time Details=======");
-        sb.append("\n" + persist_time.toString() + "\n");
+        sb.append("\n" + Snapshot_time.toString() + "\n");
         sb.append("=======ReloadDB Time Details=======");
         sb.append("\n" + reloadDB + "\n");
         sb.append("=======Reload Input Time Details=======");
@@ -209,6 +248,10 @@ public class MeasureTools {
         for (DescriptiveStatistics rt : Performance.Latency.values()) {
             totalTailLatency = totalTailLatency + rt.getPercentile(0.5);
         }
+        sb.append("=======Throughput=======");
+        sb.append("\n" + totalThroughput + "\n");
+        sb.append("=======Avg_latency=======");
+        sb.append("\n" + totalAvgLatency/Performance.Latency.size() + "\n");
         fileWriter.write("Throughput: " + totalThroughput + "\n");
         fileWriter.write("Avg_latency: " + totalAvgLatency / Performance.Latency.size() + "\n");
         fileWriter.write("Percentile\t Latency\n");
@@ -222,11 +265,8 @@ public class MeasureTools {
                             "%-10.4f\t"
                     , percentile[i], totalTailLatency / Performance.Latency.size());
             fileWriter.write(output + "\n");
+            sb.append("\n" + percentile[i]+ " : " + totalTailLatency / Performance.Latency.size() + "\n");
         }
-        sb.append("=======Throughput=======");
-        sb.append("\n" + totalThroughput + "\n");
-        sb.append("=======Avg_latency=======");
-        sb.append("\n" + totalAvgLatency/Performance.Latency.size() + "\n");
         fileWriter.close();
     }
     private static void RuntimeLatencyReport(String baseDirectory) throws IOException {
@@ -318,7 +358,10 @@ public class MeasureTools {
     public static void METRICS_REPORT(String baseDirectory) throws IOException {
         StringBuilder sb = new StringBuilder();
         PerformanceReport(baseDirectory,sb);
-        RuntimeThroughputReport(baseDirectory);
-        RuntimeLatencyReport(baseDirectory);
+        LOG.info(sb.toString());
+        if (enable_states_lost) {
+            RuntimeThroughputReport(baseDirectory);
+            RuntimeLatencyReport(baseDirectory);
+        }
     }
 }

@@ -53,9 +53,9 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
             if (enable_determinants_log) {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
-                targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, event.getTimestamp());//the tuple is finished.//the tuple is abort.
             } else {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
             }
             if (enable_upstreamBackup) {
                 this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());

@@ -156,12 +156,14 @@ public class CheckpointManager extends FTManager {
                 } else if(callSnapshot.containsValue(Snapshot)){
                     LOG.debug("CheckpointManager received all register and start snapshot");
                     SnapshotResult snapshotResult;
+                    MeasureTools.startSnapshot(System.nanoTime());
                     if(enable_parallel){
                         snapshotResult = this.db.parallelSnapshot(SnapshotOffset.poll(),00000L);
                     }else{
                         RunnableFuture<SnapshotResult> getSnapshotResult = this.db.snapshot(SnapshotOffset.poll(),00000L);
                         snapshotResult = getSnapshotResult.get();
                     }
+                    MeasureTools.finishSnapshot(System.nanoTime());
                     this.snapshotResults.put(snapshotResult.getCheckpointId(),snapshotResult);
                     notifyBoltComplete();
                     lock.notifyAll();
@@ -170,7 +172,7 @@ public class CheckpointManager extends FTManager {
         }
     }
     public boolean commitCurrentLog(long id) throws IOException {
-        LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(checkpointFile);
+        LocalDataOutputStream localDataOutputStream = new LocalDataOutputStream(checkpointFile);
         DataOutputStream dataOutputStream = new DataOutputStream(localDataOutputStream);
         byte[] result = Serialize.serializeObject(this.snapshotResults.get(id));
         int len = result.length;

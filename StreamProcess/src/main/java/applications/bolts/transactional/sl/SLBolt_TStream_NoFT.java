@@ -15,11 +15,16 @@ public class SLBolt_TStream_NoFT extends SLBolt_TStream {
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if (in.isMarker()){
-            if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                TXN_PROCESS();
-                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                if(in.getMarker().getValue()=="finish"){
-                    this.context.stop_running();
+            if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
+                switch (in.getMarker().getValue()){
+                    case "finish" :
+                        TXN_PROCESS();
+                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                        this.context.stop_running();
+                        break;
+                    case "marker" :
+                        TXN_PROCESS();
+                        break;
                 }
             }
         }else{

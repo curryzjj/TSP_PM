@@ -24,7 +24,6 @@ public class OBBolt_TStream_NoFT extends OBBolt_TStream{
                         break;
                     case "marker" :
                         TXN_PROCESS();
-                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                         break;
                 }
             }

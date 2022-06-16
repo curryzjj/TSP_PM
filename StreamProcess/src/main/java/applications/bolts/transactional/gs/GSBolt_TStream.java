@@ -1,5 +1,6 @@
 package applications.bolts.transactional.gs;
 
+import System.measure.MeasureTools;
 import applications.events.gs.MicroEvent;
 import engine.Exception.DatabaseException;
 import engine.table.datatype.DataBox;
@@ -58,7 +59,6 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                     InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(),event.getPid());
                     insideDeterminant.setAbort(true);
                     targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, event.getTimestamp());//the tuple is finished.//the tuple is abort.
-
                 } else {
                     targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished.//the tuple is abort.
                 }
@@ -96,7 +96,9 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
         if(!isReconstruct){
             EventsHolder.add(event);//mark the tuple as ``in-complete"
             if (enable_recovery_dependency) {
+                MeasureTools.HelpLog_backup_begin(this.executor.getExecutorID(), System.nanoTime());
                 this.updateRecoveryDependency(event.getKeys(),true);
+                MeasureTools.HelpLog_backup_acc(this.executor.getExecutorID(), System.nanoTime());
             }
         }
         return true;
@@ -179,9 +181,12 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                     targetId = WRITE_POST(event);
                 }
                 if (enable_upstreamBackup) {
+                    MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
                     this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                 }
             }
+            MeasureTools.Upstream_backup_finish_acc(this.executor.getExecutorID());
         }
     }
     private void READ_CORE(MicroEvent event) {
@@ -204,6 +209,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     }
     protected int WRITE_POST(MicroEvent event) throws InterruptedException {
         if (enable_determinants_log) {
+            MeasureTools.HelpLog_backup_begin(this.executor.getExecutorID(), System.nanoTime());
             OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
             outsideDeterminant.setOutSideEvent(event);
             //TODO: just add non-determinant event
@@ -212,6 +218,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                     outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(event.getKeys()[i])));
                 }
             }
+            MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
             if (outsideDeterminant.targetPartitionIds.size() !=0 ) {
                 return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished finally.
             } else {

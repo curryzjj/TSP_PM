@@ -224,7 +224,7 @@ public class MeasureSink extends BaseSink {
             abortTransaction++;
         } else {
             if (Exactly_Once) {
-                perCommitTuple.put(in.getBID(),new Tuple2<>((long)in.getValue(2),System.nanoTime()));
+                perCommitTuple.put(in.getBID(),new Tuple2<>((long)in.getValue(2), System.nanoTime()));
             } else {
                 if (enable_determinants_log) {
                     if (in.getValue(1) != null) {

@@ -43,9 +43,9 @@ public class  AppRunner extends baseRunner {
     private void LoadConfiguration() {
         //Get the running environment
         if(OsUtils.isMac()){
-            LOG.info(application+" running on the mac");
+            LOG.info(application+"running on the mac");
         }else {
-            LOG.info(application+" running on the Node22");
+            LOG.info(application+"running on the Node22");
         }
         // Loads the configuration file set by the user or the default
         // configuration
@@ -168,9 +168,9 @@ public class  AppRunner extends baseRunner {
     private void run() throws UnhandledCaseException, InterruptedException, IOException {
         LoadConfiguration();
         //set the MeasureTool
-        MeasureTools tools = new MeasureTools(config.getInt("partition_num"),config.getInt("executor.threads"),config.getInt("FTOptions"));
+        MeasureTools tools = new MeasureTools(config.getInt("partition_num"), config.getInt("executor.threads"), config.getInt("FTOptions"));
         //Get the descriptor for thr given application
-        AppDriver.AppDescriptor app=driver.getApp(application);
+        AppDriver.AppDescriptor app = driver.getApp(application);
         // In case topology names is given, create one
         if (topologyName == null) {
             topologyName = application;
@@ -183,12 +183,12 @@ public class  AppRunner extends baseRunner {
         // decide the output path of metrics.
         String directory;
         String statsFolderPattern = config.getString("metrics.output")
-                + OsUtils.osWrapperPostFix("Application = %s")
-                + OsUtils.osWrapperPostFix("FTOption = %d")
-                + OsUtils.osWrapperPostFix("Exactly_Once = %s")
-                + OsUtils.osWrapperPostFix("Arrival_Control = %s")
+                + OsUtils.osWrapperPostFix("Application=%s")
+                + OsUtils.osWrapperPostFix("FTOption=%d")
+                + OsUtils.osWrapperPostFix("Exactly_Once=%s")
+                + OsUtils.osWrapperPostFix("Arrival_Control=%s")
                 + "failureTime=%f_targetHz=%f_NUM_EVENTS=%d_NUM_ITEMS=%d_NUM_ACCESSES=%d_ZIP=%f_RATIO_OF_READ=%d_RATIO_OF_ABORT=%d_" +
-                "RATIO_OF_DEPENDENCY=%d_partition_num_per_txn=%d_partition_num = %d";
+                "RATIO_OF_DEPENDENCY=%d_partition_num_per_txn=%d_partition_num=%d";
         directory = String.format(statsFolderPattern,
                 config.getString("application"),
                 config.getInt("FTOptions"),

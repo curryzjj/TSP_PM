@@ -144,8 +144,10 @@ public class CLRManager extends FTManager {
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Snapshot)) {
                     LOG.info("CLRManager received all bolt register and start snpshot");
+                    MeasureTools.startSnapshot(System.nanoTime());
                     SnapshotResult snapshotResult = this.db.parallelSnapshot(this.SnapshotOffset.poll(),00000L);
                     this.snapshotResults.put(snapshotResult.getCheckpointId(),snapshotResult);
+                    MeasureTools.finishSnapshot(System.nanoTime());
                     notifySnapshotComplete(snapshotResult.getCheckpointId());
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Undo)){
