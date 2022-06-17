@@ -97,7 +97,7 @@ public class TPDataGenerator extends InputDataGenerator {
 
     @Override
     public void close() {
-        LocalFileSystem fs=new LocalFileSystem();
+        LocalFileSystem fs = new LocalFileSystem();
         try {
             fs.delete(new Path(dataPath),true);
         } catch (IOException e) {

@@ -34,7 +34,6 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
         TxnContext txnContext = new TxnContext(thread_Id, this.fid, in.getBID());
         TollProcessingEvent event = (TollProcessingEvent) in.getValue(0);
-        REQUEST_CONSTRUCT(event, txnContext, false);
         if (enable_determinants_log) {
             Determinant_REQUEST_CONSTRUCT(event, txnContext);
         } else {
@@ -124,15 +123,17 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
        }
     }
     protected void REQUEST_POST() throws InterruptedException {
-        for (TollProcessingEvent event : LREvents) {
-            int targetId = TP_REQUEST_POST(event);
-            if (enable_upstreamBackup) {
-                MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
-                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
-                MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
+        if (this.markerId > recoveryId) {
+            for (TollProcessingEvent event : LREvents) {
+                int targetId = TP_REQUEST_POST(event);
+                if (enable_upstreamBackup) {
+                    MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
+                }
             }
+            MeasureTools.Upstream_backup_finish_acc(this.executor.getExecutorID());
         }
-        MeasureTools.Upstream_backup_finish_acc(this.executor.getExecutorID());
     }
     int TP_REQUEST_POST(TollProcessingEvent event) throws InterruptedException {
         //Nothing to determinant log

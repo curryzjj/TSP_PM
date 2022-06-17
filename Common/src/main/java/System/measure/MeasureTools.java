@@ -161,7 +161,7 @@ public class MeasureTools {
     }
     //Sink Measure
     public static void setAvgThroughput(int threadId, double result) {
-        Performance.AvgThroughput.put(threadId,result);
+        Performance.AvgThroughput.put(threadId, result);
     }
     public static void setLatency(int threadId, DescriptiveStatistics result) {
         Performance.Latency.put(threadId, result);
@@ -184,7 +184,7 @@ public class MeasureTools {
     }
     private static void PerformanceReport(String baseDirectory, StringBuilder sb) throws IOException {
         sb.append("\n");
-        String statsFolderPath = baseDirectory + "_overview";
+        String statsFolderPath = baseDirectory + "_overview.txt";
         File file = new File(statsFolderPath);
         LOG.info("Dumping stats to...");
         LOG.info(String.valueOf(file.getAbsoluteFile()));
@@ -199,26 +199,22 @@ public class MeasureTools {
         BufferedWriter fileWriter = Files.newBufferedWriter(Paths.get(file.getPath()), APPEND);
         double totalThroughput = 0;
         double totalAvgLatency = 0;
-        double totalTailLatency = 0;
         for (double rt : Performance.AvgThroughput.values()) {
-            totalThroughput = totalThroughput+rt;
+            totalThroughput = totalThroughput + rt;
         }
         for (DescriptiveStatistics rt : Performance.Latency.values()) {
             totalAvgLatency = totalAvgLatency + rt.getMean();
-        }
-        for (DescriptiveStatistics rt : Performance.Latency.values()) {
-            totalTailLatency = totalTailLatency + rt.getPercentile(0.5);
         }
         sb.append("=======Throughput=======");
         sb.append("\n" + totalThroughput + "\n");
         sb.append("=======Avg_latency=======");
         sb.append("\n" + totalAvgLatency/Performance.Latency.size() + "\n");
-        fileWriter.write("Throughput: " + totalThroughput + "\n");
+        fileWriter.write("Throughput: " + totalThroughput / Performance.AvgThroughput.size() + "\n");
         fileWriter.write("Avg_latency: " + totalAvgLatency / Performance.Latency.size() + "\n");
         fileWriter.write("Percentile\t Latency\n");
         double percentile[] = new double[]{0.5, 20, 40, 60, 80, 99};
         for (int i = 0; i < percentile.length; i ++){
-            totalTailLatency = 0;
+            double totalTailLatency = 0;
             for (DescriptiveStatistics rt : Performance.Latency.values()) {
                 totalTailLatency = totalTailLatency + rt.getPercentile(percentile[i]);
             }
@@ -231,6 +227,7 @@ public class MeasureTools {
         if (FT != 0) {
             FileSizeReport(fileWriter, sb);
         }
+        RuntimeBreakdownReport(fileWriter, sb);
         fileWriter.close();
     }
     public static void FileSizeReport(BufferedWriter fileWriter, StringBuilder sb) throws IOException {
@@ -317,23 +314,11 @@ public class MeasureTools {
         }
         fileWriter.close();
     }
-    private static void RuntimeBreakdownReport(String baseDirectory, StringBuilder sb) throws IOException {
+    private static void RuntimeBreakdownReport(BufferedWriter fileWriter, StringBuilder sb) throws IOException {
         //TODO: implement later
         sb.append("\n");
-        String statsFolderPath = baseDirectory + "_overview";
-        File file = new File(statsFolderPath);
-        LOG.info("Dumping stats to...");
-        LOG.info(String.valueOf(file.getAbsoluteFile()));
-        file.mkdirs();
-        if (file.exists())
-            file.delete();
-        try {
-            file.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        BufferedWriter fileWriter = Files.newBufferedWriter(Paths.get(file.getPath()), APPEND);
         fileWriter.write("thread_id\t Input-Store\t Snapshot\t HelpLog \t UpStream \t Txn_time");
+        sb.append("\n");
         double helpLog = 0;
         double upstreamBackupTime = 0;
         double transactionRunTime = 0;
@@ -440,7 +425,6 @@ public class MeasureTools {
     public static void METRICS_REPORT(String baseDirectory) throws IOException {
         StringBuilder sb = new StringBuilder();
         PerformanceReport(baseDirectory, sb);
-        RuntimeBreakdownReport(baseDirectory, sb);
         LOG.info(sb.toString());
         if (enable_states_lost) {
             RuntimeThroughputReport(baseDirectory);

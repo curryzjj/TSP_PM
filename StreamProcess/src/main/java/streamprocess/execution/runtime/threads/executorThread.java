@@ -131,7 +131,7 @@ public abstract class executorThread extends Thread {
         while(running){
             _execute();
         }
-        end_emit=System.nanoTime();
+        end_emit = System.nanoTime();
     }
     //end
 

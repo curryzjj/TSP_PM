@@ -43,7 +43,6 @@ public class MeasureSink extends BaseSink {
     private int exe;
 
     protected static final List<Double> throughput_map = new ArrayList<>();
-    public int batch_number_per_wm;
     /** <bid,timestamp> */
 
     //2PC
@@ -72,7 +71,6 @@ public class MeasureSink extends BaseSink {
 
     public void initialize(int task_Id_InGroup, int thisTaskId, ExecutionGraph graph) {
         super.initialize(task_Id_InGroup, thisTaskId, graph);
-        batch_number_per_wm = 100;
         exe = NUM_EVENTS;
         LOG.info("expected last events = " + exe);
     }
@@ -255,7 +253,7 @@ public class MeasureSink extends BaseSink {
         }
     }
     private void measure_end() {
-        MeasureTools.setAvgThroughput(thisTaskId,count * 1E6 / (System.nanoTime()-startTime));
+        MeasureTools.setAvgThroughput(thisTaskId,count * 1E6 / (System.nanoTime() - startTime));
         if (Exactly_Once) {
             for (double a:latency_map){
                 latency.addValue(a);
@@ -283,7 +281,7 @@ public class MeasureSink extends BaseSink {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                long current_count=getCount();
+                long current_count = getCount();
                 double throughput=(current_count-p_count) / 1000.0;
                 p_count=current_count;
                 throughput_map.add(throughput);
