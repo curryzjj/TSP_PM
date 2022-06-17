@@ -95,7 +95,7 @@ public class GSDataGenerator extends InputDataGenerator {
         Set<Integer> keys = new HashSet<>();
         current_pid = key_to_partition(partitionId_generator.next());
         randomKeys(param, keys, NUM_ACCESSES);
-        assert !enable_states_partition|| verify(keys,current_pid, partition_num);
+        assert !enable_states_partition|| verify(keys, current_pid, partition_num);
         current_bid++;
         if (random.nextInt(1000) < RATIO_OF_ABORT) {
             return new MicroEvent(param.getKeys(), flag, NUM_ACCESSES, bid, current_pid, p_bid, partition_num,true);

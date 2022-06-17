@@ -140,6 +140,7 @@ public class OBDataGenerator extends InputDataGenerator {
     @Override
     public Object create_new_event(int bid) {
         int flag = next_event_decision();
+        current_pid = key_to_partition(partitionId_generator.next());
         if (flag == 0) {
             return randomBuyEvents(p_bid.clone(), bid, rnd);
         } else if (flag == 1) {
@@ -172,7 +173,7 @@ public class OBDataGenerator extends InputDataGenerator {
         Set<Integer> keys = new HashSet<>();
         randomKeys(param,keys,NUM_ACCESSES);
         assert !enable_states_partition || verify(keys, current_pid, partition_num);
-        current_bid++;
+        current_bid ++;
         if (random.nextInt(1000) < RATIO_OF_ABORT) {
             return new BuyingEvent(param.keys(),rnd,current_pid,bid_array,bid, partition_num,true);
         } else {
