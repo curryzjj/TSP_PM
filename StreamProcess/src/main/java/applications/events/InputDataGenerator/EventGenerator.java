@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.CountDownLatch;
 
 import static UserApplications.CONTROL.Arrival_Control;
 import static streamprocess.execution.affinity.SequentialBinding.next_cpu;
@@ -30,12 +31,13 @@ public class EventGenerator extends Thread {
     private long lastFinishTime;
     private long busyTime=0;
     private int spoutThreads;
+    private CountDownLatch latch;
     //<ExecutorId, inputQueue>
     public HashMap<Integer, Queue<TxnEvent>> EventsQueues = new HashMap<>();
     public Queue<List<TxnEvent>> EventsQueue;
     private final long exe;
     private Configuration configuration;
-    public EventGenerator(Configuration configuration){
+    public EventGenerator(Configuration configuration, CountDownLatch latch){
         this.configuration = configuration;
         this.loadTargetHz = configuration.getInt("targetHz");
         this.timeSliceLengthMs = configuration.getInt("timeSliceLengthMs");
@@ -44,6 +46,7 @@ public class EventGenerator extends Thread {
         this.batch = configuration.getInt("input_store_batch");
         spoutThreads = configuration.getInt("spoutThread", 1);//now read from parameters.
         this.exe = configuration.getInt("NUM_EVENTS");
+        this.latch = latch;
         for (int i = 0; i < spoutThreads; i++) {
             EventsQueues.put(i, new MpscArrayQueue<>((int) (exe/spoutThreads)));
         }
@@ -51,8 +54,14 @@ public class EventGenerator extends Thread {
 
     @Override
     public void run() {
-        boolean finish=false;
+        boolean finish = false;
         sequential_binding();
+        latch.countDown();//tells others I'm really ready.
+        try {
+            latch.await();//wait all the thread to be ready
+        }catch(InterruptedException ignored){
+
+        }
         this.startTime = System.nanoTime();
         this.lastFinishTime = System.currentTimeMillis();
         while (!finish){

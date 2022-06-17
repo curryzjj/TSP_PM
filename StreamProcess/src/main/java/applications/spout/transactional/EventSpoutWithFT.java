@@ -44,10 +44,10 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     @Override
     public void initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
         LOG.info("EventSpoutWithFT initialize is being called");
-        cnt=0;
-        counter=0;
-        this.graph=graph;
-        taskId= getContext().getThisTaskId();
+        cnt = 0;
+        counter = 0;
+        this.graph = graph;
+        taskId = getContext().getThisTaskId();
         String OS_prefix="";
         String path;
         Data_path = "";

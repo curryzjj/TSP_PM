@@ -57,7 +57,7 @@ public class ExecutionManager {
      * Launch threads for each executor in executionGraph
      * All executors have to sync_ratio for OM to start, so it's safe to do initialization here. E.g., initialize database.
      */
-    public void  distributeTasks(Configuration conf, ExecutionPlan plan, CountDownLatch latch, boolean benchmark,
+    public void distributeTasks(Configuration conf, ExecutionPlan plan, CountDownLatch latch, boolean benchmark,
                                  boolean profile, Database db, Platform p, FTManager FTM, RecoveryManager RM, EventGenerator eventGenerator) throws UnhandledCaseException, IOException {
         assert plan !=null;
         loadTargetHz =(int) conf.getDouble("targetHz",10000000);
@@ -111,14 +111,15 @@ public class ExecutionManager {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException ex) {
+
                 }
             }
         }
     }
     private executorThread launchSpout_InCore(ExecutionNode e, TopologyContext context,Configuration conf,int node,long[] cores,CountDownLatch latch){
         spoutThread st;
-       st=new spoutThread(e,context,conf,cores,node,latch,loadTargetHz,timeSliceLengthMs,HPCMonotor,ThreadMap,clock);
-       st.setDaemon(true);
+        st = new spoutThread(e,context,conf,cores,node,latch,loadTargetHz,timeSliceLengthMs,HPCMonotor,ThreadMap,clock);
+        st.setDaemon(true);
         if (!(conf.getBoolean("monte", false) || conf.getBoolean("simulation", false))) {
             st.start();
         }

@@ -9,6 +9,8 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
 public class TPBolt_TStream_NoFT extends TPBolt_TStream{
+    private static final long serialVersionUID = 2529061168277309169L;
+
     public TPBolt_TStream_NoFT(int fid) {
         super(fid);
     }

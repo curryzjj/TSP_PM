@@ -28,9 +28,9 @@ public class TopologySubmitter {
 
     public Topology submitTopology(Topology topology, Configuration conf) throws UnhandledCaseException, IOException {
         //compile
-        ExecutionGraph g=new TopologyCompiler().generateEG(topology,conf);
+        ExecutionGraph g = new TopologyCompiler().generateEG(topology,conf);
         g.display_ExecutionNodeList();
-        Collection<TopologyComponent> topologyComponents=g.topology.getRecords().values();
+        Collection<TopologyComponent> topologyComponents = g.topology.getRecords().values();
         //TODO:Some Metrics code
         //launch
         OM = new OptimizationManager(g,conf,conf.getBoolean("profile",false),conf.getDouble("relax",1),topology.getPlatform());

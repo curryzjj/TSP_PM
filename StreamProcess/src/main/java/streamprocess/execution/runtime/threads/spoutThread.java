@@ -97,18 +97,18 @@ public class spoutThread extends executorThread{
             sp.prepare(conf,context,collector);
             long[] binding=null;
             if (!conf.getBoolean("NAV",true)){
-                binding=binding();
+                binding = binding();
             }
             if(enable_numa_placement){
                 if(conf.getBoolean("Sequential_Binding",true)){
-                 binding=sequential_binding();
+                 binding = sequential_binding();
                 }
             }
-            if(binding!=null){
+            if(binding != null){
                 LOG.info("Successfully create spoutExecutors "+sp.getContext().getThisTaskId()+"on node:"+
                         ""+node+"binding:"+Long.toBinaryString(0x1000000000000000L| binding[0]).substring(1));
             }
-            binding_finish=true;
+            binding_finish = true;
             if (enable_shared_state)
                 LOG.info("Operator:\t"+executor.getOP_full()+"is ready"+"\nlock_ratio dumps\n"+dumpLocks());
             this.Ready(LOG);
@@ -123,7 +123,7 @@ public class spoutThread extends executorThread{
                 profile_routing(context.getGraph().topology.getPlatform());
             }else {
                 LOG.info(this.executor.getOP_full()+" started");
-                this.context.getEventGenerator().start();
+               // this.context.getEventGenerator().start();
                 routing();
             }
         } catch (DatabaseException | BrokenBarrierException | InterruptedException | IOException e) {

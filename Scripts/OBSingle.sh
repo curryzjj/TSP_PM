@@ -9,7 +9,7 @@ function ResetParameters() {
 
   #System Configurations
   Arrival_Control=1
-  targetHz=300000.0
+  targetHz=200000.0
   timeSliceLengthMs=1000
   input_store_batch=10000
   #shellcheck disable=SC2006
@@ -17,7 +17,7 @@ function ResetParameters() {
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
   #Workload Configurations
   NUM_ITEMS=163840
-  NUM_EVENTS=16000000
+  NUM_EVENTS=8000000
   ZIP_SKEW=0.4
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0

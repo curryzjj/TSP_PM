@@ -256,8 +256,8 @@ public abstract class Operator implements Serializable{
                     status.dst_status_init(executor);
             }
         }
-        db=getContext().getDb();
-        FTM= context.getFTM();
+        db = getContext().getDb();
+        FTM = context.getFTM();
         initialize(thread_Id,thisTaskId,graph);
     }
     /**
