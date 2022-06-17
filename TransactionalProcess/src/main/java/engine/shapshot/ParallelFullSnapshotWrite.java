@@ -26,7 +26,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static UserApplications.CONTROL.PARTITION_NUM;
 import static engine.Database.snapshotExecutor;
 import static utils.FullSnapshotUtil.END_OF_KEY_GROUP_MARK;
 
@@ -54,7 +53,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
         initTasks(callables,snapshotCloseableRegistry);
         List<Future<Tuple2<Path,KeyGroupRangeOffsets>>> snapshotPaths = snapshotExecutor.invokeAll(callables);
         HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> results = new HashMap<>();
-        for(int i = 0; i < PARTITION_NUM; i++){
+        for(int i = 0; i < snapshotPaths.size(); i++){
             try {
                 Tuple2<Path,KeyGroupRangeOffsets> tuple = snapshotPaths.get(i).get();
                 results.put(i, tuple);
@@ -82,7 +81,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
                              CheckpointStreamWithResultProvider provider) {
             this.taskId = taskId;
             this.snapshotResources = snapshotResources;
-            this.snapshotCloseableRegistry=snapshotCloseableRegistry;
+            this.snapshotCloseableRegistry  =snapshotCloseableRegistry;
             this.provider = provider;
         }
 
@@ -121,7 +120,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
     }
     private void writeTableKVStateData(TableStatePerKeyGroupMerageIterator mergeIterator,
                                        CheckpointStreamWithResultProvider checkpointStreamWithResultProvider,
-                                       KeyGroupRangeOffsets keyGroupRangeOffsets,int taskId) throws IOException {
+                                       KeyGroupRangeOffsets keyGroupRangeOffsets, int taskId) throws IOException {
         DataOutputView kgOutView = null;
         OutputStream kgOutStream = null;
         CheckpointStreamFactory.CheckpointStateOutputStream checkpointOutputStream =

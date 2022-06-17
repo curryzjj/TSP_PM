@@ -1,5 +1,6 @@
 package engine.shapshot.ImplSnapshotStrategy;
 
+import System.tools.StringHelp;
 import engine.shapshot.*;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.CheckpointStreamWithResultProvider;
@@ -37,16 +38,16 @@ public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullS
     @Override
     public List<FullSnapshotResources> syncPrepareResources(long checkpointId, int partitionNum) throws IOException {
         List<FullSnapshotResources> resources=new ArrayList<>();
-        for(int i=0;i<partitionNum;i++){
+        for(int i = 0;i < partitionNum; i++){
             Map<String,BaseTable> tables = new HashMap<>();
-            LinkedHashMap<String,StorageManager.InMemoryKvStateInfo> kvStateInformation=new LinkedHashMap<>();
-            for (String tableName:this.tables.keySet()){
-                if(tableName.endsWith(String.valueOf(i))){
-                    tables.put(tableName,this.tables.get(tableName));
-                    kvStateInformation.put(tableName,this.kvStateInformation.get(tableName));
+            LinkedHashMap<String,StorageManager.InMemoryKvStateInfo> kvStateInformation = new LinkedHashMap<>();
+            for (String tableName : this.tables.keySet()){
+                if(StringHelp.isDigitStr(tableName) == i){
+                    tables.put(tableName, this.tables.get(tableName));
+                    kvStateInformation.put(tableName, this.kvStateInformation.get(tableName));
                 }
             }
-            resources.add(InMemoryFullSnapshotResources.create(kvStateInformation,tables,resourceGuard,keyGroupRange));
+            resources.add(InMemoryFullSnapshotResources.create(kvStateInformation, tables, resourceGuard, keyGroupRange));
         }
         return resources;
     }

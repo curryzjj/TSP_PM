@@ -60,10 +60,10 @@ public class TableStatePerKeyGroupMerageIterator implements TableStateIterator {
     }
     @Override
     public void switchIterator() {
-        iteratorFlag++;
-        if(iteratorFlag<heap.size()){
-            currentSubIterator=heap.get(iteratorFlag);
-            newKVState=true;
+        iteratorFlag ++;
+        if(iteratorFlag < heap.size()){
+            currentSubIterator = heap.get(iteratorFlag);
+            newKVState = true;
         }else{
             valid = false;
         }

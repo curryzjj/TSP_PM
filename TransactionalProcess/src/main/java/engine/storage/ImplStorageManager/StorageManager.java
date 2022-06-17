@@ -139,8 +139,8 @@ public class StorageManager extends AbstractStorageManager {
     }
     @Override
     public void createTableRange(int table_count) {
-        this.keyGroupRange=new KeyGroupRange(0,table_count-1);
-        this.checkpointSnapshotStrategy.keyGroupRange=this.keyGroupRange;
+        this.keyGroupRange = new KeyGroupRange(0,table_count-1);
+        this.checkpointSnapshotStrategy.keyGroupRange = this.keyGroupRange;
     }
     /**
      * initialize the snapshot strategies

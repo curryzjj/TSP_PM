@@ -95,12 +95,16 @@ public class MeasureTools {
     public static void setWalFileSize(Path path){
         if(wal_file_size.length == 1){
             File walFile = localFileSystem.pathToFile(new Path(path,"WAL"));
-            wal_file_size[0].addValue((walFile.length() - previous_wal_file_size[0]) / (1024*1024));
+            wal_file_size[0].addValue((walFile.length() - previous_wal_file_size[0]) / 1024);
             previous_wal_file_size[0] = walFile.length();
         }else{
             for (int i = 0; i < wal_file_size.length; i++){
-                File walFile = localFileSystem.pathToFile(new Path(path,"WAL_"+i));
-                wal_file_size[i].addValue((walFile.length() - previous_wal_file_size[i]) / (1024*1024));
+                File walFile = localFileSystem.pathToFile(new Path(path,"WAL-"+i));
+                if (walFile.length() > previous_wal_file_size[i]) {
+                    wal_file_size[i].addValue((walFile.length() - previous_wal_file_size[i]) / 1024);
+                } else {
+                    wal_file_size[i].addValue(walFile.length() / 1024);
+                }
                 previous_wal_file_size[i] = walFile.length();
             }
         }
@@ -178,55 +182,6 @@ public class MeasureTools {
         Arrays.sort(times,0,times.length-1);
         return times[0];
     }
-    public static void showMeasureResult(){
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n");
-        sb.append("=======FTM Begin Ack Time Details=======");
-        sb.append("\n" + FTM_start_ack_time.toString() + "\n");
-        sb.append("=======FTM Finish Ack Time Details=======");
-        sb.append("\n" + FTM_finish_ack_time.toString() + "\n");
-        sb.append("=======Input store Time Details=======");
-        sb.append("\n" + input_store_time.toString() + "\n");
-        sb.append("=======Persist Time Details=======");
-        sb.append("\n" + Snapshot_time.toString() + "\n");
-        sb.append("=======ReloadDB Time Details=======");
-        sb.append("\n" + reloadDB + "\n");
-        sb.append("=======Reload Input Time Details=======");
-        sb.append("\n" + input_reload_time + "\n");
-        sb.append("=======Recovery Time Details=======");
-        sb.append("\n" + recovery_time.toString() + "\n");
-        sb.append("=======Lost Data=======");
-        sb.append("\n" + replayData + "\n");
-        sb.append("=======Undo Time Details=======");
-        sb.append("\n" + transaction_abort_time.toString() + "\n");
-        switch(FT){
-            case 1:
-                for (int i=0;i<wal_file_size.length;i++){
-                    sb.append("=======Wal"+i+" file size(MB) Details=======");
-                    sb.append("\n" + wal_file_size[i].toString() + "\n");
-                }
-            break;
-            case 2:
-                for (int i=0;i<snapshot_file_size.length;i++){
-                    sb.append("=======Snapshot"+i+" file size(MB) Details=======");
-                    sb.append("\n" + snapshot_file_size[i].toString() + "\n");
-                }
-            break;
-        }
-        double Total_time=0;
-        for (int i=0;i<transaction_run_time.length;i++){
-            Total_time=Total_time+transaction_run_time[i].getMean();
-        }
-        sb.append("Avg transaction_run_time: "+Total_time/transaction_run_time.length+"\n");
-        LOG.info(sb.toString());
-        for (int i=0;i< event_post_time.length;i++){
-            Total_time=Total_time+event_post_time[i].getMean();
-        }
-        sb.append("Avg post_run_time: "+Total_time/event_post_time.length+"\n");
-        sb.append("=======2PC commit time=======");
-        //sb.append("\n" + twoPC_commit_time + "\n");
-        LOG.info(sb.toString());
-    }
     private static void PerformanceReport(String baseDirectory, StringBuilder sb) throws IOException {
         sb.append("\n");
         String statsFolderPath = baseDirectory + "_overview";
@@ -290,9 +245,9 @@ public class MeasureTools {
         sb.append("=======SnapshotSize=======");
         sb.append("\n" + snapshotFileSize + " MB" +  "\n");
         sb.append("=======WALSize=======");
-        sb.append("\n" + walFileSize + " MB" +  "\n");
+        sb.append("\n" + walFileSize + " KB" +  "\n");
         fileWriter.write("SnapshotSize: " + snapshotFileSize + " MB" + "\n");
-        fileWriter.write("WALSize: " + walFileSize + " MB" +  "\n");
+        fileWriter.write("WALSize: " + walFileSize + " KB" +  "\n");
     }
     private static void RuntimeLatencyReport(String baseDirectory) throws IOException {
         String statsFolderPath = baseDirectory + "_latency";

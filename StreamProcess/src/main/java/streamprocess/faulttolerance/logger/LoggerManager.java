@@ -196,7 +196,7 @@ public class LoggerManager extends FTManager {
                     MeasureTools.startWAL(System.nanoTime());
                     commitLog();
                     MeasureTools.finishWAL(System.nanoTime());
-                    MeasureTools.setWalFileSize(new Path(WAL_Path.toString().concat("/").concat(LogFolderName)));
+                    MeasureTools.setWalFileSize(new Path(WAL_Path.getParent().toString().concat("/").concat(LogFolderName)));
                     notifyLogComplete();
                     lock.notifyAll();
                 } else if (callLog.containsValue(Snapshot)) {
@@ -204,7 +204,7 @@ public class LoggerManager extends FTManager {
                     MeasureTools.startWAL(System.nanoTime());
                     long offset = commitLog();
                     MeasureTools.finishWAL(System.nanoTime());
-                    MeasureTools.setWalFileSize(new Path(WAL_Path.toString().concat("/").concat(LogFolderName)));
+                    MeasureTools.setWalFileSize(new Path(WAL_Path.getParent().toString().concat("/").concat(LogFolderName)));
                     SnapshotResult snapshotResult;
                     MeasureTools.startSnapshot(System.nanoTime());
                     if(enable_parallel){

@@ -107,13 +107,13 @@ public class Metrics {
     public static int replayData;
     public static void Initialize(int partition_num,int tthread_num,int FT_) {
         snapshot_file_size = new DescriptiveStatistics[partition_num];
-        wal_file_size=new DescriptiveStatistics[partition_num];
-        previous_wal_file_size=new long[partition_num];
+        wal_file_size = new DescriptiveStatistics[partition_num];
+        previous_wal_file_size = new long[partition_num];
 
         for(int i=0;i<partition_num;i++){
             previous_wal_file_size[i]=0;
             snapshot_file_size[i] = new DescriptiveStatistics();
-            wal_file_size[i]=new DescriptiveStatistics();
+            wal_file_size[i] = new DescriptiveStatistics();
         }
         FT = FT_;
     }
