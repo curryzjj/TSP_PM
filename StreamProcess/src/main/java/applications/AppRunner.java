@@ -187,8 +187,8 @@ public class  AppRunner extends baseRunner {
                 + OsUtils.osWrapperPostFix("FTOption=%d")
                 + OsUtils.osWrapperPostFix("Exactly_Once=%s")
                 + OsUtils.osWrapperPostFix("Arrival_Control=%s")
-                + "failureTime=%f_targetHz=%f_NUM_EVENTS=%d_NUM_ITEMS=%d_NUM_ACCESSES=%d_ZIP=%f_RATIO_OF_READ=%f_RATIO_OF_ABORT=%f_" +
-                "RATIO_OF_DEPENDENCY=%f_partition_num_per_txn=%d_partition_num=%d";
+                + "failureTime=%f_targetHz=%f_NUM_EVENTS=%d_NUM_ITEMS=%d_NUM_ACCESSES=%d_ZIP=%f_RATIO_OF_READ=%d_RATIO_OF_ABORT=%d_" +
+                "RATIO_OF_DEPENDENCY=%d_partition_num_per_txn=%d_partition_num=%d";
         directory = String.format(statsFolderPattern,
                 config.getString("application"),
                 config.getInt("FTOptions"),
@@ -200,9 +200,9 @@ public class  AppRunner extends baseRunner {
                 config.getInt("NUM_ITEMS"),
                 config.getInt("NUM_ACCESSES"),
                 config.getDouble("ZIP_SKEW"),
-                config.getInt("RATIO_OF_READ") / 1000,
-                config.getInt("RATIO_OF_ABORT") / 1000,
-                config.getInt("RATIO_OF_DEPENDENCY") / 1000,
+                config.getInt("RATIO_OF_READ"),
+                config.getInt("RATIO_OF_ABORT"),
+                config.getInt("RATIO_OF_DEPENDENCY"),
                 config.getInt("partition_num_per_txn"),
                 config.getInt("partition_num"));
         MeasureTools.METRICS_REPORT(directory);
