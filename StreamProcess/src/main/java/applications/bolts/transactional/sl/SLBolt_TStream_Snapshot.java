@@ -17,31 +17,38 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
-            if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                switch (in.getMarker().getValue()){
-                    case "recovery":
-                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        break;
-                    case "marker":
-                        this.markerId = in.getBID();
-                        TXN_PROCESS();
-                        break;
-                    case "finish":
-                        this.markerId = in.getBID();
-                        if(TXN_PROCESS()){
-                            /* All the data has been executed */
+            if (status.isMarkerArrived(in.getSourceTask())) {
+                if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                    switch (in.getMarker().getValue()){
+                        case "recovery":
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        }
-                        this.context.stop_running();
-                        break;
-                    case "snapshot":
-                        this.markerId = in.getBID();
-                        this.isSnapshot = true;
-                        if(TXN_PROCESS_FT()){
+                            break;
+                        case "marker":
+                            this.markerId = in.getBID();
+                            TXN_PROCESS();
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        }
-                        break;
+                            break;
+                        case "snapshot":
+                            this.markerId = in.getBID();
+                            this.isSnapshot = true;
+                            if(TXN_PROCESS_FT()){
+                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            }
+                            break;
+                        case "finish":
+                            this.markerId = in.getBID();
+                            if(TXN_PROCESS()){
+                                /* All the data has been executed */
+                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            }
+                            this.context.stop_running();
+                            break;
+                        default:
+                            throw new IllegalStateException("Unexpected value: " + in.getMarker().getValue());
+                    }
                 }
+            } else {
+                PRE_EXECUTE(in);
             }
         }else{
             execute_ts_normal(in);

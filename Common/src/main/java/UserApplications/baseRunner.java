@@ -91,11 +91,11 @@ public abstract class baseRunner {
     @Parameter(names = {"--ZIP_SKEW"}, description = "ZIP_SKEW", required = false)
     public double ZIP_SKEW = 0.4;
     @Parameter(names = {"--RATIO_OF_READ"}, description = "RATIO_OF_READ", required = false)
-    public int RATIO_OF_READ = 750;
+    public int ratioOfRead = 750;
     @Parameter(names = {"--RATIO_OF_ABORT"}, description = "RATIO_OF_ABORT", required = false)
-    public int RATIO_OF_ABORT = 100;
+    public int ratioOfAbort = 100;
     @Parameter(names = {"--RATIO_OF_DEPENDENCY"}, description = "RATIO_OF_DEPENDENCY", required = false)
-    public int RATIO_OF_DEPENDENCY = 1000;
+    public int ratioOfDependency = 1000;
     @Parameter(names = {"--complexity"}, description = "complexity", required = false)
     public int complexity = 0;
 
@@ -185,9 +185,9 @@ public abstract class baseRunner {
         config.put("partition_num",partition_num);
         config.put("partition_num_per_txn",partition_num_per_txn);
         config.put("ZIP_SKEW",ZIP_SKEW);
-        config.put("RATIO_OF_READ",RATIO_OF_READ);
-        config.put("RATIO_OF_ABORT",RATIO_OF_ABORT);
-        config.put("RATIO_OF_DEPENDENCY",RATIO_OF_DEPENDENCY);
+        config.put("RATIO_OF_READ", ratioOfRead);
+        config.put("RATIO_OF_ABORT", ratioOfAbort);
+        config.put("RATIO_OF_DEPENDENCY", ratioOfDependency);
         config.put("complexity",complexity);
         //System Configuration
         config.put("tthreads",tthreads);

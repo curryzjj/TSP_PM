@@ -201,7 +201,7 @@ public class TxnProcessingEngine {
         }
         while (true){
             Operation operation = operation_chain.pollFirst();
-            if(operation==null) return;
+            if(operation == null) return;
             process(operation, mark_ID, operation_chain.getLogRecord());
         }
     }

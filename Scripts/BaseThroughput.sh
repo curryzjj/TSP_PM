@@ -76,12 +76,20 @@ function runFTStream() {
 }
 function FTEvaluation() {
   ResetParameters
-  for app in GS_txn TP_txn SL_txn OB_txn
+  for app in GS_txn OB_txn
   do
     for FTOptions in 0 1 2 3 4
     do runFTStream
     done
   done
+  ResetParameters
+  for app in TP_txn SL_txn
+    do
+      NUM_ITEMS=40960
+      for FTOptions in 0 1 2 3 4
+      do runFTStream
+      done
+    done
 }
 function baselineEvaluation() {
    ResetParameters

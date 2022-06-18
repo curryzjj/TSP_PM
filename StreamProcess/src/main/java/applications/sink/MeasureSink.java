@@ -84,43 +84,47 @@ public class MeasureSink extends BaseSink {
             startTime = System.nanoTime();
         }
         if(in.isMarker()){
-            if (enable_recovery_dependency) {
-                addRecoveryDependency(in.getBID());
-                this.recoveryDependency.get(in.getBID()).addDependency(in.getMarker().getEpochInfo());
-            }
-            if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
-                this.currentMarkerId = in.getBID();
-                if (enable_determinants_log) {
-                    for (Integer id:this.causalService.keySet()){
-                        causalService.get(id).setCurrentMarkerId(currentMarkerId);
-                    }
+            if (status.isMarkerArrived(in.getSourceTask())) {
+                PRE_EXECUTE(in);
+            } else {
+                if (enable_recovery_dependency) {
+                    addRecoveryDependency(in.getBID());
+                    this.recoveryDependency.get(in.getBID()).addDependency(in.getMarker().getEpochInfo());
                 }
-                switch (in.getMarker().getValue()) {
-                    case "recovery" :
-                        MeasureTools.finishRecovery(System.nanoTime());
-                        BUFFER_EXECUTE();
-                        break;
-                    case "snapshot" :
-                        this.FTM.sinkRegister(in.getBID());
-                        BUFFER_EXECUTE();
-                        break;
-                    case "marker" :
-                        if (enable_wal) {
+                if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
+                    this.currentMarkerId = in.getBID();
+                    if (enable_determinants_log) {
+                        for (Integer id:this.causalService.keySet()){
+                            causalService.get(id).setCurrentMarkerId(currentMarkerId);
+                        }
+                    }
+                    switch (in.getMarker().getValue()) {
+                        case "recovery" :
+                            MeasureTools.finishRecovery(System.nanoTime());
+                            BUFFER_EXECUTE();
+                            break;
+                        case "snapshot" :
                             this.FTM.sinkRegister(in.getBID());
-                        }
-                        BUFFER_EXECUTE();
-                        break;
-                    case "finish" :
-                        if(CONTROL.Exactly_Once){
-                            twoPC_CommitTuple(in.getBID());
-                        }
-                        timer.cancel();
-                        measure_end();
-                        BUFFER_EXECUTE();
-                        context.stop_running();
-                        break;
-                    default:
-                        throw new IllegalStateException("Unexpected value: " + in.getMarker().getValue());
+                            BUFFER_EXECUTE();
+                            break;
+                        case "marker" :
+                            if (enable_wal) {
+                                this.FTM.sinkRegister(in.getBID());
+                            }
+                            BUFFER_EXECUTE();
+                            break;
+                        case "finish" :
+                            if(CONTROL.Exactly_Once){
+                                twoPC_CommitTuple(in.getBID());
+                            }
+                            timer.cancel();
+                            measure_end();
+                            BUFFER_EXECUTE();
+                            context.stop_running();
+                            break;
+                        default:
+                            throw new IllegalStateException("Unexpected value: " + in.getMarker().getValue());
+                    }
                 }
             }
         }else{

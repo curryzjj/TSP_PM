@@ -24,70 +24,74 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
-            if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                switch (in.getMarker().getValue()){
-                    case "recovery":
-                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        break;
-                    case "marker":
-                        this.markerId = in.getBID();
-                        if (enable_determinants_log && this.markerId < recoveryId) {
-                            this.CommitOutsideDeterminant(this.markerId);
-                        }
-                        if (TXN_PROCESS()){
-                            if (this.markerId > recoveryId) {
-                                if (enable_recovery_dependency) {
-                                    Marker marker = in.getMarker().clone();
-                                    marker.setEpochInfo(this.epochInfo);
-                                    forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                    this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                                } else {
-                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                }
-                                if (enable_upstreamBackup) {
-                                    this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
-                                }
-                                MeasureTools.HelpLog_finish_acc(this.thread_Id);
+            if (status.isMarkerArrived(in.getSourceTask())) {
+                PRE_EXECUTE(in);
+            } else {
+                if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                    switch (in.getMarker().getValue()){
+                        case "recovery":
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            break;
+                        case "marker":
+                            this.markerId = in.getBID();
+                            if (enable_determinants_log && this.markerId < recoveryId) {
+                                this.CommitOutsideDeterminant(this.markerId);
                             }
-                        }
-                        break;
-                    case "snapshot":
-                        this.markerId = in.getBID();
-                        this.isSnapshot = true;
-                        if (TXN_PROCESS_FT()){
-                            Marker marker = in.getMarker();
-                            marker.setEpochInfo(this.epochInfo);
-                            forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                        }
-                        if (enable_upstreamBackup && this.markerId > recoveryId) {
-                            this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
-                            this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
-                        }
-                        break;
-                    case "finish":
-                        this.markerId = in.getBID();
-                        if (enable_determinants_log && this.markerId < recoveryId) {
-                            this.CommitOutsideDeterminant(this.markerId);
-                        }
-                        if(TXN_PROCESS()){
-                            /* All the data has been executed */
-                            if (this.markerId > recoveryId) {
-                                if (enable_recovery_dependency) {
-                                    Marker marker = in.getMarker().clone();
-                                    marker.setEpochInfo(this.epochInfo);
-                                    forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                    this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                                } else {
-                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            if (TXN_PROCESS()){
+                                if (this.markerId > recoveryId) {
+                                    if (enable_recovery_dependency) {
+                                        Marker marker = in.getMarker().clone();
+                                        marker.setEpochInfo(this.epochInfo);
+                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                        this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
+                                    } else {
+                                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    }
+                                    if (enable_upstreamBackup) {
+                                        this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                    }
+                                    MeasureTools.HelpLog_finish_acc(this.thread_Id);
                                 }
-                                if (enable_upstreamBackup) {
-                                    this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
-                                }
-                                MeasureTools.HelpLog_finish_acc(this.thread_Id);
                             }
-                        }
-                        this.context.stop_running();
-                        break;
+                            break;
+                        case "snapshot":
+                            this.markerId = in.getBID();
+                            this.isSnapshot = true;
+                            if (TXN_PROCESS_FT()){
+                                Marker marker = in.getMarker();
+                                marker.setEpochInfo(this.epochInfo);
+                                forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                            }
+                            if (enable_upstreamBackup && this.markerId > recoveryId) {
+                                this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
+                                this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                            }
+                            break;
+                        case "finish":
+                            this.markerId = in.getBID();
+                            if (enable_determinants_log && this.markerId < recoveryId) {
+                                this.CommitOutsideDeterminant(this.markerId);
+                            }
+                            if(TXN_PROCESS()){
+                                /* All the data has been executed */
+                                if (this.markerId > recoveryId) {
+                                    if (enable_recovery_dependency) {
+                                        Marker marker = in.getMarker().clone();
+                                        marker.setEpochInfo(this.epochInfo);
+                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                        this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
+                                    } else {
+                                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    }
+                                    if (enable_upstreamBackup) {
+                                        this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                    }
+                                    MeasureTools.HelpLog_finish_acc(this.thread_Id);
+                                }
+                            }
+                            this.context.stop_running();
+                            break;
+                    }
                 }
             }
         }else {

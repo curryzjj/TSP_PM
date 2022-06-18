@@ -24,7 +24,10 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
-            if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
+            if (status.isMarkerArrived(in.getSourceTask())) {
+                PRE_EXECUTE(in);
+            } else {
+                if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
                     switch (in.getMarker().getValue()){
                         case "recovery":
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
@@ -89,6 +92,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                             this.context.stop_running();
                             break;
                     }
+                }
             }
         }else {
             execute_ts_normal(in);
