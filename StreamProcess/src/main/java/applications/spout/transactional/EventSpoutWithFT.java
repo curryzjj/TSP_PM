@@ -99,16 +99,17 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 for (TxnEvent input : events) {
                     int targetId = collector.emit_single(DEFAULT_STREAM_ID, bid, input);
                     bid ++;
-                    forward_marker(this.taskId, bid, null, "marker");
-                }
-                if (enable_upstreamBackup) {
-                    MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
-                    for (TxnEvent input : events) {
+                    if (enable_upstreamBackup) {
+                        MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
                         //TODO: clone the input
                         TxnEvent event = input.cloneEvent();
                         multiStreamInFlightLog.addEvent(event.getPid(), DEFAULT_STREAM_ID, input);
+                        MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                     }
-                    MeasureTools.Upstream_backup_finish(this.executor.getExecutorID(), System.nanoTime());
+                    forward_marker(this.taskId, bid, null, "marker");
+                }
+                if (enable_upstreamBackup) {
+                    MeasureTools.Upstream_backup_finish_acc(this.executor.getExecutorID());
                 }
             }else{
                 stopRunning();
@@ -121,12 +122,12 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     @Override
     protected void loadInputFromSSD() throws FileNotFoundException {
         MeasureTools.startReloadInput(System.nanoTime());
-        long msg = offset;
+        long msg = lastSnapshotOffset;
         bid = 0;
         openFile(Data_path);
-        while (offset != 0){
+        while (lastSnapshotOffset != 0){
             scanner.nextLine();
-            offset --;
+            lastSnapshotOffset--;
             bid ++;
         }
         MeasureTools.finishReloadInput(System.nanoTime());

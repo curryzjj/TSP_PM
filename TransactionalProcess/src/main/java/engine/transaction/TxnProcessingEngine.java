@@ -199,13 +199,20 @@ public class TxnProcessingEngine {
                 this.walManager.addLogRecord(operation_chain);
             }
         }
+        boolean cleanVersion = true;
         while (true){
             Operation operation = operation_chain.pollFirst();
             if(operation == null) return;
-            process(operation, mark_ID, operation_chain.getLogRecord());
+            process(operation, mark_ID, operation_chain.getLogRecord(), cleanVersion);
+            if (cleanVersion) {
+                cleanVersion = false;
+            }
         }
     }
-    private void process(Operation operation, int mark_id, LogRecord logRecord) {
+    private void process(Operation operation, int mark_id, LogRecord logRecord, boolean cleanVersion) {
+        if (cleanVersion) {
+            operation.s_record.clean_map();
+        }
         if(operation.bid == failureTime){
           if(enable_states_lost){
                 if(drop){

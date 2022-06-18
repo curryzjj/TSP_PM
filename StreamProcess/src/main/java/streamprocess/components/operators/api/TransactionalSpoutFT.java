@@ -33,7 +33,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected ArrayList<String> array;
     protected boolean startClock=false;
 
-    protected long offset;
+    protected long lastSnapshotOffset;
     protected long AlignMarkerId;
     protected HashMap<Long,MultiStreamInFlightLog.BatchEvents> recoveryEvents;
     protected List<Integer> recoveryIDs = new ArrayList<>();
@@ -186,7 +186,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     public void recoveryInput(long offset, List<Integer> recoveryPartitionIds, long alignOffset) throws FileNotFoundException, InterruptedException {
         this.needWaitReplay = true;
         this.replay = true;
-        this.offset = offset;
+        this.lastSnapshotOffset = offset;
         this.AlignMarkerId = alignOffset;
         if (enable_upstreamBackup) {
             Map<TopologyComponent, Grouping> children = this.executor.operator.getChildrenOfStream(DEFAULT_STREAM_ID);
@@ -209,14 +209,14 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public void loadInFlightLog() {
         int ID = recoveryIDs.get(0);
-        recoveryEvents = multiStreamInFlightLog.getInFlightEvents(DEFAULT_STREAM_ID, graph.getExecutionNode(ID).getOP(), offset);
+        recoveryEvents = multiStreamInFlightLog.getInFlightEvents(DEFAULT_STREAM_ID, graph.getExecutionNode(ID).getOP(), lastSnapshotOffset);
     }
 
     @Override
     public void replayEvents() throws InterruptedException {
         for (long checkpointId: this.recoveryEvents.keySet()){
             MultiStreamInFlightLog.BatchEvents batchEvents = recoveryEvents.get(checkpointId);
-            if (checkpointId > offset){
+            if (checkpointId > lastSnapshotOffset){
                 collector.create_marker_boardcast(System.nanoTime(),DEFAULT_STREAM_ID,checkpointId,myiteration,"snapshot");
             }
             for (long markerIds : batchEvents.getMarkerId()){
@@ -224,7 +224,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 int currentID = 0;
                 int flag = 0;
                 ConcurrentHashMap<Integer, Iterator<Object>> iterators = batchEvents.getBatchEvents(markerIds);
-                if (markerIds > offset){
+                if (markerIds > lastSnapshotOffset){
                     collector.create_marker_boardcast(System.nanoTime(),DEFAULT_STREAM_ID,markerIds,myiteration,"marker");
                 }
                 if (enable_align_wait && markerIds < AlignMarkerId) {

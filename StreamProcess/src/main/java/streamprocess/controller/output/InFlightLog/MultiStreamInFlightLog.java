@@ -83,8 +83,8 @@ public class MultiStreamInFlightLog {
         }
         public void addEpoch(long offset){
             currentOffset = offset;
-            BatchEvents batchEvents = new BatchEvents(this.executorID,currentOffset);
-            InFlightEvents.put(currentOffset,batchEvents);
+            BatchEvents batchEvents = new BatchEvents(this.executorID, currentOffset);
+            InFlightEvents.put(currentOffset, batchEvents);
         }
         public BatchEvents getInFlightEventsByOffset(long offset){
             return InFlightEvents.get(offset);

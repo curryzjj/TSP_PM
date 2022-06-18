@@ -126,7 +126,7 @@ public class CLRManager extends FTManager {
                         alignOffset = recoveryDependency.currentMarkId;
                         recoveryIds = recoveryDependency.getDependencyByPatitionId(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     }
-                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),recoveryIds, alignOffset);
+                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(), recoveryIds, alignOffset);
                     //undo to align offset
                     if (enable_align_wait) {
                         this.db.undoFromWALToTargetOffset(recoveryIds,alignOffset);
@@ -163,14 +163,14 @@ public class CLRManager extends FTManager {
         }
     }
     public boolean commitCurrentLog(long checkpointId) throws IOException {
-        LocalDataOutputStream localDataOutputStream=new LocalDataOutputStream(SnapshotFile);
-        DataOutputStream dataOutputStream=new DataOutputStream(localDataOutputStream);
+        LocalDataOutputStream localDataOutputStream= new LocalDataOutputStream(SnapshotFile);
+        DataOutputStream dataOutputStream = new DataOutputStream(localDataOutputStream);
         byte[] result= Serialize.serializeObject(this.snapshotResults.get(checkpointId));
         int len=result.length;
         dataOutputStream.writeInt(len);
         dataOutputStream.write(result);
         dataOutputStream.close();
-        LOG.debug("CLRManager commit the checkpoint to the current.log");
+        LOG.info("CLRManager commit the checkpoint to the current.log");
         g.getSpout().ackCommit(checkpointId);
         g.getSink().ackCommit(checkpointId);
         for (int eId : this.callFaultTolerance.keySet()) {
