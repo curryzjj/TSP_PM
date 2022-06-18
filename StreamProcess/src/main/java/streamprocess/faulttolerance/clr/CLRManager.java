@@ -126,11 +126,11 @@ public class CLRManager extends FTManager {
                         alignOffset = recoveryDependency.currentMarkId;
                         recoveryIds = recoveryDependency.getDependencyByPatitionId(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     }
+                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),recoveryIds, alignOffset);
                     //undo to align offset
                     if (enable_align_wait) {
                         this.db.undoFromWALToTargetOffset(recoveryIds,alignOffset);
                     }
-                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),recoveryIds, alignOffset);
                     this.db.recoveryFromTargetSnapshot(lastSnapshotResult,recoveryIds);
                     this.db.getTxnProcessingEngine().isTransactionAbort=false;
                     LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");

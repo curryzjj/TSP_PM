@@ -69,7 +69,7 @@ public abstract class baseRunner {
     @Parameter(names = {"--failureModel"}, description = "No failure(0), Transaction Abort(1), State lost(2), Both(3)", required = false)
     public int failureModel= 0;
     @Parameter(names = {"--failureFrequency"}, description = "Failure Frequency", required = false)
-    public double failureFrequency =0.4;
+    public int failureFrequency =0;
     @Parameter(names = {"--Exactly_Once"}, description = "is Exactly_Once", required = false)
     public int Exactly_Once = 0;
 
@@ -77,7 +77,7 @@ public abstract class baseRunner {
     @Parameter(names = {"--Arrival_Control"}, description = "is Arrival_Control", required = false)
     public int Arrival_Control = 1;
     @Parameter(names = {"--targetHz"}, description = "Arrive rate(events / s)", required = false)
-    public double targetHz = 200000.0;
+    public int targetHz = 200000;
     @Parameter(names = {"--NUM_ITEMS"}, description = "Number of items in the table", required = false)
     public int NUM_ITEMS = 10000;
     @Parameter(names = {"--NUM_EVENTS"}, description = "Total events", required = false)
@@ -89,7 +89,7 @@ public abstract class baseRunner {
     @Parameter(names = {"--partition_num_per_txn"}, description = "Number of partition to access per transaction", required = false)
     public int partition_num_per_txn = 1;
     @Parameter(names = {"--ZIP_SKEW"}, description = "ZIP_SKEW", required = false)
-    public double ZIP_SKEW = 0.4;
+    public int ZIP_SKEW = 400;
     @Parameter(names = {"--RATIO_OF_READ"}, description = "RATIO_OF_READ", required = false)
     public int ratioOfRead = 750;
     @Parameter(names = {"--RATIO_OF_ABORT"}, description = "RATIO_OF_ABORT", required = false)
@@ -184,7 +184,7 @@ public abstract class baseRunner {
         config.put("NUM_ACCESSES",NUM_ACCESSES);
         config.put("partition_num",partition_num);
         config.put("partition_num_per_txn",partition_num_per_txn);
-        config.put("ZIP_SKEW",ZIP_SKEW);
+        config.put("ZIP_SKEW",(double)ZIP_SKEW / 1000);
         config.put("RATIO_OF_READ", ratioOfRead);
         config.put("RATIO_OF_ABORT", ratioOfAbort);
         config.put("RATIO_OF_DEPENDENCY", ratioOfDependency);

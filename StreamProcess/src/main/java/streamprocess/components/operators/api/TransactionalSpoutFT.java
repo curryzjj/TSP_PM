@@ -209,7 +209,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public void loadInFlightLog() {
         int ID = recoveryIDs.get(0);
-        recoveryEvents = multiStreamInFlightLog.getInFlightEvents(DEFAULT_STREAM_ID,graph.getExecutionNode(ID).getOP(),offset);
+        recoveryEvents = multiStreamInFlightLog.getInFlightEvents(DEFAULT_STREAM_ID, graph.getExecutionNode(ID).getOP(), offset);
     }
 
     @Override

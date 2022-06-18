@@ -27,6 +27,7 @@ import static UserApplications.CONTROL.*;
 
 public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG= LoggerFactory.getLogger(SLBolt_TStream.class);
+    private static final long serialVersionUID = -5333749446740104376L;
     List<TxnEvent> EventsHolder = new ArrayList<>();
     public SLBolt_TStream(int fid) {
         super(LOG, fid);
@@ -152,7 +153,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     }
 
     protected void DeterminantDepositRequestConstruct(DepositEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
-        if (event.getBid() < recoveryId) {
+        if (event.getBid() <= recoveryId) {
             for (CausalService c:this.causalService.values()) {
                 if (c.abortEvent.contains(event.getBid())){
                     return;
@@ -170,7 +171,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     }
 
     protected void DeterminantTransferRequestConstruct(TransactionEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
-        if (event.getBid() < recoveryId) {
+        if (event.getBid() <= recoveryId) {
             for (CausalService c:this.causalService.values()) {
                 if (c.abortEvent.contains(event.getBid())){
                     return;

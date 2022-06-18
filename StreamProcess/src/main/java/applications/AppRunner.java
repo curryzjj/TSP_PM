@@ -120,12 +120,12 @@ public class  AppRunner extends baseRunner {
         }
         CONTROL.Time_Control = config.getBoolean("enable_time_Interval");
         if(CONTROL.MAX_RECOVERY_TIME){
-            CONTROL.failureTime = (int) (config.getInt("snapshot") * config.getInt("batch_number_per_wm") * config.getDouble("failureFrequency")-1);
+            CONTROL.failureTime = (int) (config.getInt("snapshot") * config.getInt("batch_number_per_wm") * config.getInt("failureFrequency")-1);
         }else {
             if(OsUtils.isMac()){
-                CONTROL.failureTime = (int)(config.getInt("TEST_NUM_EVENTS") * config.getDouble("failureFrequency"));
+                CONTROL.failureTime = (int)(config.getInt("TEST_NUM_EVENTS") * config.getInt("failureFrequency"));
             }else {
-                CONTROL.failureTime = (int)(config.getInt("NUM_EVENTS") * config.getDouble("failureFrequency"));
+                CONTROL.failureTime = (int)(config.getInt("NUM_EVENTS") * config.getInt("failureFrequency"));
             }
         }
         //Set the application
@@ -187,19 +187,19 @@ public class  AppRunner extends baseRunner {
                 + OsUtils.osWrapperPostFix("FTOption=%d")
                 + OsUtils.osWrapperPostFix("Exactly_Once=%s")
                 + OsUtils.osWrapperPostFix("Arrival_Control=%s")
-                + "failureTime=%f_targetHz=%f_NUM_EVENTS=%d_NUM_ITEMS=%d_NUM_ACCESSES=%d_ZIP=%f_RATIO_OF_READ=%d_RATIO_OF_ABORT=%d_" +
+                + "failureTime=%d_targetHz=%d_NUM_EVENTS=%d_NUM_ITEMS=%d_NUM_ACCESSES=%d_ZIP=%d_RATIO_OF_READ=%d_RATIO_OF_ABORT=%d_" +
                 "RATIO_OF_DEPENDENCY=%d_partition_num_per_txn=%d_partition_num=%d";
         directory = String.format(statsFolderPattern,
                 config.getString("application"),
                 config.getInt("FTOptions"),
                 config.getBoolean("Exactly_Once"),
                 config.getBoolean("Arrival_Control"),
-                config.getDouble("failureFrequency"),
-                config.getDouble("targetHz"),
+                config.getInt("failureFrequency"),
+                config.getInt("targetHz"),
                 config.getInt("NUM_EVENTS"),
                 config.getInt("NUM_ITEMS"),
                 config.getInt("NUM_ACCESSES"),
-                config.getDouble("ZIP_SKEW"),
+                ZIP_SKEW,
                 config.getInt("RATIO_OF_READ"),
                 config.getInt("RATIO_OF_ABORT"),
                 config.getInt("RATIO_OF_DEPENDENCY"),

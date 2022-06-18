@@ -3,13 +3,13 @@ function ResetParameters() {
   app="GS_txn"
   FTOptions=0
   failureModel=0
-  failureFrequency=0.0
+  failureFrequency=0
   tthreads=16
   snapshot=10
 
   #System Configurations
   Arrival_Control=1
-  targetHz=200000.0
+  targetHz=200000
   timeSliceLengthMs=1000
   input_store_batch=10000
   #shellcheck disable=SC2006
@@ -18,7 +18,7 @@ function ResetParameters() {
   #Workload Configurations
   NUM_ITEMS=163840
   NUM_EVENTS=8000000
-  ZIP_SKEW=0.4
+  ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0
   RATIO_OF_DEPENDENCY=500
@@ -101,3 +101,6 @@ function baselineEvaluation() {
    done
  }
 baselineEvaluation
+ResetParameters
+cd DRAW || exit
+echo "BaseThroughput.py -i $NUM_ITEMS -d $Ratio_of_Multiple_State_Access -n $NUM_ACCESS -k $key_skewness -o $overlap_ratio -a $abort_ratio -b $checkpointInterval -c $isCyclic -m $complexity"

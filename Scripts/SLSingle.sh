@@ -2,23 +2,23 @@
 function ResetParameters() {
   app="SL_txn"
   FTOptions=0
-  failureModel=0
-  failureFrequency=0.0
+  failureModel=2
+  failureFrequency=2
   tthreads=16
   snapshot=10
 
   #System Configurations
   Arrival_Control=1
-  targetHz=200000.0
+  targetHz=200000
   timeSliceLengthMs=1000
   input_store_batch=10000
   #shellcheck disable=SC2006
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
   #Workload Configurations
-  NUM_ITEMS=163840
+  NUM_ITEMS=81920
   NUM_EVENTS=8000000
-  ZIP_SKEW=0.4
+  ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0
   RATIO_OF_DEPENDENCY=500
@@ -76,7 +76,7 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-    for FTOptions in 0 1 2 3 4
+    for FTOptions in 3 4
         do runFTStream
         done
 }
