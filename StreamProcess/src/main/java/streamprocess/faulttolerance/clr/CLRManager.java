@@ -132,7 +132,7 @@ public class CLRManager extends FTManager {
                         this.db.undoFromWALToTargetOffset(recoveryIds,alignOffset);
                     }
                     this.db.recoveryFromTargetSnapshot(lastSnapshotResult,recoveryIds);
-                    this.db.getTxnProcessingEngine().isTransactionAbort=false;
+                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
                     LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     synchronized (lock){
                         while (callRecovery.containsValue(NULL)){

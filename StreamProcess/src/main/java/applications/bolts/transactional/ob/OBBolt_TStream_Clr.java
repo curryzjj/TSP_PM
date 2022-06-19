@@ -34,7 +34,7 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                             break;
                         case "marker":
                             this.markerId = in.getBID();
-                            if (enable_determinants_log && this.markerId < recoveryId) {
+                            if (enable_determinants_log && this.markerId <= recoveryId) {
                                 this.CommitOutsideDeterminant(this.markerId);
                             }
                             if (TXN_PROCESS()){
@@ -61,15 +61,16 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                                 Marker marker = in.getMarker();
                                 marker.setEpochInfo(this.epochInfo);
                                 forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                            }
-                            if (enable_upstreamBackup && this.markerId > recoveryId) {
-                                this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
-                                this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                if (enable_upstreamBackup) {
+                                    this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
+                                    this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                }
+                                MeasureTools.HelpLog_finish_acc(this.thread_Id);
                             }
                             break;
                         case "finish":
                             this.markerId = in.getBID();
-                            if (enable_determinants_log && this.markerId < recoveryId) {
+                            if (enable_determinants_log && this.markerId <= recoveryId) {
                                 this.CommitOutsideDeterminant(this.markerId);
                             }
                             if(TXN_PROCESS()){

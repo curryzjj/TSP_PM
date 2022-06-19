@@ -103,4 +103,5 @@ function baselineEvaluation() {
 baselineEvaluation
 ResetParameters
 cd DRAW || exit
-echo "BaseThroughput.py -i $NUM_ITEMS -d $Ratio_of_Multiple_State_Access -n $NUM_ACCESS -k $key_skewness -o $overlap_ratio -a $abort_ratio -b $checkpointInterval -c $isCyclic -m $complexity"
+echo "BaseThroughput.py -t $targetHz -e $NUM_EVENTS -i $NUM_ITEMS -a $NUM_ACCESSES -z $ZIP_SKEW -ab $RATIO_OF_ABORT -d $RATIO_OF_DEPENDENCY -p $partition_num_per_txn -t $partition_num"
+python BaseThroughput.py -t $targetHz -e $NUM_EVENTS -i $NUM_ITEMS -a $NUM_ACCESSES -z $ZIP_SKEW -ab $RATIO_OF_ABORT -d $RATIO_OF_DEPENDENCY -p $partition_num_per_txn -t $partition_num

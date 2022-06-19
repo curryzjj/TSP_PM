@@ -58,12 +58,12 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                                 Marker marker = in.getMarker();
                                 marker.setEpochInfo(this.epochInfo);
                                 forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                if (enable_upstreamBackup) {
+                                    this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
+                                    this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                }
+                                MeasureTools.HelpLog_finish_acc(this.thread_Id);
                             }
-                            if (enable_upstreamBackup && this.markerId > recoveryId) {
-                                this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
-                                this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
-                            }
-                            MeasureTools.HelpLog_finish_acc(this.thread_Id);
                             break;
                         case "finish":
                             this.markerId = in.getBID();
@@ -102,7 +102,7 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
         int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
-        boolean transactionSuccess=FT==0;
+        boolean transactionSuccess = FT==0;
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();

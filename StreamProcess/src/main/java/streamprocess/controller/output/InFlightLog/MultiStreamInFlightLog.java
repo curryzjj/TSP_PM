@@ -92,10 +92,12 @@ public class MultiStreamInFlightLog {
 
         public void cleanEpoch(long offset){
             InFlightEvents.entrySet().removeIf(entry -> entry.getKey() < offset);
-            LOG.info("Clean epoch at "+ offset);
+            LOG.info("Clean epoch before "+ offset);
         }
         public void cleanAll(){
-            InFlightEvents.clear();
+            InFlightEvents.entrySet().removeIf(entry -> entry.getKey() == currentOffset);
+            BatchEvents batchEvents = new BatchEvents(executorID, currentOffset);
+            InFlightEvents.put(currentOffset, batchEvents);
         }
     }
 

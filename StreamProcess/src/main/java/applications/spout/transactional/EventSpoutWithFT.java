@@ -141,8 +141,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             if (event != null) {
                 if (!enable_clr || bid >= AlignMarkerId || recoveryIDs.contains(event.getPid())) {
                     collector.emit_single(DEFAULT_STREAM_ID, bid, event);
+                    lostData ++;
                 }
-                lostData ++;
                 bid ++;
                 forward_marker(this.taskId, bid, null, "marker");
             }
