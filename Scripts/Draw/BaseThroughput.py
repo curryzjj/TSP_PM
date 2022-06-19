@@ -72,7 +72,7 @@ for opt, arg in opts:
             partition_num = int(arg)
 
  apps = ["GS_txn", "TP_txn", "SL_txn", "OB_txn"]
- FTOptions = [0, 1, 2, 3, 4]
+ FTOptions = [0, 1, 2, 5, 6]
 
 
 

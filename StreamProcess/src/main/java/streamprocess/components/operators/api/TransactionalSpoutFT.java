@@ -219,15 +219,15 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         for (long checkpointId: this.recoveryEvents.keySet()){
             MultiStreamInFlightLog.BatchEvents batchEvents = recoveryEvents.get(checkpointId);
             if (checkpointId > lastSnapshotOffset){
-                collector.create_marker_boardcast(System.nanoTime(),DEFAULT_STREAM_ID,checkpointId,myiteration,"snapshot");
+                collector.create_marker_boardcast(System.nanoTime(), DEFAULT_STREAM_ID, checkpointId, myiteration,"snapshot");
             }
             for (long markerIds : batchEvents.getMarkerId()){
                 replay = true;
                 int currentID = 0;
                 int flag = 0;
                 ConcurrentHashMap<Integer, Iterator<Object>> iterators = batchEvents.getBatchEvents(markerIds);
-                if (markerIds > lastSnapshotOffset){
-                    collector.create_marker_boardcast(System.nanoTime(),DEFAULT_STREAM_ID,markerIds,myiteration,"marker");
+                if (markerIds != checkpointId && markerIds > lastSnapshotOffset){
+                    collector.create_marker_boardcast(System.nanoTime(),DEFAULT_STREAM_ID, markerIds, myiteration,"marker");
                 }
                 if (enable_align_wait && markerIds < AlignMarkerId) {
                     while(replay) {

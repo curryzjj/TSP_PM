@@ -51,6 +51,8 @@ public class MeasureSink extends BaseSink {
     protected int abortTransaction=0;
     protected static long count;
     protected static long  p_count;
+    //Computation latency every second
+    private long computationLatency;
     public MeasureSink() {
         super(new HashMap<>());
         this.input_selectivity.put(DEFAULT_STREAM_ID, 1.0);
@@ -240,8 +242,11 @@ public class MeasureSink extends BaseSink {
                         }
                     }
                 }
-                long latency = System.nanoTime() - (long)in.getValue(2);
-                No_Exactly_Once_latency_map.add(latency / 1E6);
+                if ((System.nanoTime() - computationLatency / 1E9) > 1) {
+                    long latency = System.nanoTime() - (long)in.getValue(2);
+                    No_Exactly_Once_latency_map.add(latency / 1E6);
+                    computationLatency = System.nanoTime();
+                }
                 count ++;
             }
         }
@@ -257,6 +262,7 @@ public class MeasureSink extends BaseSink {
         }
     }
     private void measure_end() {
+        LOG.info("System running time is " + (System.nanoTime() - startTime) / 1E9);
         MeasureTools.setAvgThroughput(thisTaskId,count * 1E6 / (System.nanoTime() - startTime));
         if (Exactly_Once) {
             for (double a:latency_map){
