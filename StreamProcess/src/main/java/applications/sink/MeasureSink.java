@@ -242,7 +242,7 @@ public class MeasureSink extends BaseSink {
                         }
                     }
                 }
-                if ((System.nanoTime() - computationLatency / 1E9) > 1) {
+                if ((System.nanoTime() - computationLatency) / 1E9 > 1) {
                     long latency = System.nanoTime() - (long)in.getValue(2);
                     No_Exactly_Once_latency_map.add(latency / 1E6);
                     computationLatency = System.nanoTime();

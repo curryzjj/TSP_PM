@@ -76,7 +76,8 @@ public class InMemoryDataBase extends Database {
     }
     @Override
     public void recoveryFromTargetSnapshot(SnapshotResult lastSnapshotResult, List<Integer> targetIds) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
-        AbstractRecoveryManager.parallelRecoveryTargetPartitionFromSnapshot(this, lastSnapshotResult,targetIds);
+        this.storageManager.cleanTable(targetIds);
+        AbstractRecoveryManager.parallelRecoveryTargetPartitionFromSnapshot(this, lastSnapshotResult, targetIds);
     }
 
     @Override

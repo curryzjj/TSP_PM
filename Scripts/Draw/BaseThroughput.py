@@ -15,14 +15,51 @@ FILE_FOLDER = "/home/jjzhao/app/results"
 def ReadFileThroughput(apps, FTOptions, Exactly_Once, Arrival_Control, failureTime, targetHz, NUM_EVENTS, NUM_ITEMS, NUM_ACCESSES, ZIP_SKEW, RATIO_OF_READ, RATIO_OF_ABORT, RATIO_OF_DEPENDENCY, partition_num_per_txn, partition_num):
 # app:[0, 1, 2, 3, 4]
 w, h = len(apps), len(FTOptions)
-y = [[] for _ in range(w)]
+y = [[] for _ in range(6)]
 
-for i in [0, 1, 2, 3]
 for FTOptions in FTOptions:
-op_path = getPathApp(app[i], FTOptions, Exactly_Once, Arrival_Control, failureTime, targetHz, NUM_EVENTS, NUM_ITEMS, NUM_ACCESSES, ZIP_SKEW, RATIO_OF_READ, RATIO_OF_ABORT, RATIO_OF_DEPENDENCY, partition_num_per_txn, partition_num)
+RATIO_OF_READ = 950
+op_path = getPathApp("GS_txn", FTOptions, Exactly_Once, Arrival_Control, failureTime, targetHz, NUM_EVENTS, NUM_ITEMS, NUM_ACCESSES, ZIP_SKEW, RATIO_OF_READ, RATIO_OF_ABORT, RATIO_OF_DEPENDENCY, partition_num_per_txn, partition_num)
 lines = open(op_gs_path).readlines()
 throughput = lines[0].split(": ")[1]
-y[i].append(float(throughput))
+y[0].append(float(throughput))
+
+for FTOptions in FTOptions:
+RATIO_OF_READ = 950
+op_path = getPathApp("GS_txn", FTOptions, Exactly_Once, Arrival_Control, failureTime, targetHz, NUM_EVENTS, NUM_ITEMS, NUM_ACCESSES, ZIP_SKEW, RATIO_OF_READ, RATIO_OF_ABORT, RATIO_OF_DEPENDENCY, partition_num_per_txn, partition_num)
+lines = open(op_gs_path).readlines()
+throughput = lines[0].split(": ")[1]
+y[1].append(float(throughput))
+
+for FTOptions in FTOptions:
+RATIO_OF_READ = 50
+op_path = getPathApp("GS_txn", FTOptions, Exactly_Once, Arrival_Control, failureTime, targetHz, NUM_EVENTS, NUM_ITEMS, NUM_ACCESSES, ZIP_SKEW, RATIO_OF_READ, RATIO_OF_ABORT, RATIO_OF_DEPENDENCY, partition_num_per_txn, partition_num)
+lines = open(op_gs_path).readlines()
+throughput = lines[0].split(": ")[1]
+y[2].append(float(throughput))
+
+for FTOptions in FTOptions:
+RATIO_OF_READ = 500
+op_path = getPathApp("OB_txn", FTOptions, Exactly_Once, Arrival_Control, failureTime, targetHz, NUM_EVENTS, NUM_ITEMS, NUM_ACCESSES, ZIP_SKEW, RATIO_OF_READ, RATIO_OF_ABORT, RATIO_OF_DEPENDENCY, partition_num_per_txn, partition_num)
+lines = open(op_gs_path).readlines()
+throughput = lines[0].split(": ")[1]
+y[3].append(float(throughput))
+
+for FTOptions in FTOptions:
+RATIO_OF_READ = 700
+NUM_ITEMS = 81920
+op_path = getPathApp("SL_txn", FTOptions, Exactly_Once, Arrival_Control, failureTime, targetHz, NUM_EVENTS, NUM_ITEMS, NUM_ACCESSES, ZIP_SKEW, RATIO_OF_READ, RATIO_OF_ABORT, RATIO_OF_DEPENDENCY, partition_num_per_txn, partition_num)
+lines = open(op_gs_path).readlines()
+throughput = lines[0].split(": ")[1]
+y[4].append(float(throughput))
+
+for FTOptions in FTOptions:
+RATIO_OF_READ = 500
+NUM_ITEMS = 40960
+op_path = getPathApp("TP_txn", FTOptions, Exactly_Once, Arrival_Control, failureTime, targetHz, NUM_EVENTS, NUM_ITEMS, NUM_ACCESSES, ZIP_SKEW, RATIO_OF_READ, RATIO_OF_ABORT, RATIO_OF_DEPENDENCY, partition_num_per_txn, partition_num)
+lines = open(op_gs_path).readlines()
+throughput = lines[0].split(": ")[1]
+y[5].append(float(throughput))
 
 print(y)
 
