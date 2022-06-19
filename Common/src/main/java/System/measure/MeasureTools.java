@@ -367,7 +367,28 @@ public class MeasureTools {
                 transactionRunTime = transaction_run_time[threadId].getMean() + transactionRunTime;
                 fileWriter.write(output + "\n");
             }
-        } else if (FT == 2){
+        } else if (FT == 5 || FT == 6) {
+            for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
+                String output = String.format("%d\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t"
+                        , threadId
+                        , input_store_time.getMean()
+                        , Snapshot_time.getMean()
+                        , Help_Log[threadId].getMean()
+                        , 0.0
+                        , transaction_run_time[threadId].getMean()
+                );
+                inputStoreTime = input_store_time.getMean() + inputStoreTime;
+                snapshotTime = Snapshot_time.getMean() + snapshotTime;
+                helpLog = Help_Log[threadId].getMean() + helpLog;
+                transactionRunTime = transaction_run_time[threadId].getMean() + transactionRunTime;
+                fileWriter.write(output + "\n");
+            }
+        }else if (FT == 2){
             for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
                 String output = String.format("%d\t" +
                                 "%-10.2f\t" +

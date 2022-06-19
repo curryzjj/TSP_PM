@@ -196,6 +196,8 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
             for (int partitionId:recoveryPartitionIds) {
                 recoveryIDs.add(downExecutorIds.get(partitionId));
             }
+        } else {
+            recoveryIDs = recoveryPartitionIds;
         }
     }
 

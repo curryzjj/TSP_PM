@@ -103,6 +103,26 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_determinants_log = true;
                 break;
+            case 5:
+                CONTROL.enable_clr = true;
+                CONTROL.enable_input_store = true;
+                CONTROL.enable_snapshot = true;
+                CONTROL.enable_undo_log = true;
+                CONTROL.enable_parallel = true;
+                CONTROL.enable_upstreamBackup = false;
+                CONTROL.enable_align_wait = true;
+                CONTROL.enable_recovery_dependency = true;
+                break;
+            case 6:
+                CONTROL.enable_clr = true;
+                CONTROL.enable_input_store = true;
+                CONTROL.enable_snapshot = true;
+                CONTROL.enable_undo_log = true;
+                CONTROL.enable_parallel = true;
+                CONTROL.enable_upstreamBackup = false;
+                CONTROL.enable_align_wait = true;
+                CONTROL.enable_determinants_log = true;
+                break;
         }
         //Set the failure model
         switch (config.getInt("failureModel",0)){

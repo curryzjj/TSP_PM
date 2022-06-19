@@ -210,6 +210,8 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
 
     @Override
     public void cleanEpoch(long offset) {
-        this.multiStreamInFlightLog.cleanEpoch(offset, DEFAULT_STREAM_ID);
+        if (enable_upstreamBackup) {
+            this.multiStreamInFlightLog.cleanEpoch(offset, DEFAULT_STREAM_ID);
+        }
     }
 }
