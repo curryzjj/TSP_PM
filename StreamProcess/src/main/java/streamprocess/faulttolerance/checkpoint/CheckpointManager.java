@@ -129,7 +129,7 @@ public class CheckpointManager extends FTManager {
                     return;
                 }
                 if(callSnapshot.containsValue(Recovery)){
-                    LOG.debug("CheckpointManager received all register and start recovery");
+                    LOG.info("CheckpointManager received all register and start recovery");
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(checkpointFile);
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, lastSnapshotResult.getCheckpointId());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
@@ -154,7 +154,7 @@ public class CheckpointManager extends FTManager {
                     notifyBoltComplete();
                     lock.notifyAll();
                 } else if(callSnapshot.containsValue(Snapshot)){
-                    LOG.debug("CheckpointManager received all register and start snapshot");
+                    LOG.info("CheckpointManager received all register and start snapshot");
                     SnapshotResult snapshotResult;
                     MeasureTools.startSnapshot(System.nanoTime());
                     if(enable_parallel){

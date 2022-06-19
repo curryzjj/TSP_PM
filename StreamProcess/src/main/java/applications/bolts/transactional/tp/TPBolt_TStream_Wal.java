@@ -17,40 +17,45 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
-            if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                //this.collector.ack(in,in.getMarker());
-                switch (in.getMarker().getValue()){
-                    case "recovery":
-                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        break;
-                    case "marker":
-                        this.markerId = in.getBID();
-                        if (TXN_PROCESS_FT()){
-                            /* When the wal is completed, the data can be consumed by the outside world */
+            if (status.isMarkerArrived(in.getSourceTask())) {
+                PRE_EXECUTE(in);
+            } else {
+                if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                    //this.collector.ack(in,in.getMarker());
+                    switch (in.getMarker().getValue()){
+                        case "recovery":
                             forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        }
-                        break;
-                    case "snapshot":
-                        this.markerId = in.getBID();
-                        this.isSnapshot = true;
-                        if (TXN_PROCESS_FT()){
-                            /* When the wal is completed, the data can be consumed by the outside world */
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        }
-                        break;
-                    case "finish":
-                        this.markerId = in.getBID();
-                        if(TXN_PROCESS_FT()){
-                            /* All the data has been executed */
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                        }
-                        this.context.stop_running();
-                        break;
+                            break;
+                        case "marker":
+                            this.markerId = in.getBID();
+                            if (TXN_PROCESS_FT()){
+                                /* When the wal is completed, the data can be consumed by the outside world */
+                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            }
+                            break;
+                        case "snapshot":
+                            this.markerId = in.getBID();
+                            this.isSnapshot = true;
+                            if (TXN_PROCESS_FT()){
+                                /* When the wal is completed, the data can be consumed by the outside world */
+                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            }
+                            break;
+                        case "finish":
+                            this.markerId = in.getBID();
+                            if(TXN_PROCESS_FT()){
+                                /* All the data has been executed */
+                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            }
+                            this.context.stop_running();
+                            break;
+                    }
                 }
             }
         }else {
             execute_ts_normal(in);
         }
+
     }
 
     @Override

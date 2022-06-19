@@ -18,6 +18,8 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
             if (status.isMarkerArrived(in.getSourceTask())) {
+                PRE_EXECUTE(in);
+            } else {
                 if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
                     switch (in.getMarker().getValue()){
                         case "recovery":
@@ -47,8 +49,6 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
                             throw new IllegalStateException("Unexpected value: " + in.getMarker().getValue());
                     }
                 }
-            } else {
-                PRE_EXECUTE(in);
             }
         }else{
             execute_ts_normal(in);
