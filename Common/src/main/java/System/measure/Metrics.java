@@ -19,7 +19,10 @@ public class Metrics {
             throughput_map = new ConcurrentHashMap<>();
         }
     }
+    //Runtime Breakdown
     static class Runtime_Breakdown{
+        //Wait Time
+        public static DescriptiveStatistics wait_time = new DescriptiveStatistics();
         //Input_Store
         public static DescriptiveStatistics input_store_time = new DescriptiveStatistics();
         public static long input_store_begin_time;
@@ -43,15 +46,8 @@ public class Metrics {
         public static long[] transaction_begin_time;
 
 
-        public static final DescriptiveStatistics FTM_start_ack_time =new DescriptiveStatistics();
-        public static final DescriptiveStatistics FTM_finish_ack_time =new DescriptiveStatistics();
-        public static DescriptiveStatistics[] event_post_time;
         public static ConcurrentHashMap<Integer,Double> Avg_WaitTime;
         public static ConcurrentHashMap<Integer,Double> Avg_CommitTime;
-        public static long[] bolt_register_ack_time;
-        public static long[] bolt_receive_ack_time;
-        public static long[] post_begin_time;
-        public static long FTM_finish_time;
         public static void Initialize(int tthread_num) {
             upstream_backup_time = new DescriptiveStatistics[tthread_num + 1];
             upstream_backup_begin = new long[tthread_num + 1];
@@ -71,40 +67,41 @@ public class Metrics {
                 Help_Log_backup_acc[i] = 0;
                 transaction_run_time[i]=new DescriptiveStatistics();
             }
-
-
-            event_post_time=new DescriptiveStatistics[tthread_num];
-            Avg_WaitTime=new ConcurrentHashMap<>();
-            Avg_CommitTime=new ConcurrentHashMap<>();
-            for (int i = 0 ; i < tthread_num; i++){
-
-                event_post_time[i]=new DescriptiveStatistics();
-            }
-            bolt_register_ack_time =new long[tthread_num];
-            bolt_receive_ack_time =new long[tthread_num];
             transaction_begin_time=new long[tthread_num];
-            post_begin_time=new long[tthread_num];
+            //not used
         }
     }
-
+    //Snapshot and Wal FileSize
     public static DescriptiveStatistics[] snapshot_file_size;
     public static DescriptiveStatistics[] wal_file_size;
-
     public static long[] previous_wal_file_size;
-    public static final DescriptiveStatistics recovery_time=new DescriptiveStatistics();
-    public static final DescriptiveStatistics transaction_abort_time=new DescriptiveStatistics();
-
-
-    public static long input_reload_begin_time;
-    public static double input_reload_time;
-
-    public static long recovery_begin_time;
-    public static long transaction_abort_begin_time;
-    public static double reloadDB;
-    public static long reloadDB_start_time;
+    //Recovery BreakDown
+    static class Recovery_Breakdown {
+        //Input-load
+        public static DescriptiveStatistics input_load_time;
+        public static long input_load_time_begin;
+        //State-load
+        public static DescriptiveStatistics state_load_time;
+        public static long state_load_time_begin;
+        //Align-time
+        public static DescriptiveStatistics align_time;
+        public static long align_time_begin;
+        //RedoLog
+        public static DescriptiveStatistics RedoLog_time;
+        public static long RedoLog_time_begin;
+        //Re-execute
+        public static DescriptiveStatistics ReExecute_time;
+        public static long ReExecute_time_begin;
+        public static void Initialize() {
+            input_load_time = new DescriptiveStatistics();
+            state_load_time = new DescriptiveStatistics();
+            align_time = new DescriptiveStatistics();
+            RedoLog_time = new DescriptiveStatistics();
+            ReExecute_time = new DescriptiveStatistics();
+        }
+    }
     public static final LocalFileSystem localFileSystem=new LocalFileSystem();
     public static int FT;
-    public static int replayData;
     public static void Initialize(int partition_num,int tthread_num,int FT_) {
         snapshot_file_size = new DescriptiveStatistics[partition_num];
         wal_file_size = new DescriptiveStatistics[partition_num];

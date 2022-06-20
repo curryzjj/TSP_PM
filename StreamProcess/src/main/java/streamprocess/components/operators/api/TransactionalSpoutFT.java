@@ -1,5 +1,6 @@
 package streamprocess.components.operators.api;
 
+import System.measure.MeasureTools;
 import System.tools.SortHelper;
 import applications.events.InputDataGenerator.InputDataGenerator;
 import applications.events.TxnEvent;
@@ -167,7 +168,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "finish");
         try {
             clock.close();
-            inputDataGenerator.close();
+            //inputDataGenerator.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -205,12 +206,15 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
 
     @Override
     public void loadInFlightLog() {
+        MeasureTools.Input_load_begin(System.nanoTime());
         int ID = recoveryIDs.get(0);
         recoveryEvents = multiStreamInFlightLog.getInFlightEvents(DEFAULT_STREAM_ID, graph.getExecutionNode(ID).getOP(), lastSnapshotOffset);
+        MeasureTools.Input_load_finish(System.nanoTime());
     }
 
     @Override
     public void replayEvents() throws InterruptedException {
+        MeasureTools.ReExecute_time_begin(System.nanoTime());
         ArrayList<Long> checkpointIds = SortHelper.sortKey(this.recoveryEvents.keySet());
         for (long checkpointId: checkpointIds){
             MultiStreamInFlightLog.BatchEvents batchEvents = recoveryEvents.get(checkpointId);

@@ -64,10 +64,8 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
-                MeasureTools.startPost(this.thread_Id,System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
-                MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 this.SyncCommitLog();
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
@@ -97,10 +95,8 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
         boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
-                MeasureTools.startPost(this.thread_Id,System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
-                MeasureTools.finishPost(this.thread_Id,System.nanoTime());
                 EventsHolder.clear();
                 BUFFER_PROCESS();
                 break;

@@ -101,6 +101,9 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 }
                 for (TxnEvent input : events) {
                     int targetId = collector.emit_single(DEFAULT_STREAM_ID, bid, input);
+                    if (enable_measure) {
+                        MeasureTools.SetWaitTime((System.nanoTime() - input.getTimestamp()) / 1E6);
+                    }
                     bid ++;
                     if (enable_upstreamBackup) {
                         MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
@@ -124,7 +127,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
 
     @Override
     protected void loadInputFromSSD() throws FileNotFoundException {
-        MeasureTools.startReloadInput(System.nanoTime());
+        MeasureTools.Input_load_begin(System.nanoTime());
         long msg = lastSnapshotOffset;
         bid = 0;
         openFile(Data_path);
@@ -133,12 +136,13 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             lastSnapshotOffset--;
             bid ++;
         }
-        MeasureTools.finishReloadInput(System.nanoTime());
+        MeasureTools.Input_load_finish(System.nanoTime());
         LOG.info("The input data have been load to the offset "+msg);
     }
 
     @Override
     protected void replayInput() throws InterruptedException {
+        MeasureTools.ReExecute_time_begin(System.nanoTime());
         while(replay) {
             TxnEvent event = replayInputFromSSD();
             if (event != null) {

@@ -114,7 +114,6 @@ public class CLRManager extends FTManager {
                 }
                 if(callFaultTolerance.containsValue(Recovery)){
                     LOG.info("CLRManager received all bolt register and start recovery");
-                    SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(SnapshotFile);
                     List<Integer> recoveryIds;
                     long alignOffset;
                     if (enable_determinants_log) {
@@ -127,12 +126,17 @@ public class CLRManager extends FTManager {
                         recoveryIds = recoveryDependency.getDependencyByPartitionId(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     }
                     LOG.info("Recovery partitions are " + recoveryIds.toString() + " Align offset is  " + alignOffset);
+                    SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(SnapshotFile);
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(), recoveryIds, alignOffset);
                     //undo to align offset
+                    MeasureTools.Align_time_begin(System.nanoTime());
                     if (enable_align_wait) {
                         this.db.undoFromWALToTargetOffset(recoveryIds, alignOffset);
                     }
+                    MeasureTools.Align_time_finish(System.nanoTime());
+                    MeasureTools.State_load_begin(System.nanoTime());
                     this.db.recoveryFromTargetSnapshot(lastSnapshotResult,recoveryIds);
+                    MeasureTools.State_load_finish(System.nanoTime());
                     this.db.getTxnProcessingEngine().isTransactionAbort = false;
                     LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     synchronized (lock){

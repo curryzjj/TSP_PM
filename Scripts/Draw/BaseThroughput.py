@@ -88,29 +88,29 @@ if __name__ == '__main__':
     except getopt.GetoptError:
         print
     for opt, arg in opts:
-     if opt in ['-t']:
-                targetHz = int(arg)
-            elif opt in ['-e']:
-                NUM_EVENTS = int(arg)
-            elif opt in ['-i']:
-                NUM_ITEMS = int(arg)
-            elif opt in ['-a']:
-                NUM_ACCESSES = int(arg)
-            elif opt in ['-z']:
-                ZIP_SKEW = int(arg)
-            elif opt in ['-r']:
-                RATIO_OF_READ = int(arg)
-            elif opt in ['-ab']:
-                RATIO_OF_ABORT = int(arg)
-            elif opt in ['-d']:
-                RATIO_OF_DEPENDENCY = int(arg)
-            elif opt in ['-p']:
-                partition_num_per_txn = int(arg)
-            elif opt in ['-t']:
-                partition_num = int(arg)
+        if opt in ['-t']:
+            targetHz = int(arg)
+        elif opt in ['-e']:
+            NUM_EVENTS = int(arg)
+        elif opt in ['-i']:
+            NUM_ITEMS = int(arg)
+        elif opt in ['-a']:
+            NUM_ACCESSES = int(arg)
+        elif opt in ['-z']:
+            ZIP_SKEW = int(arg)
+        elif opt in ['-r']:
+            RATIO_OF_READ = int(arg)
+        elif opt in ['-ab']:
+            RATIO_OF_ABORT = int(arg)
+        elif opt in ['-d']:
+            RATIO_OF_DEPENDENCY = int(arg)
+        elif opt in ['-p']:
+            partition_num_per_txn = int(arg)
+        elif opt in ['-t']:
+            partition_num = int(arg)
 
-     apps = ["GS_txn", "TP_txn", "SL_txn", "OB_txn"]
-     FTOptions = [0, 1, 2, 5, 6]
+    apps = ["GS_txn", "TP_txn", "SL_txn", "OB_txn"]
+    FTOptions = [0, 1, 2, 5, 6]
 
 
 

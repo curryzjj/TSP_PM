@@ -12,9 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import static System.measure.Metrics.*;
+import static System.measure.Metrics.Recovery_Breakdown.*;
 import static System.measure.Metrics.Runtime_Breakdown.*;
 import static UserApplications.CONTROL.PARTITION_NUM;
 import static UserApplications.CONTROL.enable_states_lost;
@@ -26,6 +26,11 @@ public class MeasureTools {
         Metrics.Initialize(partition_num,tthread_num,FT_);
         Metrics.Performance.Initialize();
         Metrics.Runtime_Breakdown.Initialize(tthread_num);
+        Metrics.Recovery_Breakdown.Initialize();
+    }
+    //Wait time measure
+    public static void SetWaitTime(double time) {
+        wait_time.addValue(time);
     }
     //Input Store time measure
     public static void Input_store_begin(long time){
@@ -81,8 +86,6 @@ public class MeasureTools {
     public static void finishTransaction(int threadId,long time){
         transaction_run_time[threadId].addValue((time-transaction_begin_time[threadId])/1E6);
     }
-
-
     //FileSize Measure
     public static void setSnapshotFileSize(List<Path> paths){
         int i = 0;
@@ -109,56 +112,43 @@ public class MeasureTools {
             }
         }
     }
+    //Input-load
+    public static void Input_load_begin(long time) {
+        input_load_time_begin = time;
+    }
+    public static void Input_load_finish(long time) {
+        input_load_time.addValue((time - input_load_time_begin) / 1E6);
+    }
+    //State-load
+    public static void State_load_begin(long time) {
+        state_load_time_begin = time;
+    }
+    public static void State_load_finish(long time) {
+        state_load_time.addValue((time - state_load_time_begin) / 1E6);
+    }
+    //Align-time
+    public static void Align_time_begin(long time) {
+        align_time_begin = time;
+    }
+    public static void Align_time_finish(long time) {
+        align_time.addValue((time - align_time_begin) / 1E6);
+    }
+    //ReExecute_time
+    public static void RedoLog_time_begin(long time) {
+        RedoLog_time_begin = time;
+    }
+    public static void RedoLog_time_finish(long time) {
+        RedoLog_time.addValue((time - RedoLog_time_begin) / 1E6);
+    }
+    //ReExecute_time
+    public static void ReExecute_time_begin(long time) {
+        ReExecute_time_begin = time;
+    }
+    public static void ReExecute_time_finish(long time) {
+        ReExecute_time.addValue((time - ReExecute_time_begin) / 1E6);
+    }
 
 
-    public static void setReplayData(int num){
-        replayData = num;
-    }
-    public static void bolt_register_Ack(int thread_id,long time){
-        bolt_register_ack_time[thread_id]=time;
-    }
-    public static void FTM_receive_all_Ack(long time){
-        FTM_start_ack_time.addValue((time-get_begin_time(bolt_register_ack_time))/1E6);
-    }
-    public static void FTM_finish_Ack(long time){
-        FTM_finish_time=time;
-    }
-    public static void bolt_receive_ack_time(int thread_id,long time){
-        bolt_receive_ack_time[thread_id]=time;
-        FTM_finish_ack_time.addValue((time-FTM_finish_time)/1E6);
-    }
-
-    public static void startPost(int threadId,long time){
-        post_begin_time[threadId]=time;
-    }
-    public static void finishPost(int threadId,long time){
-        event_post_time[threadId].addValue((time-post_begin_time[threadId])/1E6);
-    }
-
-    public static void startRecovery(long time){
-        recovery_begin_time=time;
-    }
-    public static void finishRecovery(long time){
-        recovery_time.addValue((time-recovery_begin_time)/1E6);
-    }
-    public static void startUndoTransaction(long time){
-        transaction_abort_begin_time=time;
-    }
-    public static void finishUndoTransaction(long time){
-        transaction_abort_time.addValue((time-transaction_abort_begin_time)/1E6);
-    }
-    public static void startReloadDB(long time){
-        reloadDB_start_time=time;
-    }
-    public static void finishReloadDB(long time){
-        reloadDB=(time-reloadDB_start_time)/1E6;
-    }
-    public static void startReloadInput(long time){
-        input_reload_begin_time=time;
-    }
-    public static void finishReloadInput(long time){
-        input_reload_time=(time-input_reload_begin_time)/1E6;
-    }
     //Sink Measure
     public static void setAvgThroughput(int threadId, double result) {
         Performance.AvgThroughput.put(threadId, result);
@@ -171,16 +161,6 @@ public class MeasureTools {
     }
     public static void setLatencyMap(int threadId, List<Double> result) {
         Performance.latency_map.put(threadId,result);
-    }
-    public static void setAvgWaitTime(int threadId, double result) {
-        Avg_WaitTime.put(threadId,result);
-    }
-    public static void setAvgCommitTime(int threadId, double result) {
-        Avg_CommitTime.put(threadId,result);
-    }
-    private static long get_begin_time(long[] times){
-        Arrays.sort(times,0,times.length-1);
-        return times[0];
     }
     private static void PerformanceReport(String baseDirectory, StringBuilder sb) throws IOException {
         sb.append("\n");
@@ -226,6 +206,9 @@ public class MeasureTools {
         }
         FileSizeReport(fileWriter, sb);
         RuntimeBreakdownReport(fileWriter, sb);
+        if (enable_states_lost) {
+            RecoveryBreakdownReport(fileWriter, sb);
+        }
         fileWriter.close();
     }
     public static void FileSizeReport(BufferedWriter fileWriter, StringBuilder sb) throws IOException {
@@ -329,8 +312,10 @@ public class MeasureTools {
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
+                                "%-10.2f\t" +
                                 "%-10.2f\t"
                         , threadId
+                        , wait_time.getMean()
                         , input_store_time.getMean()
                         , Snapshot_time.getMean()
                         , Wal_time.getMean()
@@ -350,8 +335,10 @@ public class MeasureTools {
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
+                                "%-10.2f\t" +
                                 "%-10.2f\t"
                         , threadId
+                        , wait_time.getMean()
                         , input_store_time.getMean()
                         , Snapshot_time.getMean()
                         , Help_Log[threadId].getMean()
@@ -372,8 +359,10 @@ public class MeasureTools {
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
+                                "%-10.2f\t" +
                                 "%-10.2f\t"
                         , threadId
+                        , wait_time.getMean()
                         , input_store_time.getMean()
                         , Snapshot_time.getMean()
                         , Help_Log[threadId].getMean()
@@ -393,8 +382,10 @@ public class MeasureTools {
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
+                                "%-10.2f\t" +
                                 "%-10.2f\t"
                         , threadId
+                        , wait_time.getMean()
                         , input_store_time.getMean()
                         , Snapshot_time.getMean()
                         , 0.0
@@ -413,8 +404,10 @@ public class MeasureTools {
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
+                                "%-10.2f\t" +
                                 "%-10.2f\t"
                         , threadId
+                        , wait_time.getMean()
                         , 0.0
                         , 0.0
                         , 0.0
@@ -427,19 +420,69 @@ public class MeasureTools {
         }
         String output = String.format(
                 "%-10.2f\t" +
+                "%-10.2f\t" +
                         "%-10.2f\t" +
                         "%-10.2f\t" +
                         "%-10.2f\t" +
                         "%-10.2f\t"
+                , wait_time.getMean()
                 , inputStoreTime / PARTITION_NUM
                 , snapshotTime / PARTITION_NUM
                 , helpLog / PARTITION_NUM
                 , upstreamBackupTime / PARTITION_NUM
                 , transactionRunTime / PARTITION_NUM
         );
-        sb.append("Input-Store\t Snapshot\t HelpLog \t UpStream \t Txn_time \n");
+        sb.append("Wait\t Input-Store\t Snapshot\t HelpLog \t UpStream \t Txn_time \n");
         sb.append(output);
         fileWriter.write(output + "\n");
+    }
+    private static void RecoveryBreakdownReport(BufferedWriter fileWriter, StringBuilder sb) throws IOException {
+        String output;
+        if (FT == 1) {
+            output = String.format(
+                            "%-10.2f\t" +
+                            "%-10.2f\t" +
+                            "%-10.2f\t" +
+                            "%-10.2f\t" +
+                            "%-10.2f\t"
+                    , input_load_time.getMean()
+                    , state_load_time.getMean()
+                    , 0.0
+                    , RedoLog_time.getMean()
+                    , ReExecute_time.getMean()
+            );
+            fileWriter.write(output + "\n");
+        } else if (FT == 2){
+            output = String.format(
+                    "%-10.2f\t" +
+                            "%-10.2f\t" +
+                            "%-10.2f\t" +
+                            "%-10.2f\t" +
+                            "%-10.2f\t"
+                    , input_load_time.getMean()
+                    , state_load_time.getMean()
+                    , 0.0
+                    , 0.0
+                    , ReExecute_time.getMean()
+            );
+        } else {
+            output = String.format(
+                    "%-10.2f\t" +
+                            "%-10.2f\t" +
+                            "%-10.2f\t" +
+                            "%-10.2f\t" +
+                            "%-10.2f\t"
+                    , input_load_time.getMean()
+                    , state_load_time.getMean()
+                    , align_time.getMean()
+                    , 0.0
+                    , ReExecute_time.getMean()
+            );
+        }
+        fileWriter.write("\n Input-load\t State-load\t Align \t RedoLog \t ReExecute \n");
+        fileWriter.write(output + "\n");
+        sb.append("\n Input-load\t State-load\t Align \t RedoLog \t ReExecute \n");
+        sb.append(output).append("\n");
     }
     public static void METRICS_REPORT(String baseDirectory) throws IOException {
         StringBuilder sb = new StringBuilder();

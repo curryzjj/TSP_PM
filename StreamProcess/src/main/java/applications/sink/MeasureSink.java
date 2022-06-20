@@ -102,7 +102,6 @@ public class MeasureSink extends BaseSink {
                     }
                     switch (in.getMarker().getValue()) {
                         case "recovery" :
-                            MeasureTools.finishRecovery(System.nanoTime());
                             BUFFER_EXECUTE();
                             break;
                         case "snapshot" :
@@ -248,6 +247,9 @@ public class MeasureSink extends BaseSink {
                     No_Exactly_Once_latency_map.add(latency / 1E6);
                     computationLatency = System.nanoTime();
                 }
+                if (in.getBID() == failureTime) {
+                    MeasureTools.ReExecute_time_finish(System.nanoTime());
+                }
                 count ++;
             }
         }
@@ -261,8 +263,6 @@ public class MeasureSink extends BaseSink {
         MeasureTools.setThroughputMap(thisTaskId, throughput_map);
         MeasureTools.setLatencyMap(thisTaskId, No_Exactly_Once_latency_map);
         MeasureTools.setLatency(thisTaskId, latency);
-        MeasureTools.setAvgWaitTime(thisTaskId, waitTime.getMean());
-        MeasureTools.setAvgCommitTime(thisTaskId, twoPC_commit_time.getMean());
     }
 
     public long getCount() {
@@ -274,11 +274,11 @@ public class MeasureSink extends BaseSink {
             @Override
             public void run() {
                 long current_count = getCount();
-                double throughput = (current_count - p_count) / 500.0;
+                double throughput = (current_count - p_count) / 1000.0;
                 p_count = current_count;
                 throughput_map.add(throughput);
             }
-        },  1000, 500);//ms
+        },  1000, 1000);//ms
     }
     @Override
     protected Logger getLogger() {

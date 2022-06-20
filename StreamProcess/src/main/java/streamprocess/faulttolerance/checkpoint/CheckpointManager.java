@@ -132,7 +132,9 @@ public class CheckpointManager extends FTManager {
                     LOG.info("CheckpointManager received all register and start recovery");
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(checkpointFile);
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, lastSnapshotResult.getCheckpointId());
+                    MeasureTools.State_load_begin(System.nanoTime());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
+                    MeasureTools.State_load_finish(System.nanoTime());
                     this.db.getTxnProcessingEngine().isTransactionAbort = false;
                     LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     synchronized (lock){

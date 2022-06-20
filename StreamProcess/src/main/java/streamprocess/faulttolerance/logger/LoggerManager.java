@@ -151,35 +151,33 @@ public class LoggerManager extends FTManager {
                     return;
                 }
                 if(callLog.containsValue(Undo)){
-                    if(enable_measure){
-                        MeasureTools.startUndoTransaction(System.nanoTime());
-                    }
                     LOG.debug("LoggerManager received all register and start Undo");
                     this.db.undoFromWAL();
                     LOG.debug("Undo log complete!");
                     this.db.getTxnProcessingEngine().isTransactionAbort=false;
                     notifyLogComplete();
                     lock.notifyAll();
-                    if(enable_measure){
-                        MeasureTools.finishUndoTransaction(System.nanoTime());
-                    }
                 }else if(callLog.containsValue(Recovery)){
                     LOG.info("LoggerManager received all register and start recovery");
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(snapshotFile);
                     long theLastLSN = getLastGlobalLSN(walFile);
                     this.g.getSpout().recoveryInput(theLastLSN,null, theLastLSN);
+                    MeasureTools.State_load_begin(System.nanoTime());
                     LOG.info("Reload database from lastSnapshot");
                     if (lastSnapshotResult == null){
                         this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     } else {
                         this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     }
+                    MeasureTools.State_load_finish(System.nanoTime());
+                    MeasureTools.RedoLog_time_begin(System.nanoTime());
                     LOG.info("Replay committed transactions");
                     if(enable_parallel){
                         this.db.recoveryFromWAL(theLastLSN);
                     }else{
                         theLastLSN = this.db.recoveryFromWAL(-1);
                     }
+                    MeasureTools.RedoLog_time_finish(System.nanoTime());
                     LOG.info("Replay committed transactions complete!");
                     this.db.undoFromWAL();
                     this.SnapshotOffset = new ArrayDeque<>();

@@ -80,4 +80,6 @@ function baselineEvaluation() {
        do runFTStream
        done
 }
+sudo rm -rf /mnt/nvme0n1p1/jjzhao/app/benchmarks/obtxn/Skew01.dat
+sudo rm -rf /mnt/nvme0n1p1/jjzhao/app/txnob/checkpoint
 baselineEvaluation
