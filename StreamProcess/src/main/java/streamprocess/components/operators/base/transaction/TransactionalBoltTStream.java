@@ -172,6 +172,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
                 }
             }
         }
+        LOG.info("Align offset is  " + this.recoveryId);
 
     }
     /**
