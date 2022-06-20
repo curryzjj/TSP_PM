@@ -1,5 +1,6 @@
 package engine.storage.ImplStorageManager;
 
+import System.tools.StringHelper;
 import System.util.Configuration;
 import engine.Exception.DatabaseException;
 import engine.Meta.RegisteredKeyValueStateBackendMetaInfo;
@@ -70,7 +71,7 @@ public class StorageManager extends AbstractStorageManager {
         List<String> tableNames = new ArrayList<>(tables.keySet());
         for(int id:rangeId){
             for (String s : tableNames) {
-                if(s.endsWith(String.valueOf(id)))
+                if(StringHelper.isDigitStr(s) == id)
                     cleanTable(s);
             }
         }

@@ -24,7 +24,7 @@ function ResetParameters() {
   RATIO_OF_DEPENDENCY=500
   complexity=0
   NUM_ACCESSES=2
-  partition_num_per_txn=2
+  partition_num_per_txn=4
   partition_num=16
 }
 function runFTStream() {
@@ -100,8 +100,8 @@ function baselineEvaluation() {
      done
    done
  }
-baselineEvaluation
-ResetParameters
-cd DRAW || exit
+#baselineEvaluation
+#ResetParameters
+cd Draw || exit
 echo "BaseThroughput.py -t $targetHz -e $NUM_EVENTS -i $NUM_ITEMS -a $NUM_ACCESSES -z $ZIP_SKEW -ab $RATIO_OF_ABORT -d $RATIO_OF_DEPENDENCY -p $partition_num_per_txn -t $partition_num"
 python BaseThroughput.py -t $targetHz -e $NUM_EVENTS -i $NUM_ITEMS -a $NUM_ACCESSES -z $ZIP_SKEW -ab $RATIO_OF_ABORT -d $RATIO_OF_DEPENDENCY -p $partition_num_per_txn -t $partition_num

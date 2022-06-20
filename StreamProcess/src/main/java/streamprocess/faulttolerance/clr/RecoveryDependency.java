@@ -50,7 +50,7 @@ public class RecoveryDependency {
             }
         }
     }
-    public List<Integer> getDependencyByPatitionId(List<Integer> targetIds){
+    public List<Integer> getDependencyByPartitionId(List<Integer> targetIds){
         List<Integer> dependencyIds = new ArrayList<>();
         for (int id : targetIds) {
             dependencyIds.addAll(this.recoveryDependency.get(id));

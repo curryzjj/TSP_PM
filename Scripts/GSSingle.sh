@@ -2,14 +2,14 @@
 function ResetParameters() {
   app="GS_txn"
   FTOptions=0
-  failureModel=0
-  failureFrequency=0.0
+  failureModel=2
+  failureFrequency=4
   tthreads=16
   snapshot=10
 
   #System Configurations
   Arrival_Control=1
-  targetHz=200000.0
+  targetHz=80000
   timeSliceLengthMs=1000
   input_store_batch=10000
   #shellcheck disable=SC2006
@@ -17,14 +17,14 @@ function ResetParameters() {
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
   #Workload Configurations
   NUM_ITEMS=163840
-  NUM_EVENTS=8000000
-  ZIP_SKEW=0.4
+  NUM_EVENTS=16000000
+  ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0
-  RATIO_OF_DEPENDENCY=500
+  RATIO_OF_DEPENDENCY=1000
   complexity=0
   NUM_ACCESSES=2
-  partition_num_per_txn=2
+  partition_num_per_txn=4
   partition_num=16
 }
 function runFTStream() {
@@ -80,4 +80,6 @@ function baselineEvaluation() {
       do runFTStream
       done
 }
+sudo rm -rf /mnt/nvme0n1p1/jjzhao/app/benchmarks/gstxn/Skew01.dat
+sudo rm -rf /mnt/nvme0n1p1/jjzhao/app/txngs/checkpoint
 baselineEvaluation

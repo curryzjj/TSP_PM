@@ -124,13 +124,13 @@ public class CLRManager extends FTManager {
                     } else {
                         RecoveryDependency recoveryDependency = this.g.getSink().ackRecoveryDependency();
                         alignOffset = recoveryDependency.currentMarkId;
-                        recoveryIds = recoveryDependency.getDependencyByPatitionId(this.db.getTxnProcessingEngine().getRecoveryRangeId());
+                        recoveryIds = recoveryDependency.getDependencyByPartitionId(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     }
                     LOG.info("Recovery partitions are " + recoveryIds.toString() + " Align offset is  " + alignOffset);
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(), recoveryIds, alignOffset);
                     //undo to align offset
                     if (enable_align_wait) {
-                        this.db.undoFromWALToTargetOffset(recoveryIds,alignOffset);
+                        this.db.undoFromWALToTargetOffset(recoveryIds, alignOffset);
                     }
                     this.db.recoveryFromTargetSnapshot(lastSnapshotResult,recoveryIds);
                     this.db.getTxnProcessingEngine().isTransactionAbort = false;
