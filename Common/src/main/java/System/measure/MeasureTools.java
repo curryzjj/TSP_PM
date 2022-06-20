@@ -224,9 +224,7 @@ public class MeasureTools {
             fileWriter.write(output + "\n");
             sb.append("\n" + percentile[i]+ " : " + totalTailLatency / Performance.Latency.size() + "\n");
         }
-        if (FT != 0) {
-            FileSizeReport(fileWriter, sb);
-        }
+        FileSizeReport(fileWriter, sb);
         RuntimeBreakdownReport(fileWriter, sb);
         fileWriter.close();
     }

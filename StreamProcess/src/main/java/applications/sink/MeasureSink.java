@@ -63,7 +63,6 @@ public class MeasureSink extends BaseSink {
             count = 0;
             p_count = 0;
         }
-        this.startThroughputMeasure();
     }
 
     public Integer default_scale(Configuration conf) {
@@ -84,6 +83,7 @@ public class MeasureSink extends BaseSink {
     public void execute(Tuple in) throws InterruptedException, IOException {
         if (count == 0){
             startTime = System.nanoTime();
+            this.startThroughputMeasure();
         }
         if(in.isMarker()){
             if (status.isMarkerArrived(in.getSourceTask())) {
@@ -242,8 +242,9 @@ public class MeasureSink extends BaseSink {
                         }
                     }
                 }
+                long latency = System.nanoTime() - (long)in.getValue(2);
+                this.latency.addValue(latency / 1E6);
                 if ((System.nanoTime() - computationLatency) / 1E9 > 0.5) {
-                    long latency = System.nanoTime() - (long)in.getValue(2);
                     No_Exactly_Once_latency_map.add(latency / 1E6);
                     computationLatency = System.nanoTime();
                 }
@@ -251,28 +252,9 @@ public class MeasureSink extends BaseSink {
             }
         }
     }
-    private void addLatency() {
-        if(No_Exactly_Once_latency_map.size()!=0){
-            double totalLatency=0;
-            for (double latency: No_Exactly_Once_latency_map){
-                totalLatency=totalLatency+latency;
-            }
-            latency_map.add(totalLatency/ No_Exactly_Once_latency_map.size());
-            No_Exactly_Once_latency_map.clear();
-        }
-    }
     private void measure_end() {
         LOG.info("System running time is " + (System.nanoTime() - startTime) / 1E9);
         MeasureTools.setAvgThroughput(thisTaskId,count * 1E6 / (System.nanoTime() - startTime));
-        if (Exactly_Once) {
-            for (double a:latency_map){
-                latency.addValue(a);
-            }
-        } else {
-            for (double a:No_Exactly_Once_latency_map){
-                latency.addValue(a);
-            }
-        }
         for (double a:throughput_map){
             throughput.addValue(a);//k events/s
         }
@@ -292,11 +274,11 @@ public class MeasureSink extends BaseSink {
             @Override
             public void run() {
                 long current_count = getCount();
-                double throughput=(current_count-p_count) / 1000.0;
-                p_count=current_count;
+                double throughput = (current_count - p_count) / 500.0;
+                p_count = current_count;
                 throughput_map.add(throughput);
             }
-        },  1000, 1000);//ms
+        },  1000, 500);//ms
     }
     @Override
     protected Logger getLogger() {

@@ -28,11 +28,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected Queue<List<TxnEvent>> inputQueue;
     protected long previous_bid=-1;
     protected long epoch_size=0;
-    protected double target_Hz;
     protected volatile int control=0;
-    protected int element=0;
-    protected ArrayList<String> array;
-    protected boolean startClock=false;
 
     protected long lastSnapshotOffset;
     protected long AlignMarkerId;
@@ -40,8 +36,6 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected List<Integer> recoveryIDs = new ArrayList<>();
     protected List<Integer> downExecutorIds = new ArrayList<>();
 
-    boolean rt = false;
-    protected int total_children_tasks=0;
     protected int tthread;
     protected long start_time;
     protected long time_Interval;//ms
@@ -49,9 +43,8 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     //TODO:BufferedWrite
 
     protected int taskId;
-    protected int ccOption;
     protected long bid=0;
-    volatile boolean earilier_check=true;
+    protected boolean earlier_finish = false;
     public int empty=0;
 
     protected int batch_number_per_wm;
@@ -180,7 +173,8 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         }
         LOG.info("Spout sent marker "+ myiteration);
         LOG.info("Spout sent snapshot " + checkpoint_counter);
-        context.stop_running();
+        this.earlier_finish = true;
+        //context.stop_running();
     }
 
     @Override

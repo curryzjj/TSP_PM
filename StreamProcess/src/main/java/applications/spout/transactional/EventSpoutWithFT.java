@@ -85,7 +85,10 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             } else{
                 replayInput();
             }
-        } else{
+            if (earlier_finish) {
+                stopRunning();
+            }
+        } else if (!earlier_finish){
             List<TxnEvent> events = inputQueue.poll();
             while(events == null){
                 events = inputQueue.poll();
