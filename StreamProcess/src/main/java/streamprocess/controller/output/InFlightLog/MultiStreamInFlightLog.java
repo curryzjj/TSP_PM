@@ -1,5 +1,6 @@
 package streamprocess.controller.output.InFlightLog;
 
+import System.tools.SortHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.grouping.Grouping;
@@ -138,11 +139,7 @@ public class MultiStreamInFlightLog {
             return iterators;
         }
         public List<Long> getMarkerId(){
-            List<Long> ids = new ArrayList<>();
-            for (Long markerId:batchEvents.keySet()){
-                ids.add(markerId);
-            }
-            return ids;
+            return SortHelper.sortKey(batchEvents.keySet());
         }
     }
 }

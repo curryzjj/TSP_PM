@@ -1,5 +1,6 @@
 package streamprocess.components.operators.api;
 
+import System.tools.SortHelper;
 import applications.events.InputDataGenerator.InputDataGenerator;
 import applications.events.TxnEvent;
 import org.joda.time.DateTime;
@@ -216,9 +217,11 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
 
     @Override
     public void replayEvents() throws InterruptedException {
-        for (long checkpointId: this.recoveryEvents.keySet()){
+        ArrayList<Long> checkpointIds = SortHelper.sortKey(this.recoveryEvents.keySet());
+        for (long checkpointId: checkpointIds){
             MultiStreamInFlightLog.BatchEvents batchEvents = recoveryEvents.get(checkpointId);
             if (checkpointId > lastSnapshotOffset){
+                LOG.info(executor.getOP_full() + " emit " + "snapshot @" + DateTime.now() + " SOURCE_CONTROL: " + checkpointId);
                 collector.create_marker_boardcast(System.nanoTime(), DEFAULT_STREAM_ID, checkpointId, myiteration,"snapshot");
             }
             for (long markerIds : batchEvents.getMarkerId()){
@@ -227,6 +230,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 int flag = 0;
                 ConcurrentHashMap<Integer, Iterator<Object>> iterators = batchEvents.getBatchEvents(markerIds);
                 if (markerIds != checkpointId && markerIds > lastSnapshotOffset){
+                    LOG.info(executor.getOP_full() + " emit " + "marker @" + DateTime.now() + " SOURCE_CONTROL: " + markerIds);
                     collector.create_marker_boardcast(System.nanoTime(),DEFAULT_STREAM_ID, markerIds, myiteration,"marker");
                 }
                 if (enable_align_wait && markerIds < AlignMarkerId) {

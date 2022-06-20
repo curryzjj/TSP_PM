@@ -1,6 +1,6 @@
 package engine.shapshot.ImplSnapshotStrategy;
 
-import System.tools.StringHelp;
+import System.tools.StringHelper;
 import engine.shapshot.*;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
 import engine.shapshot.CheckpointStream.CheckpointStreamWithResultProvider;
@@ -42,7 +42,7 @@ public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullS
             Map<String,BaseTable> tables = new HashMap<>();
             LinkedHashMap<String,StorageManager.InMemoryKvStateInfo> kvStateInformation = new LinkedHashMap<>();
             for (String tableName : this.tables.keySet()){
-                if(StringHelp.isDigitStr(tableName) == i){
+                if(StringHelper.isDigitStr(tableName) == i){
                     tables.put(tableName, this.tables.get(tableName));
                     kvStateInformation.put(tableName, this.kvStateInformation.get(tableName));
                 }

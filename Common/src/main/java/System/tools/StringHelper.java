@@ -1,6 +1,6 @@
 package System.tools;
 
-public class StringHelp {
+public class StringHelper {
     public static int isDigitStr(String str) {
         int num = -1;
         char[] chars = str.toCharArray();
