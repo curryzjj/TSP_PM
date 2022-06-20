@@ -1,10 +1,18 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 
 public class Test {
 
     public static void main(String[] args) {
-        String a = "segment_cnt_16";
-        System.out.println(isDigitStr(a));
+        HashMap<Long, Long> test = new HashMap<>();
+        test.put(1600000L,1600000L);
+        test.put(3200000L,3200000L);
+        test.put(4800000L,4800000L);
+        ArrayList<Long> keys = new ArrayList<>(test.keySet());
+        keys.sort((o1, o2) -> o1 > o2 ? 1 : 0);
+        System.out.println(keys.toString());
     }
     public static int isDigitStr(String str) {
         int num = -1;
