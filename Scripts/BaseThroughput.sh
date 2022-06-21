@@ -17,7 +17,7 @@ function ResetParameters() {
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
   #Workload Configurations
   NUM_ITEMS=163840
-  NUM_EVENTS=8000000
+  NUM_EVENTS=16000000
   ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0

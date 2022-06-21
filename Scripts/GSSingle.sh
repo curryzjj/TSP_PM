@@ -81,12 +81,12 @@ function baselineEvaluation() {
       do runFTStream
       done
   ResetParameters
-  RATIO_OF_READ=5
+  RATIO_OF_READ=50
    for FTOptions in 0 1 2 3 4
       do runFTStream
       done
   ResetParameters
-  RATIO_OF_READ=95
+  RATIO_OF_READ=950
    for FTOptions in 0 1 2 3 4
       do runFTStream
       done

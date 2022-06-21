@@ -23,7 +23,7 @@ public class MicroEvent extends TxnEvent {
     private final boolean flag;
     private List<DataBox>[] value;
     public int sum;
-    public int result[]=new int[NUM_ACCESSES];
+    public int result[] = new int[NUM_ACCESSES];
 
     /**
      * Create a new MicroEvent
@@ -45,7 +45,9 @@ public class MicroEvent extends TxnEvent {
         for (int i = 0; i < numAccess; i++) {
             recordRefs[i] = new SchemaRecordRef();
         }
-        setValues(keys);
+        if (!flag) {
+            setValues(keys);
+        }
     }
     /**
      * Loading a DepositEvent.
@@ -71,7 +73,9 @@ public class MicroEvent extends TxnEvent {
         for (int i = 0; i < key_arrays.length; i++) {
             this.keys[i] = Integer.parseInt(key_arrays[i].trim());
         }
-        setValues(keys);
+        if (!flag) {
+            setValues(keys);
+        }
         this.timestamp = timestamp;
     }
     public int[] getKeys() {
