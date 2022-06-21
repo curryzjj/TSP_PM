@@ -36,6 +36,7 @@ public class TxnProcessingEngine {
     private CyclicBarrier barrier;
     private int TOTAL_CORES;
     private WALManager walManager;
+    private long markerId;
     private ExecutorServiceInstance standalone_engine;
     /* Abort transactions <bid> */
     private ConcurrentSkipListSet<Long> transactionAbort;
@@ -211,7 +212,7 @@ public class TxnProcessingEngine {
     }
     private void process(Operation operation, int mark_id, LogRecord logRecord, boolean cleanVersion) {
         if (cleanVersion) {
-            operation.s_record.clean_map(operation.bid);
+            operation.s_record.clean_map(this.markerId);
         }
         if(operation.bid == failureTime){
           if(enable_states_lost){
@@ -336,6 +337,7 @@ public class TxnProcessingEngine {
         if (enable_wal || enable_undo_log) {
             this.walManager.addLogForBatch(mark_ID);
         }
+        this.markerId = mark_ID;
         SOURCE_CONTROL.getInstance().Wait_Start(thread_id);
         int size = evaluation(thread_id,mark_ID);
         //implement the SOURCE_CONTROL sync for all threads to come to this line.
