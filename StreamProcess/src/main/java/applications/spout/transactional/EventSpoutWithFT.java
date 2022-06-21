@@ -99,11 +99,11 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                     this.inputDataGenerator.storeInput(events);
                     MeasureTools.Input_store_finish();
                 }
+                if (enable_measure) {
+                    MeasureTools.SetWaitTime((System.nanoTime() - events.get(0).getTimestamp()) / 1E6);
+                }
                 for (TxnEvent input : events) {
                     int targetId = collector.emit_single(DEFAULT_STREAM_ID, bid, input);
-                    if (enable_measure) {
-                        MeasureTools.SetWaitTime((System.nanoTime() - input.getTimestamp()) / 1E6);
-                    }
                     bid ++;
                     if (enable_upstreamBackup) {
                         MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
