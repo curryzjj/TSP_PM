@@ -36,6 +36,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
         TxnContext txnContext=new TxnContext(thread_Id,this.fid,in.getBID());
         MicroEvent event = (MicroEvent) in.getValue(0);
+        MeasureTools.Transaction_construction_begin(thread_Id, System.nanoTime());
         if (event.READ_EVENT()) {//read
             if (enable_determinants_log) {
                 determinant_read_construct(event, txnContext);
@@ -49,6 +50,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                 write_construct(event, txnContext, false);
             }
         }
+        MeasureTools.Transaction_construction_acc(thread_Id, System.nanoTime());
     }
     boolean read_construct(MicroEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
         for (int i = 0; i < NUM_ACCESSES; i++) {

@@ -18,7 +18,7 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(in.isMarker()){
             if (status.isMarkerArrived(in.getSourceTask())) {
-               PRE_EXECUTE(in);
+                PRE_EXECUTE(in);
             } else {
                 if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
                     //this.collector.ack(in,in.getMarker());
@@ -30,6 +30,7 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
                             this.markerId = in.getBID();
                             if (TXN_PROCESS_FT()){
                                 /* When the wal is completed, the data can be consumed by the outside world */
+                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                             }
                             break;
@@ -38,6 +39,7 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
                             this.isSnapshot = true;
                             if (TXN_PROCESS_FT()){
                                 /* When the wal is completed, the data can be consumed by the outside world */
+                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                             }
                             break;
@@ -45,6 +47,7 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
                             this.markerId = in.getBID();
                             if(TXN_PROCESS_FT()){
                                 /* All the data has been executed */
+                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                             }
                             this.context.stop_running();
@@ -67,8 +70,10 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
+                MeasureTools.startPostTransaction(thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
+                MeasureTools.finishPostTransaction(thread_Id, System.nanoTime());
                 this.SyncCommitLog();
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();

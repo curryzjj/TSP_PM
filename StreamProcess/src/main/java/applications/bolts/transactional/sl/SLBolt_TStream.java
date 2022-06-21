@@ -39,7 +39,8 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
 
     @Override
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
-        TxnContext txnContext = new TxnContext(thread_Id, this.fid,in.getBID());
+        MeasureTools.Transaction_construction_begin(this.thread_Id, System.nanoTime());
+        TxnContext txnContext = new TxnContext(thread_Id, this.fid, in.getBID());
         TxnEvent event = (TxnEvent) in.getValue(0);
         if (event instanceof DepositEvent) {
             if (enable_determinants_log) {
@@ -54,6 +55,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 TransferRequestConstruct((TransactionEvent) event, txnContext,false);
             }
         }
+        MeasureTools.Transaction_construction_acc(this.thread_Id, System.nanoTime());
     }
     protected boolean Deposit_Request_Construct(DepositEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
         boolean flag = transactionManager.Asy_ModifyRecord(txnContext,"T_accounts",event.getAccountId(),new INC(event.getAccountTransfer()));

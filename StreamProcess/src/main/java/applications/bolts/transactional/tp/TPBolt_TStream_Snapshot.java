@@ -32,14 +32,17 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
                             break;
                         case "marker":
                             this.markerId = in.getBID();
-                            TXN_PROCESS();
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                            if (TXN_PROCESS()) {
+                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                            }
                             break;
                         case "snapshot":
                             this.markerId = in.getBID();
                             this.isSnapshot = true;
                             if(TXN_PROCESS_FT()){
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                             }
                             break;
                         case "finish":
@@ -47,6 +50,7 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
                             if(TXN_PROCESS()){
                                 /* All the data has been executed */
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                             }
                             this.context.stop_running();
                             break;
@@ -68,9 +72,10 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
+                MeasureTools.startPostTransaction(thread_Id, System.nanoTime());
                 REQUEST_CORE();
-                /* When the transaction is successful, the data can be pre-commit to the outside world */
                 REQUEST_POST();
+                MeasureTools.finishPostTransaction(thread_Id, System.nanoTime());
                 this.SyncCommitLog();
                 LREvents.clear();//clear stored events.
                 BUFFER_PROCESS();
@@ -100,8 +105,10 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
         boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
+                MeasureTools.startPostTransaction(thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
+                MeasureTools.finishPostTransaction(thread_Id, System.nanoTime());
                 LREvents.clear();
                 BUFFER_PROCESS();
                 break;

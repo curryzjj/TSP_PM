@@ -51,6 +51,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                                         this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                                     }
                                     MeasureTools.HelpLog_finish_acc(this.thread_Id);
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                                 }
                             }
                             break;
@@ -66,6 +67,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                                     this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                                 }
                                 MeasureTools.HelpLog_finish_acc(this.thread_Id);
+                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                             }
                             break;
                         case "finish":
@@ -88,6 +90,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                                         this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                                     }
                                     MeasureTools.HelpLog_finish_acc(this.thread_Id);
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                                 }
                             }
                             this.context.stop_running();
@@ -109,8 +112,10 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
+                MeasureTools.startPostTransaction(this.thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
+                MeasureTools.finishPostTransaction(this.thread_Id, System.nanoTime());
                 this.SyncCommitLog();
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();

@@ -44,6 +44,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
         TxnContext txnContext=new TxnContext(thread_Id,this.fid,in.getBID());
         TxnEvent event = (TxnEvent) in.getValue(0);
+        MeasureTools.Transaction_construction_begin(this.thread_Id, System.nanoTime());
         if (event instanceof BuyingEvent) {
             if (enable_determinants_log) {
                 Determinant_Buying_request_construct((BuyingEvent) event, txnContext);
@@ -63,6 +64,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 Topping_request_construct((ToppingEvent) event, txnContext,false);
             }
         }
+        MeasureTools.Transaction_construction_acc(this.thread_Id, System.nanoTime());
     }
     protected boolean Topping_request_construct(ToppingEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
         for (int i = 0; i < event.getNum_access(); i++){

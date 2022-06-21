@@ -34,11 +34,13 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
         TxnContext txnContext = new TxnContext(thread_Id, this.fid, in.getBID());
         TollProcessingEvent event = (TollProcessingEvent) in.getValue(0);
+        MeasureTools.Transaction_construction_begin(this.thread_Id, System.nanoTime());
         if (enable_determinants_log) {
             Determinant_REQUEST_CONSTRUCT(event, txnContext);
         } else {
             REQUEST_CONSTRUCT(event, txnContext, false);
         }
+        MeasureTools.Transaction_construction_acc(this.thread_Id, System.nanoTime());
     }
     protected boolean REQUEST_CONSTRUCT(TollProcessingEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
         //some process used the transactionManager

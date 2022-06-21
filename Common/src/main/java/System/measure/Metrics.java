@@ -44,6 +44,13 @@ public class Metrics {
         //Txn_time
         public static DescriptiveStatistics[] transaction_run_time;
         public static long[] transaction_begin_time;
+        //Post_time
+        public static DescriptiveStatistics[] transaction_post_time;
+        public static long[] transaction_post_begin_time;
+        //Construction Time
+        public static DescriptiveStatistics[] transaction_construction_time;
+        public static long[] transaction_construction_begin;
+        public static double[] transaction_construction_acc;
 
 
         public static ConcurrentHashMap<Integer,Double> Avg_WaitTime;
@@ -60,14 +67,25 @@ public class Metrics {
             Help_Log = new DescriptiveStatistics[tthread_num];
             Help_Log_begin = new long[tthread_num];
             Help_Log_backup_acc = new double[tthread_num];
+            transaction_construction_time = new DescriptiveStatistics[tthread_num];
+            transaction_construction_begin = new long[tthread_num];
+            transaction_construction_acc = new double[tthread_num];
             transaction_run_time = new DescriptiveStatistics[tthread_num];
+            transaction_post_time = new DescriptiveStatistics[tthread_num];
+            transaction_begin_time = new long[tthread_num];
+            transaction_post_begin_time = new long[tthread_num];
             for (int i = 0 ; i < tthread_num; i++){
                 Help_Log[i] = new DescriptiveStatistics();
                 Help_Log_begin[i] = 0;
                 Help_Log_backup_acc[i] = 0;
-                transaction_run_time[i]=new DescriptiveStatistics();
+                transaction_construction_time[i] = new DescriptiveStatistics();
+                transaction_construction_begin[i] = 0;
+                transaction_construction_acc[i] = 0;
+                transaction_run_time[i]  =new DescriptiveStatistics();
+                transaction_begin_time[i] = 0;
+                transaction_post_time[i] = new DescriptiveStatistics();
+                transaction_post_begin_time[i] = 0;
             }
-            transaction_begin_time=new long[tthread_num];
             //not used
         }
     }

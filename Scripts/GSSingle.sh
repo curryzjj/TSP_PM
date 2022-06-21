@@ -2,14 +2,14 @@
 function ResetParameters() {
   app="GS_txn"
   FTOptions=0
-  failureModel=2
-  failureFrequency=4
+  failureModel=0
+  failureFrequency=0
   tthreads=16
   snapshot=10
 
   #System Configurations
   Arrival_Control=1
-  targetHz=80000
+  targetHz=200000
   timeSliceLengthMs=1000
   input_store_batch=10000
   #shellcheck disable=SC2006
@@ -17,7 +17,7 @@ function ResetParameters() {
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
   #Workload Configurations
   NUM_ITEMS=163840
-  NUM_EVENTS=16000000
+  NUM_EVENTS=8000000
   ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0
@@ -81,15 +81,6 @@ function baselineEvaluation() {
       do runFTStream
       done
   ResetParameters
-  RATIO_OF_READ=50
-   for FTOptions in 0 1 2 3 4
-      do runFTStream
-      done
-  ResetParameters
-  RATIO_OF_READ=950
-   for FTOptions in 0 1 2 3 4
-      do runFTStream
-      done
 }
 sudo rm -rf /mnt/nvme0n1p1/jjzhao/app/benchmarks/gstxn/Skew01.dat
 sudo rm -rf /mnt/nvme0n1p1/jjzhao/app/txngs/checkpoint

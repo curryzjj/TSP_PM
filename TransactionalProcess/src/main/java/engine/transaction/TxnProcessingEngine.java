@@ -212,7 +212,7 @@ public class TxnProcessingEngine {
     }
     private void process(Operation operation, int mark_id, LogRecord logRecord, boolean cleanVersion) {
         if (cleanVersion) {
-            operation.s_record.clean_map(this.markerId);
+            operation.s_record.clean_map();
         }
         if(operation.bid == failureTime){
           if(enable_states_lost){
@@ -291,7 +291,7 @@ public class TxnProcessingEngine {
                 assert operation.record_ref != null;
                 if (app.equals("SL_txn")) {//used in SL
                     SL_Transfer_Fun(operation,true);
-                    if (operation.record_ref.isEmpty()) {
+                    if (operation.condition_records[0].readPreValues(operation.bid) != null) {
                         operation.record_ref.setRecord(operation.condition_records[0].readPreValues(operation.bid));
                     }
                 }

@@ -30,6 +30,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                             this.markerId = in.getBID();
                             if (TXN_PROCESS_FT()){
                                 /* When the wal is completed, the data can be consumed by the outside world */
+                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                             }
                             break;
@@ -38,6 +39,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                             this.isSnapshot = true;
                             if (TXN_PROCESS_FT()){
                                 /* When the wal is completed, the data can be consumed by the outside world */
+                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                             }
                             break;
@@ -45,6 +47,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                             this.markerId = in.getBID();
                             if(TXN_PROCESS_FT()){
                                 /* All the data has been executed */
+                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                             }
                             this.context.stop_running();
@@ -67,8 +70,10 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
+                MeasureTools.startPostTransaction(thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
+                MeasureTools.finishPostTransaction(thread_Id, System.nanoTime());
                 this.SyncCommitLog();
                 LREvents.clear();//clear stored events.
                 BUFFER_PROCESS();
