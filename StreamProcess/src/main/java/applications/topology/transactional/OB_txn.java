@@ -8,6 +8,7 @@ import applications.bolts.transactional.ob.OBBolt_TStream_NoFT;
 import applications.bolts.transactional.ob.OBBolt_TStream_Snapshot;
 import applications.bolts.transactional.ob.OBBolt_TStream_Wal;
 import applications.events.InputDataGenerator.ImplDataGenerator.OBDataGenerator;
+import applications.events.InputDataStore.ImplDataStore.OBInputStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.exception.InvalidIDException;
@@ -45,7 +46,7 @@ public class OB_txn extends TransactionalTopology {
     public Topology buildTopology() {
        try{
            spout.setFields(new Fields(OnlineBidingSystemConstants.Field.TEXT));
-           spout.setInputDataGenerator(new OBDataGenerator());
+           spout.setInputStore(new OBInputStore());
            builder.setSpout(OnlineBidingSystemConstants.Component.SPOUT,spout,spoutThreads);
            Grouping grouping;
            if (enable_key_based) {

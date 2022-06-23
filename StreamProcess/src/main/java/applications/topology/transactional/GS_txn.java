@@ -8,6 +8,7 @@ import applications.bolts.transactional.gs.GSBolt_TStream_NoFT;
 import applications.bolts.transactional.gs.GSBolt_TStream_Snapshot;
 import applications.bolts.transactional.gs.GSBolt_TStream_Wal;
 import applications.events.InputDataGenerator.ImplDataGenerator.GSDataGenerator;
+import applications.events.InputDataStore.ImplDataStore.GSInputStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.exception.InvalidIDException;
@@ -46,7 +47,7 @@ public class GS_txn extends TransactionalTopology {
     public Topology buildTopology() {
         try {
             spout.setFields(new Fields(GrepSumConstants.Field.TEXT));
-            spout.setInputDataGenerator(new GSDataGenerator());
+            spout.setInputStore(new GSInputStore());
             builder.setSpout(Component.SPOUT,spout,spoutThreads);
             Grouping grouping;
             if (enable_key_based) {

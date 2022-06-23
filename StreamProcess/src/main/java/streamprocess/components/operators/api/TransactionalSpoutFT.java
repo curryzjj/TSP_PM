@@ -2,7 +2,7 @@ package streamprocess.components.operators.api;
 
 import System.measure.MeasureTools;
 import System.tools.SortHelper;
-import applications.events.InputDataGenerator.InputDataGenerator;
+import applications.events.InputDataStore.InputStore;
 import applications.events.TxnEvent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -25,7 +25,7 @@ import static UserApplications.CONTROL.*;
 public abstract class TransactionalSpoutFT extends AbstractSpout implements emitMarker {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionalSpoutFT.class);
     private static final long serialVersionUID = 7501673262740197416L;
-    protected InputDataGenerator inputDataGenerator;
+    protected InputStore inputStore;
     protected Queue<List<TxnEvent>> inputQueue;
     protected long previous_bid=-1;
     protected long epoch_size=0;
@@ -36,6 +36,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected HashMap<Long,MultiStreamInFlightLog.BatchEvents> recoveryEvents;
     protected List<Integer> recoveryIDs = new ArrayList<>();
     protected List<Integer> downExecutorIds = new ArrayList<>();
+    protected Queue<Long> storedSnapshotOffsets = new ArrayDeque<>();
 
     protected int tthread;
     protected long start_time;
@@ -78,11 +79,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 return false;
             }
         }else {
-            if(bid%(checkpoint_interval*batch_number_per_wm)==0){
-                return true;
-            }else {
-                return false;
-            }
+            return bid % (checkpoint_interval * batch_number_per_wm) == 0;
         }
     }
     public void forward_marker(int sourceId, long bid, Marker marker, String msg) throws InterruptedException{
@@ -95,6 +92,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 if(snapshot()){
                     msg = "snapshot";
                     checkpoint_counter ++;
+                    this.inputStore.switchInputStorePath(bid);
                 }
             }
             if (msg.equals("snapshot") || enable_wal) {
@@ -149,8 +147,8 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     }
 
     protected abstract void loadInputFromSSD() throws FileNotFoundException;
-    protected abstract TxnEvent replayInputFromSSD();
-    protected abstract void replayInput() throws InterruptedException;
+    protected abstract TxnEvent replayInputFromSSD() throws FileNotFoundException;
+    protected abstract void replayInput() throws InterruptedException, FileNotFoundException;
 
 
     @Override

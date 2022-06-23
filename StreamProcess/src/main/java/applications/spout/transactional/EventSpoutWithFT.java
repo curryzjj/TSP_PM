@@ -3,7 +3,7 @@ package applications.spout.transactional;
 import System.constants.BaseConstants;
 import System.measure.MeasureTools;
 import System.util.OsUtils;
-import applications.events.InputDataGenerator.InputDataGenerator;
+import applications.events.InputDataStore.InputStore;
 import applications.events.SL.DepositEvent;
 import applications.events.SL.TransactionEvent;
 import applications.events.gs.MicroEvent;
@@ -67,7 +67,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         this.batch_number_per_wm = config.getInt("batch_number_per_wm");
         this.checkpoint_interval = config.getInt("snapshot");
         Data_path = Data_path.concat(path);
-        inputDataGenerator.initialize(Data_path,config);
+        inputStore.initialize(Data_path);
         this.inputQueue = this.getContext().getEventGenerator().getEventsQueue();
         this.start_time = System.currentTimeMillis();
         this.time_Interval=config.getInt("time_Interval");
@@ -96,7 +96,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             if(events.size() != 0){
                 if(enable_input_store){
                     MeasureTools.Input_store_begin(System.nanoTime());
-                    this.inputDataGenerator.storeInput(events);
+                    this.inputStore.storeInput(events);
                     MeasureTools.Input_store_finish();
                 }
                 if (enable_measure) {
@@ -127,21 +127,15 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
 
     @Override
     protected void loadInputFromSSD() throws FileNotFoundException {
-        MeasureTools.Input_load_begin(System.nanoTime());
         long msg = lastSnapshotOffset;
-        bid = 0;
-        openFile(Data_path);
-        while (lastSnapshotOffset != 0){
-            scanner.nextLine();
-            lastSnapshotOffset--;
-            bid ++;
-        }
-        MeasureTools.Input_load_finish(System.nanoTime());
-        LOG.info("The input data have been load to the offset "+msg);
+        bid = lastSnapshotOffset;
+        this.storedSnapshotOffsets.addAll(this.inputStore.getStoredSnapshotOffsets(lastSnapshotOffset));
+        openFile(Data_path.concat(this.inputStore.getInputStorePath(storedSnapshotOffsets.poll())));
+        LOG.info("The input data have been load to the offset " + msg);
     }
 
     @Override
-    protected void replayInput() throws InterruptedException {
+    protected void replayInput() throws InterruptedException, FileNotFoundException {
         MeasureTools.ReExecute_time_begin(System.nanoTime());
         while(replay) {
             TxnEvent event = replayInputFromSSD();
@@ -158,7 +152,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
 
 
     @Override
-    protected TxnEvent replayInputFromSSD() {
+    protected TxnEvent replayInputFromSSD() throws FileNotFoundException {
         if(scanner.hasNextLine()){
             TxnEvent event;
             String read = scanner.nextLine();
@@ -263,17 +257,22 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             }
             return event;
         }else{
-            scanner.close();
-            LOG.info("The number of lost data is " + lostData);
-            replay = false;
-            return null;
+            if (storedSnapshotOffsets.size() != 0){
+                openFile(Data_path.concat(this.inputStore.getInputStorePath(storedSnapshotOffsets.poll())));
+                return replayInputFromSSD();
+            } else {
+                scanner.close();
+                LOG.info("The number of lost data is " + lostData);
+                replay = false;
+                return null;
+            }
         }
     }
     private void openFile(String fileName) throws FileNotFoundException {
         scanner = new Scanner(new File(fileName), "UTF-8");
     }
     @Override
-    public void setInputDataGenerator(InputDataGenerator inputDataGenerator) {
-        this.inputDataGenerator = inputDataGenerator;
+    public void setInputStore(InputStore inputStore) {
+        this.inputStore = inputStore;
     }
 }

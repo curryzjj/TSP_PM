@@ -9,6 +9,7 @@ import applications.bolts.transactional.sl.SLBolt_TStream_NoFT;
 import applications.bolts.transactional.sl.SLBolt_TStream_Snapshot;
 import applications.bolts.transactional.sl.SLBolt_TStream_Wal;
 import applications.events.InputDataGenerator.ImplDataGenerator.SLDataGenerator;
+import applications.events.InputDataStore.ImplDataStore.SLInputStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.exception.InvalidIDException;
@@ -46,7 +47,7 @@ public class SL_txn extends TransactionalTopology {
     public Topology buildTopology() {
         try{
             spout.setFields(new Fields(StreamLedgerConstants.Field.TEXT));
-            spout.setInputDataGenerator(new SLDataGenerator());
+            spout.setInputStore(new SLInputStore());
             builder.setSpout(StreamLedgerConstants.Component.SPOUT,spout,spoutThreads);
             Grouping grouping;
             if (enable_key_based) {

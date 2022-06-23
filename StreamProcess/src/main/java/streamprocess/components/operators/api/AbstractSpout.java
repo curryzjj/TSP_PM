@@ -3,7 +3,7 @@ package streamprocess.components.operators.api;
 import System.constants.BaseConstants;
 import System.spout.helper.wrapper.StringStatesWrapper;
 import System.util.OsUtils;
-import applications.events.InputDataGenerator.InputDataGenerator;
+import applications.events.InputDataStore.InputStore;
 import org.slf4j.Logger;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
@@ -170,7 +170,7 @@ public abstract class AbstractSpout extends Operator {
     }
     //end
     //createInput for FileSpout
-    public void setInputDataGenerator(InputDataGenerator inputDataGenerator){}
+    public void setInputStore(InputStore inputStore){}
 
     public abstract void recoveryInput(long offset, List<Integer> recoveryPartitionIds, long alignOffset) throws FileNotFoundException, InterruptedException;
 
