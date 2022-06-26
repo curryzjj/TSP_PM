@@ -55,11 +55,11 @@ public class Metrics {
 
         public static ConcurrentHashMap<Integer,Double> Avg_WaitTime;
         public static ConcurrentHashMap<Integer,Double> Avg_CommitTime;
-        public static void Initialize(int tthread_num) {
-            upstream_backup_time = new DescriptiveStatistics[tthread_num + 1];
-            upstream_backup_begin = new long[tthread_num + 1];
-            upstream_backup_acc = new double[tthread_num + 1];
-            for (int i = 0 ; i <= tthread_num; i++){
+        public static void Initialize(int tthread_num, int spoutThread) {
+            upstream_backup_time = new DescriptiveStatistics[tthread_num + spoutThread];
+            upstream_backup_begin = new long[tthread_num + spoutThread];
+            upstream_backup_acc = new double[tthread_num + spoutThread];
+            for (int i = 0 ; i < tthread_num + spoutThread; i++){
                 upstream_backup_time[i] = new DescriptiveStatistics();
                 upstream_backup_begin[i] = 0;
                 upstream_backup_acc[i] = 0;
@@ -120,7 +120,7 @@ public class Metrics {
     }
     public static final LocalFileSystem localFileSystem=new LocalFileSystem();
     public static int FT;
-    public static void Initialize(int partition_num,int tthread_num,int FT_) {
+    public static void Initialize(int partition_num,int FT_) {
         snapshot_file_size = new DescriptiveStatistics[partition_num];
         wal_file_size = new DescriptiveStatistics[partition_num];
         previous_wal_file_size = new long[partition_num];

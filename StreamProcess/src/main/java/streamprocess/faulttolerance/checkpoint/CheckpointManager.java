@@ -53,8 +53,8 @@ public class CheckpointManager extends FTManager {
         this.callRecovery = new ConcurrentHashMap<>();
         this.lock = new Object();
         this.conf = conf;
-        this.g=g;
-        this.db=db;
+        this.g = g;
+        this.db = db;
         this.close=false;
         if(OsUtils.isMac()){
             this.Current_Path = new Path(System.getProperty("user.home").concat(conf.getString("checkpointTestPath")),"CURRENT");
@@ -85,7 +85,7 @@ public class CheckpointManager extends FTManager {
     }
     public boolean spoutRegister(long checkpointId){
         this.SnapshotOffset.add(checkpointId);
-        LOG.debug("Spout register the checkpoint with the checkpointId= "+checkpointId);
+        LOG.info("Spout register the checkpoint with the checkpointId= "+checkpointId);
         return true;
     }
     public void boltRegister(int executorId,FaultToleranceConstants.FaultToleranceStatus status){
@@ -94,7 +94,7 @@ public class CheckpointManager extends FTManager {
         }else{
             callRecovery.put(executorId,status);
         }
-        LOG.debug("executor("+executorId+")"+" register the "+status);
+        LOG.info("executor("+executorId+")"+" register the "+status);
     }
 
     @Override
@@ -111,7 +111,7 @@ public class CheckpointManager extends FTManager {
     }
     private void callRecovery_ini(){
         for (ExecutionNode e:g.getExecutionNodeArrayList()){
-            if(!e.isLeafNode()&&!e.op.IsStateful()){
+            if(!e.isLeafNode() && !e.op.IsStateful()){
                 this.callRecovery.put(e.getExecutorID(),NULL);
             }
         }
@@ -131,7 +131,9 @@ public class CheckpointManager extends FTManager {
                 if(callSnapshot.containsValue(Recovery)){
                     LOG.info("CheckpointManager received all register and start recovery");
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(checkpointFile);
-                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, lastSnapshotResult.getCheckpointId());
+                    for(int id:callRecovery.keySet()){
+                        g.getExecutionNode(id).recoveryInput(lastSnapshotResult.getCheckpointId(),null, lastSnapshotResult.getCheckpointId());
+                    }
                     MeasureTools.State_load_begin(System.nanoTime());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     MeasureTools.State_load_finish(System.nanoTime());
@@ -182,7 +184,7 @@ public class CheckpointManager extends FTManager {
         dataOutputStream.writeInt(len);
         dataOutputStream.write(result);
         dataOutputStream.close();
-        LOG.debug("CheckpointManager commit the checkpoint to the current.log");
+        LOG.info("CheckpointManager commit the checkpoint to the current.log");
         return true;
     }
     public void notifyBoltComplete() throws Exception {

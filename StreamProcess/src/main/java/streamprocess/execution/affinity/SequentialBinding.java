@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 public class SequentialBinding {
     private static final Logger LOG= LoggerFactory.getLogger(SequentialBinding.class);
-    static int socket=0;
+    static int socket = 1;
     static int cpu = 0;
     static int cpu_for_db;
     public static void SequentialBindingDB(){
@@ -30,15 +30,15 @@ public class SequentialBinding {
             cpu++;
             return core;
         }else {
-            if (socket == 1 && cpu == 20) {
+            if (socket == 0 && cpu == 20) {
                 throw new UnsupportedOperationException("out of cores!");
             }
             ArrayList[] mapping_node = Platform.getNodes(1);
             ArrayList<Integer> list = mapping_node[socket];
             Integer core = list.get(cpu);
-            cpu++;
+            cpu ++;
             if (cpu == 20) {
-                socket++;
+                socket--;
                 cpu = 0;
             }
             return core;

@@ -188,7 +188,7 @@ public class  AppRunner extends baseRunner {
     private void run() throws UnhandledCaseException, InterruptedException, IOException {
         LoadConfiguration();
         //set the MeasureTool
-        MeasureTools tools = new MeasureTools(config.getInt("partition_num"), config.getInt("executor.threads"), config.getInt("FTOptions"));
+        MeasureTools tools = new MeasureTools(config.getInt("partition_num"), config.getInt("spoutThread"), config.getInt("FTOptions"));
         //Get the descriptor for thr given application
         AppDriver.AppDescriptor app = driver.getApp(application);
         // In case topology names is given, create one

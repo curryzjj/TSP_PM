@@ -42,16 +42,15 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected long start_time;
     protected long time_Interval;//ms
 
-    //TODO:BufferedWrite
-
     protected int taskId;
-    protected long bid=0;
+    protected long count = 0;
     protected boolean earlier_finish = false;
     public int empty=0;
 
-    protected int batch_number_per_wm;
+    protected int batch_number_per_spout;
     protected int checkpoint_interval;
-    protected int checkpoint_counter=0;
+    protected int checkpoint_counter = 0;
+    protected List<Long> markerIds = new ArrayList<>();
     protected MultiStreamInFlightLog multiStreamInFlightLog;
 
     protected TransactionalSpoutFT(Logger log) {
@@ -64,53 +63,52 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public abstract void nextTuple(int batch) throws InterruptedException, IOException;
     public boolean marker(){
-        if( bid % batch_number_per_wm==0){
-            return true;
-        }else {
-            return false;
-        }
+        return count % batch_number_per_spout == 0;
     }
     public boolean snapshot(){
         if(Time_Control){
-            if(System.currentTimeMillis()-start_time>=time_Interval){
+            if(System.currentTimeMillis() - start_time >= time_Interval){
                 this.start_time=System.currentTimeMillis();
                 return true;
             }else {
                 return false;
             }
         }else {
-            return bid % (checkpoint_interval * batch_number_per_wm) == 0;
+            return count % ((long) checkpoint_interval * batch_number_per_spout) == 0;
         }
     }
     public void forward_marker(int sourceId, long bid, Marker marker, String msg) throws InterruptedException{
-        forward_marker(sourceId,DEFAULT_STREAM_ID,bid,marker,msg);
+        forward_marker(sourceId, DEFAULT_STREAM_ID, bid, marker, msg);
     }
     @Override
     public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
         if (this.marker()) {//emit marker tuple
+            long markerId = markerIds.get((int) (count / batch_number_per_spout) - 1);
             if(enable_snapshot){
                 if(snapshot()){
                     msg = "snapshot";
                     checkpoint_counter ++;
-                    this.inputStore.switchInputStorePath(bid);
+                    this.inputStore.switchInputStorePath(markerId);
                 }
             }
             if (msg.equals("snapshot") || enable_wal) {
-                this.getContext().getFTM().spoutRegister(bid);
+                if (this.taskId == 0) { //Only the leader register
+                    this.getContext().getFTM().spoutRegister(markerId);
+                }
             }
-            LOG.info(executor.getOP_full() + " emit " + msg + " of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + bid);
+            LOG.info(executor.getOP_full() + " emit " + msg + " of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + markerId);
             boardcast_time = System.nanoTime();
-            collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration, msg);
+            collector.create_marker_boardcast(boardcast_time, streamId, markerId, myiteration, msg);
             if(enable_upstreamBackup) {
                 if (msg.equals("snapshot")) {
-                    multiStreamInFlightLog.addEpoch(bid, DEFAULT_STREAM_ID);
+                    multiStreamInFlightLog.addEpoch(markerId, DEFAULT_STREAM_ID);
                 }
-                multiStreamInFlightLog.addBatch(bid, DEFAULT_STREAM_ID);
+                multiStreamInFlightLog.addBatch(markerId, DEFAULT_STREAM_ID);
             }
             myiteration++;
             success = false;
-            epoch_size = bid - previous_bid;
-            previous_bid = bid;
+            epoch_size = markerId - previous_bid;
+            previous_bid = markerId;
         }
     }
     public void registerRecovery() throws InterruptedException {
@@ -159,11 +157,11 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     }
     public void stopRunning() throws InterruptedException {
         if(enable_wal|| enable_checkpoint ||enable_clr){
-            this.getContext().getFTM().spoutRegister(bid);
+            this.getContext().getFTM().spoutRegister(count);
         }
-        LOG.info(executor.getOP_full() + " emit " + "finish" + " of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + bid);
+        LOG.info(executor.getOP_full() + " emit " + "finish" + " of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + exe);
         boardcast_time = System.nanoTime();
-        collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "finish");
+        collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, exe, myiteration, "finish");
         try {
             clock.close();
             //inputDataGenerator.close();

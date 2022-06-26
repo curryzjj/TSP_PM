@@ -18,7 +18,7 @@ import static System.Constants.Mac_Data_Path;
 public abstract class AbstractSpout extends Operator {
 
     //the following are used for shapshot(marker)
-    protected int myiteration=0;//
+    protected int myiteration = 0;//
     protected boolean success=true;
     protected long boardcast_time;
     //end

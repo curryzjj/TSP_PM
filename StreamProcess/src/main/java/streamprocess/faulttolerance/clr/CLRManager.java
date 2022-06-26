@@ -127,7 +127,9 @@ public class CLRManager extends FTManager {
                     }
                     LOG.info("Recovery partitions are " + recoveryIds.toString() + " Align offset is  " + alignOffset);
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(SnapshotFile);
-                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(), recoveryIds, alignOffset);
+                    for (int id : callRecovery.keySet()) {
+                        g.getExecutionNode(id).recoveryInput(lastSnapshotResult.getCheckpointId(), recoveryIds, alignOffset);
+                    }
                     //undo to align offset
                     MeasureTools.Align_time_begin(System.nanoTime());
                     if (enable_align_wait) {
@@ -176,8 +178,10 @@ public class CLRManager extends FTManager {
         dataOutputStream.write(result);
         dataOutputStream.close();
         LOG.info("CLRManager commit the checkpoint to the current.log");
-        g.getSpout().ackCommit(checkpointId);
         g.getSink().ackCommit(checkpointId);
+        for (int sId : this.callRecovery.keySet()) {
+            g.getExecutionNode(sId).ackCommit(checkpointId);
+        }
         for (int eId : this.callFaultTolerance.keySet()) {
             g.getExecutionNode(eId).ackCommit(checkpointId);
         }

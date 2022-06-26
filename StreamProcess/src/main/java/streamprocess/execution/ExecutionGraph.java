@@ -44,9 +44,9 @@ public class ExecutionGraph implements Serializable {
     private boolean common;//OutputController shared by multi consumers
     //some Constructors
     public ExecutionGraph(Topology topo, Map<String, Integer> parallelism, Configuration conf){
-        executionNodeArrayList=new ArrayList<>();
-        this.conf=conf;
-        this.topology=topo;
+        executionNodeArrayList = new ArrayList<>();
+        this.conf = conf;
+        this.topology = topo;
         this.global_tuple_scheduler=topo.getScheduler();
         Configuration(this.topology, parallelism, conf, topology.getPlatform());
     }

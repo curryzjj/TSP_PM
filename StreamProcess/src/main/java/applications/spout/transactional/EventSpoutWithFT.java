@@ -64,13 +64,17 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             Data_path = Node22_Data_Path;
         }
         this.exe = NUM_EVENTS;
-        this.batch_number_per_wm = config.getInt("batch_number_per_wm");
-        this.checkpoint_interval = config.getInt("snapshot");
+        this.batch_number_per_spout = config.getInt("batch_number_per_wm") / config.getInt("spoutThread");
+        this.checkpoint_interval = config.getInt("snapshot") / config.getInt("spoutThread");
+        int batch_number_per_wm = config.getInt("batch_number_per_wm");
+        for (long i = batch_number_per_wm; i <= exe; i = i + batch_number_per_wm) {
+            this.markerIds.add(i);
+        }
         Data_path = Data_path.concat(path);
         inputStore.initialize(Data_path);
-        this.inputQueue = this.getContext().getEventGenerator().getEventsQueue();
+        this.inputQueue = this.getContext().getEventGenerator().getEventsQueue(thisTaskId);
         this.start_time = System.currentTimeMillis();
-        this.time_Interval=config.getInt("time_Interval");
+        this.time_Interval = config.getInt("time_Interval");
         if (enable_upstreamBackup){
             multiStreamInFlightLog = new MultiStreamInFlightLog(this.executor.operator);
         }
@@ -103,16 +107,16 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                     MeasureTools.SetWaitTime((System.nanoTime() - events.get(0).getTimestamp()) / 1E6);
                 }
                 for (TxnEvent input : events) {
-                    int targetId = collector.emit_single(DEFAULT_STREAM_ID, bid, input);
-                    bid ++;
+                    int targetId = collector.emit_single(DEFAULT_STREAM_ID, count, input);
+                    count ++;
                     if (enable_upstreamBackup) {
                         MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
                         //TODO: clone the input
                         TxnEvent event = input.cloneEvent();
-                        multiStreamInFlightLog.addEvent(event.getPid(), DEFAULT_STREAM_ID, input);
+                        multiStreamInFlightLog.addEvent(event.getPid(), DEFAULT_STREAM_ID, event);
                         MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                     }
-                    forward_marker(this.taskId, bid, null, "marker");
+                    forward_marker(this.taskId, input.getBid(), null, "marker");
                 }
                 if (enable_upstreamBackup) {
                     MeasureTools.Upstream_backup_finish_acc(this.executor.getExecutorID());
@@ -128,10 +132,16 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     @Override
     protected void loadInputFromSSD() throws FileNotFoundException {
         long msg = lastSnapshotOffset;
-        bid = lastSnapshotOffset;
+        count = lastSnapshotOffset / this.executor.operator.getNumTasks();
         this.storedSnapshotOffsets.addAll(this.inputStore.getStoredSnapshotOffsets(lastSnapshotOffset));
         openFile(Data_path.concat(this.inputStore.getInputStorePath(storedSnapshotOffsets.poll())));
-        LOG.info("The input data have been load to the offset " + msg);
+        long eachAlignNumber = this.AlignMarkerId / this.executor.operator.getNumTasks() - count;
+        while (eachAlignNumber != 0){
+            scanner.nextLine();
+            count ++;
+            eachAlignNumber --;
+        }
+        LOG.info("The input data have been load to the offset " + this.AlignMarkerId);
     }
 
     @Override
@@ -140,12 +150,12 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         while(replay) {
             TxnEvent event = replayInputFromSSD();
             if (event != null) {
-                if (!enable_clr || bid >= AlignMarkerId || recoveryIDs.contains(event.getPid())) {
-                    collector.emit_single(DEFAULT_STREAM_ID, bid, event);
+                if (!enable_clr || count >= AlignMarkerId || recoveryIDs.contains(event.getPid())) {
+                    collector.emit_single(DEFAULT_STREAM_ID, count, event);
                     lostData ++;
                 }
-                bid ++;
-                forward_marker(this.taskId, bid, null, "marker");
+                count++;
+                forward_marker(this.taskId, count, null, "marker");
             }
         }
     }

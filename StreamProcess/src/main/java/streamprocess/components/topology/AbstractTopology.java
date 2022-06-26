@@ -39,9 +39,9 @@ public abstract class AbstractTopology  {
         return loadSpout(BaseConstants.BaseConf.SPOUT_CLASS, getConfigPrefix());
     }
     protected AbstractSpout loadSpout(String configKey, String configPrefix){
-        String spoutClass=config.getString(String.format(configKey,configPrefix));
+        String spoutClass  = config.getString(String.format(configKey,configPrefix));
         AbstractSpout spout;
-        spout=(AbstractSpout) ClassLoaderUtils.newInstance(spoutClass,"spout",getLogger());
+        spout = (AbstractSpout) ClassLoaderUtils.newInstance(spoutClass,"spout", getLogger());
         spout.setConfigPrefix(configPrefix);
         return spout;
     }

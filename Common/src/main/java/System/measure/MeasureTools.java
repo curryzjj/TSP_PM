@@ -22,10 +22,10 @@ import static java.nio.file.StandardOpenOption.APPEND;
 
 public class MeasureTools {
     private static final Logger LOG = LoggerFactory.getLogger(MeasureTools.class);
-    public MeasureTools(int partition_num,int tthread_num , int FT_) {
-        Metrics.Initialize(partition_num,tthread_num,FT_);
+    public MeasureTools(int partition_num, int spoutThread , int FT_) {
+        Metrics.Initialize(partition_num, FT_);
         Metrics.Performance.Initialize();
-        Metrics.Runtime_Breakdown.Initialize(tthread_num);
+        Metrics.Runtime_Breakdown.Initialize(partition_num, spoutThread);
         Metrics.Recovery_Breakdown.Initialize();
     }
     //Wait time measure
@@ -369,7 +369,7 @@ public class MeasureTools {
                         , input_store_time.getMean()
                         , Snapshot_time.getMean() - transaction_post_time[threadId].getMean()
                         , Help_Log[threadId].getMean()
-                        , upstream_backup_time[threadId].getMean() + upstream_backup_time[0].getMean()
+                        , upstream_backup_time[threadId + 1].getMean() + upstream_backup_time[0].getMean()
                         , transaction_construction_time[threadId].getMean()
                         , transaction_run_time[threadId].getMean()
                         , transaction_post_time[threadId].getMean() - upstream_backup_time[threadId].getMean()

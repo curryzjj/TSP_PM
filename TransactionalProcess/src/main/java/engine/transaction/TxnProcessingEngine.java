@@ -291,9 +291,7 @@ public class TxnProcessingEngine {
                 assert operation.record_ref != null;
                 if (app.equals("SL_txn")) {//used in SL
                     SL_Transfer_Fun(operation,true);
-                    if (operation.condition_records[0].readPreValues(operation.bid) != null) {
-                        operation.record_ref.setRecord(operation.condition_records[0].readPreValues(operation.bid));
-                    }
+                    operation.record_ref.setRecord(operation.condition_records[0].readPreValues(operation.bid));
                 }
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.d_record);

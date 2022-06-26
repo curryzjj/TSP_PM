@@ -13,14 +13,14 @@ public class Platform {
             return new ArrayList[]{
                     node_0
             };
-        }else if(machine==1){//node22 low SSD
+        }else if(machine==1){//node22
             Integer[] no_0 = {19, 18, 17, 16, 15, 14,13,12,11,10,9,8,7,6,5,4,3,2,1,0};
             node_0 = new ArrayList<>(Arrays.asList(no_0));
-            Integer[] no_1 = {39, 38, 37, 36, 35, 34,33,32,31,30,29,28,27,26,25,24,23,22,21,20};
+            Integer[] no_1 = {39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20};
             ArrayList<Integer>node_1 = new ArrayList<>(Arrays.asList(no_1));
             return new ArrayList[]{node_0,
                     node_1};
-        } if (machine==2){//node12 Optane SSD
+        } if (machine==2){//node12
             Integer[] no_0={7,6,5,4,3,2,1,0,23,22,21,20,19, 18, 17,16};
             node_0=new ArrayList<>(Arrays.asList(no_0));
             Integer[] no_1={15, 14,13,12,11,10,9,8,31,30,29,28,27,26,25,24};

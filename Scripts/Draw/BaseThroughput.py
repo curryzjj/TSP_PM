@@ -2,13 +2,13 @@ import getopt
 import os
 import sys
 
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-import pylab
-from matplotlib.font_manager import FontProperties
-from matplotlib.ticker import LinearLocator, LogLocator, MaxNLocator
-from numpy import double
+#import matplotlib
+#import matplotlib.pyplot as plt
+#import numpy as np
+#import pylab
+#from matplotlib.font_manager import FontProperties
+#from matplotlib.ticker import LinearLocator, LogLocator, MaxNLocator
+#from numpy import double
 
 FILE_FOLDER = "/home/jjzhao/app/results"
 
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     try:
         opts, args = getopt.getopt(sys.argv[1:], "t:e:i:a:z:r:ab:d:p:t")
     except getopt.GetoptError:
-        print
+        print("Error")
     for opt, arg in opts:
         if opt in ['-t']:
             targetHz = int(arg)

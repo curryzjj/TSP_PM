@@ -30,10 +30,11 @@ public class EventGenerator extends Thread {
     private long finishTime;
     private long lastFinishTime;
     private long busyTime=0;
-    private int spoutThreads;
     private CountDownLatch latch;
-    //<ExecutorId, inputQueue>
-    public HashMap<Integer, Queue<TxnEvent>> EventsQueues = new HashMap<>();
+    //<spoutId, inputQueue>
+    public HashMap<Integer, Queue<List<TxnEvent>>> EventsQueues = new HashMap<>();
+    private int spoutThreads;
+    private int currentTaskId = 0;
     public Queue<List<TxnEvent>> EventsQueue;
     private final long exe;
     private Configuration configuration;
@@ -42,13 +43,13 @@ public class EventGenerator extends Thread {
         this.loadTargetHz = configuration.getInt("targetHz");
         this.timeSliceLengthMs = configuration.getInt("timeSliceLengthMs");
         this.elements = this.loadPerTimeslice();
-        this.EventsQueue = new MpscArrayQueue<>(20000000);
+        this.exe = configuration.getInt("NUM_EVENTS");
+        this.EventsQueue = new MpscArrayQueue<>((int)exe);
         this.batch = configuration.getInt("input_store_batch");
         spoutThreads = configuration.getInt("spoutThread", 1);//now read from parameters.
-        this.exe = configuration.getInt("NUM_EVENTS");
         this.latch = latch;
         for (int i = 0; i < spoutThreads; i++) {
-            EventsQueues.put(i, new MpscArrayQueue<>((int) (exe/spoutThreads)));
+            EventsQueues.put(i, new MpscArrayQueue<>((int) (exe / spoutThreads)));
         }
     }
 
@@ -81,12 +82,18 @@ public class EventGenerator extends Thread {
         while (circle != 0){
             List<TxnEvent> events = DataHolder.ArrivalData(batch);
             if(events.size() == batch){
-                this.EventsQueue.offer(events);
+                this.EventsQueues.get(currentTaskId).offer(events);
                 circle --;
             }else{
-                this.EventsQueue.offer(events);
+                for (int i = 0 ; i < spoutThreads; i++) {
+                    this.EventsQueues.get(i).offer(events);
+                }
                 this.finishTime = System.nanoTime();
                 return true;
+            }
+            currentTaskId ++;
+            if (currentTaskId == spoutThreads) {
+                currentTaskId = 0;
             }
         }
         // Sleep for the rest of time slice if needed
@@ -139,8 +146,8 @@ public class EventGenerator extends Thread {
         return loadTargetHz * timeSliceLengthMs/1000;//make each spout thread independent
     }
 
-    public Queue<List<TxnEvent>> getEventsQueue() {
-        return EventsQueue;
+    public Queue<List<TxnEvent>> getEventsQueue(int taskId) {
+        return this.EventsQueues.get(taskId);
     }
     //bind Thread
     protected void sequential_binding(){

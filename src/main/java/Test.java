@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.*;
 
 public class Test {
 
@@ -11,8 +8,10 @@ public class Test {
         test.put(3200000L,3200000L);
         test.put(4800000L,4800000L);
         ArrayList<Long> keys = new ArrayList<>(test.keySet());
-        keys.sort((o1, o2) -> o1 > o2 ? 1 : 0);
-        System.out.println(keys.toString());
+        keys.sort((o1, o2) -> o1 > o2 ? 1 : -1);
+        Queue<Long> testQueue = new ArrayDeque<>();
+        testQueue.addAll(keys);
+        System.out.println(testQueue);
     }
     public static int isDigitStr(String str) {
         int num = -1;

@@ -47,11 +47,8 @@ public class SLBolt_TStream_Wal extends SLBolt_TStream{
                             break;
                         case "finish":
                             this.markerId = in.getBID();
-                            if(TXN_PROCESS_FT()){
-                                /* All the data has been executed */
-                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                            }
+                            /* All the data has been executed */
+                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                             this.context.stop_running();
                             break;
                     }
