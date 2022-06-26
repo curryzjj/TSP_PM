@@ -49,7 +49,7 @@ public class EventGenerator extends Thread {
         spoutThreads = configuration.getInt("spoutThread", 1);//now read from parameters.
         this.latch = latch;
         for (int i = 0; i < spoutThreads; i++) {
-            EventsQueues.put(i, new MpscArrayQueue<>((int) (exe / spoutThreads)));
+            EventsQueues.put(i, new MpscArrayQueue<>((int) exe));
         }
     }
 
