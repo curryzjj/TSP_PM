@@ -5,6 +5,7 @@ function ResetParameters() {
   failureModel=0
   failureFrequency=0
   tthreads=16
+  spoutThread=1
   snapshot=10
 
   #System Configurations
@@ -34,6 +35,7 @@ function runFTStream() {
             --failureModel $failureModel \
             --failureFrequency $failureFrequency \
             --tthreads $tthreads \
+            --spoutThread $spoutThread
             --snapshot $snapshot \
             --Arrival_Control $Arrival_Control \
             --targetHz $targetHz \
@@ -57,6 +59,7 @@ function runFTStream() {
               --failureModel $failureModel \
               --failureFrequency $failureFrequency \
               --tthreads $tthreads \
+              --spoutThread $spoutThread \
               --snapshot $snapshot \
               --Arrival_Control $Arrival_Control \
               --targetHz $targetHz \
