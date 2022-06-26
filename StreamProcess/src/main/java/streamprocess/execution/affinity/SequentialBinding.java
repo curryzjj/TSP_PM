@@ -25,7 +25,7 @@ public class SequentialBinding {
                 cpu = 0;
             }
             ArrayList[] mapping_node = Platform.getNodes(0);
-            ArrayList<Integer> list = mapping_node[socket];
+            ArrayList<Integer> list = mapping_node[0];
             Integer core = list.get(cpu);
             cpu++;
             return core;

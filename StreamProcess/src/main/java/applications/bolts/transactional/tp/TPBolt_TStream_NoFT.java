@@ -21,7 +21,7 @@ public class TPBolt_TStream_NoFT extends TPBolt_TStream{
             if (status.isMarkerArrived(in.getSourceTask())) {
                 PRE_EXECUTE(in);
             } else {
-                if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                if (status.allMarkerArrived(in.getSourceTask(), this.executor)){
                     switch (in.getMarker().getValue()) {
                         case "marker":
                             this.markerId = in.getBID();
@@ -54,7 +54,7 @@ public class TPBolt_TStream_NoFT extends TPBolt_TStream{
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        transactionManager.start_evaluate(thread_Id,this.markerId);
+        transactionManager.start_evaluate(thread_Id, this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         MeasureTools.startPostTransaction(thread_Id, System.nanoTime());
         REQUEST_CORE();

@@ -30,7 +30,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements emitMark
     protected int tthread;
     protected int COMPUTE_COMPLEXITY;
     protected int POST_COMPUTE_COMPLEXITY;
-    private int i=0;
+    private int i = 0;
     private int NUM_ITEMS;
     //<UpstreamId,bufferQueue>
     public HashMap<Integer, Queue<Tuple>> bufferedTuples = new HashMap<>();
@@ -81,7 +81,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements emitMark
         bufferedTuples.get(in.getSourceTask()).add(in);
         _bid = in.getBID();
         input_event = in.getValue(0);
-        TxnContext temp=new TxnContext(thread_Id, this.fid, _bid);
+        TxnContext temp = new TxnContext(thread_Id, this.fid, _bid);
         txn_context[0] = temp;
         sum = 0;
     }
