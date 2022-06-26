@@ -107,7 +107,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                     MeasureTools.SetWaitTime((System.nanoTime() - events.get(0).getTimestamp()) / 1E6);
                 }
                 for (TxnEvent input : events) {
-                    int targetId = collector.emit_single(DEFAULT_STREAM_ID, count, input);
+                    int targetId = collector.emit_single(DEFAULT_STREAM_ID, input.getBid(), input);
                     count ++;
                     if (enable_upstreamBackup) {
                         MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());

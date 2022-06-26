@@ -43,6 +43,9 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
         MeasureTools.Transaction_construction_acc(this.thread_Id, System.nanoTime());
     }
     protected boolean REQUEST_CONSTRUCT(TollProcessingEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
+        if (event.getBid() == 5125) {
+            System.out.println();
+        }
         //some process used the transactionManager
         boolean flag = transactionManager.Asy_ModifyRecord_Read(txnContext
                 , "segment_speed"

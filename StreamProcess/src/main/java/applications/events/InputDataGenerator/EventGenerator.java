@@ -56,7 +56,7 @@ public class EventGenerator extends Thread {
     @Override
     public void run() {
         boolean finish = false;
-        sequential_binding();
+        //sequential_binding();
         latch.countDown();//tells others I'm really ready.
         try {
             latch.await();//wait all the thread to be ready
