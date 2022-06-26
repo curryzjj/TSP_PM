@@ -35,7 +35,6 @@ public class EventGenerator extends Thread {
     public HashMap<Integer, Queue<List<TxnEvent>>> EventsQueues = new HashMap<>();
     private int spoutThreads;
     private int currentTaskId = 0;
-    public Queue<List<TxnEvent>> EventsQueue;
     private final long exe;
     private Configuration configuration;
     public EventGenerator(Configuration configuration, CountDownLatch latch){
@@ -44,7 +43,6 @@ public class EventGenerator extends Thread {
         this.timeSliceLengthMs = configuration.getInt("timeSliceLengthMs");
         this.elements = this.loadPerTimeslice();
         this.exe = configuration.getInt("NUM_EVENTS");
-        this.EventsQueue = new MpscArrayQueue<>((int)exe);
         this.batch = configuration.getInt("input_store_batch");
         spoutThreads = configuration.getInt("spoutThread", 1);//now read from parameters.
         this.latch = latch;
@@ -130,14 +128,19 @@ public class EventGenerator extends Thread {
         boolean finish=false;
         while (!finish){
             List<TxnEvent> events = DataHolder.ArrivalData(batch);
-            if(events != null){
-                this.EventsQueue.offer(events);
+            if(events.size() == batch){
+                this.EventsQueues.get(currentTaskId).offer(events);
                 cnt=cnt+batch;
             }else{
-                events = new ArrayList<>();
-                this.EventsQueue.offer(events);
+                for (int i = 0 ; i < spoutThreads; i++) {
+                    this.EventsQueues.get(i).offer(events);
+                }
                 this.finishTime = System.nanoTime();
                 finish = true;
+            }
+            currentTaskId ++;
+            if (currentTaskId == spoutThreads) {
+                currentTaskId = 0;
             }
         }
         return finish;
