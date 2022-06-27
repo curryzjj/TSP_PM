@@ -3,6 +3,7 @@ package applications.events.InputDataStore;
 import System.tools.SortHelper;
 import applications.events.TxnEvent;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
@@ -22,11 +23,23 @@ public abstract class InputStore implements Serializable {
     public void initialize(String path) {
         this.currentOffset = 0L;
         this.inputFile = path;
+        File file = new File(inputFile);
+        if (!file.exists()) {
+            file.mkdirs();
+        }
         this.inputStorePaths.put(currentOffset, UUID.randomUUID().toString());
     }
     public void switchInputStorePath(long currentOffset) {
         this.currentOffset = currentOffset;
         this.inputStorePaths.putIfAbsent(currentOffset, UUID.randomUUID().toString());
+        File file = new File(inputFile.concat(this.inputStorePaths.get(currentOffset)));
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
     public List<Long> getStoredSnapshotOffsets(long lastSnapshotOffset) {
         Set<Long> keySets  = new HashSet<>();
