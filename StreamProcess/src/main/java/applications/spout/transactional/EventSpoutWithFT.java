@@ -71,7 +71,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         this.inputQueue = this.getContext().getEventGenerator().getEventsQueue();
         this.start_time = System.currentTimeMillis();
         this.time_Interval=config.getInt("time_Interval");
-        if (enable_upstreamBackup){
+        if (enable_spoutBackup){
             multiStreamInFlightLog = new MultiStreamInFlightLog(this.executor.operator);
         }
     }
@@ -80,7 +80,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     public void nextTuple(int batch) throws InterruptedException, IOException {
         if (needWaitReplay){
             this.registerRecovery();
-            if (enable_upstreamBackup) {
+            if (enable_spoutBackup) {
                 replayEvents();
             } else{
                 replayInput();
@@ -105,16 +105,16 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 for (TxnEvent input : events) {
                     int targetId = collector.emit_single(DEFAULT_STREAM_ID, bid, input);
                     bid ++;
-                    if (enable_upstreamBackup) {
+                    if (enable_spoutBackup) {
                         MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
                         //TODO: clone the input
                         TxnEvent event = input.cloneEvent();
-                        multiStreamInFlightLog.addEvent(input.getPid(), DEFAULT_STREAM_ID, input);
+                        multiStreamInFlightLog.addEvent(event.getPid(), DEFAULT_STREAM_ID, event);
                         MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                     }
                     forward_marker(this.taskId, bid, null, "marker");
                 }
-                if (enable_upstreamBackup) {
+                if (enable_spoutBackup) {
                     MeasureTools.Upstream_backup_finish_acc(this.executor.getExecutorID());
                 }
             }else{
@@ -131,6 +131,13 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         bid = lastSnapshotOffset;
         this.storedSnapshotOffsets.addAll(this.inputStore.getStoredSnapshotOffsets(lastSnapshotOffset));
         openFile(Data_path.concat(this.inputStore.getInputStorePath(storedSnapshotOffsets.poll())));
+        if (enable_wal) {
+            while (this.AlignMarkerId != 0){
+                scanner.nextLine();
+                lastSnapshotOffset ++;
+                this.AlignMarkerId --;
+            }
+        }
         LOG.info("The input data have been load to the offset " + msg);
     }
 

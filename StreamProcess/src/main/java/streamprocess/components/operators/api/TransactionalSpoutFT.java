@@ -101,7 +101,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
             LOG.info(executor.getOP_full() + " emit " + msg + " of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + bid);
             boardcast_time = System.nanoTime();
             collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration, msg);
-            if(enable_upstreamBackup) {
+            if(enable_spoutBackup) {
                 if (msg.equals("snapshot")) {
                     multiStreamInFlightLog.addEpoch(bid, DEFAULT_STREAM_ID);
                 }
@@ -118,17 +118,20 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         synchronized (lock){
             this.getContext().getFTM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
             try {
-                if (enable_upstreamBackup){
+                if (enable_clr){
                     if (enable_align_wait) {
                         this.collector.cleanAll();
                     } else {
                         for (int ID:recoveryIDs){
-                            this.collector.clean(DEFAULT_STREAM_ID,ID);
+                            this.collector.clean(DEFAULT_STREAM_ID, ID);
                         }
                     }
-                    this.loadInFlightLog();
                 } else{
                     this.collector.cleanAll();
+                }
+                if (enable_spoutBackup) {
+                    this.loadInFlightLog();
+                } else {
                     this.loadInputFromSSD();
                 }
             } catch (FileNotFoundException e) {
@@ -182,7 +185,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         this.replay = true;
         this.lastSnapshotOffset = offset;
         this.AlignMarkerId = alignOffset;
-        if (enable_upstreamBackup) {
+        if (enable_spoutBackup) {
             Map<TopologyComponent, Grouping> children = this.executor.operator.getChildrenOfStream(DEFAULT_STREAM_ID);
             for (TopologyComponent child:children.keySet()){
                 downExecutorIds.addAll(child.getExecutorIDList());
@@ -197,7 +200,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
 
     @Override
     public void cleanEpoch(long offset) {
-        if (enable_upstreamBackup){
+        if (enable_spoutBackup){
             multiStreamInFlightLog.cleanEpoch(offset,DEFAULT_STREAM_ID);
         }
     }

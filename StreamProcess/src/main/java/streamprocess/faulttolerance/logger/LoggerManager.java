@@ -161,7 +161,7 @@ public class LoggerManager extends FTManager {
                     LOG.info("LoggerManager received all register and start recovery");
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(snapshotFile);
                     long theLastLSN = getLastGlobalLSN(walFile);
-                    this.g.getSpout().recoveryInput(theLastLSN,null, theLastLSN);
+                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, theLastLSN);
                     MeasureTools.State_load_begin(System.nanoTime());
                     LOG.info("Reload database from lastSnapshot");
                     if (lastSnapshotResult == null){
@@ -179,14 +179,14 @@ public class LoggerManager extends FTManager {
                     }
                     MeasureTools.RedoLog_time_finish(System.nanoTime());
                     LOG.info("Replay committed transactions complete!");
-                    this.db.undoFromWAL();
-                    this.SnapshotOffset = new ArrayDeque<>();
-                    this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     synchronized (lock){
                         while (callRecovery.containsValue(NULL)){
                             lock.wait();
                         }
                     }
+                    this.db.undoFromWAL();
+                    this.SnapshotOffset = new ArrayDeque<>();
+                    this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     notifyAllComplete();
                     lock.notifyAll();
                 } else if (callLog.containsValue(Persist)){

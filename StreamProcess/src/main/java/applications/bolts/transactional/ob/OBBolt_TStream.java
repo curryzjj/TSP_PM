@@ -39,7 +39,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
 
     @Override
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
-        TxnContext txnContext=new TxnContext(thread_Id,this.fid,in.getBID());
+        TxnContext txnContext = new TxnContext(thread_Id,this.fid,in.getBID());
         TxnEvent event = (TxnEvent) in.getValue(0);
         MeasureTools.Transaction_construction_begin(this.thread_Id, System.nanoTime());
         if (event instanceof BuyingEvent) {
@@ -336,9 +336,9 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
             MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
         }
         if (outsideDeterminant!=null && !outsideDeterminant.targetPartitionIds.isEmpty()) {
-            return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, outsideDeterminant, event.getTimestamp(), event.topping_result);//the tuple is finished.
+            return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, outsideDeterminant, event.getTimestamp(), event.topping_result);//the tuple is finished.
         } else {
-            return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp(), event.topping_result);//the tuple is finished.
+            return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), event.topping_result);//the tuple is finished.
         }
     }
 }

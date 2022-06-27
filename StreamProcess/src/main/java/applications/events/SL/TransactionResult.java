@@ -18,8 +18,8 @@ public class TransactionResult extends TxnResult {
         this.newSourceAccountBalance = newSourceAccountBalance;
         this.newTargetAccountBalance = newTargetAccountBalance;
     }
-    public TransactionResult(long bid, long timeStemp, boolean success){
-        super(bid, timeStemp);
+    public TransactionResult(long bid, long timeStamp, boolean success){
+        super(bid, timeStamp);
         this.success = success;
     }
 }
