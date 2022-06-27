@@ -77,11 +77,11 @@ function runFTStream() {
 function baselineEvaluation() {
   ResetParameters
   RATIO_OF_READ=500
-  for FTOptions in 0 1 2 3 4
+  for FTOptions in 0
       do runFTStream
       done
   ResetParameters
 }
-sudo rm -rf /mnt/nvme0n1p1/jjzhao/app/benchmarks/gstxn/Skew01.dat
-sudo rm -rf /mnt/nvme0n1p1/jjzhao/app/txngs/checkpoint
+sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/gstxn/
+sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/checkpoint
 baselineEvaluation
