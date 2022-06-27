@@ -215,7 +215,7 @@ public abstract class Operator implements Serializable{
         this.config=Configuration.fromMap(conf);
         setContext(context);
         this.collector=collector;
-        base_initialize(context.getThisTaskId()-context.getThisComponent().getExecutorList().get(0).getExecutorID(),context.getThisTaskId(),
+        base_initialize(context.getThisTaskId() - context.getThisComponent().getExecutorList().get(0).getExecutorID(), context.getThisTaskId(),
                 context.getGraph());
     }
     public void loadDB(TopologyContext context){
@@ -258,7 +258,7 @@ public abstract class Operator implements Serializable{
         }
         db = getContext().getDb();
         FTM = context.getFTM();
-        initialize(thread_Id,thisTaskId,graph);
+        initialize(thread_Id, thisTaskId, graph);
     }
     /**
      * This is the API to client application code.

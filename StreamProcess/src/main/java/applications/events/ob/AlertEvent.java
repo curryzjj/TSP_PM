@@ -10,7 +10,7 @@ import static UserApplications.constants.OnlineBidingSystemConstants.Constant.MA
 
 public class AlertEvent extends TxnEvent {
     private final int num_access;
-    public boolean alert_result=true;
+    public boolean alert_result = true;
     private int[] itemId;//keys.
     private long[] ask_price;//new ask price
     public SchemaRecordRef[] record_refs;

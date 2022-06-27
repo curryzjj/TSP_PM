@@ -13,6 +13,7 @@ public class TollProcessingEvent extends TxnEvent {
     private final int speedValue;
     public double[] spendValues;
     public int[] cntValues;
+    public double toll;
     private final int Vid;
     public TollProcessingEvent(int[] keys, int numAccess, long bid, int partition_id, int spendValue, int vid, long[] bid_array, int number_of_partitions, boolean isAbort) {
         super(bid, partition_id, bid_array,number_of_partitions,isAbort);

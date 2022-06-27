@@ -2,10 +2,7 @@ package applications.bolts.transactional.ob;
 
 import System.measure.MeasureTools;
 import applications.events.TxnEvent;
-import applications.events.ob.AlertEvent;
-import applications.events.ob.BidingResult;
-import applications.events.ob.BuyingEvent;
-import applications.events.ob.ToppingEvent;
+import applications.events.ob.*;
 import engine.Exception.DatabaseException;
 import engine.transaction.TxnContext;
 import engine.transaction.function.Condition;
@@ -79,7 +76,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is abort.
                 }
                 if (enable_upstreamBackup) {
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new OnlineBidingResult(event.getBid(), event.getTimestamp(), false));
                 }
                 return false;
             }
@@ -107,7 +104,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is abort.
                 }
                 if (enable_upstreamBackup) {
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new OnlineBidingResult(event.getBid(), event.getTimestamp(), false));
                 }
                 return false;
             }
@@ -142,7 +139,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is abort.
                 }
                 if (enable_upstreamBackup) {
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new OnlineBidingResult(event.getBid(), event.getTimestamp(), false));
                 }
                 return false;
             }
@@ -279,7 +276,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 }
                 if (enable_upstreamBackup) {
                     MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new OnlineBidingResult(event.getBid(), event.getTimestamp(), true));
                     MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                 }
             }
@@ -291,7 +288,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if (enable_determinants_log) {
             MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
             outsideDeterminant = new OutsideDeterminant();
-            outsideDeterminant.setOutSideEvent(event);
+            outsideDeterminant.setOutSideEvent(event.cloneEvent());
             for (int itemId : event.getItemId()) {
                 if (this.getPartitionId(String.valueOf(itemId)) != event.getPid()) {
                     outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
@@ -310,7 +307,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if (enable_determinants_log) {
             MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
             outsideDeterminant = new OutsideDeterminant();
-            outsideDeterminant.setOutSideEvent(event);
+            outsideDeterminant.setOutSideEvent(event.cloneEvent());
             for (int itemId : event.getItemId()) {
                 if (this.getPartitionId(String.valueOf(itemId)) != event.getPid()) {
                     outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
@@ -330,7 +327,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if (enable_determinants_log) {
             MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
             outsideDeterminant = new OutsideDeterminant();
-            outsideDeterminant.setOutSideEvent(event);
+            outsideDeterminant.setOutSideEvent(event.cloneEvent());
             for (int itemId : event.getItemId()) {
                 if (this.getPartitionId(String.valueOf(itemId)) != event.getPid()) {
                     outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));

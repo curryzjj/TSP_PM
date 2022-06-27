@@ -2,6 +2,7 @@ package applications.bolts.transactional.tp;
 
 import System.measure.MeasureTools;
 import applications.events.lr.TollProcessingEvent;
+import applications.events.lr.TollProcessingResult;
 import engine.Exception.DatabaseException;
 import engine.transaction.TxnContext;
 import engine.transaction.function.AVG;
@@ -59,7 +60,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                 targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
             }
             if (enable_upstreamBackup) {
-                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new TollProcessingResult(event.getBid(), event.getTimestamp(), -1));
             }
             return false;
         }
@@ -130,7 +131,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                 int targetId = TP_REQUEST_POST(event);
                 if (enable_upstreamBackup) {
                     MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new TollProcessingResult(event.getBid(), event.getTimestamp(),event.toll));
                     MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                 }
             }
@@ -146,8 +147,8 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
             cntValue = cntValue + event.cntValues[i];
         }
         //Some UDF function
-        double toll = spendValue / cntValue;
-        return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), toll);//the tuple is finished.
+        event.toll = spendValue / cntValue;
+        return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), event.toll);//the tuple is finished.
     }
 
     protected void CommitOutsideDeterminant(long markerId) {

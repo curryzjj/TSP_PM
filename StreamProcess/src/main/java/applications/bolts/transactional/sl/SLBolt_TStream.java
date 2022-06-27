@@ -69,7 +69,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,null, event.getTimestamp());//the tuple is finished.//the tuple is abort.
             }
             if (enable_upstreamBackup) {
-                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new TransactionResult(event.getBid(), event.getTimestamp(), false));
             }
             return false;
         }
@@ -110,7 +110,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
             }
             if (enable_upstreamBackup) {
-                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new TransactionResult(event.getBid(), event.getTimestamp(), false));
             }
             return false;
         }
@@ -278,16 +278,19 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         if (this.markerId > recoveryId) {
             for (TxnEvent event:EventsHolder){
                 OutsideDeterminant outsideDeterminant = null;
+                TransactionResult transactionResult = null;
                 if (enable_determinants_log) {
                     MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
                     outsideDeterminant = new OutsideDeterminant();
-                    outsideDeterminant.setOutSideEvent(event);
+                    outsideDeterminant.setOutSideEvent(event.cloneEvent());
                     String[] keys;
                     if(event instanceof TransactionEvent){
                         keys = new String[]{((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent)event).getSourceAccountId(),
                                 ((TransactionEvent)event).getTargetAccountId(), ((TransactionEvent)event).getTargetBookEntryId()};
+                        transactionResult = ((TransactionEvent) event).transaction_result;
                     }else{
                         keys = new String[]{((DepositEvent)event).getAccountId(), ((DepositEvent)event).getBookEntryId()};
+                        transactionResult = ((DepositEvent) event).transactionResult;
                     }
                     for (String id : keys) {
                         if (this.getPartitionId(id) != event.getPid()) {
@@ -304,7 +307,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 }
                 if (enable_upstreamBackup) {
                     MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, transactionResult);
                     MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                 }
             }
@@ -332,9 +335,9 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         if (schemaRecord == null) {
             System.out.println(event.getBid());
         }
-        event.transaction_result = new TransactionResult(event, event.success[0],event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
+        event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0], event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
     }
     protected void DEPOSITE_REQUEST_CORE(DepositEvent event) {
-
+        event.transactionResult = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0]);
     }
 }

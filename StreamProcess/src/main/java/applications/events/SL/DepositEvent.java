@@ -10,22 +10,11 @@ import java.util.List;
 
 public class DepositEvent extends TxnEvent {
     //updated state...to be written.
-    public long newAccountValue;
-    public long newAssetValue;
-    //place-rangeMap.
-    public SchemaRecordRef account_value = new SchemaRecordRef();
-    public SchemaRecordRef asset_value = new SchemaRecordRef();
-
-    //used in no-push.
-    public TableRecordRef account_values = new TableRecordRef();
-    public TableRecordRef asset_values = new TableRecordRef();
-
-
     private String accountId; //32 bytes
     private String bookEntryId; //32 bytes
     private long accountTransfer; //64 bytes
     private long bookEntryTransfer;//64 bytes
-
+    public TransactionResult transactionResult;
     /**
      * Creates a new DepositEvent.
      */
