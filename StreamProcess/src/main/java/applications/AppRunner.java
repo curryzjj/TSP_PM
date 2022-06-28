@@ -90,7 +90,6 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
                 CONTROL.enable_upstreamBackup = true;
-                CONTROL.enable_spoutBackup = true;
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_recovery_dependency = true;
                 break;
@@ -101,7 +100,6 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
                 CONTROL.enable_upstreamBackup = true;
-                CONTROL.enable_spoutBackup = true;
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_determinants_log = true;
                 break;
@@ -111,7 +109,8 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_snapshot = true;
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
-                CONTROL.enable_upstreamBackup = false;
+                CONTROL.enable_upstreamBackup = true;
+                CONTROL.enable_spoutBackup = true;
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_recovery_dependency = true;
                 break;
@@ -121,7 +120,8 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_snapshot = true;
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
-                CONTROL.enable_upstreamBackup = false;
+                CONTROL.enable_upstreamBackup = true;
+                CONTROL.enable_spoutBackup = true;
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_determinants_log = true;
                 break;
