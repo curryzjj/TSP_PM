@@ -147,7 +147,14 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         while(replay) {
             TxnEvent event = replayInputFromSSD();
             if (event != null) {
-                if (!enable_clr || bid >= AlignMarkerId || recoveryIDs.contains(event.getPid())) {
+                if (enable_clr) {
+                    if (bid >= AlignMarkerId) {
+                        collector.emit_single(DEFAULT_STREAM_ID, bid, event);
+                    } else if (recoveryIDs.contains(event.getPid())) {
+                        collector.emit_single(DEFAULT_STREAM_ID, bid, event);
+                        lostData ++;
+                    }
+                } else {
                     collector.emit_single(DEFAULT_STREAM_ID, bid, event);
                     lostData ++;
                 }
