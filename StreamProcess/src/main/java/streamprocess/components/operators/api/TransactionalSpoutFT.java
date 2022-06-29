@@ -240,14 +240,18 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                     collector.create_marker_boardcast(System.nanoTime(),DEFAULT_STREAM_ID, markerIds, myiteration,"marker");
                 }
                 if (enable_align_wait && markerIds < AlignMarkerId) {
+                    HashMap<Integer, Boolean> hasFinish = new HashMap<>();
+                    for (int id : recoveryIDs) {
+                        hasFinish.put(id, false);
+                    }
                     while(replay) {
                         int targetId = getTargetID(currentID,false);
                         if (iterators.get(targetId).hasNext()){
                             TxnEvent o = deserializeEvent((String) iterators.get(targetId).next());
                             collector.emit_single(DEFAULT_STREAM_ID, o.getBid(),o);
                         } else {
-                            flag ++;
-                            if (flag == recoveryIDs.size()){
+                            hasFinish.put(targetId, true);
+                            if (!hasFinish.containsValue(false)){
                                 replay = false;
                             }
                         }
@@ -257,14 +261,18 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                         }
                     }
                 } else {
+                    HashMap<Integer, Boolean> hasFinish = new HashMap<>();
+                    for (int id : downExecutorIds) {
+                        hasFinish.put(id, false);
+                    }
                     while (replay) {
                         int targetId = getTargetID(currentID, true);
                         if (iterators.get(targetId).hasNext()){
                             TxnEvent o = deserializeEvent((String) iterators.get(targetId).next());
                             collector.emit_single(DEFAULT_STREAM_ID, o.getBid(),o);
                         } else {
-                            flag ++;
-                            if (flag == downExecutorIds.size()){
+                            hasFinish.put(targetId, true);
+                            if (!hasFinish.containsValue(false)){
                                 replay = false;
                             }
                         }

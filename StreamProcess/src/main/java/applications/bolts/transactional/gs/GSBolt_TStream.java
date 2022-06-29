@@ -208,7 +208,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
         for (int i = 0; i < NUM_ACCESSES;i++){
             event.sum += event.result[i];
         }
-        return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp(), event.sum);//the tuple is finished finally.
+        return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), event.sum);//the tuple is finished finally.
     }
     protected int WRITE_POST(MicroEvent event) throws InterruptedException {
         if (enable_determinants_log) {
@@ -223,12 +223,12 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
             }
             MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
             if (outsideDeterminant.targetPartitionIds.size() !=0 ) {
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished finally.
             } else {
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
             }
         } else {
-            return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
+            return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
         }
     }
 }

@@ -136,7 +136,7 @@ public class MeasureSink extends BaseSink {
 
     @Override
     public void execute(JumboTuple in) throws DatabaseException, BrokenBarrierException, InterruptedException {
-        for(int i=0;i<in.length;i++){
+        for(int i = 0;  i< in.length; i ++){
             boolean finish= (boolean) in.getMsg(i).getValue(0);
             if(!finish){
                 LOG.info("The tuple ("+in.getMsg(i).getValue(1)+ ") is abort");
@@ -256,7 +256,7 @@ public class MeasureSink extends BaseSink {
     }
     private void measure_end() {
         LOG.info("System running time is " + (System.nanoTime() - startTime) / 1E9);
-        MeasureTools.setAvgThroughput(thisTaskId,count * 1E6 / (System.nanoTime() - startTime));
+        MeasureTools.setAvgThroughput(thisTaskId,exe * 1E6 / (System.nanoTime() - startTime));
         for (double a:throughput_map){
             throughput.addValue(a);//k events/s
         }
