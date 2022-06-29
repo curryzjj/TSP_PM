@@ -247,8 +247,9 @@ public class MeasureSink extends BaseSink {
                     No_Exactly_Once_latency_map.add(latency / 1E6);
                     computationLatency = System.nanoTime();
                 }
-                if (in.getBID() == failureTime) {
+                if (in.getBID() == lastFailureTime) {
                     MeasureTools.ReExecute_time_finish(System.nanoTime());
+                    lastFailureTime = failureTime;
                 }
                 count ++;
             }

@@ -353,7 +353,7 @@ public class MeasureTools {
                 transactionPostTime = transaction_post_time[threadId].getMean() + transactionPostTime;
                 fileWriter.write(output + "\n");
             }
-        } else if (FT == 3 || FT == 4) {
+        } else if (FT == 5 || FT == 6) {
             for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
                 String output = String.format("%d\t" +
                                 "%-10.2f\t" +

@@ -54,7 +54,7 @@ public class TxnProcessingEngine {
             this.walManager = new WALManager(PARTITION_NUM);
         }
         this.transactionAbort=new ConcurrentSkipListSet<>();
-        this.dropTable=new ArrayList<>();
+        this.dropTable = new ArrayList<>();
         switch(app){
             case "TP_txn":
                 holder_by_stage.put("segment_speed", new Holder_in_range(num_op));
@@ -220,13 +220,11 @@ public class TxnProcessingEngine {
                     if (enable_clr){
                         if (!dropTable.contains(mark_id)){
                             this.dropTable.add(mark_id);
-                            this.drop = false;
                         }
                     }else{
                         for(int i = 0; i < num_op; i++){
                             this.dropTable.add(i);
                         }
-                        this.drop = false;
                     }
                     return;
                 }

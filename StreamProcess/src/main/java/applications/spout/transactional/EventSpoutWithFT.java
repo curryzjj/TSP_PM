@@ -141,22 +141,16 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 if (enable_clr) {
                     if (bid >= AlignMarkerId) {
                         collector.emit_single(DEFAULT_STREAM_ID, bid, event);
-                        bid ++;
-                        forward_marker(this.taskId, bid, null, "marker");
                     } else if (recoveryIDs.contains(event.getPid())) {
                         collector.emit_single(DEFAULT_STREAM_ID, bid, event);
                         lostData ++;
-                        bid ++;
-                        if (bid == AlignMarkerId) {
-                            forward_marker(this.taskId, bid, null, "marker");
-                        }
                     }
                 } else {
                     collector.emit_single(DEFAULT_STREAM_ID, bid, event);
                     lostData ++;
-                    bid ++;
-                    forward_marker(this.taskId, bid, null, "marker");
                 }
+                bid ++;
+                forward_marker(this.taskId, bid, null, "marker");
             }
         }
     }

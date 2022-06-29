@@ -239,8 +239,8 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                     LOG.info(executor.getOP_full() + " emit " + "marker @" + DateTime.now() + " SOURCE_CONTROL: " + markerIds);
                     collector.create_marker_boardcast(System.nanoTime(),DEFAULT_STREAM_ID, markerIds, myiteration,"marker");
                 }
+                HashMap<Integer, Boolean> hasFinish = new HashMap<>();
                 if (enable_align_wait && markerIds < AlignMarkerId) {
-                    HashMap<Integer, Boolean> hasFinish = new HashMap<>();
                     for (int id : recoveryIDs) {
                         hasFinish.put(id, false);
                     }
@@ -261,7 +261,6 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                         }
                     }
                 } else {
-                    HashMap<Integer, Boolean> hasFinish = new HashMap<>();
                     for (int id : downExecutorIds) {
                         hasFinish.put(id, false);
                     }

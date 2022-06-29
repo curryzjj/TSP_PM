@@ -145,6 +145,11 @@ public class CLRManager extends FTManager {
                         }
                     }
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                    if (failureTimes.size() != 0) {
+                        failureTime = failureTimes.poll();
+                    } else {
+                        failureTime = -1;
+                    }
                     notifyAllComplete();
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Snapshot)) {

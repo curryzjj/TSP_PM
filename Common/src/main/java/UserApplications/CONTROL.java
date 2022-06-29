@@ -1,9 +1,6 @@
 package UserApplications;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SplittableRandom;
-import java.util.Timer;
+import java.util.*;
 
 public class CONTROL {
     //application related.
@@ -35,7 +32,8 @@ public class CONTROL {
     public static boolean enable_transaction_abort = false;
     public static boolean enable_states_lost = false;
     public static int failureTime = 0;
-    public static List<Integer> failureTimes = new ArrayList<>();
+    public static int lastFailureTime = 0;
+    public static Queue<Integer> failureTimes = new ArrayDeque<>();
     public static boolean MAX_RECOVERY_TIME = true;
     public static boolean Exactly_Once = false;
     //Measure Methods
