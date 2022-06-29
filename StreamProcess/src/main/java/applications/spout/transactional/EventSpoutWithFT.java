@@ -107,9 +107,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                     bid ++;
                     if (enable_spoutBackup) {
                         MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
-                        //TODO: clone the input
-                        TxnEvent event = input.cloneEvent();
-                        multiStreamInFlightLog.addEvent(event.getPid(), DEFAULT_STREAM_ID, event);
+                        multiStreamInFlightLog.addEvent(input.getPid(), DEFAULT_STREAM_ID, input.toString());
                         MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                     }
                     forward_marker(this.taskId, bid, null, "marker");

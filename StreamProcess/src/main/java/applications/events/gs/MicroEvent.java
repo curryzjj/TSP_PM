@@ -119,9 +119,13 @@ public class MicroEvent extends TxnEvent {
         String split_exp = ";";
         sb.append(bid).append(split_exp);//0-bid
         sb.append(pid).append(split_exp);//1-pid
-        sb.append(Arrays.toString(keys)).append(split_exp);//2-keys
-        sb.append(flag);//3-isRead
-        sb.append(isAbort);//4-isAbort
+        sb.append(Arrays.toString(bid_array)).append(split_exp);//2-bid_array
+        sb.append(num_p()).append(split_exp);//3 number of p
+        sb.append("MicroEvent").append(split_exp);//4 input_event type
+        sb.append(Arrays.toString(getKeys())).append(split_exp);//5 keys int
+        sb.append(flag).append(split_exp);//6-isRead
+        sb.append(timestamp).append(split_exp);//7-timestamp
+        sb.append(isAbort);//8-isAbort
         return sb.toString();
     }
 
