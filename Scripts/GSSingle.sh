@@ -11,13 +11,13 @@ function ResetParameters() {
   Arrival_Control=1
   targetHz=150000
   timeSliceLengthMs=1000
-  input_store_batch=10000
+  input_store_batch=20000
   #shellcheck disable=SC2006
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
   #Workload Configurations
   NUM_ITEMS=163840
-  NUM_EVENTS=1600000
+  NUM_EVENTS=16000000
   ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0
@@ -77,7 +77,7 @@ function runFTStream() {
 function baselineEvaluation() {
   ResetParameters
   RATIO_OF_READ=500
-  for FTOptions in 0
+  for FTOptions in 1
       do runFTStream
       done
   ResetParameters
