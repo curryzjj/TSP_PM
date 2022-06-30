@@ -218,16 +218,16 @@ public class TxnProcessingEngine {
               if (enable_clr){
                   if (!dropTable.contains(mark_id)){
                       this.dropTable.add(mark_id);
-                      if (failureTimes.size() != 0) {
-                          failureTime = failureTimes.poll();
-                      } else {
-                          failureTime = -1;
-                      }
                   }
               }else{
                   for(int i = 0; i < num_op; i++){
                       this.dropTable.add(i);
                   }
+              }
+              if (failureTimes.size() != 0) {
+                  failureTime = failureTimes.poll();
+              } else {
+                  failureTime = -1;
               }
               return;
             }
