@@ -35,9 +35,9 @@ public class GSInputStore extends InputStore {
                     split_exp+
                     microEvent.READ_EVENT()+//6 is read_event boolean
                     split_exp+
-                    microEvent.getTimestamp()+
+                    microEvent.getTimestamp()+//7 timestamp long
                     split_exp+
-                    microEvent.isAbort();//7 timestamp long
+                    microEvent.isAbort();//8 abort
             bw.write(str+"\n");
         }
         bw.flush();

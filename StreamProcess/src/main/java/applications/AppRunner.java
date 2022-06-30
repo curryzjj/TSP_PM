@@ -63,7 +63,7 @@ public class  AppRunner extends baseRunner {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            this.metric_path=this.metric_path+application;
+            this.metric_path = this.metric_path + application;
         }
         //Set the fault tolerance mechanisms
         switch (config.getInt("FTOptions")){
@@ -109,7 +109,8 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_snapshot = true;
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
-                CONTROL.enable_upstreamBackup = false;
+                CONTROL.enable_upstreamBackup = true;
+                CONTROL.enable_spoutBackup = true;
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_recovery_dependency = true;
                 break;
@@ -119,7 +120,8 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_snapshot = true;
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
-                CONTROL.enable_upstreamBackup = false;
+                CONTROL.enable_upstreamBackup = true;
+                CONTROL.enable_spoutBackup = true;
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_determinants_log = true;
                 break;
@@ -139,15 +141,23 @@ public class  AppRunner extends baseRunner {
                 break;
         }
         CONTROL.Time_Control = config.getBoolean("enable_time_Interval");
-        if(CONTROL.MAX_RECOVERY_TIME){
-            CONTROL.failureTime = (int) (config.getInt("snapshot") * config.getInt("batch_number_per_wm") * config.getInt("failureFrequency")-1);
-        }else {
-            if(OsUtils.isMac()){
-                CONTROL.failureTime = (int)(config.getInt("TEST_NUM_EVENTS") * config.getInt("failureFrequency"));
+        if (CONTROL.enable_states_lost) {
+            int interval;
+            if(CONTROL.MAX_RECOVERY_TIME){
+                interval = config.getInt("NUM_EVENTS") / config.getInt("snapshot") / config.getInt("batch_number_per_wm") / config.getInt("failureFrequency");
+                for (int i = 1; i <= config.getInt("failureFrequency"); i++) {
+                    CONTROL.failureTimes.add( config.getInt("snapshot") * config.getInt("batch_number_per_wm") * i * interval - 1);
+                }
             }else {
-                CONTROL.failureTime = (int)(config.getInt("NUM_EVENTS") * config.getInt("failureFrequency"));
+                interval = config.getInt("NUM_EVENTS") / config.getInt("batch_number_per_wm") / config.getInt("failureFrequency");
+                for (int i = 1; i <= config.getInt("failureFrequency"); i++) {
+                    CONTROL.failureTimes.add( config.getInt("batch_number_per_wm") * interval - 1);
+                }
             }
+            CONTROL.failureTime = failureTimes.poll();
+            CONTROL.lastFailureTime = failureTime;
         }
+
         //Set the application
        CONTROL.Arrival_Control = config.getBoolean("Arrival_Control");
        CONTROL.RATIO_OF_READ = config.getInt("RATIO_OF_READ");

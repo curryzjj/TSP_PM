@@ -14,7 +14,6 @@ public class BuyingEvent extends TxnEvent {
     public SchemaRecordRef[] record_refs;
 
     //updated state...to be written.
-    public long newQty;
     public BidingResult biding_result;
 
     //expected state.
@@ -91,11 +90,19 @@ public class BuyingEvent extends TxnEvent {
 
     @Override
     public String toString() {
-        return "BuyingEvent {"
-                + "itemId=" + Arrays.toString(itemId)
-                + ", bid_price=" + Arrays.toString(bid_price)
-                + ", bid_qty=" + Arrays.toString(bid_qty)
-                + '}';
+        StringBuilder sb = new StringBuilder();
+        String split_exp = ";";
+        sb.append(bid).append(split_exp);//0-bid
+        sb.append(pid).append(split_exp);//1-pid
+        sb.append(Arrays.toString(bid_array)).append(split_exp);//2-bid_array
+        sb.append(num_p()).append(split_exp);//3 number of p
+        sb.append("BuyingEvent").append(split_exp);//4 input_event type
+        sb.append(Arrays.toString(getItemId())).append(split_exp);//5 keys int
+        sb.append(Arrays.toString(getBidPrice())).append(split_exp);//6 bid_price
+        sb.append(Arrays.toString(getBidQty())).append(split_exp);//7 bid_qty
+        sb.append(timestamp).append(split_exp);//8-timestamp
+        sb.append(isAbort);//9-isAbort
+        return sb.toString();
     }
 
     public int[] getItemId() {

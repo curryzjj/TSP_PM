@@ -4,14 +4,7 @@ import System.constants.BaseConstants;
 import System.measure.MeasureTools;
 import System.util.OsUtils;
 import applications.events.InputDataStore.InputStore;
-import applications.events.SL.DepositEvent;
-import applications.events.SL.TransactionEvent;
-import applications.events.gs.MicroEvent;
 import applications.events.TxnEvent;
-import applications.events.lr.TollProcessingEvent;
-import applications.events.ob.AlertEvent;
-import applications.events.ob.BuyingEvent;
-import applications.events.ob.ToppingEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.TransactionalSpoutFT;
@@ -70,8 +63,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         inputStore.initialize(Data_path);
         this.inputQueue = this.getContext().getEventGenerator().getEventsQueue();
         this.start_time = System.currentTimeMillis();
-        this.time_Interval=config.getInt("time_Interval");
-        if (enable_upstreamBackup){
+        if (enable_spoutBackup){
             multiStreamInFlightLog = new MultiStreamInFlightLog(this.executor.operator);
         }
     }
@@ -80,7 +72,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     public void nextTuple(int batch) throws InterruptedException, IOException {
         if (needWaitReplay){
             this.registerRecovery();
-            if (enable_upstreamBackup) {
+            if (enable_spoutBackup) {
                 replayEvents();
             } else{
                 replayInput();
@@ -105,16 +97,14 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 for (TxnEvent input : events) {
                     int targetId = collector.emit_single(DEFAULT_STREAM_ID, bid, input);
                     bid ++;
-                    if (enable_upstreamBackup) {
+                    if (enable_spoutBackup) {
                         MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
-                        //TODO: clone the input
-                        TxnEvent event = input.cloneEvent();
-                        multiStreamInFlightLog.addEvent(event.getPid(), DEFAULT_STREAM_ID, input);
+                        multiStreamInFlightLog.addEvent(input.getPid(), DEFAULT_STREAM_ID, input.toString());
                         MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                     }
                     forward_marker(this.taskId, bid, null, "marker");
                 }
-                if (enable_upstreamBackup) {
+                if (enable_spoutBackup) {
                     MeasureTools.Upstream_backup_finish_acc(this.executor.getExecutorID());
                 }
             }else{
@@ -131,6 +121,16 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         bid = lastSnapshotOffset;
         this.storedSnapshotOffsets.addAll(this.inputStore.getStoredSnapshotOffsets(lastSnapshotOffset));
         openFile(Data_path.concat(this.inputStore.getInputStorePath(storedSnapshotOffsets.poll())));
+        long align = this.AlignMarkerId - lastSnapshotOffset;
+        if (enable_wal) {
+            while (align != 0){
+                if (scanner.hasNextLine()) {
+                    scanner.nextLine();
+                }
+                lastSnapshotOffset ++;
+                align --;
+            }
+        }
         LOG.info("The input data have been load to the offset " + msg);
     }
 
@@ -140,7 +140,14 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         while(replay) {
             TxnEvent event = replayInputFromSSD();
             if (event != null) {
-                if (!enable_clr || bid >= AlignMarkerId || recoveryIDs.contains(event.getPid())) {
+                if (enable_clr) {
+                    if (bid >= AlignMarkerId) {
+                        collector.emit_single(DEFAULT_STREAM_ID, bid, event);
+                    } else if (recoveryIDs.contains(event.getPid())) {
+                        collector.emit_single(DEFAULT_STREAM_ID, bid, event);
+                        lostData ++;
+                    }
+                } else {
                     collector.emit_single(DEFAULT_STREAM_ID, bid, event);
                     lostData ++;
                 }
@@ -155,106 +162,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     protected TxnEvent replayInputFromSSD() throws FileNotFoundException {
         if(scanner.hasNextLine()){
             TxnEvent event;
-            String read = scanner.nextLine();
-            String[] split = read.split(";");
-            switch (split[4]){
-                case "MicroEvent":
-                    event = new MicroEvent(
-                            Integer.parseInt(split[0]), //bid
-                            Integer.parseInt(split[1]), //pid
-                            split[2], //bid_array
-                            Integer.parseInt(split[3]),//num_of_partition
-                            split[5],//key_array
-                            Boolean.parseBoolean(split[6]),//flag
-                            Long.parseLong(split[7]),//timestamp
-                            Boolean.parseBoolean(split[8])//isAbort
-                    );
-                    break;
-                case "BuyingEvent":
-                    event=new BuyingEvent(
-                            Integer.parseInt(split[0]), //bid
-                            split[2], //bid_array
-                            Integer.parseInt(split[1]),//pid
-                            Integer.parseInt(split[3]),//num_of_partition
-                            split[5],//key_array
-                            split[6],//price_array
-                            split[7]  ,//qty_array
-                            Long.parseLong(split[8]),
-                            Boolean.parseBoolean(split[9])
-                    );
-                    break;
-                case "AlertEvent":
-                    event = new AlertEvent(
-                            Integer.parseInt(split[0]), //bid
-                            split[2], // bid_array
-                            Integer.parseInt(split[1]),//pid
-                            Integer.parseInt(split[3]),//num_of_partition
-                            Integer.parseInt(split[5]), //num_access
-                            split[6],//key_array
-                            split[7],//price_array
-                            Long.parseLong(split[8]),
-                            Boolean.parseBoolean(split[9])
-                    );
-                    break;
-                case "ToppingEvent":
-                    event = new ToppingEvent(
-                            Integer.parseInt(split[0]), //bid
-                            split[2], Integer.parseInt(split[1]), //pid
-                            //bid_array
-                            Integer.parseInt(split[3]),//num_of_partition
-                            Integer.parseInt(split[5]), //num_access
-                            split[6],//key_array
-                            split[7] , //top_array
-                            Long.parseLong(split[8]),
-                            Boolean.parseBoolean(split[9])
-                    );
-                    break;
-                case "DepositEvent":
-                    event = new DepositEvent(
-                            Integer.parseInt(split[0]), //bid
-                            Integer.parseInt(split[1]), //pid
-                            split[2], //bid_array
-                            Integer.parseInt(split[3]),//num_of_partition
-                            split[5],//getAccountId
-                            split[6],//getBookEntryId
-                            Integer.parseInt(split[7]),  //getAccountTransfer
-                            Integer.parseInt(split[8]),  //getBookEntryTransfer
-                            Long.parseLong(split[9]),
-                            Boolean.parseBoolean(split[10])
-                    );
-                    break;
-                case "TransactionEvent":
-                    event = new TransactionEvent(
-                            Integer.parseInt(split[0]), //bid
-                            Integer.parseInt(split[1]), //pid
-                            split[2], //bid_array
-                            Integer.parseInt(split[3]),//num_of_partition
-                            split[5],//getSourceAccountId
-                            split[6],//getSourceBookEntryId
-                            split[7],//getTargetAccountId
-                            split[8],//getTargetBookEntryId
-                            Integer.parseInt(split[9]),  //getAccountTransfer
-                            Integer.parseInt(split[10]),  //getBookEntryTransfer
-                            Long.parseLong(split[11]),
-                            Boolean.parseBoolean(split[12])
-                    );
-                    break;
-                case "TollProcessEvent" :
-                    event = new TollProcessingEvent(
-                            Integer.parseInt(split[0]), //bid
-                            Integer.parseInt(split[1]), //pid
-                            split[2], //bid_array
-                            Integer.parseInt(split[3]),//num_of_partition
-                            split[5],
-                            Integer.parseInt(split[6]),
-                            Integer.parseInt(split[7]),
-                            Long.parseLong(split[8]),
-                            Boolean.parseBoolean(split[9])
-                    );
-                    break;
-                default:
-                    throw new IllegalStateException("Unexpected value: " + split[4]);
-            }
+            event = deserializeEvent(scanner.nextLine());
             return event;
         }else{
             if (storedSnapshotOffsets.size() != 0){

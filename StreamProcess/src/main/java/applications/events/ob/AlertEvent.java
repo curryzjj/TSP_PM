@@ -10,7 +10,7 @@ import static UserApplications.constants.OnlineBidingSystemConstants.Constant.MA
 
 public class AlertEvent extends TxnEvent {
     private final int num_access;
-    public boolean alert_result=true;
+    public boolean alert_result = true;
     private int[] itemId;//keys.
     private long[] ask_price;//new ask price
     public SchemaRecordRef[] record_refs;
@@ -68,9 +68,6 @@ public class AlertEvent extends TxnEvent {
             }
         }
     }
-    private void set_values(int access_id, SplittableRandom rnd) {
-        ask_price[access_id] = rnd.nextLong(MAX_Price);
-    }
 
     public int[] getItemId() {
         return itemId;
@@ -89,6 +86,24 @@ public class AlertEvent extends TxnEvent {
     public long getTimestamp() {
         return timestamp;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        String split_exp = ";";
+        sb.append(bid).append(split_exp);//0-bid
+        sb.append(pid).append(split_exp);//1-pid
+        sb.append(Arrays.toString(bid_array)).append(split_exp);//2-bid_array
+        sb.append(num_p()).append(split_exp);//3 number of p
+        sb.append("AlertEvent").append(split_exp);//4 input_event type
+        sb.append(getNum_access()).append(split_exp);//5-number of access
+        sb.append(Arrays.toString(getItemId())).append(split_exp);//6 keys int
+        sb.append(Arrays.toString(getAsk_price())).append(split_exp);//6 ask_price
+        sb.append(timestamp).append(split_exp);//8-timestamp
+        sb.append(isAbort);//9-isAbort
+        return sb.toString();
+    }
+
     @Override
     public AlertEvent cloneEvent() {
         return new AlertEvent((int) bid, Arrays.toString(bid_array),pid,number_of_partitions,num_access,Arrays.toString(itemId),Arrays.toString(ask_price),timestamp,isAbort);

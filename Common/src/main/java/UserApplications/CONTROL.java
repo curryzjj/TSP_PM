@@ -1,7 +1,6 @@
 package UserApplications;
 
-import java.util.SplittableRandom;
-import java.util.Timer;
+import java.util.*;
 
 public class CONTROL {
     //application related.
@@ -33,6 +32,8 @@ public class CONTROL {
     public static boolean enable_transaction_abort = false;
     public static boolean enable_states_lost = false;
     public static int failureTime = 0;
+    public static int lastFailureTime = 0;
+    public static Queue<Integer> failureTimes = new ArrayDeque<>();
     public static boolean MAX_RECOVERY_TIME = true;
     public static boolean Exactly_Once = false;
     //Measure Methods
@@ -45,6 +46,7 @@ public class CONTROL {
     public static boolean enable_states_partition = true;//must be enabled for parallel snapshot
     public static boolean enable_key_based = false;
     public static boolean enable_upstreamBackup = false;
+    public static boolean enable_spoutBackup = false;//Default to be false, as we store input at spout
     public static boolean enable_undo_log = false;
     public static boolean enable_input_store = false;
     public static boolean enable_align_wait = false;

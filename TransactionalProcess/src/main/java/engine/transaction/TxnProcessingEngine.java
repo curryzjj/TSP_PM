@@ -42,7 +42,6 @@ public class TxnProcessingEngine {
     private ConcurrentSkipListSet<Long> transactionAbort;
     public Boolean isTransactionAbort=false;
     private List<Integer> dropTable;
-    public boolean drop = true;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
     //initialize
     private String app;
@@ -54,7 +53,7 @@ public class TxnProcessingEngine {
             this.walManager = new WALManager(PARTITION_NUM);
         }
         this.transactionAbort=new ConcurrentSkipListSet<>();
-        this.dropTable=new ArrayList<>();
+        this.dropTable = new ArrayList<>();
         switch(app){
             case "TP_txn":
                 holder_by_stage.put("segment_speed", new Holder_in_range(num_op));
@@ -216,20 +215,21 @@ public class TxnProcessingEngine {
         }
         if(operation.bid == failureTime){
           if(enable_states_lost){
-                if(drop){
-                    if (enable_clr){
-                        if (!dropTable.contains(mark_id)){
-                            this.dropTable.add(mark_id);
-                            this.drop = false;
-                        }
-                    }else{
-                        for(int i = 0; i < num_op; i++){
-                            this.dropTable.add(i);
-                        }
-                        this.drop = false;
-                    }
-                    return;
-                }
+              if (enable_clr){
+                  if (!dropTable.contains(mark_id)){
+                      this.dropTable.add(mark_id);
+                  }
+              }else{
+                  for(int i = 0; i < num_op; i++){
+                      this.dropTable.add(i);
+                  }
+              }
+              if (failureTimes.size() != 0) {
+                  failureTime = failureTimes.poll();
+              } else {
+                  failureTime = -1;
+              }
+              return;
             }
         }
         switch (operation.accessType){

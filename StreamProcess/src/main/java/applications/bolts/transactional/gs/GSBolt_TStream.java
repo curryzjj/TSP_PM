@@ -1,7 +1,9 @@
 package applications.bolts.transactional.gs;
 
 import System.measure.MeasureTools;
+import System.spout.helper.Event;
 import applications.events.gs.MicroEvent;
+import applications.events.gs.MicroResult;
 import engine.Exception.DatabaseException;
 import engine.table.datatype.DataBox;
 import engine.table.tableRecords.SchemaRecordRef;
@@ -65,7 +67,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                     targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished.//the tuple is abort.
                 }
                 if (enable_upstreamBackup) {
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID,new MicroResult(event.getBid(), event.getTimestamp(), true, event.sum));
                 }
                 return false;
             }
@@ -90,7 +92,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                     targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,null,event.getTimestamp());//the tuple is finished.//the tuple is abort.
                 }
                 if (enable_upstreamBackup) {
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new MicroResult(event.getBid(), event.getTimestamp(), true, event.sum));
                 }
                 return false;
             }
@@ -184,7 +186,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                 }
                 if (enable_upstreamBackup) {
                     MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, event.cloneEvent());
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new MicroResult(event.getBid(), event.getTimestamp(), false, event.sum));
                     MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                 }
             }
@@ -203,17 +205,16 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     }
 
     protected int READ_POST(MicroEvent event) throws InterruptedException {
-        int sum  = 0;
         for (int i = 0; i < NUM_ACCESSES;i++){
-            sum += event.result[i];
+            event.sum += event.result[i];
         }
-        return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp(),sum);//the tuple is finished finally.
+        return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), event.sum);//the tuple is finished finally.
     }
     protected int WRITE_POST(MicroEvent event) throws InterruptedException {
         if (enable_determinants_log) {
             MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
             OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
-            outsideDeterminant.setOutSideEvent(event);
+            outsideDeterminant.setOutSideEvent(event.cloneEvent());
             //TODO: just add non-determinant event
             for (int i = 0; i < NUM_ACCESSES; i++) {
                 if (this.getPartitionId(String.valueOf(event.getKeys()[i])) != event.getPid()) {
@@ -222,12 +223,12 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
             }
             MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
             if (outsideDeterminant.targetPartitionIds.size() !=0 ) {
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished finally.
             } else {
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
             }
         } else {
-            return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
+            return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
         }
     }
 }

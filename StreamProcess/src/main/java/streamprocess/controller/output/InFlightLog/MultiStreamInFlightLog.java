@@ -77,7 +77,7 @@ public class MultiStreamInFlightLog {
         }
         public void addEvents(int partitionID, Object o){
             int executorId = executorID.get(partitionID);
-            InFlightEvents.get(currentOffset).addEvent(o,executorId);
+            InFlightEvents.get(currentOffset).addEvent(o, executorId);
         }
         public void addBatch(long markerId) {
             InFlightEvents.get(currentOffset).addMarkerId(markerId);
@@ -115,7 +115,7 @@ public class MultiStreamInFlightLog {
               eventsForExecutor.put(id,Events);
             }
             this.currentMarkerId = currentMarkerId;
-            batchEvents.put(currentMarkerId,eventsForExecutor);
+            batchEvents.put(currentMarkerId, eventsForExecutor);
         }
         public void addMarkerId(long markerId) {
             currentMarkerId = markerId;

@@ -114,10 +114,19 @@ public class ToppingEvent extends TxnEvent {
 
     @Override
     public String toString() {
-        return "ToppingEvent {"
-                + "itemId=" + Arrays.toString(itemId)
-                + ", itemTopUp=" + Arrays.toString(itemTopUp)
-                + '}';
+        StringBuilder sb = new StringBuilder();
+        String split_exp = ";";
+        sb.append(bid).append(split_exp);//0-bid
+        sb.append(pid).append(split_exp);//1-pid
+        sb.append(Arrays.toString(bid_array)).append(split_exp);//2-bid_array
+        sb.append(num_p()).append(split_exp);//3 number of p
+        sb.append("ToppingEvent").append(split_exp);//4 input_event type
+        sb.append(getNum_access()).append(split_exp);//5-number of access
+        sb.append(Arrays.toString(getItemId())).append(split_exp);//6 keys int
+        sb.append(Arrays.toString(getItemTopUp())).append(split_exp);//7 top up
+        sb.append(timestamp).append(split_exp);//8-timestamp
+        sb.append(isAbort);//9-isAbort
+        return sb.toString();
     }
 
     @Override

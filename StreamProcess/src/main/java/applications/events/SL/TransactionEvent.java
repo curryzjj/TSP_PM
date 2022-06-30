@@ -108,15 +108,22 @@ public class TransactionEvent extends TxnEvent {
 
     @Override
     public String toString() {
-        return "TransactionEvent {"
-                + "sourceAccountId=" + sourceAccountId
-                + ", targetAccountId=" + targetAccountId
-                + ", sourceBookEntryId=" + sourceBookEntryId
-                + ", targetBookEntryId=" + targetBookEntryId
-                + ", accountTransfer=" + accountTransfer
-                + ", bookEntryTransfer=" + bookEntryTransfer
-                + ", minAccountBalance=" + minAccountBalance
-                + '}';
+        StringBuilder sb = new StringBuilder();
+        String split_exp = ";";
+        sb.append(bid).append(split_exp);//0-bid
+        sb.append(pid).append(split_exp);//1-pid
+        sb.append(Arrays.toString(bid_array)).append(split_exp);//2-bid_array
+        sb.append(num_p()).append(split_exp);//3 number of p
+        sb.append("TransactionEvent").append(split_exp);//4 input_event type
+        sb.append(getSourceAccountId()).append(split_exp);//5 S-accountId
+        sb.append(getSourceBookEntryId()).append(split_exp);//6 S-bookId
+        sb.append(getTargetAccountId()).append(split_exp);//7 T-accountId
+        sb.append(getTargetBookEntryId()).append(split_exp);//8 T-bookId
+        sb.append(getAccountTransfer()).append(split_exp);//9 accountTransfer
+        sb.append(getBookEntryTransfer()).append(split_exp);//10 bookTransfer
+        sb.append(timestamp).append(split_exp);//11-timestamp
+        sb.append(isAbort);//12-isAbort
+        return sb.toString();
     }
 
     @Override

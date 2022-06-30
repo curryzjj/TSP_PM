@@ -125,7 +125,7 @@ public class CLRManager extends FTManager {
                         alignOffset = recoveryDependency.currentMarkId;
                         recoveryIds = recoveryDependency.getDependencyByPartitionId(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     }
-                    LOG.info("Recovery partitions are " + recoveryIds.toString() + " Align offset is  " + alignOffset);
+                    LOG.info("Recovery partitions are" + recoveryIds.toString() + "Align offset is  " + alignOffset);
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(SnapshotFile);
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(), recoveryIds, alignOffset);
                     //undo to align offset

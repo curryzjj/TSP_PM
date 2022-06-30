@@ -3,7 +3,14 @@ package streamprocess.components.operators.api;
 import System.measure.MeasureTools;
 import System.tools.SortHelper;
 import applications.events.InputDataStore.InputStore;
+import applications.events.SL.DepositEvent;
+import applications.events.SL.TransactionEvent;
 import applications.events.TxnEvent;
+import applications.events.gs.MicroEvent;
+import applications.events.lr.TollProcessingEvent;
+import applications.events.ob.AlertEvent;
+import applications.events.ob.BuyingEvent;
+import applications.events.ob.ToppingEvent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +52,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     //TODO:BufferedWrite
 
     protected int taskId;
-    protected long bid=0;
+    protected long bid = 0;
     protected boolean earlier_finish = false;
     public int empty=0;
 
@@ -64,20 +71,20 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public abstract void nextTuple(int batch) throws InterruptedException, IOException;
     public boolean marker(){
-        if( bid % batch_number_per_wm==0){
-            return true;
-        }else {
-            return false;
-        }
-    }
-    public boolean snapshot(){
-        if(Time_Control){
-            if(System.currentTimeMillis()-start_time>=time_Interval){
-                this.start_time=System.currentTimeMillis();
+        if(Time_Control) {
+            if(System.currentTimeMillis() - start_time >= time_Interval){
+                this.start_time = System.currentTimeMillis();
                 return true;
             }else {
                 return false;
             }
+        } else {
+            return bid % batch_number_per_wm == 0;
+        }
+    }
+    public boolean snapshot(){
+        if(Time_Control){
+            return myiteration % checkpoint_interval == 0;
         }else {
             return bid % (checkpoint_interval * batch_number_per_wm) == 0;
         }
@@ -101,13 +108,13 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
             LOG.info(executor.getOP_full() + " emit " + msg + " of: " + myiteration + " @" + DateTime.now() + " SOURCE_CONTROL: " + bid);
             boardcast_time = System.nanoTime();
             collector.create_marker_boardcast(boardcast_time, streamId, bid, myiteration, msg);
-            if(enable_upstreamBackup) {
+            if(enable_spoutBackup) {
                 if (msg.equals("snapshot")) {
                     multiStreamInFlightLog.addEpoch(bid, DEFAULT_STREAM_ID);
                 }
                 multiStreamInFlightLog.addBatch(bid, DEFAULT_STREAM_ID);
             }
-            myiteration++;
+            myiteration ++;
             success = false;
             epoch_size = bid - previous_bid;
             previous_bid = bid;
@@ -118,17 +125,20 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         synchronized (lock){
             this.getContext().getFTM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
             try {
-                if (enable_upstreamBackup){
+                if (enable_clr){
                     if (enable_align_wait) {
                         this.collector.cleanAll();
                     } else {
                         for (int ID:recoveryIDs){
-                            this.collector.clean(DEFAULT_STREAM_ID,ID);
+                            this.collector.clean(DEFAULT_STREAM_ID, ID);
                         }
                     }
-                    this.loadInFlightLog();
                 } else{
                     this.collector.cleanAll();
+                }
+                if (enable_spoutBackup) {
+                    this.loadInFlightLog();
+                } else {
                     this.loadInputFromSSD();
                 }
             } catch (FileNotFoundException e) {
@@ -182,7 +192,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         this.replay = true;
         this.lastSnapshotOffset = offset;
         this.AlignMarkerId = alignOffset;
-        if (enable_upstreamBackup) {
+        if (enable_spoutBackup) {
             Map<TopologyComponent, Grouping> children = this.executor.operator.getChildrenOfStream(DEFAULT_STREAM_ID);
             for (TopologyComponent child:children.keySet()){
                 downExecutorIds.addAll(child.getExecutorIDList());
@@ -197,7 +207,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
 
     @Override
     public void cleanEpoch(long offset) {
-        if (enable_upstreamBackup){
+        if (enable_spoutBackup){
             multiStreamInFlightLog.cleanEpoch(offset,DEFAULT_STREAM_ID);
         }
     }
@@ -229,15 +239,19 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                     LOG.info(executor.getOP_full() + " emit " + "marker @" + DateTime.now() + " SOURCE_CONTROL: " + markerIds);
                     collector.create_marker_boardcast(System.nanoTime(),DEFAULT_STREAM_ID, markerIds, myiteration,"marker");
                 }
+                HashMap<Integer, Boolean> hasFinish = new HashMap<>();
                 if (enable_align_wait && markerIds < AlignMarkerId) {
+                    for (int id : recoveryIDs) {
+                        hasFinish.put(id, false);
+                    }
                     while(replay) {
                         int targetId = getTargetID(currentID,false);
                         if (iterators.get(targetId).hasNext()){
-                            Object o = iterators.get(targetId).next();
-                            collector.emit_single(DEFAULT_STREAM_ID,((TxnEvent)o).getBid(),o);
+                            TxnEvent o = deserializeEvent((String) iterators.get(targetId).next());
+                            collector.emit_single(DEFAULT_STREAM_ID, o.getBid(),o);
                         } else {
-                            flag ++;
-                            if (flag == recoveryIDs.size()){
+                            hasFinish.put(targetId, true);
+                            if (!hasFinish.containsValue(false)){
                                 replay = false;
                             }
                         }
@@ -247,14 +261,17 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                         }
                     }
                 } else {
+                    for (int id : downExecutorIds) {
+                        hasFinish.put(id, false);
+                    }
                     while (replay) {
                         int targetId = getTargetID(currentID, true);
                         if (iterators.get(targetId).hasNext()){
-                            Object o = iterators.get(targetId).next();
-                            collector.emit_single(DEFAULT_STREAM_ID,((TxnEvent)o).getBid(),o);
+                            TxnEvent o = deserializeEvent((String) iterators.get(targetId).next());
+                            collector.emit_single(DEFAULT_STREAM_ID, o.getBid(),o);
                         } else {
-                            flag ++;
-                            if (flag == downExecutorIds.size()){
+                            hasFinish.put(targetId, true);
+                            if (!hasFinish.containsValue(false)){
                                 replay = false;
                             }
                         }
@@ -276,13 +293,115 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         }
     }
 
+    public TxnEvent deserializeEvent(String eventString) {
+        TxnEvent event;
+        String[] split = eventString.split(";");
+        switch (split[4]){
+            case "MicroEvent":
+                event = new MicroEvent(
+                        Integer.parseInt(split[0]), //bid
+                        Integer.parseInt(split[1]), //pid
+                        split[2], //bid_array
+                        Integer.parseInt(split[3]),//num_of_partition
+                        split[5],//key_array
+                        Boolean.parseBoolean(split[6]),//flag
+                        Long.parseLong(split[7]),//timestamp
+                        Boolean.parseBoolean(split[8])//isAbort
+                );
+                break;
+            case "BuyingEvent":
+                event=new BuyingEvent(
+                        Integer.parseInt(split[0]), //bid
+                        split[2], //bid_array
+                        Integer.parseInt(split[1]),//pid
+                        Integer.parseInt(split[3]),//num_of_partition
+                        split[5],//key_array
+                        split[6],//price_array
+                        split[7]  ,//qty_array
+                        Long.parseLong(split[8]),
+                        Boolean.parseBoolean(split[9])
+                );
+                break;
+            case "AlertEvent":
+                event = new AlertEvent(
+                        Integer.parseInt(split[0]), //bid
+                        split[2], // bid_array
+                        Integer.parseInt(split[1]),//pid
+                        Integer.parseInt(split[3]),//num_of_partition
+                        Integer.parseInt(split[5]), //num_access
+                        split[6],//key_array
+                        split[7],//price_array
+                        Long.parseLong(split[8]),
+                        Boolean.parseBoolean(split[9])
+                );
+                break;
+            case "ToppingEvent":
+                event = new ToppingEvent(
+                        Integer.parseInt(split[0]), //bid
+                        split[2], Integer.parseInt(split[1]), //pid
+                        //bid_array
+                        Integer.parseInt(split[3]),//num_of_partition
+                        Integer.parseInt(split[5]), //num_access
+                        split[6],//key_array
+                        split[7] , //top_array
+                        Long.parseLong(split[8]),
+                        Boolean.parseBoolean(split[9])
+                );
+                break;
+            case "DepositEvent":
+                event = new DepositEvent(
+                        Integer.parseInt(split[0]), //bid
+                        Integer.parseInt(split[1]), //pid
+                        split[2], //bid_array
+                        Integer.parseInt(split[3]),//num_of_partition
+                        split[5],//getAccountId
+                        split[6],//getBookEntryId
+                        Integer.parseInt(split[7]),  //getAccountTransfer
+                        Integer.parseInt(split[8]),  //getBookEntryTransfer
+                        Long.parseLong(split[9]),
+                        Boolean.parseBoolean(split[10])
+                );
+                break;
+            case "TransactionEvent":
+                event = new TransactionEvent(
+                        Integer.parseInt(split[0]), //bid
+                        Integer.parseInt(split[1]), //pid
+                        split[2], //bid_array
+                        Integer.parseInt(split[3]),//num_of_partition
+                        split[5],//getSourceAccountId
+                        split[6],//getSourceBookEntryId
+                        split[7],//getTargetAccountId
+                        split[8],//getTargetBookEntryId
+                        Integer.parseInt(split[9]),  //getAccountTransfer
+                        Integer.parseInt(split[10]),  //getBookEntryTransfer
+                        Long.parseLong(split[11]),
+                        Boolean.parseBoolean(split[12])
+                );
+                break;
+            case "TollProcessEvent" :
+                event = new TollProcessingEvent(
+                        Integer.parseInt(split[0]), //bid
+                        Integer.parseInt(split[1]), //pid
+                        split[2], //bid_array
+                        Integer.parseInt(split[3]),//num_of_partition
+                        split[5],
+                        Integer.parseInt(split[6]),
+                        Integer.parseInt(split[7]),
+                        Long.parseLong(split[8]),
+                        Boolean.parseBoolean(split[9])
+                );
+                break;
+            default:
+                throw new IllegalStateException("Unexpected value: " + split[4]);
+        }
+        return event;
+    }
+
     @Override
     public void earlier_ack_marker(Marker marker) {
-
     }
 
     @Override
     public void cleanup() {
-
     }
 }

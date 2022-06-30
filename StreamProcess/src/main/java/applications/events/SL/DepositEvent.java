@@ -10,22 +10,11 @@ import java.util.List;
 
 public class DepositEvent extends TxnEvent {
     //updated state...to be written.
-    public long newAccountValue;
-    public long newAssetValue;
-    //place-rangeMap.
-    public SchemaRecordRef account_value = new SchemaRecordRef();
-    public SchemaRecordRef asset_value = new SchemaRecordRef();
-
-    //used in no-push.
-    public TableRecordRef account_values = new TableRecordRef();
-    public TableRecordRef asset_values = new TableRecordRef();
-
-
     private String accountId; //32 bytes
     private String bookEntryId; //32 bytes
     private long accountTransfer; //64 bytes
     private long bookEntryTransfer;//64 bytes
-
+    public TransactionResult transactionResult;
     /**
      * Creates a new DepositEvent.
      */
@@ -91,12 +80,20 @@ public class DepositEvent extends TxnEvent {
 
     @Override
     public String toString() {
-        return "DepositEvent {"
-                + "accountId=" + accountId
-                + ", bookEntryId=" + bookEntryId
-                + ", accountTransfer=" + accountTransfer
-                + ", bookEntryTransfer=" + bookEntryTransfer
-                + '}';
+        StringBuilder sb = new StringBuilder();
+        String split_exp = ";";
+        sb.append(bid).append(split_exp);//0-bid
+        sb.append(pid).append(split_exp);//1-pid
+        sb.append(Arrays.toString(bid_array)).append(split_exp);//2-bid_array
+        sb.append(num_p()).append(split_exp);//3 number of p
+        sb.append("DepositEvent").append(split_exp);//4 input_event type
+        sb.append(getAccountId()).append(split_exp);//5 accountId
+        sb.append(getBookEntryId()).append(split_exp);//6 bookId
+        sb.append(getAccountTransfer()).append(split_exp);//7 accountTransfer
+        sb.append(getBookEntryTransfer()).append(split_exp);//8 bookTransfer
+        sb.append(timestamp).append(split_exp);//9-timestamp
+        sb.append(isAbort);//10-isAbort
+        return sb.toString();
     }
 
     @Override
