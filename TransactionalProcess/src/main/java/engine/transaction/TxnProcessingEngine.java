@@ -42,7 +42,6 @@ public class TxnProcessingEngine {
     private ConcurrentSkipListSet<Long> transactionAbort;
     public Boolean isTransactionAbort=false;
     private List<Integer> dropTable;
-    public boolean drop = true;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
     //initialize
     private String app;
@@ -216,18 +215,21 @@ public class TxnProcessingEngine {
         }
         if(operation.bid == failureTime){
           if(enable_states_lost){
-                if(drop){
-                    if (enable_clr){
-                        if (!dropTable.contains(mark_id)){
-                            this.dropTable.add(mark_id);
-                        }
-                    }else{
-                        for(int i = 0; i < num_op; i++){
-                            this.dropTable.add(i);
-                        }
-                    }
-                    return;
-                }
+              if (enable_clr){
+                  if (!dropTable.contains(mark_id)){
+                      this.dropTable.add(mark_id);
+                      if (failureTimes.size() != 0) {
+                          failureTime = failureTimes.poll();
+                      } else {
+                          failureTime = -1;
+                      }
+                  }
+              }else{
+                  for(int i = 0; i < num_op; i++){
+                      this.dropTable.add(i);
+                  }
+              }
+              return;
             }
         }
         switch (operation.accessType){
