@@ -9,7 +9,7 @@ function ResetParameters() {
 
   #System Configurations
   Arrival_Control=1
-  targetHz=200000
+  targetHz=150000
   timeSliceLengthMs=1000
   input_store_batch=10000
   #shellcheck disable=SC2006
@@ -17,14 +17,14 @@ function ResetParameters() {
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
   #Workload Configurations
   NUM_ITEMS=163840
-  NUM_EVENTS=8000000
+  NUM_EVENTS=1600000
   ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0
   RATIO_OF_DEPENDENCY=1000
   complexity=0
   NUM_ACCESSES=2
-  partition_num_per_txn=4
+  partition_num_per_txn=8
   partition_num=16
 }
 function runFTStream() {
@@ -84,4 +84,5 @@ function baselineEvaluation() {
 }
 sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/gstxn/
 sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/checkpoint
+sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/wal
 baselineEvaluation

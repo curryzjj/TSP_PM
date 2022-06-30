@@ -169,6 +169,8 @@ public class LoggerManager extends FTManager {
                     } else {
                         this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     }
+                    LOG.info("Align offset is  " + theLastLSN);
+                    LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     MeasureTools.State_load_finish(System.nanoTime());
                     MeasureTools.RedoLog_time_begin(System.nanoTime());
                     LOG.info("Replay committed transactions");
