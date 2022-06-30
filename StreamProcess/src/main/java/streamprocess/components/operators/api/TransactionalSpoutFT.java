@@ -52,7 +52,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     //TODO:BufferedWrite
 
     protected int taskId;
-    protected long bid=0;
+    protected long bid = 0;
     protected boolean earlier_finish = false;
     public int empty=0;
 
@@ -71,20 +71,20 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public abstract void nextTuple(int batch) throws InterruptedException, IOException;
     public boolean marker(){
-        if( bid % batch_number_per_wm==0){
-            return true;
-        }else {
-            return false;
-        }
-    }
-    public boolean snapshot(){
-        if(Time_Control){
-            if(System.currentTimeMillis()-start_time>=time_Interval){
-                this.start_time=System.currentTimeMillis();
+        if(Time_Control) {
+            if(System.currentTimeMillis() - start_time >= time_Interval){
+                this.start_time = System.currentTimeMillis();
                 return true;
             }else {
                 return false;
             }
+        } else {
+            return bid % batch_number_per_wm == 0;
+        }
+    }
+    public boolean snapshot(){
+        if(Time_Control){
+            return myiteration % checkpoint_interval == 0;
         }else {
             return bid % (checkpoint_interval * batch_number_per_wm) == 0;
         }
@@ -114,7 +114,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 }
                 multiStreamInFlightLog.addBatch(bid, DEFAULT_STREAM_ID);
             }
-            myiteration++;
+            myiteration ++;
             success = false;
             epoch_size = bid - previous_bid;
             previous_bid = bid;

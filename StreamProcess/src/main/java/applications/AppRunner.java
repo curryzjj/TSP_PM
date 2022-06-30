@@ -63,7 +63,7 @@ public class  AppRunner extends baseRunner {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            this.metric_path=this.metric_path+application;
+            this.metric_path = this.metric_path + application;
         }
         //Set the fault tolerance mechanisms
         switch (config.getInt("FTOptions")){

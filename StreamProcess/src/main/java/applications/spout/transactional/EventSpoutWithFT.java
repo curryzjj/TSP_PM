@@ -63,7 +63,6 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         inputStore.initialize(Data_path);
         this.inputQueue = this.getContext().getEventGenerator().getEventsQueue();
         this.start_time = System.currentTimeMillis();
-        this.time_Interval=config.getInt("time_Interval");
         if (enable_spoutBackup){
             multiStreamInFlightLog = new MultiStreamInFlightLog(this.executor.operator);
         }
