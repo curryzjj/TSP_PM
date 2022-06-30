@@ -128,10 +128,13 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                     scanner.nextLine();
                 }
                 lastSnapshotOffset ++;
+                bid ++;
                 align --;
             }
+            LOG.info("The input data have been load to the offset " + this.AlignMarkerId);
+        } else {
+            LOG.info("The input data have been load to the offset " + msg);
         }
-        LOG.info("The input data have been load to the offset " + msg);
     }
 
     @Override

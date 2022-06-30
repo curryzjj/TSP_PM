@@ -146,7 +146,7 @@ public class  AppRunner extends baseRunner {
             if(CONTROL.MAX_RECOVERY_TIME){
                 interval = config.getInt("NUM_EVENTS") / config.getInt("snapshot") / config.getInt("batch_number_per_wm") / config.getInt("failureFrequency");
                 for (int i = 1; i <= config.getInt("failureFrequency"); i++) {
-                    CONTROL.failureTimes.add( config.getInt("snapshot") * config.getInt("batch_number_per_wm") * i * interval - 1);
+                    CONTROL.failureTimes.add(config.getInt("snapshot") * config.getInt("batch_number_per_wm") * i * interval - 1);
                 }
             }else {
                 interval = config.getInt("NUM_EVENTS") / config.getInt("batch_number_per_wm") / config.getInt("failureFrequency");
