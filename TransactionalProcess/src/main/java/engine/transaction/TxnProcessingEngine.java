@@ -116,7 +116,7 @@ public class TxnProcessingEngine {
         if(enable_work_partition){
             if(island==-1){//partition as the core
                 for(int i = 0; i < tp; i++){
-                    multi_engine.put(i,new ExecutorServiceInstance(1));
+                    multi_engine.put(i, new ExecutorServiceInstance(1));
                 }
             }else if(island == -2){//partition as the socket
                 int actual_island = tp/CORE_PER_SOCKET;
