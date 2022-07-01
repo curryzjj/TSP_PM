@@ -223,7 +223,7 @@ public class  AppRunner extends baseRunner {
                 + OsUtils.osWrapperPostFix("Application=%s")
                 + OsUtils.osWrapperPostFix("NUM_EVENTS=%d_NUM_ITEMS=%d_NUM_ACCESSES=%d_ZIP=%d_RATIO_OF_READ=%d_RATIO_OF_ABORT=%d_RATIO_OF_DEPENDENCY=%d_partition_num_per_txn=%d_partition_num=%d")
                 + OsUtils.osWrapperPostFix("Exactly_Once=%s_Arrival_Control=%s_targetHz=%d_TimeControl=%s_timeInterval=%d_InputStoreBatch=%d_failureTime=%d")
-                + "FTOption=%d";
+                + OsUtils.osWrapperPostFix("FTOption=%d");
         directory = String.format(statsFolderPattern,
                 config.getString("application"),
                 config.getInt("NUM_EVENTS"),
