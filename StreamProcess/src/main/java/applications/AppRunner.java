@@ -143,7 +143,7 @@ public class  AppRunner extends baseRunner {
         CONTROL.Time_Control = config.getBoolean("enable_time_Interval");
         if (CONTROL.enable_states_lost) {
             int interval;
-            if (CONTROL.Time_Control) {
+            if (!CONTROL.Time_Control) {
                 if(CONTROL.MAX_RECOVERY_TIME){
                     interval = config.getInt("NUM_EVENTS") / config.getInt("snapshot") / config.getInt("batch_number_per_wm") / config.getInt("failureFrequency");
                     for (int i = 1; i <= config.getInt("failureFrequency"); i++) {

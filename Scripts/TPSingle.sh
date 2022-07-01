@@ -82,9 +82,10 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-    for FTOptions in 1 2 5 6
-        do runFTStream
-        done
+    FTOptions=5
+        for time_Interval in 500 1000 2000 3000 4000 5000
+            do runFTStream
+            done
 }
 sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/tptxn/
 sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txntp/checkpoint
