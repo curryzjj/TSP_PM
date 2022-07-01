@@ -2,10 +2,10 @@
 function ResetParameters() {
   app="GS_txn"
   FTOptions=0
-  failureModel=0
-  failureFrequency=0
+  failureModel=2
+  failureFrequency=2
   tthreads=16
-  snapshot=10
+  snapshot=2
 
   #System Configurations
   Arrival_Control=1
@@ -77,7 +77,7 @@ function runFTStream() {
 function baselineEvaluation() {
   ResetParameters
   RATIO_OF_READ=500
-  for FTOptions in 1
+  for FTOptions in 6
       do runFTStream
       done
   ResetParameters
