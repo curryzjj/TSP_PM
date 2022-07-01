@@ -117,9 +117,9 @@ public abstract class baseRunner {
 
     //Algorithm Configuration
     @Parameter(names = {"--Time_Control"}, description = "time interval or number interval", required = false)
-    public int enable_time_Interval = 0;
+    public int Time_Control = 0;
     @Parameter(names = {"--time_Interval"}, description = "time interval", required = false)
-    public int time_Interval = 6000;
+    public int time_Interval = 1000;
     @Parameter(names = {"--snapshot"}, description = "batch per commit(number interval)", required = false)
     public int snapshot = 10;
 
@@ -203,7 +203,7 @@ public abstract class baseRunner {
             config.put("isParallel",false);
         }
         //Algorithm Configuration
-        if (enable_time_Interval == 1){
+        if (Time_Control == 1){
             config.put("enable_time_Interval",true);
         } else {
             config.put("enable_time_Interval",false);

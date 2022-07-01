@@ -10,6 +10,8 @@ function ResetParameters() {
   #System Configurations
   Arrival_Control=1
   targetHz=200000
+  Time_Control=1
+  time_Interval=1000
   timeSliceLengthMs=1000
   input_store_batch=10000
   #shellcheck disable=SC2006
@@ -28,7 +30,7 @@ function ResetParameters() {
   partition_num=16
 }
 function runFTStream() {
-  echo " java -Xms100g -Xmx100g -jar -XX:+UseG1GC -d64 /home/jjzhao/TSP_PM/StreamProcess/target/StreamProcess-1.0-SNAPSHOT-jar-with-dependencies \
+  echo "java -Xms100g -Xmx100g -jar -XX:+UseG1GC -d64 /home/jjzhao/TSP_PM/StreamProcess/target/StreamProcess-1.0-SNAPSHOT-jar-with-dependencies \
             --app $app \
             --FTOptions $FTOptions \
             --failureModel $failureModel \
@@ -37,6 +39,8 @@ function runFTStream() {
             --snapshot $snapshot \
             --Arrival_Control $Arrival_Control \
             --targetHz $targetHz \
+            --Time_Control $Time_Control \
+            --time_Interval $time_Interval \
             --timeSliceLengthMs $timeSliceLengthMs \
             --input_store_batch $input_store_batch \
             --batch_number_per_wm $batch_number_per_wm \
@@ -60,6 +64,8 @@ function runFTStream() {
               --snapshot $snapshot \
               --Arrival_Control $Arrival_Control \
               --targetHz $targetHz \
+              --Time_Control $Time_Control \
+              --time_Interval $time_Interval \
               --timeSliceLengthMs $timeSliceLengthMs \
               --input_store_batch $input_store_batch \
               --batch_number_per_wm $batch_number_per_wm \

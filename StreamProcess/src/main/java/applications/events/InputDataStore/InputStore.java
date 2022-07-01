@@ -50,6 +50,15 @@ public abstract class InputStore implements Serializable {
         }
         return SortHelper.sortKey(keySets);
     }
+    public int checkpointNum(long lastSnapshotOffset) {
+        int number = 0;
+        for (long offset : this.inputStorePaths.keySet()) {
+            if (offset >= lastSnapshotOffset) {
+                number ++;
+            }
+        }
+        return number;
+    }
     public String getInputStorePath(long offset) {
         return this.inputStorePaths.get(offset);
     }
