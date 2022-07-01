@@ -67,7 +67,7 @@ public class CONTROL {
     public static boolean enable_numa_placement = true;//thread placement. always on.
 
     //used for NUMA-aware partition engine
-    public static boolean enable_work_partition = true; // 2. this is a sub-option, only useful when engine is enabled.
+    public static boolean enable_work_partition = false; // 2. this is a sub-option, only useful when engine is enabled.
     public static int island = -1;//-1 stands for one engine per core; -2 stands for one engine per socket.
 
     public static int CORE_PER_SOCKET = 2;//configure this for NUMA placement please.

@@ -61,8 +61,8 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         this.checkpoint_interval = config.getInt("snapshot");
         Data_path = Data_path.concat(path);
         inputStore.initialize(Data_path);
+        time_Interval = config.getInt("time_Interval");
         this.inputQueue = this.getContext().getEventGenerator().getEventsQueue();
-        this.start_time = System.currentTimeMillis();
         if (enable_spoutBackup){
             multiStreamInFlightLog = new MultiStreamInFlightLog(this.executor.operator);
         }
@@ -70,6 +70,9 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
 
     @Override
     public void nextTuple(int batch) throws InterruptedException, IOException {
+        if (bid == 0 && Time_Control) {
+            this.start_time = System.currentTimeMillis();
+        }
         if (needWaitReplay){
             this.registerRecovery();
             if (enable_spoutBackup) {
@@ -140,6 +143,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     @Override
     protected void replayInput() throws InterruptedException, FileNotFoundException {
         MeasureTools.ReExecute_time_begin(System.nanoTime());
+        this.start_time = System.currentTimeMillis();
         while(replay) {
             TxnEvent event = replayInputFromSSD();
             if (event != null) {

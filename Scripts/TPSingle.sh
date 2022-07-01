@@ -2,22 +2,22 @@
 function ResetParameters() {
   app="TP_txn"
   FTOptions=0
-  failureModel=0
-  failureFrequency=0
+  failureModel=2
+  failureFrequency=2
   tthreads=16
-  snapshot=10
+  snapshot=2
 
   #System Configurations
   Arrival_Control=1
   targetHz=200000
   timeSliceLengthMs=1000
-  input_store_batch=10000
+  input_store_batch=20000
   #shellcheck disable=SC2006
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
   #Workload Configurations
   NUM_ITEMS=40960
-  NUM_EVENTS=8000000
+  NUM_EVENTS=16000000
   ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0
@@ -51,7 +51,7 @@ function runFTStream() {
             --partition_num_per_txn $partition_num_per_txn \
             --partition_num $partition_num
             "
-    java -Xms100g -Xmx100g -jar -XX:+UseG1GC -d64 /home/jjzhao/TSP_PM/StreamProcess/target/StreamProcess-1.0-SNAPSHOT-jar-with-dependencies.jar \
+  java -Xms100g -Xmx100g -jar -XX:+UseG1GC -d64 /home/jjzhao/TSP_PM/StreamProcess/target/StreamProcess-1.0-SNAPSHOT-jar-with-dependencies.jar \
               --app $app \
               --FTOptions $FTOptions \
               --failureModel $failureModel \
@@ -76,7 +76,7 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-    for FTOptions in 0 1 2 3 4
+    for FTOptions in 1 2 5 6
         do runFTStream
         done
 }

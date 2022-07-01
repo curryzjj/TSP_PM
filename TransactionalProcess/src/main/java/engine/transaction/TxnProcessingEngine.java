@@ -97,7 +97,7 @@ public class TxnProcessingEngine {
         public ConcurrentHashMap<Integer,Holder> rangeMap = new ConcurrentHashMap<>();//multi range support. <rangeId, holder>
         public Holder_in_range(Integer num_op){
             int i;
-            for (i=0;i<num_op;i++){
+            for (i = 0; i < num_op; i++){
                 rangeMap.put(i,new Holder());
             }
         }
@@ -115,11 +115,11 @@ public class TxnProcessingEngine {
         barrier=new CyclicBarrier(num_op);
         if(enable_work_partition){
             if(island==-1){//partition as the core
-                for(int i=0;i<tp;i++){
+                for(int i = 0; i < tp; i++){
                     multi_engine.put(i,new ExecutorServiceInstance(1));
                 }
-            }else if(island==-2){//partition as the socket
-                int actual_island=tp/CORE_PER_SOCKET;
+            }else if(island == -2){//partition as the socket
+                int actual_island = tp/CORE_PER_SOCKET;
                 int i;
                 for (i = 0; i < actual_island; i++) {
                     multi_engine.put(i, new ExecutorServiceInstance(CORE_PER_SOCKET));
@@ -132,7 +132,7 @@ public class TxnProcessingEngine {
                 throw new UnsupportedOperationException("Unsupported partition strategy");
             }
         }else{
-            standalone_engine=new ExecutorServiceInstance(tp);
+            standalone_engine = new ExecutorServiceInstance(tp);
         }
         TOTAL_CORES = tp;
         LOG.info("Engine initialize:" + " Working Threads:" + tp);
@@ -344,8 +344,8 @@ public class TxnProcessingEngine {
         SOURCE_CONTROL.getInstance().Wait_End(thread_id);
     }
     public int evaluation(int thread_Id, long mark_ID) throws InterruptedException{
-        Collection<Callable<Object>> callables=new Vector<>();
-        int task=0;
+        Collection<Callable<Object>> callables = new Vector<>();
+        int task = 0;
         for (Holder_in_range holder_in_range:holder_by_stage.values()){
             Holder holder = holder_in_range.rangeMap.get(thread_Id);
             task += submit_task(thread_Id, holder, callables, mark_ID);

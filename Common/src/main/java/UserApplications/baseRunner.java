@@ -116,7 +116,7 @@ public abstract class baseRunner {
     public int sinkThread = 1;
 
     //Algorithm Configuration
-    @Parameter(names = {"--enable_time_Interval"}, description = "time interval or number interval", required = false)
+    @Parameter(names = {"--Time_Control"}, description = "time interval or number interval", required = false)
     public int enable_time_Interval = 0;
     @Parameter(names = {"--time_Interval"}, description = "time interval", required = false)
     public int time_Interval = 6000;

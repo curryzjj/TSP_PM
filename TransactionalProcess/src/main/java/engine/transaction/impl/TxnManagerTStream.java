@@ -123,7 +123,7 @@ public class TxnManagerTStream extends TxnManagerDedicated {
     //operation_chain_construction
     private void operation_chain_construction_modify_read(TableRecord tableRecord, String srcTable, long bid, MetaTypes.AccessType accessType, SchemaRecordRef record_ref, Function function, TxnContext txn_context) {
         String primaryKey=tableRecord.record_.GetPrimaryKey();
-        ConcurrentHashMap<String, MyList<Operation>> holder=instance.getHolder(srcTable).rangeMap.get(getTaskId(primaryKey)).holder_v1;
+        ConcurrentHashMap<String, MyList<Operation>> holder = instance.getHolder(srcTable).rangeMap.get(getTaskId(primaryKey)).holder_v1;
         holder.putIfAbsent(primaryKey,new MyList<>(srcTable,primaryKey, getPartitionId(primaryKey)));
         holder.get(primaryKey).add(new Operation(srcTable,txn_context,bid,accessType,tableRecord,record_ref,function));
     }
