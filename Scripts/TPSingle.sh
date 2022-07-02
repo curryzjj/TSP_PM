@@ -10,6 +10,8 @@ function ResetParameters() {
   #System Configurations
   Arrival_Control=1
   targetHz=200000
+  Time_Control=1
+  time_Interval=1000
   timeSliceLengthMs=1000
   input_store_batch=20000
   #shellcheck disable=SC2006
@@ -37,6 +39,8 @@ function runFTStream() {
             --snapshot $snapshot \
             --Arrival_Control $Arrival_Control \
             --targetHz $targetHz \
+            --Time_Control $Time_Control \
+            --time_Interval $time_Interval \
             --timeSliceLengthMs $timeSliceLengthMs \
             --input_store_batch $input_store_batch \
             --batch_number_per_wm $batch_number_per_wm \
@@ -60,6 +64,8 @@ function runFTStream() {
               --snapshot $snapshot \
               --Arrival_Control $Arrival_Control \
               --targetHz $targetHz \
+              --Time_Control $Time_Control \
+              --time_Interval $time_Interval \
               --timeSliceLengthMs $timeSliceLengthMs \
               --input_store_batch $input_store_batch \
               --batch_number_per_wm $batch_number_per_wm \
@@ -76,9 +82,10 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-    for FTOptions in 1 2 5 6
-        do runFTStream
-        done
+    FTOptions=5
+        for time_Interval in 500 1000 2000 3000 4000 5000
+            do runFTStream
+            done
 }
 sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/tptxn/
 sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txntp/checkpoint

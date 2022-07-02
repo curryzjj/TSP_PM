@@ -75,6 +75,9 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         }
         if (needWaitReplay){
             this.registerRecovery();
+            if (Time_Control){
+                this.start_time = System.currentTimeMillis();
+            }
             if (enable_spoutBackup) {
                 replayEvents();
             } else{
@@ -143,7 +146,6 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     @Override
     protected void replayInput() throws InterruptedException, FileNotFoundException {
         MeasureTools.ReExecute_time_begin(System.nanoTime());
-        this.start_time = System.currentTimeMillis();
         while(replay) {
             TxnEvent event = replayInputFromSSD();
             if (event != null) {

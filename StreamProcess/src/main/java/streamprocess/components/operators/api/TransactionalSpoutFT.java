@@ -71,20 +71,16 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public abstract void nextTuple(int batch) throws InterruptedException, IOException;
     public boolean marker(){
-        if(Time_Control) {
+        return bid % batch_number_per_wm == 0;
+    }
+    public boolean snapshot(){
+        if(Time_Control){
             if(System.currentTimeMillis() - start_time >= time_Interval){
                 this.start_time = System.currentTimeMillis();
                 return true;
             }else {
                 return false;
             }
-        } else {
-            return bid % batch_number_per_wm == 0;
-        }
-    }
-    public boolean snapshot(){
-        if(Time_Control){
-            return myiteration % checkpoint_interval == 0;
         }else {
             return bid % (checkpoint_interval * batch_number_per_wm) == 0;
         }
@@ -228,6 +224,9 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
             MultiStreamInFlightLog.BatchEvents batchEvents = recoveryEvents.get(checkpointId);
             if (checkpointId > lastSnapshotOffset){
                 LOG.info(executor.getOP_full() + " emit " + "snapshot @" + DateTime.now() + " SOURCE_CONTROL: " + checkpointId);
+                if (Time_Control){
+                    this.start_time = System.currentTimeMillis();
+                }
                 collector.create_marker_boardcast(System.nanoTime(), DEFAULT_STREAM_ID, checkpointId, myiteration,"snapshot");
             }
             for (long markerIds : batchEvents.getMarkerId()){

@@ -143,15 +143,22 @@ public class  AppRunner extends baseRunner {
         CONTROL.Time_Control = config.getBoolean("enable_time_Interval");
         if (CONTROL.enable_states_lost) {
             int interval;
-            if(CONTROL.MAX_RECOVERY_TIME){
-                interval = config.getInt("NUM_EVENTS") / config.getInt("snapshot") / config.getInt("batch_number_per_wm") / config.getInt("failureFrequency");
-                for (int i = 1; i <= config.getInt("failureFrequency"); i++) {
-                    CONTROL.failureTimes.add(config.getInt("snapshot") * config.getInt("batch_number_per_wm") * i * interval - 1);
+            if (!CONTROL.Time_Control) {
+                if(CONTROL.MAX_RECOVERY_TIME){
+                    interval = config.getInt("NUM_EVENTS") / config.getInt("snapshot") / config.getInt("batch_number_per_wm") / config.getInt("failureFrequency");
+                    for (int i = 1; i <= config.getInt("failureFrequency"); i++) {
+                        CONTROL.failureTimes.add(config.getInt("snapshot") * config.getInt("batch_number_per_wm") * i * interval - 1);
+                    }
+                }else {
+                    interval = config.getInt("NUM_EVENTS") / config.getInt("batch_number_per_wm") / config.getInt("failureFrequency");
+                    for (int i = 1; i <= config.getInt("failureFrequency"); i++) {
+                        CONTROL.failureTimes.add( config.getInt("batch_number_per_wm") * interval - 1);
+                    }
                 }
-            }else {
-                interval = config.getInt("NUM_EVENTS") / config.getInt("batch_number_per_wm") / config.getInt("failureFrequency");
+            } else {
+                interval = config.getInt("NUM_EVENTS") / config.getInt("failureFrequency");
                 for (int i = 1; i <= config.getInt("failureFrequency"); i++) {
-                    CONTROL.failureTimes.add( config.getInt("batch_number_per_wm") * interval - 1);
+                    CONTROL.failureTimes.add( i * interval - 1);
                 }
             }
             CONTROL.failureTime = failureTimes.poll();
@@ -214,18 +221,11 @@ public class  AppRunner extends baseRunner {
         String directory;
         String statsFolderPattern = config.getString("metrics.output")
                 + OsUtils.osWrapperPostFix("Application=%s")
-                + OsUtils.osWrapperPostFix("FTOption=%d")
-                + OsUtils.osWrapperPostFix("Exactly_Once=%s")
-                + OsUtils.osWrapperPostFix("Arrival_Control=%s")
-                + "failureTime=%d_targetHz=%d_NUM_EVENTS=%d_NUM_ITEMS=%d_NUM_ACCESSES=%d_ZIP=%d_RATIO_OF_READ=%d_RATIO_OF_ABORT=%d_" +
-                "RATIO_OF_DEPENDENCY=%d_partition_num_per_txn=%d_partition_num=%d";
+                + OsUtils.osWrapperPostFix("NUM_EVENTS=%d_NUM_ITEMS=%d_NUM_ACCESSES=%d_ZIP=%d_RATIO_OF_READ=%d_RATIO_OF_ABORT=%d_RATIO_OF_DEPENDENCY=%d_partition_num_per_txn=%d_partition_num=%d")
+                + OsUtils.osWrapperPostFix("Exactly_Once=%s_Arrival_Control=%s_targetHz=%d_TimeControl=%s_timeInterval=%d_InputStoreBatch=%d_failureTime=%d")
+                + OsUtils.osWrapperPostFix("FTOption=%d");
         directory = String.format(statsFolderPattern,
                 config.getString("application"),
-                config.getInt("FTOptions"),
-                config.getBoolean("Exactly_Once"),
-                config.getBoolean("Arrival_Control"),
-                config.getInt("failureFrequency"),
-                config.getInt("targetHz"),
                 config.getInt("NUM_EVENTS"),
                 config.getInt("NUM_ITEMS"),
                 config.getInt("NUM_ACCESSES"),
@@ -234,7 +234,15 @@ public class  AppRunner extends baseRunner {
                 config.getInt("RATIO_OF_ABORT"),
                 config.getInt("RATIO_OF_DEPENDENCY"),
                 config.getInt("partition_num_per_txn"),
-                config.getInt("partition_num"));
+                config.getInt("partition_num"),
+                config.getBoolean("Exactly_Once"),
+                config.getBoolean("Arrival_Control"),
+                config.getInt("targetHz"),
+                config.getBoolean("enable_time_Interval"),
+                config.getInt("time_Interval"),
+                config.getInt("input_store_batch"),
+                config.getInt("failureFrequency"),
+                config.getInt("FTOptions"));
         MeasureTools.METRICS_REPORT(directory);
     }
     public static void main(String[] args) throws UnhandledCaseException, InterruptedException, IOException {

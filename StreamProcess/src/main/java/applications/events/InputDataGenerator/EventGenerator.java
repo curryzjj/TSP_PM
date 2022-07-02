@@ -85,6 +85,7 @@ public class EventGenerator extends Thread {
                 circle --;
             }else{
                 this.EventsQueue.offer(events);
+                this.EventsQueue.offer(new ArrayList<>());
                 this.finishTime = System.nanoTime();
                 return true;
             }

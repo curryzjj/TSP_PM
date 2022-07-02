@@ -18,6 +18,7 @@ public class RecoveryDependency {
         this.currentMarkId = currentMarkId;
         for (int i = 0; i < partitionNum; i++) {
             this.recoveryDependency.put(i,new ArrayList<>());
+            this.recoveryDependency.get(i).add(i);
         }
     }
     public RecoveryDependency(ConcurrentHashMap<Integer, List<Integer>> lastDependency, long currentMarkId) {
