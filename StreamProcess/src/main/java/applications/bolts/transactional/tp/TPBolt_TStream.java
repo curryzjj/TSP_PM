@@ -23,6 +23,7 @@ import static UserApplications.CONTROL.*;
 
 public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream.class);
+    private static final long serialVersionUID = -4887076370033768805L;
     ArrayDeque<TollProcessingEvent> LREvents = new ArrayDeque<>();
     public TPBolt_TStream(int fid) {
         super(LOG, fid);

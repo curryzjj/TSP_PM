@@ -25,6 +25,7 @@ import java.util.List;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
+import static applications.events.DeserializeEventHelper.deserializeEvent;
 
 public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG= LoggerFactory.getLogger(SLBolt_TStream.class);
@@ -257,12 +258,13 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
             for (CausalService c:this.causalService.values()) {
                 for (OutsideDeterminant outsideDeterminant:c.outsideDeterminant) {
-                    if (outsideDeterminant.outSideEvent.getBid() < markId) {
-                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,outsideDeterminant.outSideEvent.getBid());
-                        if (outsideDeterminant.outSideEvent instanceof DepositEvent) {
-                            DeterminantDepositRequestConstruct((DepositEvent) outsideDeterminant.outSideEvent, txnContext);
+                    TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
+                    if (event.getBid() < markId) {
+                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
+                        if (event instanceof DepositEvent) {
+                            DeterminantDepositRequestConstruct((DepositEvent) event, txnContext);
                         } else {
-                            DeterminantTransferRequestConstruct((TransactionEvent) outsideDeterminant.outSideEvent, txnContext);
+                            DeterminantTransferRequestConstruct((TransactionEvent) event, txnContext);
                         }
                     } else {
                         break;
@@ -282,7 +284,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 if (enable_determinants_log) {
                     MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
                     outsideDeterminant = new OutsideDeterminant();
-                    outsideDeterminant.setOutSideEvent(event.cloneEvent());
+                    outsideDeterminant.setOutSideEvent(event.toString());
                     String[] keys;
                     if(event instanceof TransactionEvent){
                         keys = new String[]{((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent)event).getSourceAccountId(),

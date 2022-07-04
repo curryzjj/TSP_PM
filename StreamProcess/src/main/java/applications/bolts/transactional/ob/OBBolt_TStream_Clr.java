@@ -106,7 +106,7 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT=transactionManager.start_evaluate(thread_Id,this.markerId);
+        int FT = transactionManager.start_evaluate(thread_Id, this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         boolean transactionSuccess=FT==0;
         switch (FT){

@@ -2,6 +2,7 @@ package applications.bolts.transactional.gs;
 
 import System.measure.MeasureTools;
 import System.spout.helper.Event;
+import applications.events.TxnEvent;
 import applications.events.gs.MicroEvent;
 import applications.events.gs.MicroResult;
 import engine.Exception.DatabaseException;
@@ -21,6 +22,7 @@ import java.util.*;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
+import static applications.events.DeserializeEventHelper.deserializeEvent;
 
 public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     private static final Logger LOG= LoggerFactory.getLogger(GSBolt_TStream.class);
@@ -150,13 +152,14 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
         if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
             for (CausalService c:this.causalService.values()) {
                 for (OutsideDeterminant outsideDeterminant:c.outsideDeterminant) {
-                    if (outsideDeterminant.outSideEvent.getBid() < markId) {
-                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,outsideDeterminant.outSideEvent.getBid());
-                        MicroEvent event = (MicroEvent) outsideDeterminant.outSideEvent;
-                        if (event.READ_EVENT()) {
-                            determinant_read_construct(event, txnContext);
+                    TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
+                    if (event.getBid() < markId) {
+                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
+                        MicroEvent microEvent = (MicroEvent) event;
+                        if (microEvent.READ_EVENT()) {
+                            determinant_read_construct(microEvent, txnContext);
                         } else {
-                            determinant_write_construct(event, txnContext);
+                            determinant_write_construct(microEvent, txnContext);
                         }
                     } else {
                         break;
@@ -214,7 +217,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
         if (enable_determinants_log) {
             MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
             OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
-            outsideDeterminant.setOutSideEvent(event.cloneEvent());
+            outsideDeterminant.setOutSideEvent(event.toString());
             //TODO: just add non-determinant event
             for (int i = 0; i < NUM_ACCESSES; i++) {
                 if (this.getPartitionId(String.valueOf(event.getKeys()[i])) != event.getPid()) {
