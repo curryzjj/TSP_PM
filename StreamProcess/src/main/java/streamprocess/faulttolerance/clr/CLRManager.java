@@ -145,6 +145,7 @@ public class CLRManager extends FTManager {
                         }
                     }
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                    this.SnapshotOffset.clear();
                     notifyAllComplete();
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Snapshot)) {
@@ -175,7 +176,7 @@ public class CLRManager extends FTManager {
         dataOutputStream.writeInt(len);
         dataOutputStream.write(result);
         dataOutputStream.close();
-        LOG.info("CLRManager commit the checkpoint to the current.log");
+        LOG.info("CLRManager commit the checkpoint to the current.log at " + checkpointId);
         g.getSpout().ackCommit(checkpointId);
         g.getSink().ackCommit(checkpointId);
         for (int eId : this.callFaultTolerance.keySet()) {

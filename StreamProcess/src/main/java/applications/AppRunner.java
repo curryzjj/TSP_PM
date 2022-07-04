@@ -149,11 +149,6 @@ public class  AppRunner extends baseRunner {
                     for (int i = 1; i <= config.getInt("failureFrequency"); i++) {
                         CONTROL.failureTimes.add(config.getInt("snapshot") * config.getInt("batch_number_per_wm") * i * interval - 1);
                     }
-                }else {
-                    interval = config.getInt("NUM_EVENTS") / config.getInt("batch_number_per_wm") / config.getInt("failureFrequency");
-                    for (int i = 1; i <= config.getInt("failureFrequency"); i++) {
-                        CONTROL.failureTimes.add( config.getInt("batch_number_per_wm") * interval - 1);
-                    }
                 }
             } else {
                 interval = config.getInt("NUM_EVENTS") / config.getInt("failureFrequency");

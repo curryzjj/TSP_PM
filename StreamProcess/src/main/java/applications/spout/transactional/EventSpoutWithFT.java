@@ -133,7 +133,6 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
                 if (scanner.hasNextLine()) {
                     scanner.nextLine();
                 }
-                lastSnapshotOffset ++;
                 bid ++;
                 align --;
             }

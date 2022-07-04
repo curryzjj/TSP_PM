@@ -227,6 +227,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 if (Time_Control){
                     this.start_time = System.currentTimeMillis();
                 }
+                this.FTM.spoutRegister(checkpointId);
                 collector.create_marker_boardcast(System.nanoTime(), DEFAULT_STREAM_ID, checkpointId, myiteration,"snapshot");
             }
             for (long markerIds : batchEvents.getMarkerId()){
