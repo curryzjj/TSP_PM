@@ -40,7 +40,7 @@ public class TxnProcessingEngine {
     private ExecutorServiceInstance standalone_engine;
     /* Abort transactions <bid> */
     private ConcurrentSkipListSet<Long> transactionAbort;
-    public Boolean isTransactionAbort=false;
+    public Boolean isTransactionAbort = false;
     private List<Integer> dropTable;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
     //initialize

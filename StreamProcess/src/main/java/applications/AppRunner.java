@@ -137,7 +137,7 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_states_lost = true;
                 break;
             case 3:
-                CONTROL.enable_transaction_abort = CONTROL.enable_states_lost=true;
+                CONTROL.enable_transaction_abort = CONTROL.enable_states_lost = true;
                 break;
         }
         CONTROL.Time_Control = config.getBoolean("enable_time_Interval");
@@ -163,6 +163,8 @@ public class  AppRunner extends baseRunner {
         //Set the application
        CONTROL.Arrival_Control = config.getBoolean("Arrival_Control");
        CONTROL.RATIO_OF_READ = config.getInt("RATIO_OF_READ");
+       CONTROL.RATIO_OF_DEPENDENCY = config.getInt("RATIO_OF_DEPENDENCY");
+       CONTROL.RATIO_OF_ABORT = config.getInt("RATIO_OF_ABORT");
        CONTROL.NUM_ACCESSES = config.getInt("NUM_ACCESSES");
        CONTROL.NUM_ITEMS = config.getInt("NUM_ITEMS");
        CONTROL.NUM_EVENTS = config.getInt("NUM_EVENTS");

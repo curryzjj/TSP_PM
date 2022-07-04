@@ -154,7 +154,7 @@ public class LoggerManager extends FTManager {
                     LOG.debug("LoggerManager received all register and start Undo");
                     this.db.undoFromWAL();
                     LOG.debug("Undo log complete!");
-                    this.db.getTxnProcessingEngine().isTransactionAbort=false;
+                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
                     notifyLogComplete();
                     lock.notifyAll();
                 }else if(callLog.containsValue(Recovery)){
