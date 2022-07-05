@@ -40,6 +40,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
 
     protected long lastSnapshotOffset = -1;
     protected long AlignMarkerId;
+    protected long storedOffset = -1;
     protected HashMap<Long,MultiStreamInFlightLog.BatchEvents> recoveryEvents;
     protected List<Integer> recoveryIDs = new ArrayList<>();
     protected List<Integer> downExecutorIds = new ArrayList<>();

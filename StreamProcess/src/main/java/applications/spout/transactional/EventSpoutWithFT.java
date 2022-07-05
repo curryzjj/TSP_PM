@@ -127,14 +127,9 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         bid = lastSnapshotOffset;
         this.storedSnapshotOffsets.addAll(this.inputStore.getStoredSnapshotOffsets(lastSnapshotOffset));
         openFile(Data_path.concat(this.inputStore.getInputStorePath(storedSnapshotOffsets.poll())));
-        if (storedSnapshotOffsets.size() != 0) {
-            lastSnapshotOffset = storedSnapshotOffsets.poll();
-        } else {
-            lastSnapshotOffset = -1;
-        }
-        long align = this.AlignMarkerId - lastSnapshotOffset;
         this.replay = true;
         if (enable_wal) {
+            long align = this.AlignMarkerId - lastSnapshotOffset;
             while (align != 0){
                 if (scanner.hasNextLine()) {
                     scanner.nextLine();
@@ -145,6 +140,11 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             LOG.info("The input data have been load to the offset " + this.AlignMarkerId);
         } else {
             LOG.info("The input data have been load to the offset " + msg);
+        }
+        if (storedSnapshotOffsets.size() != 0) {
+            storedOffset = storedSnapshotOffsets.poll();
+        } else {
+            storedOffset = -1;
         }
     }
 
@@ -179,12 +179,12 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             event = deserializeEvent(scanner.nextLine());
             return event;
         }else{
-            if (lastSnapshotOffset != -1){
-                openFile(Data_path.concat(this.inputStore.getInputStorePath(lastSnapshotOffset)));
+            if (storedOffset != -1){
+                openFile(Data_path.concat(this.inputStore.getInputStorePath(storedOffset)));
                 if (storedSnapshotOffsets.size() != 0) {
-                    lastSnapshotOffset = storedSnapshotOffsets.poll();
+                    storedOffset = storedSnapshotOffsets.poll();
                 } else {
-                    lastSnapshotOffset = -1;
+                    storedOffset = -1;
                 }
                 return replayInputFromSSD();
             } else {
