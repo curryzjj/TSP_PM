@@ -328,7 +328,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     }
 
     private void TRANSFER_REQUEST_CORE(TransactionEvent event) throws InterruptedException {
-        SchemaRecord schemaRecord = event.src_account_value.getRecord();
+        //SchemaRecord schemaRecord = event.src_account_value.getRecord();
 //        if (schemaRecord == null) {
 //            System.out.println(event.getBid());
 //        }

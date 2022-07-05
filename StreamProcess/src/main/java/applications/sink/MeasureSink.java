@@ -217,7 +217,7 @@ public class MeasureSink extends BaseSink {
     protected void EXECUTE(Tuple in) {
         boolean finish = (boolean) in.getValue(0);
         if (!finish) {
-            LOG.info("The tuple ("+in.getBID()+ ") is abort");
+            //LOG.info("The tuple ("+in.getBID()+ ") is abort");
             if (enable_determinants_log) {
                 if (in.getValue(1) != null) {
                     InsideDeterminant insideDeterminant = (InsideDeterminant) in.getValue(1);

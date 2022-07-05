@@ -35,10 +35,6 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
         }else{
             record_at_ts = versions.get(ts);
         }
-        if (record_at_ts == null) {
-           // System.out.println(ts);
-           // System.out.println(versions.keySet());
-        }
         return record_at_ts;
     }
     public void updateMultiValues(long ts, SchemaRecord record){
