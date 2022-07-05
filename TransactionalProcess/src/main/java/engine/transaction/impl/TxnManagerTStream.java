@@ -155,9 +155,7 @@ public class TxnManagerTStream extends TxnManagerDedicated {
     public int start_evaluate(int thread_id, long mark_ID) throws InterruptedException, BrokenBarrierException, IOException, DatabaseException {
         /** Pay attention to concurrency control */
         instance.start_evaluation(thread_id,mark_ID);
-        if(instance.isTransactionAbort){
-            return 1;
-        }else if(instance.getRecoveryRangeId().size()!=0) {
+        if (instance.getRecoveryRangeId().size() != 0) {
             if(thread_id == 0){
                 if(enable_states_partition && enable_parallel){
                     this.storageManager.cleanTable(instance.getRecoveryRangeId());
@@ -165,8 +163,11 @@ public class TxnManagerTStream extends TxnManagerDedicated {
                     this.storageManager.cleanAllTables();
                 }
             }
+            this.instance.getTransactionAbort().clear();
             return 2;
-        }else {
+        } else if (instance.isTransactionAbort) {
+            return 1;
+        } else {
             return 0;
         }
     }

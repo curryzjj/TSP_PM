@@ -37,7 +37,7 @@ public class MicroEvent extends TxnEvent {
      */
     public MicroEvent(int[] keys, boolean flag, int numAccess, long bid
             , int partition_id, long[] bid_array, int number_of_partitions , boolean isAbort) {
-        super(bid, partition_id, bid_array, number_of_partitions,isAbort);
+        super(bid, partition_id, bid_array, number_of_partitions, isAbort);
         this.timestamp = System.nanoTime();
         this.flag = flag;
         this.keys = keys;

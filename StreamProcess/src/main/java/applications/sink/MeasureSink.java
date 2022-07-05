@@ -217,7 +217,7 @@ public class MeasureSink extends BaseSink {
     protected void EXECUTE(Tuple in) {
         boolean finish = (boolean) in.getValue(0);
         if (!finish) {
-            LOG.info("The tuple ("+in.getBID()+ ") is abort");
+            //LOG.info("The tuple ("+in.getBID()+ ") is abort");
             if (enable_determinants_log) {
                 if (in.getValue(1) != null) {
                     InsideDeterminant insideDeterminant = (InsideDeterminant) in.getValue(1);
@@ -257,6 +257,7 @@ public class MeasureSink extends BaseSink {
     }
     private void measure_end() {
         LOG.info("System running time is " + (System.nanoTime() - startTime) / 1E9);
+        LOG.info("Transactions abort : " + abortTransaction);
         MeasureTools.setAvgThroughput(thisTaskId,exe * 1E6 / (System.nanoTime() - startTime));
         for (double a:throughput_map){
             throughput.addValue(a);//k events/s

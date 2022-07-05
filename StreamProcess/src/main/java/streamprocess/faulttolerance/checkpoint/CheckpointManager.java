@@ -152,7 +152,6 @@ public class CheckpointManager extends FTManager {
                     this.db.undoFromWAL();
                     LOG.info("Undo log complete!");
                     this.db.getTxnProcessingEngine().isTransactionAbort = false;
-                    this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     notifyBoltComplete();
                     lock.notifyAll();
                 } else if(callSnapshot.containsValue(Snapshot)){
