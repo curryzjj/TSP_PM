@@ -168,7 +168,7 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
             case 1:
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS_FT();
+                transactionSuccess=this.TXN_PROCESS();
                 break;
             case 2:
                 if (enable_align_wait){

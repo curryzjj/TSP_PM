@@ -185,7 +185,6 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public void recoveryInput(long offset, List<Integer> recoveryPartitionIds, long alignOffset) throws FileNotFoundException, InterruptedException {
         this.needWaitReplay = true;
-        this.replay = true;
         this.lastSnapshotOffset = offset;
         this.AlignMarkerId = alignOffset;
         if (enable_spoutBackup) {
@@ -211,6 +210,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public void loadInFlightLog() {
         MeasureTools.Input_load_begin(System.nanoTime());
+        this.replay = true;
         int ID = recoveryIDs.get(0);
         recoveryEvents = multiStreamInFlightLog.getInFlightEvents(DEFAULT_STREAM_ID, graph.getExecutionNode(ID).getOP(), lastSnapshotOffset);
         MeasureTools.Input_load_finish(System.nanoTime());

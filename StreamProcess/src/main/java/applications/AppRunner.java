@@ -140,7 +140,20 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_transaction_abort = CONTROL.enable_states_lost = true;
                 break;
         }
-        CONTROL.Time_Control = config.getBoolean("enable_time_Interval");
+        //Set the application
+       CONTROL.Time_Control = config.getBoolean("enable_time_Interval");
+       CONTROL.Arrival_Control = config.getBoolean("Arrival_Control");
+       CONTROL.RATIO_OF_READ = config.getInt("RATIO_OF_READ");
+       CONTROL.RATIO_OF_DEPENDENCY = config.getInt("RATIO_OF_DEPENDENCY");
+       CONTROL.RATIO_OF_ABORT = config.getInt("RATIO_OF_ABORT");
+       CONTROL.NUM_ACCESSES = config.getInt("NUM_ACCESSES");
+       CONTROL.NUM_ITEMS = config.getInt("NUM_ITEMS");
+       CONTROL.NUM_EVENTS = config.getInt("NUM_EVENTS");
+       CONTROL.ZIP_SKEW = config.getDouble("ZIP_SKEW");
+       CONTROL.PARTITION_NUM = config.getInt("partition_num");
+       CONTROL.Exactly_Once = config.getBoolean("Exactly_Once");
+       CONTROL.COMPLEXITY = config.getInt("complexity");
+       //Set failure time
         if (CONTROL.enable_states_lost) {
             int interval;
             if (!CONTROL.Time_Control) {
@@ -159,19 +172,6 @@ public class  AppRunner extends baseRunner {
             CONTROL.failureTime = failureTimes.poll();
             CONTROL.lastFailureTime = failureTime;
         }
-
-        //Set the application
-       CONTROL.Arrival_Control = config.getBoolean("Arrival_Control");
-       CONTROL.RATIO_OF_READ = config.getInt("RATIO_OF_READ");
-       CONTROL.RATIO_OF_DEPENDENCY = config.getInt("RATIO_OF_DEPENDENCY");
-       CONTROL.RATIO_OF_ABORT = config.getInt("RATIO_OF_ABORT");
-       CONTROL.NUM_ACCESSES = config.getInt("NUM_ACCESSES");
-       CONTROL.NUM_ITEMS = config.getInt("NUM_ITEMS");
-       CONTROL.NUM_EVENTS = config.getInt("NUM_EVENTS");
-       CONTROL.ZIP_SKEW = config.getDouble("ZIP_SKEW");
-       CONTROL.PARTITION_NUM = config.getInt("partition_num");
-       CONTROL.Exactly_Once = config.getBoolean("Exactly_Once");
-       CONTROL.COMPLEXITY = config.getInt("complexity");
     }
 
     private static double runTopologyLocally(Topology topology,Configuration conf) throws UnhandledCaseException, InterruptedException, IOException {
@@ -219,7 +219,7 @@ public class  AppRunner extends baseRunner {
         String statsFolderPattern = config.getString("metrics.output")
                 + OsUtils.osWrapperPostFix("Application=%s")
                 + OsUtils.osWrapperPostFix("NUM_EVENTS=%d_NUM_ITEMS=%d_NUM_ACCESSES=%d_ZIP=%d_RATIO_OF_READ=%d_RATIO_OF_ABORT=%d_RATIO_OF_DEPENDENCY=%d_partition_num_per_txn=%d_partition_num=%d")
-                + OsUtils.osWrapperPostFix("Exactly_Once=%s_Arrival_Control=%s_targetHz=%d_TimeControl=%s_timeInterval=%d_InputStoreBatch=%d_failureTime=%d")
+                + OsUtils.osWrapperPostFix("Exactly_Once=%s_Arrival_Control=%s_targetHz=%d_TimeControl=%s_timeInterval=%d_InputStoreBatch=%d_failureModel=%d_failureTime=%d")
                 + OsUtils.osWrapperPostFix("FTOption=%d");
         directory = String.format(statsFolderPattern,
                 config.getString("application"),
@@ -238,6 +238,7 @@ public class  AppRunner extends baseRunner {
                 config.getBoolean("enable_time_Interval"),
                 config.getInt("time_Interval"),
                 config.getInt("input_store_batch"),
+                config.getInt("failureModel"),
                 config.getInt("failureFrequency"),
                 config.getInt("FTOptions"));
         MeasureTools.METRICS_REPORT(directory);

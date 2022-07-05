@@ -396,7 +396,9 @@ public class TxnProcessingEngine {
             preValues = operation.condition_records[0].readPreValues(operation.bid);
         }
         final long sourceBalance = preValues.getValues().get(1).getLong();
-        if (operation.condition.arg1 > 0 && sourceBalance > operation.condition.arg1 && sourceBalance > operation.condition.arg2){
+        //To contron the abort ratio, wo modify the violation of consistency property
+        if (operation.condition.arg1 > 0) {
+        //if (operation.condition.arg1 > 0 && sourceBalance > operation.condition.arg1 && sourceBalance > operation.condition.arg2){
             SchemaRecord srcRecord = operation.s_record.readPreValues(operation.bid);
             List<DataBox> values = srcRecord.getValues();
             SchemaRecord tempo_record;

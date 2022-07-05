@@ -128,6 +128,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         this.storedSnapshotOffsets.addAll(this.inputStore.getStoredSnapshotOffsets(lastSnapshotOffset));
         openFile(Data_path.concat(this.inputStore.getInputStorePath(storedSnapshotOffsets.poll())));
         long align = this.AlignMarkerId - lastSnapshotOffset;
+        this.replay = true;
         if (enable_wal) {
             while (align != 0){
                 if (scanner.hasNextLine()) {

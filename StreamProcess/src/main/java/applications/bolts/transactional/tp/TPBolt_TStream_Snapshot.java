@@ -115,7 +115,7 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
             case 1:
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
-                transactionSuccess = this.TXN_PROCESS_FT();
+                transactionSuccess = this.TXN_PROCESS();
                 break;
             case 2:
                 this.SyncRegisterRecovery();
