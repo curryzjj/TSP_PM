@@ -88,4 +88,5 @@ function baselineEvaluation() {
 }
 sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/sltxn/
 sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txnsl/checkpoint
+sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txnsl/checkpoint/wal
 baselineEvaluation

@@ -94,7 +94,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         if (this.marker()) {//emit marker tuple
             if(enable_snapshot){
                 if (replay) {
-                    if (bid == lastSnapshotOffset) {
+                    if (bid == storedOffset) {
                         msg = "snapshot";
                     }
                 } else {
