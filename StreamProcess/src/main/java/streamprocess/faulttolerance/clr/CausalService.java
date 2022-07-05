@@ -34,6 +34,7 @@ public class CausalService implements Serializable {
     public void cleanDeterminant() {
         this.insideDeterminant.clear();
         this.outsideDeterminant.clear();
+        this.abortEvent.clear();
     }
 
     public void setCurrentMarkerId(long currentMarkerId) {

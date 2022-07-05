@@ -99,9 +99,10 @@ public abstract class InputDataGenerator implements Serializable {
             keys.add(res);
             param.set_keys(access_id,res);
             if (isDependency) {
-                i = generateRandom(1, this.partitionDependency.get(current_pid).size() -1);
-                //i = random.nextInt(this.partitionDependency.get(current_pid).size());
-                p_id = this.partitionDependency.get(current_pid).get(i);
+                while (p_id == current_pid) {
+                    i = random.nextInt(this.partitionDependency.get(current_pid).size());
+                    p_id = this.partitionDependency.get(current_pid).get(i);
+                }
             }
         }
     }

@@ -215,7 +215,6 @@ public abstract class TxnManagerDedicated implements TxnManager{
             tableName=srcTable;
         }
         TableRecord s_record = storageManager.getTable(tableName).SelectKeyRecord(key);
-
         if (s_record != null) {
             return Asy_ModifyRecordCC(txn_context, srcTable, s_record, function, condition_records, condition, accessType, success);
         } else {

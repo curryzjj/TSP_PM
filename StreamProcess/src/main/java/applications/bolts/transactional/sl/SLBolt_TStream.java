@@ -65,9 +65,9 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
             if (enable_determinants_log) {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
-                targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
             } else {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false,null, event.getTimestamp());//the tuple is finished.//the tuple is abort.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false,null, event.getTimestamp());//the tuple is finished.//the tuple is abort.
             }
             if (enable_upstreamBackup) {
                 this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new TransactionResult(event.getBid(), event.getTimestamp(), false));
@@ -173,7 +173,6 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
             Deposit_Request_Construct(event, txnContext, false);
         }
     }
-
     protected void DeterminantTransferRequestConstruct(TransactionEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() <= recoveryId) {
             for (CausalService c:this.causalService.values()) {
@@ -330,14 +329,15 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
 
     private void TRANSFER_REQUEST_CORE(TransactionEvent event) throws InterruptedException {
         SchemaRecord schemaRecord = event.src_account_value.getRecord();
-        if (schemaRecord == null) {
-            System.out.println(event.getBid());
-        }
-        schemaRecord = event.src_asset_value.getRecord();
-        if (schemaRecord == null) {
-            System.out.println(event.getBid());
-        }
-        event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0], event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
+//        if (schemaRecord == null) {
+//            System.out.println(event.getBid());
+//        }
+//        schemaRecord = event.src_asset_value.getRecord();
+//        if (schemaRecord == null) {
+//            System.out.println(event.getBid());
+//        }
+       // event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0], event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
+        event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0]);
     }
     protected void DEPOSITE_REQUEST_CORE(DepositEvent event) {
         event.transactionResult = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0]);
