@@ -127,6 +127,11 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
         bid = lastSnapshotOffset;
         this.storedSnapshotOffsets.addAll(this.inputStore.getStoredSnapshotOffsets(lastSnapshotOffset));
         openFile(Data_path.concat(this.inputStore.getInputStorePath(storedSnapshotOffsets.poll())));
+        if (storedSnapshotOffsets.size() != 0) {
+            lastSnapshotOffset = storedSnapshotOffsets.poll();
+        } else {
+            lastSnapshotOffset = -1;
+        }
         long align = this.AlignMarkerId - lastSnapshotOffset;
         this.replay = true;
         if (enable_wal) {
@@ -174,8 +179,13 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             event = deserializeEvent(scanner.nextLine());
             return event;
         }else{
-            if (storedSnapshotOffsets.size() != 0){
-                openFile(Data_path.concat(this.inputStore.getInputStorePath(storedSnapshotOffsets.poll())));
+            if (lastSnapshotOffset != -1){
+                openFile(Data_path.concat(this.inputStore.getInputStorePath(lastSnapshotOffset)));
+                if (storedSnapshotOffsets.size() != 0) {
+                    lastSnapshotOffset = storedSnapshotOffsets.poll();
+                } else {
+                    lastSnapshotOffset = -1;
+                }
                 return replayInputFromSSD();
             } else {
                 scanner.close();

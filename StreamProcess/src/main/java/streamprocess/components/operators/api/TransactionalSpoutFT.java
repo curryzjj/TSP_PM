@@ -38,7 +38,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected long epoch_size=0;
     protected volatile int control=0;
 
-    protected long lastSnapshotOffset;
+    protected long lastSnapshotOffset = -1;
     protected long AlignMarkerId;
     protected HashMap<Long,MultiStreamInFlightLog.BatchEvents> recoveryEvents;
     protected List<Integer> recoveryIDs = new ArrayList<>();
@@ -92,10 +92,16 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
         if (this.marker()) {//emit marker tuple
             if(enable_snapshot){
-                if(snapshot()){
-                    msg = "snapshot";
-                    checkpoint_counter ++;
-                    this.inputStore.switchInputStorePath(bid);
+                if (replay) {
+                    if (bid == lastSnapshotOffset) {
+                        msg = "snapshot";
+                    }
+                } else {
+                    if(snapshot()){
+                        msg = "snapshot";
+                        checkpoint_counter ++;
+                        this.inputStore.switchInputStorePath(bid);
+                    }
                 }
             }
             if (msg.equals("snapshot") || enable_wal) {

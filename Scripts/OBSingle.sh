@@ -10,7 +10,7 @@ function ResetParameters() {
   Arrival_Control=1
   targetHz=200000
   Time_Control=1
-  time_Interval=1000
+  time_Interval=3000
   timeSliceLengthMs=3000
   input_store_batch=20000
   #shellcheck disable=SC2006
