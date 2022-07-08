@@ -21,7 +21,7 @@ import streamprocess.components.topology.TopologySubmitter;
 import streamprocess.execution.runtime.threads.executorThread;
 
 import java.io.IOException;
-import java.util.Properties;
+import java.util.*;
 
 import static UserApplications.CONTROL.*;
 
@@ -156,6 +156,7 @@ public class  AppRunner extends baseRunner {
        //Set failure time
         if (CONTROL.enable_states_lost) {
             int interval;
+            Random random = new Random();
             if (!CONTROL.Time_Control) {
                 if(CONTROL.MAX_RECOVERY_TIME){
                     interval = config.getInt("NUM_EVENTS") / config.getInt("snapshot") / config.getInt("batch_number_per_wm") / config.getInt("failureFrequency");
@@ -164,11 +165,21 @@ public class  AppRunner extends baseRunner {
                     }
                 }
             } else {
-                interval = config.getInt("NUM_EVENTS") / config.getInt("failureFrequency");
+                int wm_num = config.getInt("NUM_EVENTS") / config.getInt("batch_number_per_wm");
+                interval = config.getInt("batch_number_per_wm");
+                Set<Integer> failureTime = new TreeSet<>();
                 for (int i = 1; i <= config.getInt("failureFrequency"); i++) {
-                    CONTROL.failureTimes.add( i * interval - 1);
+                    int j = random.nextInt(wm_num) + 1;
+                    while (failureTime.contains(j) && j < 3){
+                       j = random.nextInt(wm_num) + 1;
+                    }
+                    failureTime.add(j);
+                }
+                for (int i : failureTime){
+                    failureTimes.add(interval * i - 1);
                 }
             }
+            System.out.println(failureTimes);
             CONTROL.failureTime = failureTimes.poll();
             CONTROL.lastFailureTime = failureTime;
         }
