@@ -4,6 +4,7 @@ import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.IOException;
@@ -21,6 +22,10 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if (in.isFailureFlag()) {
+            FailureFlag failureFlag = in.getFailureFlag();
+            if (this.executor.isFirst_executor()) {
+                this.db.getTxnProcessingEngine().getRecoveryRangeId().add((int) failureFlag.getValue());
+            }
             if (enable_align_wait){
                 this.collector.cleanAll();
             } else {
