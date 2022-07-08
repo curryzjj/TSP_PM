@@ -162,17 +162,10 @@ public class LoggerManager extends FTManager {
                     long theLastLSN = getLastGlobalLSN(walFile);
                     MeasureTools.State_load_begin(System.nanoTime());
                     LOG.info("Reload database from lastSnapshot");
-                    if (lastSnapshotResult == null){
-                        this.g.getSpout().recoveryInput(0,null, theLastLSN);
-                        this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
-                        LOG.info("Align offset is  " + theLastLSN);
-                        LOG.info("Reload state at " + 0 + " complete!");
-                    } else {
-                        this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, theLastLSN);
-                        this.db.reloadStateFromSnapshot(lastSnapshotResult);
-                        LOG.info("Align offset is  " + theLastLSN);
-                        LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
-                    }
+                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, theLastLSN);
+                    this.db.reloadStateFromSnapshot(lastSnapshotResult);
+                    LOG.info("Align offset is  " + theLastLSN);
+                    LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     MeasureTools.State_load_finish(System.nanoTime());
                     MeasureTools.RedoLog_time_begin(System.nanoTime());
                     LOG.info("Replay committed transactions");
@@ -188,7 +181,6 @@ public class LoggerManager extends FTManager {
                             lock.wait();
                         }
                     }
-                    this.db.undoFromWAL();
                     this.SnapshotOffset = new ArrayDeque<>();
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     notifyAllComplete();

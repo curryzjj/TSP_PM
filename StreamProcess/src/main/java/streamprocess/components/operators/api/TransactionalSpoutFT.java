@@ -108,11 +108,12 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     }
     @Override
     public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
-//        if (this.failure()){
-//            Random random = new Random();
-//            FailureFlag failureFlag = new FailureFlag(DEFAULT_STREAM_ID, System.currentTimeMillis(), bid, random.nextInt(PARTITION_NUM));
-//            collector.broadcast_failureFlag(bid, failureFlag);
-//        }
+        if (this.failure()){
+            Random random = new Random();
+            FailureFlag failureFlag = new FailureFlag(DEFAULT_STREAM_ID, System.currentTimeMillis(), bid, random.nextInt(PARTITION_NUM));
+            failureFlagBid.add(bid);
+            collector.broadcast_failureFlag(bid, failureFlag);
+        }
         if (this.marker()) {
             if(enable_snapshot){
                 if (replay) {

@@ -158,10 +158,9 @@ public class  AppRunner extends baseRunner {
             int interval;
             interval = 100 / config.getInt("failureFrequency");
             for (int i = 0; i < config.getInt("failureFrequency"); i++) {
-                CONTROL.failureTimes.add(5000 + i * interval * 1000);
+                CONTROL.failureTimes.add(10000 + i * interval * 1000);
             }
             CONTROL.failureTime = failureTimes.poll();
-            CONTROL.lastFailureTime = failureTime;
         }
     }
 

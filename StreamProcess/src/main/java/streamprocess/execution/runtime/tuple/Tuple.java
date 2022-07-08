@@ -1,6 +1,7 @@
 package streamprocess.execution.runtime.tuple;
 
 import streamprocess.components.topology.TopologyContext;
+import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.util.Collection;
@@ -114,6 +115,9 @@ public class Tuple {
     }
     public Marker getMarker() {
         return (Marker) this.message;
+    }
+    public FailureFlag getFailureFlag() {
+        return (FailureFlag) this.message;
     }
 
     public Collection getValues() {

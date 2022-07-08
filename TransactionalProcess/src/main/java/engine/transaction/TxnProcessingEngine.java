@@ -213,25 +213,6 @@ public class TxnProcessingEngine {
         if (cleanVersion) {
             operation.s_record.clean_map();
         }
-        if(operation.bid == failureTime){
-          if(enable_states_lost){
-              if (enable_clr){
-                  if (!dropTable.contains(mark_id)){
-                      this.dropTable.add(mark_id);
-                  }
-              }else{
-                  for(int i = 0; i < num_op; i++){
-                      this.dropTable.add(i);
-                  }
-              }
-              if (failureTimes.size() != 0) {
-                  failureTime = failureTimes.poll();
-              } else {
-                  failureTime = -1;
-              }
-              return;
-            }
-        }
         switch (operation.accessType){
             case READ_WRITE_READ:
                 if (app.equals("TP_txn")){

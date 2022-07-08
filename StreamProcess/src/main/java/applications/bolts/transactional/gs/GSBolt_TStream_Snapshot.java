@@ -17,18 +17,24 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
     }
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-//        if (in.isFailureFlag()) {
-//            System.out.println(this.thread_Id);
-//        } else {
+        if (in.isFailureFlag()) {
+            FailureFlag failureFlag = in.getFailureFlag();
+            if (this.executor.isFirst_executor()) {
+                this.db.getTxnProcessingEngine().getRecoveryRangeId().add((int) failureFlag.getValue());
+            }
+            this.SyncRegisterRecovery();
+            this.collector.cleanAll();
+            this.EventsHolder.clear();
+            for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                tuples.clear();
+            }
+        } else {
             if(in.isMarker()){
                 if (status.isMarkerArrived(in.getSourceTask())) {
                     PRE_EXECUTE(in);
                 } else {
                     if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
                         switch (in.getMarker().getValue()){
-                            case "recovery":
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                break;
                             case "marker":
                                 this.markerId = in.getBID();
                                 if (TXN_PROCESS()) {
@@ -61,7 +67,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
             }else{
                 execute_ts_normal(in);
             }
-//        }
+        }
     }
 
     @Override
@@ -86,14 +92,6 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS_FT();
                 break;
-            case 2:
-                this.SyncRegisterRecovery();
-                this.collector.cleanAll();
-                this.EventsHolder.clear();
-                for (Queue<Tuple> tuples : bufferedTuples.values()) {
-                    tuples.clear();
-                }
-                break;
         }
         return transactionSuccess;
     }
@@ -117,14 +115,6 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS();
-                break;
-            case 2:
-                this.SyncRegisterRecovery();
-                this.collector.cleanAll();
-                this.EventsHolder.clear();
-                for (Queue<Tuple> tuples : bufferedTuples.values()) {
-                    tuples.clear();
-                }
                 break;
         }
         return transactionSuccess;
