@@ -4,6 +4,7 @@ import System.util.DataTypes.StreamValues;
 import streamprocess.components.topology.MultiStreamComponent;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.runtime.collector.MetaGroup;
+import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.execution.runtime.tuple.streaminfo;
 
@@ -255,6 +256,16 @@ public class MultiStreamOutputContoller extends OutputController{
             for (int i = 0; i < it.length; i++) {
                 PartitionController p = it[i];
                 p.marker_boardcast(MetaGroup.get(p.childOP), streamId, bid, marker);
+            }
+        }
+    }
+    @Override
+    public void failureFlag_boardcast(MetaGroup MetaGroup, long bid, FailureFlag flag) throws InterruptedException {
+        for (String streamId : PClist.keySet()) {
+            PartitionController[] it = collections.get(streamId);
+            for (int i = 0; i < it.length; i++) {
+                PartitionController p = it[i];
+                p.failureFlag_boardcast(MetaGroup.get(p.childOP), streamId, bid, flag);
             }
         }
     }

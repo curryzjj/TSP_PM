@@ -29,7 +29,10 @@ public class GeneralMsg<T> extends Message {
     public boolean isMarker() {
         return false;
     }
-
+    @Override
+    public boolean isFailureFlag() {
+        return false;
+    }
     @Override
     public Marker getMarker() {
         return null;

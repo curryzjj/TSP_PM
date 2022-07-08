@@ -3,6 +3,7 @@ package applications.bolts.transactional.gs;
 import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 
 import java.io.IOException;
 import java.util.Queue;
@@ -16,47 +17,51 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
     }
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-        if(in.isMarker()){
-            if (status.isMarkerArrived(in.getSourceTask())) {
-                PRE_EXECUTE(in);
-            } else {
-                if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                    switch (in.getMarker().getValue()){
-                        case "recovery":
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                            break;
-                        case "marker":
-                            this.markerId = in.getBID();
-                            if (TXN_PROCESS()) {
+//        if (in.isFailureFlag()) {
+//            System.out.println(this.thread_Id);
+//        } else {
+            if(in.isMarker()){
+                if (status.isMarkerArrived(in.getSourceTask())) {
+                    PRE_EXECUTE(in);
+                } else {
+                    if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                        switch (in.getMarker().getValue()){
+                            case "recovery":
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
-                            }
-                            break;
-                        case "snapshot":
-                            this.markerId = in.getBID();
-                            this.isSnapshot = true;
-                            if(TXN_PROCESS_FT()){
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
-                            }
-                            break;
-                        case "finish":
-                            this.markerId = in.getBID();
-                            if(TXN_PROCESS()){
-                                /* All the data has been executed */
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
-                            }
-                            this.context.stop_running();
-                            break;
-                        default:
-                            throw new IllegalStateException("Unexpected value: " + in.getMarker().getValue());
+                                break;
+                            case "marker":
+                                this.markerId = in.getBID();
+                                if (TXN_PROCESS()) {
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                }
+                                break;
+                            case "snapshot":
+                                this.markerId = in.getBID();
+                                this.isSnapshot = true;
+                                if(TXN_PROCESS_FT()){
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                }
+                                break;
+                            case "finish":
+                                this.markerId = in.getBID();
+                                if(TXN_PROCESS()){
+                                    /* All the data has been executed */
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                }
+                                this.context.stop_running();
+                                break;
+                            default:
+                                throw new IllegalStateException("Unexpected value: " + in.getMarker().getValue());
+                        }
                     }
                 }
+            }else{
+                execute_ts_normal(in);
             }
-        }else{
-            execute_ts_normal(in);
-        }
+//        }
     }
 
     @Override

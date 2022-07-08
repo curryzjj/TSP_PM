@@ -153,33 +153,13 @@ public class  AppRunner extends baseRunner {
        CONTROL.PARTITION_NUM = config.getInt("partition_num");
        CONTROL.Exactly_Once = config.getBoolean("Exactly_Once");
        CONTROL.COMPLEXITY = config.getInt("complexity");
-       //Set failure time
-        if (CONTROL.enable_states_lost) {
+       //Set failure time, starts after five seconds, Adjust the failure interval according to different failure frequencies
+        if (CONTROL.enable_states_lost && config.getInt("failureFrequency") > 0) {
             int interval;
-            Random random = new Random();
-            if (!CONTROL.Time_Control) {
-                if(CONTROL.MAX_RECOVERY_TIME){
-                    interval = config.getInt("NUM_EVENTS") / config.getInt("snapshot") / config.getInt("batch_number_per_wm") / config.getInt("failureFrequency");
-                    for (int i = 1; i <= config.getInt("failureFrequency"); i++) {
-                        CONTROL.failureTimes.add(config.getInt("snapshot") * config.getInt("batch_number_per_wm") * i * interval - 1);
-                    }
-                }
-            } else {
-                int wm_num = config.getInt("NUM_EVENTS") / config.getInt("batch_number_per_wm");
-                interval = config.getInt("batch_number_per_wm");
-                Set<Integer> failureTime = new TreeSet<>();
-                for (int i = 1; i <= config.getInt("failureFrequency"); i++) {
-                    int j = random.nextInt(wm_num) + 1;
-                    while (failureTime.contains(j) && j < 3){
-                       j = random.nextInt(wm_num) + 1;
-                    }
-                    failureTime.add(j);
-                }
-                for (int i : failureTime){
-                    failureTimes.add(interval * i - 1);
-                }
+            interval = 100 / config.getInt("failureFrequency");
+            for (int i = 0; i < config.getInt("failureFrequency"); i++) {
+                CONTROL.failureTimes.add(5000 + i * interval * 1000);
             }
-            System.out.println(failureTimes);
             CONTROL.failureTime = failureTimes.poll();
             CONTROL.lastFailureTime = failureTime;
         }

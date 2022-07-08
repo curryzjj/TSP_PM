@@ -29,7 +29,6 @@ import java.util.concurrent.RunnableFuture;
 
 import static System.Constants.SSD_Path;
 import static UserApplications.CONTROL.*;
-import static UserApplications.CONTROL.failureTime;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
 import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastCommitSnapshotResult;
 import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastGlobalLSN;

@@ -26,6 +26,11 @@ public class StringMsg extends Message {
     }
 
     @Override
+    public boolean isFailureFlag() {
+        return false;
+    }
+
+    @Override
     public Marker getMarker() {
         return null;
     }

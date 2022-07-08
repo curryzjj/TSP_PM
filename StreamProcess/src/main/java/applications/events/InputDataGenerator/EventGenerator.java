@@ -28,7 +28,6 @@ public class EventGenerator extends Thread {
     private long cnt=0;
     private long startTime;
     private long finishTime;
-    private long lastFinishTime;
     private long busyTime=0;
     private int spoutThreads;
     private CountDownLatch latch;
@@ -63,7 +62,6 @@ public class EventGenerator extends Thread {
 
         }
         this.startTime = System.nanoTime();
-        this.lastFinishTime = System.currentTimeMillis();
         while (!finish){
           if(Arrival_Control){
               finish = seedDataWithControl();
@@ -75,7 +73,6 @@ public class EventGenerator extends Thread {
         LOG.info("Event arrival rate is "+ exe * 1E6 / (finishTime - startTime) + " (k input_event/s)" + "busy time: " + busy_time + " sleep time: " + sleep_time + " cnt " + cnt);
     }
     private boolean seedDataWithControl(){
-        boolean finish = false;
         long emitStartTime = System.currentTimeMillis();
         int circle = elements / batch;
         while (circle != 0){
@@ -93,20 +90,7 @@ public class EventGenerator extends Thread {
         // Sleep for the rest of time slice if needed
         long finishTime = System.currentTimeMillis();
         long emitTime = finishTime - emitStartTime;
-        if (emitTime < timeSliceLengthMs) {// in terms of milliseconds.
-//            try {
-//                if(timeSliceLengthMs - emitTime > emitStartTime - lastFinishTime){
-//                    if(timeSliceLengthMs - emitTime > busyTime){
-//                        Thread.sleep(timeSliceLengthMs - emitTime - emitStartTime + lastFinishTime - busyTime);
-//                        busyTime = 0;
-//                    }else{
-//                        busyTime = busyTime-timeSliceLengthMs+emitTime;
-//                    }
-//                }
-//            } catch (InterruptedException ignored) {
-//                //  e.printStackTrace();
-//            }
-//            lastFinishTime = System.currentTimeMillis();
+        if (emitTime < timeSliceLengthMs) {
             try {
                 Thread.sleep(timeSliceLengthMs - emitTime);
             } catch (InterruptedException e) {
@@ -115,10 +99,9 @@ public class EventGenerator extends Thread {
             sleep_time ++;
         } else{
             this.busyTime = busyTime + emitTime - timeSliceLengthMs;
-            lastFinishTime = System.currentTimeMillis();
             busy_time ++;
         }
-        return finish;
+        return false;
     }
     private boolean seedDataWithoutControl(){
         boolean finish=false;
