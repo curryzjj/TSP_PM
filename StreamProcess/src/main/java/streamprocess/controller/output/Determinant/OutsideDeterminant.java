@@ -11,9 +11,9 @@ import java.util.List;
  */
 public class OutsideDeterminant implements Serializable {
     private static final long serialVersionUID = 1697109885782459412L;
-    public TxnEvent outSideEvent;
+    public String outSideEvent;
     public List<Integer> targetPartitionIds = new ArrayList<>();
-    public void setOutSideEvent(TxnEvent outSideEvent) {
+    public void setOutSideEvent(String outSideEvent) {
         this.outSideEvent = outSideEvent;
     }
     public void setTargetPartitionId(int targetIds) {

@@ -16,6 +16,7 @@ public class TxnEvent {
         this.bid = bid;
         this.pid = pid;
         this.bid_array = bid_array;
+        this.isAbort = isAbort;
         this.number_of_partitions = number_of_partitions;
         success = new boolean[1];
         success[0] = false;
@@ -23,6 +24,7 @@ public class TxnEvent {
     public TxnEvent(long bid, int partition_id, String bid_array, int number_of_partitions, boolean isAbort) {
         this.bid = bid;
         this.pid = partition_id;
+        this.isAbort = isAbort;
         String[] bid_arrays = bid_array.substring(1, bid_array.length() - 1).split(",");
         this.bid_array = new long[bid_arrays.length];
 

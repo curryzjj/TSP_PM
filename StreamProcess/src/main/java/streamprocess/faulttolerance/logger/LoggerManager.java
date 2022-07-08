@@ -154,23 +154,26 @@ public class LoggerManager extends FTManager {
                     LOG.debug("LoggerManager received all register and start Undo");
                     this.db.undoFromWAL();
                     LOG.debug("Undo log complete!");
-                    this.db.getTxnProcessingEngine().isTransactionAbort=false;
+                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
                     notifyLogComplete();
                     lock.notifyAll();
                 }else if(callLog.containsValue(Recovery)){
                     LOG.info("LoggerManager received all register and start recovery");
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(snapshotFile);
                     long theLastLSN = getLastGlobalLSN(walFile);
-                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, theLastLSN);
                     MeasureTools.State_load_begin(System.nanoTime());
                     LOG.info("Reload database from lastSnapshot");
                     if (lastSnapshotResult == null){
+                        this.g.getSpout().recoveryInput(0,null, theLastLSN);
                         this.g.topology.tableinitilizer.reloadDB(this.db.getTxnProcessingEngine().getRecoveryRangeId());
+                        LOG.info("Align offset is  " + theLastLSN);
+                        LOG.info("Reload state at " + 0 + " complete!");
                     } else {
+                        this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, theLastLSN);
                         this.db.reloadStateFromSnapshot(lastSnapshotResult);
+                        LOG.info("Align offset is  " + theLastLSN);
+                        LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     }
-                    LOG.info("Align offset is  " + theLastLSN);
-                    LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     MeasureTools.State_load_finish(System.nanoTime());
                     MeasureTools.RedoLog_time_begin(System.nanoTime());
                     LOG.info("Replay committed transactions");

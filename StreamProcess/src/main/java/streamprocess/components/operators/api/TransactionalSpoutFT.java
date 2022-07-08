@@ -38,8 +38,9 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected long epoch_size=0;
     protected volatile int control=0;
 
-    protected long lastSnapshotOffset;
+    protected long lastSnapshotOffset = -1;
     protected long AlignMarkerId;
+    protected long storedOffset = -1;
     protected HashMap<Long,MultiStreamInFlightLog.BatchEvents> recoveryEvents;
     protected List<Integer> recoveryIDs = new ArrayList<>();
     protected List<Integer> downExecutorIds = new ArrayList<>();
@@ -92,10 +93,16 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
         if (this.marker()) {//emit marker tuple
             if(enable_snapshot){
-                if(snapshot()){
-                    msg = "snapshot";
-                    checkpoint_counter ++;
-                    this.inputStore.switchInputStorePath(bid);
+                if (replay) {
+                    if (bid == storedOffset) {
+                        msg = "snapshot";
+                    }
+                } else {
+                    if(snapshot()){
+                        msg = "snapshot";
+                        checkpoint_counter ++;
+                        this.inputStore.switchInputStorePath(bid);
+                    }
                 }
             }
             if (msg.equals("snapshot") || enable_wal) {
@@ -185,7 +192,6 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public void recoveryInput(long offset, List<Integer> recoveryPartitionIds, long alignOffset) throws FileNotFoundException, InterruptedException {
         this.needWaitReplay = true;
-        this.replay = true;
         this.lastSnapshotOffset = offset;
         this.AlignMarkerId = alignOffset;
         if (enable_spoutBackup) {
@@ -211,6 +217,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     @Override
     public void loadInFlightLog() {
         MeasureTools.Input_load_begin(System.nanoTime());
+        this.replay = true;
         int ID = recoveryIDs.get(0);
         recoveryEvents = multiStreamInFlightLog.getInFlightEvents(DEFAULT_STREAM_ID, graph.getExecutionNode(ID).getOP(), lastSnapshotOffset);
         MeasureTools.Input_load_finish(System.nanoTime());
@@ -227,6 +234,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 if (Time_Control){
                     this.start_time = System.currentTimeMillis();
                 }
+                this.FTM.spoutRegister(checkpointId);
                 collector.create_marker_boardcast(System.nanoTime(), DEFAULT_STREAM_ID, checkpointId, myiteration,"snapshot");
             }
             for (long markerIds : batchEvents.getMarkerId()){

@@ -40,7 +40,7 @@ public interface StreamLedgerConstants extends BaseConstants {
         long MAX_BOOK_DEPOSIT = 1000;
         long MAX_ACCOUNT_TRANSFER = 10;
         long MAX_BOOK_TRANSFER = 10;
-        long MIN_BALANCE = 0;
+        long MIN_BALANCE = 10;
         long MAX_BALANCE = -1;
     }
 }

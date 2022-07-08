@@ -111,7 +111,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
             case 1:
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
-                transactionSuccess = this.TXN_PROCESS_FT();
+                transactionSuccess = this.TXN_PROCESS();
                 break;
             case 2:
                 this.SyncRegisterRecovery();

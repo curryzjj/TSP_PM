@@ -24,6 +24,7 @@ import java.util.List;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
+import static applications.events.DeserializeEventHelper.deserializeEvent;
 
 
 public abstract class OBBolt_TStream extends TransactionalBoltTStream {
@@ -158,14 +159,15 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
             for (CausalService c:this.causalService.values()) {
                 for (OutsideDeterminant outsideDeterminant:c.outsideDeterminant) {
-                    if (outsideDeterminant.outSideEvent.getBid() < markerId) {
-                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,outsideDeterminant.outSideEvent.getBid());
-                        if (outsideDeterminant.outSideEvent instanceof BuyingEvent) {
-                            Determinant_Buying_request_construct((BuyingEvent) outsideDeterminant.outSideEvent, txnContext);
-                        } else if (outsideDeterminant.outSideEvent instanceof AlertEvent){
-                            Determinant_Alert_request_construct((AlertEvent) outsideDeterminant.outSideEvent, txnContext);
+                    TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
+                    if (event.getBid() < markerId) {
+                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
+                        if (event instanceof BuyingEvent) {
+                            Determinant_Buying_request_construct((BuyingEvent) event, txnContext);
+                        } else if (event instanceof AlertEvent){
+                            Determinant_Alert_request_construct((AlertEvent) event, txnContext);
                         } else {
-                            Determinant_Topping_request_construct((ToppingEvent) outsideDeterminant.outSideEvent, txnContext);
+                            Determinant_Topping_request_construct((ToppingEvent) event, txnContext);
                         }
                     } else {
                         break;
@@ -288,7 +290,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if (enable_determinants_log) {
             MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
             outsideDeterminant = new OutsideDeterminant();
-            outsideDeterminant.setOutSideEvent(event.cloneEvent());
+            outsideDeterminant.setOutSideEvent(event.toString());
             for (int itemId : event.getItemId()) {
                 if (this.getPartitionId(String.valueOf(itemId)) != event.getPid()) {
                     outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
@@ -307,7 +309,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if (enable_determinants_log) {
             MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
             outsideDeterminant = new OutsideDeterminant();
-            outsideDeterminant.setOutSideEvent(event.cloneEvent());
+            outsideDeterminant.setOutSideEvent(event.toString());
             for (int itemId : event.getItemId()) {
                 if (this.getPartitionId(String.valueOf(itemId)) != event.getPid()) {
                     outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
@@ -327,7 +329,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if (enable_determinants_log) {
             MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
             outsideDeterminant = new OutsideDeterminant();
-            outsideDeterminant.setOutSideEvent(event.cloneEvent());
+            outsideDeterminant.setOutSideEvent(event.toString());
             for (int itemId : event.getItemId()) {
                 if (this.getPartitionId(String.valueOf(itemId)) != event.getPid()) {
                     outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));

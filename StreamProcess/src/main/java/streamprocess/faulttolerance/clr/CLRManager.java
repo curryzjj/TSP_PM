@@ -145,6 +145,7 @@ public class CLRManager extends FTManager {
                         }
                     }
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                    this.SnapshotOffset.clear();
                     notifyAllComplete();
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Snapshot)) {
@@ -154,14 +155,14 @@ public class CLRManager extends FTManager {
                     this.snapshotResults.put(snapshotResult.getCheckpointId(),snapshotResult);
                     MeasureTools.finishSnapshot(System.nanoTime());
                     MeasureTools.setSnapshotFileSize(snapshotResult.getSnapshotPaths());
-                    notifySnapshotComplete(snapshotResult.getCheckpointId());
+                    notifySnapshotComplete();
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Undo)){
                     LOG.info("CLRManager received all register and start undo");
                     this.db.undoFromWAL();
                     LOG.info("Undo log complete!");
-                    this.db.getTxnProcessingEngine().isTransactionAbort=false;
-                    notifyAllComplete();
+                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
+                    notifySnapshotComplete();
                     lock.notifyAll();
                 }
             }
@@ -175,7 +176,7 @@ public class CLRManager extends FTManager {
         dataOutputStream.writeInt(len);
         dataOutputStream.write(result);
         dataOutputStream.close();
-        LOG.info("CLRManager commit the checkpoint to the current.log");
+        LOG.info("CLRManager commit the checkpoint to the current.log at " + checkpointId);
         g.getSpout().ackCommit(checkpointId);
         g.getSink().ackCommit(checkpointId);
         for (int eId : this.callFaultTolerance.keySet()) {
@@ -184,7 +185,7 @@ public class CLRManager extends FTManager {
         db.cleanUndoLog(checkpointId);
         return true;
     }
-    public void notifySnapshotComplete(long offset) throws Exception {
+    public void notifySnapshotComplete() throws Exception {
         for(int id: callFaultTolerance.keySet()){
             g.getExecutionNode(id).ackCommit();
         }

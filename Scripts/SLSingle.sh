@@ -3,7 +3,7 @@ function ResetParameters() {
   app="SL_txn"
   FTOptions=0
   failureModel=2
-  failureFrequency=2
+  failureFrequency=4
   tthreads=16
   snapshot=10
 
@@ -11,15 +11,15 @@ function ResetParameters() {
   Arrival_Control=1
   targetHz=200000
   Time_Control=1
-  time_Interval=1000
+  time_Interval=3000
   timeSliceLengthMs=1000
-  input_store_batch=10000
+  input_store_batch=20000
   #shellcheck disable=SC2006
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
   #Workload Configurations
   NUM_ITEMS=81920
-  NUM_EVENTS=8000000
+  NUM_EVENTS=16000000
   ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0
@@ -82,10 +82,11 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-    for FTOptions in 3 4
+    for FTOptions in 1 2 3 4
         do runFTStream
         done
 }
 sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/sltxn/
 sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txnsl/checkpoint
+sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txnsl/wal
 baselineEvaluation

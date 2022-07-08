@@ -40,7 +40,7 @@ public class TxnProcessingEngine {
     private ExecutorServiceInstance standalone_engine;
     /* Abort transactions <bid> */
     private ConcurrentSkipListSet<Long> transactionAbort;
-    public Boolean isTransactionAbort=false;
+    public Boolean isTransactionAbort = false;
     private List<Integer> dropTable;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
     //initialize
@@ -291,9 +291,7 @@ public class TxnProcessingEngine {
                 assert operation.record_ref != null;
                 if (app.equals("SL_txn")) {//used in SL
                     SL_Transfer_Fun(operation,true);
-                    if (operation.condition_records[0].readPreValues(operation.bid) != null) {
-                        operation.record_ref.setRecord(operation.condition_records[0].readPreValues(operation.bid));
-                    }
+                    operation.record_ref.setRecord(operation.condition_records[0].readPreValues(operation.bid));
                 }
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.d_record);
@@ -396,7 +394,9 @@ public class TxnProcessingEngine {
             preValues = operation.condition_records[0].readPreValues(operation.bid);
         }
         final long sourceBalance = preValues.getValues().get(1).getLong();
-        if (operation.condition.arg1 > 0 && sourceBalance > operation.condition.arg1 && sourceBalance > operation.condition.arg2){
+        //To contron the abort ratio, wo modify the violation of consistency property
+        if (operation.condition.arg1 > 0) {
+        //if (operation.condition.arg1 > 0 && sourceBalance > operation.condition.arg1 && sourceBalance > operation.condition.arg2){
             SchemaRecord srcRecord = operation.s_record.readPreValues(operation.bid);
             List<DataBox> values = srcRecord.getValues();
             SchemaRecord tempo_record;

@@ -38,10 +38,10 @@ public class RecoveryHelperProvider {
         }finally {
             inputStream.close();
         }
-        if(SnapshotResults.size()==0){
+        if(SnapshotResults.size() == 0){
             return null;
         }else{
-            return SnapshotResults.get(SnapshotResults.size()-1);
+            return SnapshotResults.get(SnapshotResults.size() - 1);
         }
     }
     public static Long getLastGlobalLSN(File recoveryFile) throws IOException, ClassNotFoundException {
