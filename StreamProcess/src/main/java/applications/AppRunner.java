@@ -162,6 +162,7 @@ public class  AppRunner extends baseRunner {
             }
             CONTROL.failureTime = failureTimes.poll();
         }
+        System.out.println(failureTimes);
     }
 
     private static double runTopologyLocally(Topology topology,Configuration conf) throws UnhandledCaseException, InterruptedException, IOException {
