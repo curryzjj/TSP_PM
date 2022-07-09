@@ -145,7 +145,6 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
      * @throws InterruptedException
      */
     protected void SyncRegisterRecovery() throws InterruptedException {
-        this.recoveryPartitionIds = new ArrayList<>(this.db.getTxnProcessingEngine().getRecoveryRangeId());
         this.lock = this.FTM.getLock();
         synchronized (lock){
             this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);

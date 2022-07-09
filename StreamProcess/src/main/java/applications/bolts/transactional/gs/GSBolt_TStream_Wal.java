@@ -21,6 +21,8 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
             FailureFlag failureFlag = in.getFailureFlag();
             if (this.executor.isFirst_executor()) {
                 this.db.getTxnProcessingEngine().getRecoveryRangeId().add((int) failureFlag.getValue());
+            } else {
+                this.recoveryPartitionIds.add((int) failureFlag.getValue());
             }
             this.SyncRegisterRecovery();
             this.collector.cleanAll();

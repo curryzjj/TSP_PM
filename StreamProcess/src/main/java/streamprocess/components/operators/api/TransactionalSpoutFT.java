@@ -91,7 +91,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     }
     public boolean failure(){
         if (enable_states_lost) {
-            if(failureTime > 0 && System.currentTimeMillis() - failureRecordTime >= failureTime){
+            if(failureTime > 0 && (System.currentTimeMillis() - failureRecordTime >= failureTime)){
                 if (!failureTimes.isEmpty()) {
                     failureTime = failureTimes.poll();
                 } else {

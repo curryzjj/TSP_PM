@@ -347,6 +347,11 @@ public class TxnProcessingEngine {
     public List<Integer> getRecoveryRangeId(){
         return dropTable;
     }
+    public void mimicFailure(int partitionId) {
+        if (!dropTable.contains(partitionId)){
+            dropTable.add(partitionId);
+        }
+    }
 
     public ConcurrentSkipListSet<Long> getTransactionAbort() {
         return transactionAbort;

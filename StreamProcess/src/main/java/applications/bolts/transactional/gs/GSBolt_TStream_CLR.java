@@ -8,6 +8,7 @@ import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
@@ -28,6 +29,8 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
             FailureFlag failureFlag = in.getFailureFlag();
             if (this.executor.isFirst_executor()) {
                 this.db.getTxnProcessingEngine().getRecoveryRangeId().add((int) failureFlag.getValue());
+            } else {
+                this.recoveryPartitionIds.add((int) failureFlag.getValue());
             }
             if (enable_align_wait){
                 this.collector.cleanAll();
