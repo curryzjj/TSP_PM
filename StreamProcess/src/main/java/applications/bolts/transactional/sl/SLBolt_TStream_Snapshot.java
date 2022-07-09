@@ -21,6 +21,7 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
             FailureFlag failureFlag = in.getFailureFlag();
             if (this.executor.isFirst_executor()) {
                 this.db.getTxnProcessingEngine().getRecoveryRangeId().add((int) failureFlag.getValue());
+                this.recoveryPartitionIds.add((int) failureFlag.getValue());
             } else {
                 this.recoveryPartitionIds.add((int) failureFlag.getValue());
             }

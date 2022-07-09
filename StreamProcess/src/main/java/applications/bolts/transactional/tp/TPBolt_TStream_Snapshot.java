@@ -26,6 +26,7 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
             FailureFlag failureFlag = in.getFailureFlag();
             if (this.executor.isFirst_executor()) {
                 this.db.getTxnProcessingEngine().getRecoveryRangeId().add((int) failureFlag.getValue());
+                this.recoveryPartitionIds.add((int) failureFlag.getValue());
             } else {
                 this.recoveryPartitionIds.add((int) failureFlag.getValue());
             }
