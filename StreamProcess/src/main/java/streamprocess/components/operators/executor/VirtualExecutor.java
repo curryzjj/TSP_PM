@@ -100,6 +100,11 @@ public class VirtualExecutor implements IExecutor{
     }
 
     @Override
+    public void clean_status() {
+
+    }
+
+    @Override
     public void ackCommit() {
 
     }

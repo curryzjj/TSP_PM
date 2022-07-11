@@ -93,6 +93,11 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
     }
 
     @Override
+    public void clean_status() {
+        this._op.clean_status();
+    }
+
+    @Override
     public void ackCommit() {
         this._op.isCommit =true;
     }
