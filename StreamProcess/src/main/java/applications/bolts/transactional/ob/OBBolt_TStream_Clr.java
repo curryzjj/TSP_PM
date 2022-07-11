@@ -49,6 +49,7 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
             for (Queue<Tuple> tuples : bufferedTuples.values()) {
                 tuples.clear();
             }
+            this.status.source_status_ini(this.executor);
         } else {
             if(in.isMarker()){
                 if (status.isMarkerArrived(in.getSourceTask())) {

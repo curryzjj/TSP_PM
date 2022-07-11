@@ -22,10 +22,10 @@ function ResetParameters() {
   ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0
-  RATIO_OF_DEPENDENCY=50
+  RATIO_OF_DEPENDENCY=1000
   complexity=0
   NUM_ACCESSES=2
-  partition_num_per_txn=8
+  partition_num_per_txn=2
   partition_num=16
 }
 function runFTStream() {
@@ -87,5 +87,5 @@ function baselineEvaluation() {
 }
 sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/obtxn/
 sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txnob/checkpoint
-sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txnob/checkpoint/wal
+sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txnob/wal
 baselineEvaluation
