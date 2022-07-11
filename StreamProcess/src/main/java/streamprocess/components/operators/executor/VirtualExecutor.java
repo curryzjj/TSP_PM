@@ -95,7 +95,7 @@ public class VirtualExecutor implements IExecutor{
     }
 
     @Override
-    public void clean_status(Tuple message) {
+    public void ackSignal(Tuple message) {
 
     }
 

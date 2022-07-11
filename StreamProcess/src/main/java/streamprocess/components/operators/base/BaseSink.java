@@ -104,13 +104,11 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
 
     @Override
     public RecoveryDependency returnRecoveryDependency() {
-        this.status.source_status_ini(this.executor);
         return this.recoveryDependency.get(currentMarkerId);
     }
 
     @Override
     public ConcurrentHashMap<Integer, CausalService> returnCausalService() {
-        this.status.source_status_ini(this.executor);
         return this.causalService;
     }
 

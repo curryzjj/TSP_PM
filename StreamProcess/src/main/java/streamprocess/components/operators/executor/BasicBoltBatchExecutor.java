@@ -38,6 +38,11 @@ public class BasicBoltBatchExecutor extends BoltExecutor{
     }
 
     @Override
+    public void clean_status() {
+        _op.clean_status();
+    }
+
+    @Override
     public void ackCommit(long offset) {
         this._op.cleanEpoch(offset);
     }

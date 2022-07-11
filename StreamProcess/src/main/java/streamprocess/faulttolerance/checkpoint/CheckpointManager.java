@@ -10,10 +10,8 @@ import System.util.OsUtils;
 import engine.Database;
 import engine.shapshot.SnapshotResult;
 import engine.table.datatype.serialize.Serialize;
-import engine.table.keyGroup.KeyGroupRangeOffsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Tuple2;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.faulttolerance.FTManager;
@@ -133,6 +131,7 @@ public class CheckpointManager extends FTManager {
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(checkpointFile);
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, lastSnapshotResult.getCheckpointId());
                     MeasureTools.State_load_begin(System.nanoTime());
+                    this.g.getSink().clean_status();
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     MeasureTools.State_load_finish(System.nanoTime());
                     this.db.getTxnProcessingEngine().isTransactionAbort = false;

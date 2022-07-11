@@ -36,7 +36,8 @@ public interface IExecutor extends Serializable {
     void callback(int callee, Tuple message);
     void setExecutionNode(ExecutionNode e);
     Integer default_scale(Configuration conf);
-    void clean_status(Tuple message);
+    void ackSignal(Tuple message);
+    void clean_status();
     void ackCommit();
     void ackCommit(long offset);
     RecoveryDependency ackRecoveryDependency();

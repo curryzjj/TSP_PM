@@ -317,6 +317,9 @@ public abstract class Operator implements Serializable{
     public RecoveryDependency returnRecoveryDependency(){
         return null;
     }
+    public void clean_status(){
+        this.status.source_status_ini(this.executor);
+    }
     public ConcurrentHashMap<Integer, CausalService> returnCausalService(){
         return null;
      }

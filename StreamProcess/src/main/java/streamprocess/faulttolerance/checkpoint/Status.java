@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyComponent;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -79,7 +78,7 @@ public class Status implements Serializable {
         if (all_dst_ack()) {
             LOG.info(executor.getOP_full() + " received ack of message" + message.getFailureFlag().msgId + " from all consumers.");
             dst_status_init(executor);//reset state.
-            executor.clean_status(message);
+            executor.ackSignal(message);
         }
     }
 
@@ -89,7 +88,7 @@ public class Status implements Serializable {
             if (enable_debug)
                 LOG.info(executor.getOP_full() + " received ack of message "+ message.getFailureFlag().msgId + " from all consumers.");
             dst_status_init(executor);
-            executor.clean_status(message);
+            executor.ackSignal(message);
         }
     }
 }

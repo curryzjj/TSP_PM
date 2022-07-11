@@ -96,7 +96,7 @@ public abstract class BoltExecutor implements IExecutor {
     public void earlier_clean_state(Marker marker) { }
 
     @Override
-    public void clean_status(Tuple message) {
+    public void ackSignal(Tuple message) {
 
     }
 

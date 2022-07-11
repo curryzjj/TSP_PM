@@ -31,7 +31,7 @@ public abstract class SpoutExecutor implements IExecutor {
     }
 
     @Override
-    public void clean_status(Tuple message) {
+    public void ackSignal(Tuple message) {
         ((emitMarker) op).ack_Signal(message);
     }
 

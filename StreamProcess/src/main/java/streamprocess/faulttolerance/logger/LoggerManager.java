@@ -161,8 +161,9 @@ public class LoggerManager extends FTManager {
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(snapshotFile);
                     long theLastLSN = getLastGlobalLSN(walFile);
                     MeasureTools.State_load_begin(System.nanoTime());
-                    LOG.info("Reload database from lastSnapshot");
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, theLastLSN);
+                    this.g.getSink().clean_status();
+                    LOG.info("Reload database from lastSnapshot");
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     LOG.info("Align offset is  " + theLastLSN);
                     LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
