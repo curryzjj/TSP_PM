@@ -181,7 +181,7 @@ public class CheckpointManager extends FTManager {
         dataOutputStream.writeInt(len);
         dataOutputStream.write(result);
         dataOutputStream.close();
-        LOG.debug("CheckpointManager commit the checkpoint to the current.log");
+        LOG.info("CheckpointManager commit the checkpoint to the current.log");
         return true;
     }
     public void notifyBoltComplete() throws Exception {

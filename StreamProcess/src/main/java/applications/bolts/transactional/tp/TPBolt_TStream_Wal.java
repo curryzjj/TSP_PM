@@ -34,7 +34,6 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                     PRE_EXECUTE(in);
                 } else {
                     if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                        //this.collector.ack(in,in.getMarker());
                         switch (in.getMarker().getValue()){
                             case "recovery":
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
