@@ -31,6 +31,7 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
                 this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
             }
             this.recoveryPartitionIds.add((int) failureFlag.getValue());
+            this.collector.ack(in);
             if (enable_align_wait){
                 this.collector.cleanAll();
             } else {

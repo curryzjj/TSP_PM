@@ -22,6 +22,7 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
             if (this.executor.isFirst_executor()) {
                 this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
             }
+            this.collector.ack(in);
             this.SyncRegisterRecovery();
             this.collector.cleanAll();
             this.EventsHolder.clear();
