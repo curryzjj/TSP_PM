@@ -142,7 +142,7 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
     }
 
     @Override
-    public void ack_marker(Marker marker) {
+    public void ack_Signal(Tuple message) {
     }
 
     @Override

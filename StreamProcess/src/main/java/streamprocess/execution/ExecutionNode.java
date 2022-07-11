@@ -10,6 +10,7 @@ import streamprocess.components.topology.TopologyComponent;
 import streamprocess.controller.input.InputStreamController;
 import streamprocess.controller.output.OutputController;
 import streamprocess.controller.output.PartitionController;
+import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.faulttolerance.clr.CausalService;
 import streamprocess.faulttolerance.clr.RecoveryDependency;
@@ -246,8 +247,8 @@ public class ExecutionNode implements Serializable {
         op.display();
     }
 
-    public void clean_status(Marker marker) {
-        op.clean_status(marker);
+    public void clean_status(Tuple message) {
+        op.clean_status(message);
     }
     public void ackCommit(){
         op.ackCommit();

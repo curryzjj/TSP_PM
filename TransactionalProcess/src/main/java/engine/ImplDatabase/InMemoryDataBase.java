@@ -107,7 +107,7 @@ public class InMemoryDataBase extends Database {
     @Override
     public void reloadStateFromSnapshot(SnapshotResult snapshotResult) throws IOException, ClassNotFoundException, DatabaseException, InterruptedException {
         this.storageManager.cleanAllTables();
-        if(snapshotResult!=null){
+        if(snapshotResult != null){
             this.recoveryFromSnapshot(snapshotResult);
         }
     }

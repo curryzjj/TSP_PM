@@ -5,7 +5,6 @@ import streamprocess.components.operators.api.AbstractBolt;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.JumboTuple;
-import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.clr.CausalService;
 import streamprocess.faulttolerance.clr.RecoveryDependency;
@@ -34,8 +33,8 @@ public class BasicBoltBatchExecutor extends BoltExecutor{
         _op.cleanup();
     }
 
-    public void callback(int callee, Marker marker) {
-        _op.callback(callee, marker);
+    public void callback(int callee, Tuple message) {
+        _op.callback(callee, message);
     }
 
     @Override

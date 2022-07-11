@@ -4,13 +4,13 @@ import System.util.Configuration;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
+import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.faulttolerance.clr.CausalService;
 import streamprocess.faulttolerance.clr.RecoveryDependency;
 
 import java.io.FileNotFoundException;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,10 +33,10 @@ public interface IExecutor extends Serializable {
      * will be called, because the supervisor kill -9's worker processes on the cluster.
      */
     void cleanup();
-    void callback(int callee, Marker marker);
+    void callback(int callee, Tuple message);
     void setExecutionNode(ExecutionNode e);
     Integer default_scale(Configuration conf);
-    void clean_status(Marker marker);
+    void clean_status(Tuple message);
     void ackCommit();
     void ackCommit(long offset);
     RecoveryDependency ackRecoveryDependency();

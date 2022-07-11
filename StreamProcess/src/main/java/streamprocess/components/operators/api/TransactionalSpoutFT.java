@@ -2,7 +2,6 @@ package streamprocess.components.operators.api;
 
 import System.measure.MeasureTools;
 import System.tools.SortHelper;
-import UserApplications.CONTROL;
 import applications.events.InputDataStore.InputStore;
 import applications.events.SL.DepositEvent;
 import applications.events.SL.TransactionEvent;
@@ -15,10 +14,10 @@ import applications.events.ob.ToppingEvent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.reflect.If;
 import streamprocess.components.grouping.Grouping;
 import streamprocess.components.topology.TopologyComponent;
 import streamprocess.controller.output.InFlightLog.MultiStreamInFlightLog;
+import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.faulttolerance.FaultToleranceConstants;
 import streamprocess.faulttolerance.checkpoint.emitMarker;
@@ -91,16 +90,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     }
     public boolean failure(){
         if (enable_states_lost) {
-            if(failureTime > 0 && (System.currentTimeMillis() - failureRecordTime >= failureTime)){
-                if (!failureTimes.isEmpty()) {
-                    failureTime = failureTimes.poll();
-                } else {
-                    failureTime = -1;
-                }
-                return true;
-            }else {
-                return false;
-            }
+            return failureTime > 0 && (System.currentTimeMillis() - failureRecordTime >= failureTime);
         } else {
             return false;
         }
@@ -110,10 +100,11 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     }
     @Override
     public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
-        if (this.failure()){
+        if (failureFlagArrived && this.failure()){
             Random random = new Random();
             FailureFlag failureFlag = new FailureFlag(DEFAULT_STREAM_ID, System.currentTimeMillis(), bid, random.nextInt(PARTITION_NUM));
             failureFlagBid.add(bid);
+            failureFlagArrived = false;
             collector.broadcast_failureFlag(bid, failureFlag);
         }
         if (this.marker()) {
@@ -143,7 +134,6 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 multiStreamInFlightLog.addBatch(bid, DEFAULT_STREAM_ID);
             }
             myiteration ++;
-            success = false;
             epoch_size = bid - previous_bid;
             previous_bid = bid;
         }
@@ -190,10 +180,14 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
 
 
     @Override
-    public void ack_marker(Marker marker) {
-        success = true;
-        long elapsed_time = System.nanoTime() - boardcast_time;//the time elapsed for the system to handle the previous epoch.
-        double actual_system_throughput = epoch_size * 1E9 / elapsed_time;//events/ s
+    public void ack_Signal(Tuple message) {
+        failureRecordTime = System.currentTimeMillis();
+        if (!failureTimes.isEmpty()) {
+            failureTime = failureTimes.poll();
+            failureFlagArrived = true;
+        } else {
+            failureTime = -1;
+        }
     }
     public void stopRunning() throws InterruptedException {
         if(enable_wal|| enable_checkpoint ||enable_clr){

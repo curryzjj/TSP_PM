@@ -156,16 +156,16 @@ public class  AppRunner extends baseRunner {
        //Set failure time, starts after five seconds, Adjust the failure interval according to different failure frequencies
         if (CONTROL.enable_states_lost && config.getInt("failureFrequency") > 0) {
             int interval;
-            interval = 100 / config.getInt("failureFrequency");
+            interval = 8 / config.getInt("failureFrequency");
             for (int i = 0; i < config.getInt("failureFrequency"); i++) {
-                CONTROL.failureTimes.add(10000 + i * interval * 1000);
+                CONTROL.failureTimes.add(interval * 1000);
             }
             CONTROL.failureTime = failureTimes.poll();
         }
         System.out.println(failureTimes);
     }
 
-    private static double runTopologyLocally(Topology topology,Configuration conf) throws UnhandledCaseException, InterruptedException, IOException {
+    private static double runTopologyLocally(Topology topology, Configuration conf) throws UnhandledCaseException, InterruptedException, IOException {
         TopologySubmitter submitter=new TopologySubmitter();
         final_topology = submitter.submitTopology(topology,conf);
         executorThread sinkThread = submitter.getOM().getEM().getSinkThread();

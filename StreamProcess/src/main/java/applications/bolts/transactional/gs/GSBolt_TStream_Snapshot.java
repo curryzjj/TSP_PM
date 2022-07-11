@@ -20,11 +20,9 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
         if (in.isFailureFlag()) {
             FailureFlag failureFlag = in.getFailureFlag();
             if (this.executor.isFirst_executor()) {
-                this.db.getTxnProcessingEngine().getRecoveryRangeId().add((int) failureFlag.getValue());
-                this.recoveryPartitionIds.add((int) failureFlag.getValue());
-            } else {
-                this.recoveryPartitionIds.add((int) failureFlag.getValue());
+                this.db.getTxnProcessingEngine().mimicFailure((Integer) failureFlag.getValue());
             }
+            this.collector.ack(in);
             this.SyncRegisterRecovery();
             this.collector.cleanAll();
             this.EventsHolder.clear();
@@ -36,7 +34,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                 if (status.isMarkerArrived(in.getSourceTask())) {
                     PRE_EXECUTE(in);
                 } else {
-                    if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                    if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
                         switch (in.getMarker().getValue()){
                             case "marker":
                                 this.markerId = in.getBID();

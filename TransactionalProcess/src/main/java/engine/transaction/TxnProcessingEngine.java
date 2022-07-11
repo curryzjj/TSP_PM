@@ -348,11 +348,16 @@ public class TxnProcessingEngine {
         return dropTable;
     }
     public void mimicFailure(int partitionId) {
-        if (!dropTable.contains(partitionId)){
-            dropTable.add(partitionId);
+        if (enable_wal || enable_checkpoint) {
+            for(int i = 0; i < num_op; i++){
+                this.dropTable.add(i);
+            }
+        } else {
+            if (!dropTable.contains(partitionId)) {
+                dropTable.add(partitionId);
+            }
         }
     }
-
     public ConcurrentSkipListSet<Long> getTransactionAbort() {
         return transactionAbort;
     }

@@ -2,7 +2,6 @@ package streamprocess.components.operators.api;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,6 +14,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.FTManager;
 import streamprocess.faulttolerance.checkpoint.emitMarker;
 import streamprocess.faulttolerance.checkpoint.Status;
@@ -227,7 +227,7 @@ public abstract class Operator implements Serializable{
     }
 
     public void cleanup() {}
-    public void callback(int callee, Marker marker){};
+    public void callback(int callee, Tuple message){};
 
     /**
      * Base init will always be called.

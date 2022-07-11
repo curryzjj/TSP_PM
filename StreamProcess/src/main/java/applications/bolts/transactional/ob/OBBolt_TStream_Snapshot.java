@@ -11,20 +11,18 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
 public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
+    private static final long serialVersionUID = 6348137453264037834L;
     public OBBolt_TStream_Snapshot(int fid) {
         super(fid);
     }
-
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if (in.isFailureFlag()) {
             FailureFlag failureFlag = in.getFailureFlag();
             if (this.executor.isFirst_executor()) {
-                this.db.getTxnProcessingEngine().getRecoveryRangeId().add((int) failureFlag.getValue());
-                this.recoveryPartitionIds.add((int) failureFlag.getValue());
-            } else {
-                this.recoveryPartitionIds.add((int) failureFlag.getValue());
+                this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
             }
+            this.collector.ack(in);
             this.SyncRegisterRecovery();
             this.collector.cleanAll();
             this.EventsHolder.clear();

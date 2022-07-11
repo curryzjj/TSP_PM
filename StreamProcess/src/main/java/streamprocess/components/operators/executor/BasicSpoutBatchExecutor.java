@@ -7,7 +7,7 @@ import streamprocess.components.operators.api.AbstractSpout;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
-import streamprocess.execution.runtime.tuple.msgs.Marker;
+import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.clr.CausalService;
 import streamprocess.faulttolerance.clr.RecoveryDependency;
 
@@ -123,8 +123,8 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
     }
 
     @Override
-    public void callback(int callee, Marker marker) {
-        _op.callback(callee, marker);
+    public void callback(int callee, Tuple message) {
+        _op.callback(callee, message);
     }
 
     public void bulk_emit_nonblocking(int batch) throws InterruptedException, IOException {

@@ -22,11 +22,9 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
         if (in.isFailureFlag()) {
             FailureFlag failureFlag = in.getFailureFlag();
             if (this.executor.isFirst_executor()) {
-                this.db.getTxnProcessingEngine().getRecoveryRangeId().add((int) failureFlag.getValue());
-                this.recoveryPartitionIds.add((int) failureFlag.getValue());
-            } else {
-                this.recoveryPartitionIds.add((int) failureFlag.getValue());
+                this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
             }
+            this.collector.ack(in);
             this.SyncRegisterRecovery();
             this.collector.cleanAll();
             this.EventsHolder.clear();

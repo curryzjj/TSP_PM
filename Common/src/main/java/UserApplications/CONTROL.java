@@ -34,7 +34,6 @@ public class CONTROL {
     public static int failureTime = 0;
     public static Queue<Long> failureFlagBid = new ArrayDeque<>();
     public static Queue<Integer> failureTimes = new ArrayDeque<>();
-    public static boolean MAX_RECOVERY_TIME = true;
     public static boolean Exactly_Once = false;
     //Measure Methods
     public static boolean enable_checkpoint = false;

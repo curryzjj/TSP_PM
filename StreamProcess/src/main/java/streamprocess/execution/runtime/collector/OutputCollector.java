@@ -148,20 +148,20 @@ public class OutputCollector<T> {
     public void emit_single(long bid, Set<Integer> keys) throws InterruptedException {
         emit_single(DEFAULT_STREAM_ID, bid, keys);
     }
-    //ack
-    public void ack(Tuple input, Marker marker) {
+    //ack marker
+    public void ack(Tuple input) {
         final int executorID = executor.getExecutorID();
         if (enable_debug)
-            LOG.info(executor.getOP_full() + " is giving acknowledgement for marker:" + marker.msgId + " to " + input.getSourceComponent());
+            LOG.info(executor.getOP_full() + " is giving acknowledgement for marker:" + input.getFailureFlag().msgId + " to " + input.getSourceComponent());
         final ExecutionNode src = input.getContext().getExecutor(input.getSourceTask());
         if (input.getBID() != NUM_EVENTS)
-            src.op.callback(executorID, marker);
+            src.op.callback(executorID, input);
     }
-    public void broadcast_ack(Marker marker) {
+    public void broadcast_ack(Tuple input) {
         final int executorID = this.executor.getExecutorID();
         for (TopologyComponent op : executor.getParents_keySet()) {
             for (ExecutionNode src : op.getExecutorList()) {
-                src.op.callback(executorID, marker);
+                src.op.callback(executorID, input);
             }
         }
     }

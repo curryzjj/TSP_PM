@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.topology.TopologyComponent;
 import streamprocess.execution.ExecutionNode;
+import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.Serializable;
@@ -45,7 +46,7 @@ public class Status implements Serializable {
             consumer_ack.replaceAll((i, v) -> false);
         }
     }
-    public synchronized boolean allMarkerArrived(int callee,ExecutionNode executor){
+    public synchronized boolean allMarkerArrived(int callee, ExecutionNode executor){
         source_ready.put(callee, true);
         if(all_src_arrived()){
             source_status_ini(executor);
@@ -64,6 +65,7 @@ public class Status implements Serializable {
     boolean all_src_arrived() {
         return !(source_ready.containsValue(false));
     }
+
     /**
      * have received all ack from consumers.
      *
@@ -72,22 +74,22 @@ public class Status implements Serializable {
     boolean all_dst_ack() {
         return !(consumer_ack.containsValue(false));
     }
-    public synchronized void callback_bolt(int callee, Marker marker, ExecutionNode executor) {
+    public synchronized void callback_bolt(int callee, Tuple message, ExecutionNode executor) {
         consumer_ack.put(callee, true);
         if (all_dst_ack()) {
-            LOG.info(executor.getOP_full() + " received ack of marker"+marker.msgId+" from all consumers.");
+            LOG.info(executor.getOP_full() + " received ack of message" + message.getFailureFlag().msgId + " from all consumers.");
             dst_status_init(executor);//reset state.
-            executor.clean_status(marker);
+            executor.clean_status(message);
         }
     }
 
-    public synchronized void callback_spout(int callee, Marker marker, ExecutionNode executor) {
+    public synchronized void callback_spout(int callee, Tuple message, ExecutionNode executor) {
         consumer_ack.put(callee, true);
         if (all_dst_ack()) {
             if (enable_debug)
-                LOG.info(executor.getOP_full() + " received ack of marker "+marker.msgId+" from all consumers.");
+                LOG.info(executor.getOP_full() + " received ack of message "+ message.getFailureFlag().msgId + " from all consumers.");
             dst_status_init(executor);
-            executor.clean_status(marker);
+            executor.clean_status(message);
         }
     }
 }

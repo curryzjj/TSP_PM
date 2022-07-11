@@ -24,11 +24,9 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
         if (in.isFailureFlag()) {
             FailureFlag failureFlag = in.getFailureFlag();
             if (this.executor.isFirst_executor()) {
-                this.db.getTxnProcessingEngine().getRecoveryRangeId().add((int) failureFlag.getValue());
-                this.recoveryPartitionIds.add((int) failureFlag.getValue());
-            } else {
-                this.recoveryPartitionIds.add((int) failureFlag.getValue());
+                this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
             }
+            this.recoveryPartitionIds.add((int) failureFlag.getValue());
             if (enable_align_wait){
                 this.collector.cleanAll();
             } else {

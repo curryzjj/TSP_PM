@@ -29,6 +29,7 @@ import static UserApplications.CONTROL.*;
 import static UserApplications.constants.TP_TxnConstants.Conf.NUM_SEGMENTS;
 
 public abstract class TransactionalBoltTStream extends TransactionalBolt {
+    private static final long serialVersionUID = 3266583495485725150L;
     public int partition_delta;
     public EpochInfo epochInfo;
     //<DownStreamId,causalService>
@@ -172,7 +173,6 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
             }
         }
         LOG.info("Align offset is  " + this.recoveryId);
-
     }
     /**
      * To register recovery when there is a failure(snapshot)
