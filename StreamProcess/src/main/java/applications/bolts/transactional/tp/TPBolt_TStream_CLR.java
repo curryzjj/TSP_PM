@@ -32,6 +32,7 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
             }
             this.recoveryPartitionIds.add((int) failureFlag.getValue());
             this.collector.ack(in);
+            this.SyncRegisterRecovery();
             if (enable_align_wait){
                 this.collector.cleanAll();
             } else {
@@ -45,7 +46,6 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
             if (enable_upstreamBackup) {
                 this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
             }
-            this.SyncRegisterRecovery();
             this.LREvents.clear();
             for (Queue<Tuple> tuples : bufferedTuples.values()) {
                 tuples.clear();
