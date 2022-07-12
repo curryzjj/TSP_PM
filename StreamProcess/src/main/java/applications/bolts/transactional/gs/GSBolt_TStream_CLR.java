@@ -31,6 +31,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
             }
             this.recoveryPartitionIds.add((int) failureFlag.getValue());
             this.collector.ack(in);
+            this.SyncRegisterRecovery();
             if (enable_align_wait){
                 this.collector.cleanAll();
             } else {
@@ -44,7 +45,6 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
             if (enable_upstreamBackup) {
                 this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
             }
-            this.SyncRegisterRecovery();
             this.EventsHolder.clear();
             for (Queue<Tuple> tuples : bufferedTuples.values()) {
                 tuples.clear();
@@ -86,9 +86,14 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                                 this.markerId = in.getBID();
                                 this.isSnapshot = true;
                                 if (TXN_PROCESS_FT()){
-                                    Marker marker = in.getMarker();
-                                    marker.setEpochInfo(this.epochInfo);
-                                    forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                    if (enable_recovery_dependency) {
+                                        Marker marker = in.getMarker().clone();
+                                        marker.setEpochInfo(this.epochInfo);
+                                        forward_marker(in.getSourceTask(),in.getBID(), marker, marker.getValue());
+                                        this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
+                                    } else {
+                                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    }
                                     if (enable_upstreamBackup) {
                                         this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
                                         this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);

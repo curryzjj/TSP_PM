@@ -222,7 +222,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 recoveryIDs.add(downExecutorIds.get(partitionId));
             }
         } else {
-            recoveryIDs = recoveryPartitionIds;
+            recoveryIDs = new ArrayList<>(recoveryPartitionIds);
         }
     }
 

@@ -131,7 +131,6 @@ public class CheckpointManager extends FTManager {
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(checkpointFile);
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, lastSnapshotResult.getCheckpointId());
                     MeasureTools.State_load_begin(System.nanoTime());
-                    this.g.getSink().clean_status();
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     MeasureTools.State_load_finish(System.nanoTime());
                     this.db.getTxnProcessingEngine().isTransactionAbort = false;
@@ -143,6 +142,7 @@ public class CheckpointManager extends FTManager {
                     }
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     this.SnapshotOffset.clear();
+                    this.g.getSink().clean_status();
                     notifyAllComplete();
                     LOG.info("Recovery complete!");
                     lock.notifyAll();
