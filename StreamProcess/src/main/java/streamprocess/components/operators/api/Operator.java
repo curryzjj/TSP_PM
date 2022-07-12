@@ -72,7 +72,7 @@ public abstract class Operator implements Serializable{
     public boolean isCommit;
     public boolean replay=false;
     public boolean needWaitReplay = false;
-    public int lostData=0;
+    public int lostData = 0;
     protected Object lock;
     //    public transient TxnContext txn_context;
     public boolean forceStop;

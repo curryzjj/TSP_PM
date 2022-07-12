@@ -161,7 +161,7 @@ public class LoggerManager extends FTManager {
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(snapshotFile);
                     long theLastLSN = getLastGlobalLSN(walFile);
                     MeasureTools.State_load_begin(System.nanoTime());
-                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, theLastLSN);
+                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),new ArrayList<>(), theLastLSN);
                     this.g.getSink().clean_status();
                     LOG.info("Reload database from lastSnapshot");
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);

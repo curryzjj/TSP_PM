@@ -29,8 +29,9 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
             if (this.executor.isFirst_executor()) {
                 this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
             }
-            this.collector.ack(in);
             this.recoveryPartitionIds.add((int) failureFlag.getValue());
+            this.collector.ack(in);
+            this.SyncRegisterRecovery();
             if (enable_align_wait){
                 this.collector.cleanAll();
             } else {
@@ -44,7 +45,6 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
             if (enable_upstreamBackup) {
                 this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
             }
-            this.SyncRegisterRecovery();
             this.EventsHolder.clear();
             for (Queue<Tuple> tuples : bufferedTuples.values()) {
                 tuples.clear();

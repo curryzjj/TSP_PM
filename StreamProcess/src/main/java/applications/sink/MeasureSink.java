@@ -101,9 +101,6 @@ public class MeasureSink extends BaseSink {
                         }
                     }
                     switch (in.getMarker().getValue()) {
-                        case "recovery" :
-                            BUFFER_EXECUTE();
-                            break;
                         case "snapshot" :
                             this.FTM.sinkRegister(in.getBID());
                             BUFFER_EXECUTE();

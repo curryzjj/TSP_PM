@@ -191,6 +191,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             } else {
                 scanner.close();
                 LOG.info("The number of lost data is " + lostData);
+                lostData = 0;
                 replay = false;
                 return null;
             }
