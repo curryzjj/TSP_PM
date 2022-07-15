@@ -115,7 +115,7 @@ public class MeasureSink extends BaseSink {
                             if(CONTROL.Exactly_Once){
                                 twoPC_CommitTuple(in.getBID());
                             }
-                            timer.cancel();
+                            SinkTimer.cancel();
                             measure_end();
                             BUFFER_EXECUTE();
                             context.stop_running();
@@ -268,7 +268,7 @@ public class MeasureSink extends BaseSink {
     }
 
     public void startThroughputMeasure(){
-        timer.scheduleAtFixedRate(new TimerTask() {
+        SinkTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 long current_count = getCount();

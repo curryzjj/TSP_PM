@@ -7,6 +7,7 @@ import System.FileSystem.Path;
 import System.measure.MeasureTools;
 import System.util.Configuration;
 import System.util.OsUtils;
+import UserApplications.CONTROL;
 import engine.Database;
 import engine.shapshot.SnapshotResult;
 import engine.table.datatype.serialize.Serialize;
@@ -128,6 +129,7 @@ public class CheckpointManager extends FTManager {
                 }
                 if(callSnapshot.containsValue(Recovery)){
                     LOG.info("CheckpointManager received all register and start recovery");
+                    failureFlag.compareAndSet(true, false);
                     failureTimes ++;
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(checkpointFile);
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(), new ArrayList<>(), lastSnapshotResult.getCheckpointId());

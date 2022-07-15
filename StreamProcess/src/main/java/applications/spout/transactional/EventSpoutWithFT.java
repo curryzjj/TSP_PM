@@ -72,7 +72,6 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     public void nextTuple(int batch) throws InterruptedException, IOException {
         if (bid == 0 && Time_Control) {
             this.snapshotRecordTime = System.currentTimeMillis();
-            this.failureRecordTime = System.currentTimeMillis();
         }
         if (needWaitReplay){
             this.registerRecovery();

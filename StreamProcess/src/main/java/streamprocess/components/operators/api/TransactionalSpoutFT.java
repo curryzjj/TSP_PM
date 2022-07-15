@@ -52,7 +52,6 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected int tthread;
     protected long snapshotRecordTime;
     protected long time_Interval;//ms
-    protected long failureRecordTime = -1;
     //TODO:BufferedWrite
 
     protected int taskId;
@@ -89,25 +88,11 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
             return bid % (checkpoint_interval * batch_number_per_wm) == 0;
         }
     }
-    public boolean failure(){
-        if (enable_states_lost) {
-            return failureTime > 0 && (System.currentTimeMillis() - failureRecordTime >= failureTime);
-        } else {
-            return false;
-        }
-    }
     public void forward_marker(int sourceId, long bid, Marker marker, String msg) throws InterruptedException{
         forward_marker(sourceId,DEFAULT_STREAM_ID,bid,marker,msg);
     }
     @Override
     public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
-        if (failureFlagArrived && this.failure()){
-            Random random = new Random();
-            FailureFlag failureFlag = new FailureFlag(DEFAULT_STREAM_ID, System.currentTimeMillis(), bid, random.nextInt(PARTITION_NUM));
-            failureFlagBid.add(bid);
-            failureFlagArrived = false;
-            collector.broadcast_failureFlag(bid, failureFlag);
-        }
         if (this.marker()) {
             if(enable_snapshot){
                 if (replay) {
@@ -182,13 +167,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
 
     @Override
     public void ack_Signal(Tuple message) {
-        failureRecordTime = System.currentTimeMillis();
-        if (!failureTimes.isEmpty()) {
-            failureTime = failureTimes.poll();
-            failureFlagArrived = true;
-        } else {
-            failureTime = -1;
-        }
+
     }
     public void stopRunning() throws InterruptedException {
         if(enable_wal|| enable_checkpoint ||enable_clr){

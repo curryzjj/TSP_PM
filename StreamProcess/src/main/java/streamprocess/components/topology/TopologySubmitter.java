@@ -1,6 +1,7 @@
 package streamprocess.components.topology;
 
 import System.util.Configuration;
+import UserApplications.CONTROL;
 import net.openhft.affinity.AffinitySupport;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -48,6 +49,7 @@ public class TopologySubmitter {
         }
         //start
         OM.start();
+        CONTROL.startFailureRecord();
         return  g.topology;
     }
 }
