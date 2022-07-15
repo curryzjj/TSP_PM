@@ -3,6 +3,7 @@ package applications.spout.transactional;
 import System.constants.BaseConstants;
 import System.measure.MeasureTools;
 import System.util.OsUtils;
+import UserApplications.CONTROL;
 import applications.events.InputDataStore.InputStore;
 import applications.events.TxnEvent;
 import org.slf4j.Logger;
@@ -72,7 +73,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     public void nextTuple(int batch) throws InterruptedException, IOException {
         if (bid == 0 && Time_Control) {
             this.snapshotRecordTime = System.currentTimeMillis();
-            this.failureRecordTime = System.currentTimeMillis();
+            CONTROL.startFailureRecord();
         }
         if (needWaitReplay){
             this.registerRecovery();

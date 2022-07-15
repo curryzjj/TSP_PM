@@ -1,6 +1,7 @@
 package applications.bolts.transactional.gs;
 
 import System.measure.MeasureTools;
+import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
@@ -17,19 +18,31 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
     }
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-        if (in.isFailureFlag()) {
-            FailureFlag failureFlag = in.getFailureFlag();
+        if (CONTROL.failureFlag.get()){
             if (this.executor.isFirst_executor()) {
-                this.db.getTxnProcessingEngine().mimicFailure((Integer) failureFlag.getValue());
+                this.db.getTxnProcessingEngine().mimicFailure(0);
             }
-            this.collector.ack(in);
             this.SyncRegisterRecovery();
             this.collector.cleanAll();
             this.EventsHolder.clear();
             for (Queue<Tuple> tuples : bufferedTuples.values()) {
                 tuples.clear();
             }
-        } else {
+        }
+//        if (in.isFailureFlag()) {
+//            FailureFlag failureFlag = in.getFailureFlag();
+//            if (this.executor.isFirst_executor()) {
+//                this.db.getTxnProcessingEngine().mimicFailure((Integer) failureFlag.getValue());
+//            }
+//            this.collector.ack(in);
+//            this.SyncRegisterRecovery();
+//            this.collector.cleanAll();
+//            this.EventsHolder.clear();
+//            for (Queue<Tuple> tuples : bufferedTuples.values()) {
+//                tuples.clear();
+//            }
+//        }
+        else {
             if(in.isMarker()){
                 if (status.isMarkerArrived(in.getSourceTask())) {
                     PRE_EXECUTE(in);

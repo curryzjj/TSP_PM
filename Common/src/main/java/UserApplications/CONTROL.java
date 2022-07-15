@@ -1,8 +1,11 @@
 package UserApplications;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CONTROL {
+    //Failure Flag
+    public static AtomicBoolean failureFlag = new AtomicBoolean(false);
     //application related.
     public static boolean Arrival_Control = false;
     public static int NUM_EVENTS = 40000000; //different input events.. TODO: It must be kept small as GC pressure increases rapidly. Fix this in future work.
@@ -18,8 +21,6 @@ public class CONTROL {
     //combo optimization
     public static boolean enable_app_combo = false;//compose all operators into one.
     public static int combo_bid_size = 1;//reduce conflict. NOT applicable to LAL, LWM and PAT (must set to one).
-
-
     //order related.
 
     boolean enable_force_ordering = true;
@@ -77,10 +78,23 @@ public class CONTROL {
 
 //    boolean enable_pushdown = false;//enabled by default.
     public static SplittableRandom rnd = new SplittableRandom(1234);
-    public static  Timer timer =new Timer();
+    public static Timer SinkTimer = new Timer();
+    public static Timer FailureTimer =  new Timer();
     public static void randomDelay() {
         long start = System.nanoTime();
         while (System.nanoTime() - start < COMPLEXITY) {}
     }
-
+    public static void startFailureRecord() {
+        FailureTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+               if (failureTimes.isEmpty()) {
+                   FailureTimer.cancel();
+               } else {
+                   failureFlag.compareAndSet(false, true);
+                   failureTimes.poll();
+               }
+            }
+        },  4000, 2000);//ms
+    }
 }
