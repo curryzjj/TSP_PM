@@ -2,6 +2,7 @@ package streamprocess.components.operators.api;
 
 import System.measure.MeasureTools;
 import System.tools.SortHelper;
+import UserApplications.CONTROL;
 import applications.events.InputDataStore.InputStore;
 import applications.events.SL.DepositEvent;
 import applications.events.SL.TransactionEvent;
@@ -51,7 +52,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected int tthread;
     protected long snapshotRecordTime;
     protected long time_Interval;//ms
-    protected long failureRecordTime;
+    protected long failureRecordTime = -1;
     //TODO:BufferedWrite
 
     protected int taskId;

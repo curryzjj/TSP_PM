@@ -57,9 +57,6 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
                 } else {
                     if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
                         switch (in.getMarker().getValue()){
-                            case "recovery":
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                break;
                             case "marker":
                                 this.markerId = in.getBID();
                                 if (enable_determinants_log && this.markerId <= recoveryId) {
@@ -135,8 +132,8 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
-        MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
+        int FT = transactionManager.start_evaluate(thread_Id, this.markerId);
+        MeasureTools.finishTransaction(this.thread_Id, System.nanoTime());
         boolean transactionSuccess=FT==0;
         switch (FT){
             case 0:

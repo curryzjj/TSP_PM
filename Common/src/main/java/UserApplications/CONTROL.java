@@ -15,7 +15,6 @@ public class CONTROL {
     public static double ZIP_SKEW = 0.4;
     public static boolean Time_Control = false;
     public static int COMPLEXITY = 0;//UDF ns
-
     //combo optimization
     public static boolean enable_app_combo = false;//compose all operators into one.
     public static int combo_bid_size = 1;//reduce conflict. NOT applicable to LAL, LWM and PAT (must set to one).

@@ -158,6 +158,7 @@ public class LoggerManager extends FTManager {
                     lock.notifyAll();
                 }else if(callLog.containsValue(Recovery)){
                     LOG.info("LoggerManager received all register and start recovery");
+                    failureTimes ++;
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(snapshotFile);
                     long theLastLSN = getLastGlobalLSN(walFile);
                     MeasureTools.State_load_begin(System.nanoTime());
@@ -287,6 +288,7 @@ public class LoggerManager extends FTManager {
                 e.printStackTrace();
             }
             LOG.info("WALManager stops");
+            LOG.info("Failure Time : " + failureTimes);
         }
     }
 }

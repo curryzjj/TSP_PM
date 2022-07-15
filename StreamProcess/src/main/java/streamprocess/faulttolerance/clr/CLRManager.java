@@ -114,6 +114,7 @@ public class CLRManager extends FTManager {
                 }
                 if(callFaultTolerance.containsValue(Recovery)){
                     LOG.info("CLRManager received all bolt register and start recovery");
+                    failureTimes ++;
                     List<Integer> recoveryIds;
                     long alignOffset;
                     if (enable_determinants_log) {
@@ -248,6 +249,7 @@ public class CLRManager extends FTManager {
                 e.printStackTrace();
             }
             LOG.info("CLRManager stops");
+            LOG.info("Failure Time : " + failureTimes);
         }
     }
 }

@@ -183,16 +183,18 @@ public class TxnProcessingEngine {
 
     class Task implements Callable{
         private final Set<Operation> operation_chain;
-        public Task(Set<Operation> operation_chain){
-            this.operation_chain=operation_chain;
+        private final long markId;
+        public Task(Set<Operation> operation_chain, long markId){
+            this.operation_chain = operation_chain;
+            this.markId = markId;
         }
         @Override
         public Object call() throws Exception {
-            process((MyList<Operation>) operation_chain, ((MyList<Operation>) operation_chain).getPartitionId());
+            process((MyList<Operation>) operation_chain, markId);
             return null;
         }
     }
-    private void process(MyList<Operation> operation_chain, int mark_ID){
+    private void process(MyList<Operation> operation_chain, long mark_ID){
         if (operation_chain.size() > 0){
             operation_chain.logRecord.setCopyTableRecord(operation_chain.first().s_record);
             if (enable_undo_log) {
@@ -209,7 +211,7 @@ public class TxnProcessingEngine {
             }
         }
     }
-    private void process(Operation operation, int mark_id, LogRecord logRecord, boolean cleanVersion) {
+    private void process(Operation operation, long mark_id, LogRecord logRecord, boolean cleanVersion) {
         if (cleanVersion) {
             operation.s_record.clean_map();
         }
@@ -282,7 +284,7 @@ public class TxnProcessingEngine {
         }
     }
 
-    private int submit_task(int thread_Id,Holder holder,Collection<Callable<Object>> callables,long mark_ID) {
+    private int submit_task(int thread_Id,Holder holder,Collection<Callable<Object>> callables, long mark_ID) {
         int sum = 0;
         for (MyList<Operation> operation_chain : holder.holder_v1.values()) {
             if (operation_chain.size() > 0) {
@@ -290,7 +292,7 @@ public class TxnProcessingEngine {
                 boolean flag=Thread.currentThread().isInterrupted();
                 if (!flag) {
                     if (enable_engine) {
-                        Task task = new Task(operation_chain);
+                        Task task = new Task(operation_chain, mark_ID);
                        // LOG.info("Submit operation_chain:" + OsUtils.Addresser.addressOf(operation_chain) + " with size:" + operation_chain.size());
                         callables.add(task);
                     }
