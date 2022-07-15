@@ -3,6 +3,7 @@ package streamprocess.controller.output;
 import System.util.DataTypes.StreamValues;
 import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.runtime.collector.MetaGroup;
+import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.Serializable;
@@ -111,6 +112,7 @@ public abstract class OutputController implements Serializable {
     public abstract void marker_boardcast(MetaGroup MetaGroup, long bid, Marker marker) throws InterruptedException;
     public abstract void marker_boardcast(MetaGroup MetaGroup, String streamId, long bid, Marker marker) throws InterruptedException;
     public abstract void marker_single(MetaGroup MetaGroup, String streamId, long bid, int targetId,Marker marker) throws InterruptedException;
+    public abstract void failureFlag_boardcast(MetaGroup MetaGroup, long bid, FailureFlag flag) throws InterruptedException;
     public abstract void setContext(int executorID, TopologyContext context);
     public abstract long getBID(String streamId);
 

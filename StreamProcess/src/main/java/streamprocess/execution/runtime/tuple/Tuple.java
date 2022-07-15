@@ -1,6 +1,7 @@
 package streamprocess.execution.runtime.tuple;
 
 import streamprocess.components.topology.TopologyContext;
+import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.util.Collection;
@@ -106,23 +107,22 @@ public class Tuple {
     public boolean getBooleanByField(String field) {
         return (boolean) getValue(fieldIndex(field));
     }
-    //public TimestampType getTimestampType(int i) {}
     public boolean isMarker() {
         return this.message.isMarker();
     }
+    public boolean isFailureFlag() {
+        return this.message.isFailureFlag();
+    }
     public Marker getMarker() {
         return (Marker) this.message;
+    }
+    public FailureFlag getFailureFlag() {
+        return (FailureFlag) this.message;
     }
 
     public Collection getValues() {
         return (Collection) this.getValue(0);
     }
-
-    public Short getShort(int timeIdx) {
-
-        return (short) getValue(timeIdx);
-    }
-
     public int fieldSize() {
         return message.field_size;
     }

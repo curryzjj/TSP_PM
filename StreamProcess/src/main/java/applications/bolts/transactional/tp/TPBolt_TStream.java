@@ -45,7 +45,6 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
         MeasureTools.Transaction_construction_acc(this.thread_Id, System.nanoTime());
     }
     protected boolean REQUEST_CONSTRUCT(TollProcessingEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
-        //some process used the transactionManager
         boolean flag = transactionManager.Asy_ModifyRecord_Read(txnContext
                 , "segment_speed"
                 ,String.valueOf(event.getSegmentId())
@@ -116,15 +115,17 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
         }
     }
     protected void REQUEST_CORE() {
-        for (TollProcessingEvent event : LREvents) {
-            TS_REQUEST_CORE(event);
+        if (this.markerId > recoveryId) {
+            for (TollProcessingEvent event : LREvents) {
+                TS_REQUEST_CORE(event);
+            }
         }
     }
     private void TS_REQUEST_CORE(TollProcessingEvent event) {
-       for (int i = 0; i < NUM_ACCESSES; i++) {
-           event.spendValues[i] = event.getSpeed_value()[i].getRecord().getValue().getDouble();
-           event.cntValues[i] = event.getCount_value()[i].getRecord().getValue().getInt();
-       }
+//       for (int i = 0; i < NUM_ACCESSES; i++) {
+//           event.spendValues[i] = event.getSpeed_value()[i].getRecord().getValue().getDouble();
+//           event.cntValues[i] = event.getCount_value()[i].getRecord().getValue().getInt();
+//       }
     }
     protected void REQUEST_POST() throws InterruptedException {
         if (this.markerId > recoveryId) {
@@ -141,14 +142,14 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     }
     int TP_REQUEST_POST(TollProcessingEvent event) throws InterruptedException {
         //Nothing to determinant log
-        double spendValue = 0;
-        int cntValue = 0;
-        for (int i =0; i < NUM_ACCESSES; i++) {
-            spendValue = spendValue + event.spendValues[i];
-            cntValue = cntValue + event.cntValues[i];
-        }
-        //Some UDF function
-        event.toll = spendValue / cntValue;
+//        double spendValue = 0;
+//        int cntValue = 0;
+//        for (int i =0; i < NUM_ACCESSES; i++) {
+//            spendValue = spendValue + event.spendValues[i];
+//            cntValue = cntValue + event.cntValues[i];
+//        }
+//        //Some UDF function
+//        event.toll = spendValue / cntValue;
         return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), event.toll);//the tuple is finished.
     }
 

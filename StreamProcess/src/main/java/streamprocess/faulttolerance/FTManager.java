@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.Queue;
 
 public abstract class FTManager extends Thread {
-    public boolean running=true;
+    public boolean running = true;
+    public int failureTimes = 0;
     public abstract void initialize(boolean needRecovery) throws IOException;
 
     /**

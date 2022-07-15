@@ -71,12 +71,13 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     @Override
     public void nextTuple(int batch) throws InterruptedException, IOException {
         if (bid == 0 && Time_Control) {
-            this.start_time = System.currentTimeMillis();
+            this.snapshotRecordTime = System.currentTimeMillis();
+            this.failureRecordTime = System.currentTimeMillis();
         }
         if (needWaitReplay){
             this.registerRecovery();
             if (Time_Control){
-                this.start_time = System.currentTimeMillis();
+                this.snapshotRecordTime = System.currentTimeMillis();
             }
             if (enable_spoutBackup) {
                 replayEvents();
@@ -190,6 +191,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
             } else {
                 scanner.close();
                 LOG.info("The number of lost data is " + lostData);
+                lostData = 0;
                 replay = false;
                 return null;
             }

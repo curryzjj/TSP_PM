@@ -364,10 +364,21 @@ public abstract class PartitionController implements IPartitionController,Serial
     protected boolean offer_create_marker(Tuple marker_tuple, int targetId) {
         return _offer_marker(marker_tuple, targetId);
     }
+    //offer_failureFlag
+    protected boolean offer_failureFlag(int srcId, int targetId, String streamId, long bid, FailureFlag flag) {
+        Tuple marker_tuple = (new Tuple(bid, srcId, context[srcId - firt_executor_Id], flag, streamId));
+        return _offer_marker(marker_tuple, targetId);
+    }
     //emit_marker uses the offer_maker method
     public int marker_boardcast(Meta meta, String streamId,long bid, Marker marker){
         for (int target : targetTasks) {
             offer_marker(meta.src_id, target, streamId, bid, marker);
+        }
+        return targetTasks.length;
+    }
+    public int failureFlag_boardcast(Meta meta, String streamId,long bid, FailureFlag flag){
+        for (int target : targetTasks) {
+            offer_failureFlag(meta.src_id, target, streamId, bid, flag);
         }
         return targetTasks.length;
     }

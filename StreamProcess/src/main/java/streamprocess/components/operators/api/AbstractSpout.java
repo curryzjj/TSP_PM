@@ -6,7 +6,7 @@ import System.util.OsUtils;
 import applications.events.InputDataStore.InputStore;
 import org.slf4j.Logger;
 import streamprocess.execution.ExecutionGraph;
-import streamprocess.execution.runtime.tuple.msgs.Marker;
+import streamprocess.execution.runtime.tuple.Tuple;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ public abstract class AbstractSpout extends Operator {
 
     //the following are used for shapshot(marker)
     protected int myiteration=0;//
-    protected boolean success=true;
+    protected boolean failureFlagArrived = true;
     protected long boardcast_time;
     //end
     protected ArrayList<char[]> array;
@@ -175,7 +175,7 @@ public abstract class AbstractSpout extends Operator {
     public abstract void recoveryInput(long offset, List<Integer> recoveryPartitionIds, long alignOffset) throws FileNotFoundException, InterruptedException;
 
     @Override
-    public void callback(int callee, Marker marker) {
-        status.callback_spout(callee,marker,executor);
+    public void callback(int callee, Tuple message) {
+        status.callback_spout(callee, message, executor);
     }
 }

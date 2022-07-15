@@ -8,6 +8,7 @@ import streamprocess.components.topology.TopologyContext;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.JumboTuple;
+import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.faulttolerance.clr.CausalService;
 import streamprocess.faulttolerance.clr.RecoveryDependency;
@@ -94,7 +95,12 @@ public class VirtualExecutor implements IExecutor{
     }
 
     @Override
-    public void clean_status(Marker marker) {
+    public void ackSignal(Tuple message) {
+
+    }
+
+    @Override
+    public void clean_status() {
 
     }
 
@@ -139,7 +145,7 @@ public class VirtualExecutor implements IExecutor{
     }
 
     @Override
-    public void callback(int callee, Marker marker) {
+    public void callback(int callee, Tuple message) {
 
     }
 

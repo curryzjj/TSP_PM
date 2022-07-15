@@ -3,6 +3,7 @@ package applications.bolts.transactional.ob;
 import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 
 import java.io.IOException;
 import java.util.Queue;
@@ -10,52 +11,67 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
 public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
+    private static final long serialVersionUID = 6348137453264037834L;
     public OBBolt_TStream_Snapshot(int fid) {
         super(fid);
     }
-
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-        if(in.isMarker()){
-            if (status.isMarkerArrived(in.getSourceTask())) {
-                PRE_EXECUTE(in);
-            } else {
-                if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                    switch (in.getMarker().getValue()){
-                        case "recovery":
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                            break;
-                        case "marker":
-                            this.markerId = in.getBID();
-                            if (TXN_PROCESS()) {
+        if (in.isFailureFlag()) {
+            FailureFlag failureFlag = in.getFailureFlag();
+            if (this.executor.isFirst_executor()) {
+                this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
+            }
+            this.collector.ack(in);
+            this.SyncRegisterRecovery();
+            this.collector.cleanAll();
+            this.EventsHolder.clear();
+            for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                tuples.clear();
+            }
+            this.status.source_status_ini(this.executor);
+        } else {
+            if(in.isMarker()){
+                if (status.isMarkerArrived(in.getSourceTask())) {
+                    PRE_EXECUTE(in);
+                } else {
+                    if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                        switch (in.getMarker().getValue()){
+                            case "recovery":
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
-                            }
-                            break;
-                        case "snapshot":
-                            this.markerId = in.getBID();
-                            this.isSnapshot = true;
-                            if(TXN_PROCESS_FT()){
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
-                            }
-                            break;
-                        case "finish":
-                            this.markerId = in.getBID();
-                            if(TXN_PROCESS()){
-                                /* All the data has been executed */
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
-                            }
-                            this.context.stop_running();
-                            break;
-                        default:
-                            throw new IllegalStateException("Unexpected value: " + in.getMarker().getValue());
+                                break;
+                            case "marker":
+                                this.markerId = in.getBID();
+                                if (TXN_PROCESS()) {
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                }
+                                break;
+                            case "snapshot":
+                                this.markerId = in.getBID();
+                                this.isSnapshot = true;
+                                if(TXN_PROCESS_FT()){
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                }
+                                break;
+                            case "finish":
+                                this.markerId = in.getBID();
+                                if(TXN_PROCESS()){
+                                    /* All the data has been executed */
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                }
+                                this.context.stop_running();
+                                break;
+                            default:
+                                throw new IllegalStateException("Unexpected value: " + in.getMarker().getValue());
+                        }
                     }
                 }
+            }else{
+                execute_ts_normal(in);
             }
-        }else{
-            execute_ts_normal(in);
         }
     }
 
@@ -81,14 +97,6 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS_FT();
                 break;
-            case 2:
-                this.SyncRegisterRecovery();
-                this.collector.cleanAll();
-                this.EventsHolder.clear();
-                for (Queue<Tuple> tuples : bufferedTuples.values()) {
-                    tuples.clear();
-                }
-                break;
         }
         return transactionSuccess;
     }
@@ -112,14 +120,6 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS();
-                break;
-            case 2:
-                this.SyncRegisterRecovery();
-                this.collector.cleanAll();
-                this.EventsHolder.clear();
-                for (Queue<Tuple> tuples : bufferedTuples.values()) {
-                    tuples.clear();
-                }
                 break;
         }
         return transactionSuccess;

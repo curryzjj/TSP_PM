@@ -10,13 +10,12 @@ public class Marker extends Message {
     private final int myiteration;
     private final String message;
     private EpochInfo epochInfo;
-    private long acknowledge_time;
     public Marker(String streamId, long timeStamp, long msgId, int myiteration, String message) {
         super(streamId, 0);
         this.timeStampNano = timeStamp;
         this.msgId = msgId;
         this.myiteration = myiteration;
-        this.message=message;
+        this.message = message;
     }
     public int getMyiteration() {
         return myiteration;
@@ -34,6 +33,11 @@ public class Marker extends Message {
     @Override
     public boolean isMarker() {
         return true;
+    }
+
+    @Override
+    public boolean isFailureFlag() {
+        return false;
     }
 
     @Override

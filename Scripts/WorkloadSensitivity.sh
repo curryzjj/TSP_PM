@@ -1,8 +1,10 @@
+#!/bin/bash
+#use Grep&Sum as the base application
 function ResetParameters() {
-  app="OB_txn"
+  app="GS_txn"
   FTOptions=0
   failureModel=2
-  failureFrequency=4
+  failureFrequency=2
   tthreads=16
   snapshot=2
 
@@ -11,21 +13,21 @@ function ResetParameters() {
   targetHz=200000
   Time_Control=1
   time_Interval=3000
-  timeSliceLengthMs=3000
+  timeSliceLengthMs=1000
   input_store_batch=20000
   #shellcheck disable=SC2006
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
   #Workload Configurations
-  NUM_ITEMS=327680
+  NUM_ITEMS=163840
   NUM_EVENTS=16000000
   ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0
-  RATIO_OF_DEPENDENCY=1000
+  RATIO_OF_DEPENDENCY=500
   complexity=0
   NUM_ACCESSES=2
-  partition_num_per_txn=2
+  partition_num_per_txn=8
   partition_num=16
 }
 function runFTStream() {
@@ -79,13 +81,108 @@ function runFTStream() {
               --partition_num_per_txn $partition_num_per_txn \
               --partition_num $partition_num
 }
-function baselineEvaluation() {
- ResetParameters
-   for FTOptions in 1 2 3 4 5 6
-       do runFTStream
-       done
+#Arrival Rate
+function ArrivalRateEvaluation() {
+  ResetParameters
+  for targetHz in 100000 150000 200000 250000 300000
+  do
+  for FTOptions in 1 2 3 4
+      do runFTStream
+      done
+  done
+  ResetParameters
 }
-sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/obtxn/
-sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txnob/checkpoint
-sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txnob/wal
+#Table Size
+function TableSizeEvaluation() {
+  ResetParameters
+  for NUM_ITEMS in 20480 40960 81920 163840 327680 655360
+  do
+  for FTOptions in 1 2 3 4
+      do runFTStream
+      done
+  done
+  ResetParameters
+}
+#ZIP_Skew
+function TableSizeEvaluation() {
+  ResetParameters
+  for ZIP_SKEW in 200 400 600 800 1000
+  do
+  for FTOptions in 1 2 3 4
+      do runFTStream
+      done
+  done
+  ResetParameters
+}
+#Ratio of read
+function ReadRatioEvaluation() {
+  ResetParameters
+  for RATIO_OF_READ in 200 400 600 800 1000
+  do
+  for FTOptions in 1 2 3 4
+      do runFTStream
+      done
+  done
+  ResetParameters
+}
+#Ratio of dependency
+function DependencyRatioEvaluation() {
+  ResetParameters
+  partition_num_per_txn=8
+  for RATIO_OF_DEPENDENCY in 200 400 600 800 1000
+  do
+  for FTOptions in 1 2 3 4
+      do runFTStream
+      done
+  done
+  ResetParameters
+}
+#Partition_num_per_txn
+function PartitionNumPerTxnEvaluation() {
+  ResetParameters
+  RATIO_OF_DEPENDENCY=500
+  for partition_num_per_txn in 2 4 6 8 10 12 16
+  do
+  for FTOptions in 1 2 3 4
+      do runFTStream
+      done
+  done
+  ResetParameters
+}
+#Complexity
+function ComplexityEvaluation() {
+  ResetParameters
+  for complexity in 0 20000 40000 60000 80000 10000
+  do
+  for FTOptions in 1 2 3 4
+      do runFTStream
+      done
+  done
+  ResetParameters
+}
+#failureFrequency
+function ComplexityEvaluation() {
+  ResetParameters
+  for failureFrequency in 1 2 3 4 5 6 7 8 9 10
+  do
+  for FTOptions in 1 2 3 4
+      do runFTStream
+      done
+  done
+  ResetParameters
+}
+function baselineEvaluation() {
+  ResetParameters
+  ArrivalRateEvaluation
+  TableSizeEvaluation
+  ReadRatioEvaluation
+  DependencyRatioEvaluation
+  PartitionNumPerTxnEvaluation
+  ComplexityEvaluation
+
+}
+
+sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/gstxn/
+sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/checkpoint
+sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/wal
 baselineEvaluation

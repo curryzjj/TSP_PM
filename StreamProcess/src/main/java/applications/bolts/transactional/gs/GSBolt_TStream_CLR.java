@@ -4,6 +4,7 @@ import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.IOException;
@@ -23,83 +24,115 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
 
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-        if(in.isMarker()){
-            if (status.isMarkerArrived(in.getSourceTask())) {
-                PRE_EXECUTE(in);
+        if (in.isFailureFlag()) {
+            FailureFlag failureFlag = in.getFailureFlag();
+            if (this.executor.isFirst_executor()) {
+                this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
+            }
+            this.recoveryPartitionIds.add((int) failureFlag.getValue());
+            this.collector.ack(in);
+            this.SyncRegisterRecovery();
+            if (enable_align_wait){
+                this.collector.cleanAll();
             } else {
-                if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                    switch (in.getMarker().getValue()){
-                        case "recovery":
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                            break;
-                        case "marker":
-                            this.markerId = in.getBID();
-                            if (enable_determinants_log && this.markerId <= recoveryId) {
-                                this.CommitOutsideDeterminant(this.markerId);
-                            }
-                            if (TXN_PROCESS()){
-                                if (this.markerId > recoveryId) {
-                                    if (enable_recovery_dependency) {
-                                        Marker marker = in.getMarker().clone();
-                                        marker.setEpochInfo(this.epochInfo);
-                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                        this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                                    } else {
-                                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                    }
-                                    if (enable_upstreamBackup) {
-                                        this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
-                                    }
-                                    MeasureTools.HelpLog_finish_acc(this.thread_Id);
-                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
-                                }
-                            }
-                            break;
-                        case "snapshot":
-                            this.markerId = in.getBID();
-                            this.isSnapshot = true;
-                            if (TXN_PROCESS_FT()){
-                                Marker marker = in.getMarker();
-                                marker.setEpochInfo(this.epochInfo);
-                                forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                if (enable_upstreamBackup) {
-                                    this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
-                                    this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
-                                }
-                                MeasureTools.HelpLog_finish_acc(this.thread_Id);
-                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
-                            }
-                            break;
-                        case "finish":
-                            this.markerId = in.getBID();
-                            if (enable_determinants_log && this.markerId <= recoveryId) {
-                                this.CommitOutsideDeterminant(this.markerId);
-                            }
-                            if(TXN_PROCESS()){
-                                /* All the data has been executed */
-                                if (this.markerId > recoveryId) {
-                                    if (enable_recovery_dependency) {
-                                        Marker marker = in.getMarker().clone();
-                                        marker.setEpochInfo(this.epochInfo);
-                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                        this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                                    } else {
-                                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                    }
-                                    if (enable_upstreamBackup) {
-                                        this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
-                                    }
-                                    MeasureTools.HelpLog_finish_acc(this.thread_Id);
-                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
-                                }
-                            }
-                            this.context.stop_running();
-                            break;
+                for (int partitionId:this.db.getTxnProcessingEngine().getRecoveryRangeId()) {
+                    if(executor.getExecutorID() == executor.operator.getExecutorIDList().get(partitionId)) {
+                        this.collector.cleanAll();
+                        break;
                     }
                 }
             }
-        }else {
-            execute_ts_normal(in);
+            if (enable_upstreamBackup) {
+                this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
+            }
+            this.EventsHolder.clear();
+            for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                tuples.clear();
+            }
+        } else {
+            if(in.isMarker()){
+                if (status.isMarkerArrived(in.getSourceTask())) {
+                    PRE_EXECUTE(in);
+                } else {
+                    if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                        switch (in.getMarker().getValue()){
+                            case "recovery":
+                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                break;
+                            case "marker":
+                                this.markerId = in.getBID();
+                                if (enable_determinants_log && this.markerId <= recoveryId) {
+                                    this.CommitOutsideDeterminant(this.markerId);
+                                }
+                                if (TXN_PROCESS()){
+                                    if (this.markerId > recoveryId) {
+                                        if (enable_recovery_dependency) {
+                                            Marker marker = in.getMarker().clone();
+                                            marker.setEpochInfo(this.epochInfo);
+                                            forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                            this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
+                                        } else {
+                                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                        }
+                                        if (enable_upstreamBackup) {
+                                            this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                        }
+                                        MeasureTools.HelpLog_finish_acc(this.thread_Id);
+                                        MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                    }
+                                }
+                                break;
+                            case "snapshot":
+                                this.markerId = in.getBID();
+                                this.isSnapshot = true;
+                                if (TXN_PROCESS_FT()){
+                                    if (enable_recovery_dependency) {
+                                        Marker marker = in.getMarker().clone();
+                                        marker.setEpochInfo(this.epochInfo);
+                                        forward_marker(in.getSourceTask(),in.getBID(), marker, marker.getValue());
+                                        this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
+                                    } else {
+                                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    }
+                                    if (enable_upstreamBackup) {
+                                        this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
+                                        this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                    }
+                                    MeasureTools.HelpLog_finish_acc(this.thread_Id);
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                }
+                                break;
+                            case "finish":
+                                this.markerId = in.getBID();
+                                if (enable_determinants_log && this.markerId <= recoveryId) {
+                                    this.CommitOutsideDeterminant(this.markerId);
+                                }
+                                if(TXN_PROCESS()){
+                                    /* All the data has been executed */
+                                    if (this.markerId > recoveryId) {
+                                        if (enable_recovery_dependency) {
+                                            Marker marker = in.getMarker().clone();
+                                            marker.setEpochInfo(this.epochInfo);
+                                            forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                            this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
+                                        } else {
+                                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                        }
+                                        if (enable_upstreamBackup) {
+                                            this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
+                                        }
+                                        MeasureTools.HelpLog_finish_acc(this.thread_Id);
+                                        MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                    }
+                                }
+                                this.context.stop_running();
+                                break;
+                        }
+                    }
+                }
+            }else {
+                execute_ts_normal(in);
+            }
         }
     }
 
@@ -125,26 +158,6 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                 this.AsyncReConstructRequest();
                 transactionSuccess=this.TXN_PROCESS_FT();
                 break;
-            case 2:
-                if (enable_align_wait){
-                    this.collector.cleanAll();
-                } else {
-                    for (int partitionId:this.db.getTxnProcessingEngine().getRecoveryRangeId()) {
-                        if(executor.getExecutorID() == executor.operator.getExecutorIDList().get(partitionId)) {
-                            this.collector.cleanAll();
-                            break;
-                        }
-                    }
-                }
-                if (enable_upstreamBackup) {
-                    this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
-                }
-                this.SyncRegisterRecovery();
-                this.EventsHolder.clear();
-                for (Queue<Tuple> tuples : bufferedTuples.values()) {
-                    tuples.clear();
-                }
-                break;
         }
         return transactionSuccess;
     }
@@ -166,26 +179,6 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
                 transactionSuccess=this.TXN_PROCESS();
-                break;
-            case 2:
-                if (enable_align_wait){
-                    this.collector.cleanAll();
-                } else {
-                    for (int partitionId:this.db.getTxnProcessingEngine().getRecoveryRangeId()) {
-                        if(executor.getExecutorID() == executor.operator.getExecutorIDList().get(partitionId)) {
-                            this.collector.cleanAll();
-                            break;
-                        }
-                    }
-                }
-                if (enable_upstreamBackup) {
-                    this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
-                }
-                this.SyncRegisterRecovery();
-                this.EventsHolder.clear();
-                for (Queue<Tuple> tuples : bufferedTuples.values()) {
-                    tuples.clear();
-                }
                 break;
         }
         return transactionSuccess;

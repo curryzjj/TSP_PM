@@ -108,10 +108,12 @@ public class WALManager {
                                 break;
                             }
                         }
-                        Iterator<LogRecord> logRecordIterator = logRecords.iterator();
-                        while (logRecordIterator.hasNext()){
-                            LogRecord logRecord = logRecordIterator.next();
-                            db.InsertRecord(logRecord.getTableName(), logRecord.getCopyTableRecord());
+                        if (logRecords != null) {
+                            Iterator<LogRecord> logRecordIterator = logRecords.iterator();
+                            while (logRecordIterator.hasNext()){
+                                LogRecord logRecord = logRecordIterator.next();
+                                db.InsertRecord(logRecord.getTableName(), logRecord.getCopyTableRecord());
+                            }
                         }
                     }
                 }

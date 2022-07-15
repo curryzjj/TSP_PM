@@ -11,7 +11,6 @@ import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.faulttolerance.checkpoint.emitMarker;
-import streamprocess.faulttolerance.clr.CausalService;
 import utils.SOURCE_CONTROL;
 
 
@@ -21,7 +20,6 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.combo_bid_size;
-import static UserApplications.CONTROL.enable_determinants_log;
 
 public abstract class TransactionalBolt extends AbstractBolt implements emitMarker {
     protected static final Logger LOG= LoggerFactory.getLogger(TransactionalBolt.class);
@@ -64,8 +62,8 @@ public abstract class TransactionalBolt extends AbstractBolt implements emitMark
         this.collector.broadcast_marker(streamId, bid, marker);//bolt needs to broadcast_marker
     }
     @Override
-    public void ack_marker(Marker marker) {
-        this.collector.broadcast_ack(marker);//bolt needs to broadcast_ack
+    public void ack_Signal(Tuple message) {
+        this.collector.broadcast_ack(message);//bolt needs to broadcast_ack
     }
     @Override
     public void earlier_ack_marker(Marker marker) {

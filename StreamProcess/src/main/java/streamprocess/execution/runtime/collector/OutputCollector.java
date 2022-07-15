@@ -11,6 +11,7 @@ import streamprocess.components.topology.TopologyContext;
 import streamprocess.controller.output.OutputController;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.util.Set;
@@ -91,6 +92,13 @@ public class OutputCollector<T> {
         assert data != null && sc != null;
         sc.force_emitOnStream(meta, DEFAULT_STREAM_ID, bid, data);
     }
+    //broadcast failureFlag
+    public void broadcast_failureFlag(long bid, FailureFlag flag) throws InterruptedException {
+        if (executor.isLeafNode()) {
+            return;
+        }
+        sc.failureFlag_boardcast(meta, bid, flag);
+    }
     //broadcast marker
     public void broadcast_marker(long bid, Marker marker) throws InterruptedException {
         if (executor.isLeafNode()) {
@@ -113,10 +121,10 @@ public class OutputCollector<T> {
         sc.marker_single(meta,streamId,bid,targetId,marker);
     }
     //create marker
-    public void create_marker_single(long boardcast_time,String streamId,long bid,int myiteration){
-        sc.create_marker_single(meta,boardcast_time,streamId,bid,myiteration);
+    public void create_marker_single(long boardcast_time, String streamId, long bid, int myiteration){
+        sc.create_marker_single(meta, boardcast_time, streamId, bid, myiteration);
     }
-    public void create_marker_boardcast(long boardcast_time, String streamId, long bid, int myiteration,String msg) throws InterruptedException {
+    public void create_marker_boardcast(long boardcast_time, String streamId, long bid, int myiteration, String msg) throws InterruptedException {
         sc.create_marker_boardcast(meta, boardcast_time, streamId, bid, myiteration,msg);
     }
     //emit single
@@ -140,20 +148,20 @@ public class OutputCollector<T> {
     public void emit_single(long bid, Set<Integer> keys) throws InterruptedException {
         emit_single(DEFAULT_STREAM_ID, bid, keys);
     }
-    //ack
-    public void ack(Tuple input, Marker marker) {
+    //ack marker
+    public void ack(Tuple input) {
         final int executorID = executor.getExecutorID();
         if (enable_debug)
-            LOG.info(executor.getOP_full() + " is giving acknowledgement for marker:" + marker.msgId + " to " + input.getSourceComponent());
+            LOG.info(executor.getOP_full() + " is giving acknowledgement for marker:" + input.getFailureFlag().msgId + " to " + input.getSourceComponent());
         final ExecutionNode src = input.getContext().getExecutor(input.getSourceTask());
         if (input.getBID() != NUM_EVENTS)
-            src.op.callback(executorID, marker);
+            src.op.callback(executorID, input);
     }
-    public void broadcast_ack(Marker marker) {
+    public void broadcast_ack(Tuple input) {
         final int executorID = this.executor.getExecutorID();
         for (TopologyComponent op : executor.getParents_keySet()) {
             for (ExecutionNode src : op.getExecutorList()) {
-                src.op.callback(executorID, marker);
+                src.op.callback(executorID, input);
             }
         }
     }

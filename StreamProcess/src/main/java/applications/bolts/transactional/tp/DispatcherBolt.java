@@ -30,7 +30,6 @@ public class DispatcherBolt extends filterBolt implements emitMarker {
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {
         long bid=in.getBID();
         if(in.isMarker()){
-            this.collector.ack(in,in.getMarker());
             if(in.getMarker().getValue()=="recovery"){
                 this.registerRecovery(in);
             }else{
@@ -77,8 +76,8 @@ public class DispatcherBolt extends filterBolt implements emitMarker {
 
     }
     @Override
-    public void ack_marker(Marker marker) {
-        this.collector.broadcast_ack(marker);//bolt needs to broadcast_ack
+    public void ack_Signal(Tuple message) {
+        this.collector.broadcast_ack(message);//bolt needs to broadcast_ack
     }
     @Override
     public void earlier_ack_marker(Marker marker) {

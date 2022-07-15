@@ -3,7 +3,6 @@ package streamprocess.components.operators.api;
 import engine.Exception.DatabaseException;
 import org.slf4j.Logger;
 import streamprocess.execution.runtime.tuple.JumboTuple;
-import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.execution.runtime.tuple.Tuple;
 
 import java.io.IOException;
@@ -33,8 +32,8 @@ public abstract class AbstractBolt extends Operator {
     }
 
     @Override
-    public void callback(int callee, Marker marker) {
-       status.callback_bolt(callee,marker,executor);
+    public void callback(int callee, Tuple message) {
+       status.callback_bolt(callee, message, executor);
     }
     public void profile_execute(JumboTuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {//shoud be the DatabaseException
         execute(in);

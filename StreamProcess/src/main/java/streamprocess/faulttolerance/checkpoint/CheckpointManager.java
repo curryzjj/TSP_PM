@@ -10,10 +10,8 @@ import System.util.OsUtils;
 import engine.Database;
 import engine.shapshot.SnapshotResult;
 import engine.table.datatype.serialize.Serialize;
-import engine.table.keyGroup.KeyGroupRangeOffsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Tuple2;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.faulttolerance.FTManager;
@@ -130,8 +128,9 @@ public class CheckpointManager extends FTManager {
                 }
                 if(callSnapshot.containsValue(Recovery)){
                     LOG.info("CheckpointManager received all register and start recovery");
+                    failureTimes ++;
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(checkpointFile);
-                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(),null, lastSnapshotResult.getCheckpointId());
+                    this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(), new ArrayList<>(), lastSnapshotResult.getCheckpointId());
                     MeasureTools.State_load_begin(System.nanoTime());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     MeasureTools.State_load_finish(System.nanoTime());
@@ -144,6 +143,7 @@ public class CheckpointManager extends FTManager {
                     }
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     this.SnapshotOffset.clear();
+                    this.g.getSink().clean_status();
                     notifyAllComplete();
                     LOG.info("Recovery complete!");
                     lock.notifyAll();
@@ -181,7 +181,7 @@ public class CheckpointManager extends FTManager {
         dataOutputStream.writeInt(len);
         dataOutputStream.write(result);
         dataOutputStream.close();
-        LOG.debug("CheckpointManager commit the checkpoint to the current.log");
+        LOG.info("CheckpointManager commit the checkpoint to the current.log");
         return true;
     }
     public void notifyBoltComplete() throws Exception {
@@ -219,6 +219,7 @@ public class CheckpointManager extends FTManager {
                 e.printStackTrace();
             }
             LOG.info("CheckpointManager stops");
+            LOG.info("Failure Time : " + failureTimes);
         }
     }
 }

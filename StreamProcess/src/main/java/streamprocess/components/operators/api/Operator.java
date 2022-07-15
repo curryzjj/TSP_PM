@@ -2,7 +2,6 @@ package streamprocess.components.operators.api;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,6 +14,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.FTManager;
 import streamprocess.faulttolerance.checkpoint.emitMarker;
 import streamprocess.faulttolerance.checkpoint.Status;
@@ -72,7 +72,7 @@ public abstract class Operator implements Serializable{
     public boolean isCommit;
     public boolean replay=false;
     public boolean needWaitReplay = false;
-    public int lostData=0;
+    public int lostData = 0;
     protected Object lock;
     //    public transient TxnContext txn_context;
     public boolean forceStop;
@@ -227,7 +227,7 @@ public abstract class Operator implements Serializable{
     }
 
     public void cleanup() {}
-    public void callback(int callee, Marker marker){};
+    public void callback(int callee, Tuple message){};
 
     /**
      * Base init will always be called.
@@ -314,12 +314,16 @@ public abstract class Operator implements Serializable{
     public void cleanEpoch(long offset){
 
     }
-    public RecoveryDependency returnRecoveryDependency(){
-        return null;
+
+    public void clean_status(){
+        this.status.source_status_ini(this.executor);
     }
     public ConcurrentHashMap<Integer, CausalService> returnCausalService(){
         return null;
      }
+    public RecoveryDependency returnRecoveryDependency(){
+        return null;
+    }
 
     public void loadInFlightLog(){}
     public void replayEvents() throws InterruptedException {}

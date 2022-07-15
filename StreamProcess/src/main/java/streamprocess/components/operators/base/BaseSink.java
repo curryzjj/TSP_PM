@@ -112,6 +112,14 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
         return this.causalService;
     }
 
+    @Override
+    public void clean_status() {
+        super.clean_status();
+        for (Queue<Tuple> tuples : bufferedTuples.values()) {
+            tuples.clear();
+        }
+    }
+
     protected abstract Logger getLogger();
     protected abstract void PRE_EXECUTE(Tuple in);
     protected abstract void execute_ts_normal(Tuple in);
@@ -142,7 +150,7 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
     }
 
     @Override
-    public void ack_marker(Marker marker) {
+    public void ack_Signal(Tuple message) {
     }
 
     @Override

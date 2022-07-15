@@ -3,6 +3,7 @@ package applications.bolts.transactional.ob;
 import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 
 import java.io.IOException;
 import java.util.Queue;
@@ -18,49 +19,63 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
 
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-        if(in.isMarker()){
-            if (status.isMarkerArrived(in.getSourceTask())) {
-                PRE_EXECUTE(in);
-            } else {
-                if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                    //this.collector.ack(in,in.getMarker());
-                    switch (in.getMarker().getValue()){
-                        case "recovery":
-                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                            break;
-                        case "marker":
-                            this.markerId = in.getBID();
-                            if (TXN_PROCESS_FT()){
-                                /* When the wal is completed, the data can be consumed by the outside world */
-                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+        if (in.isFailureFlag()) {
+            FailureFlag failureFlag = in.getFailureFlag();
+            if (this.executor.isFirst_executor()) {
+                this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
+            }
+            this.collector.ack(in);
+            this.SyncRegisterRecovery();
+            this.collector.cleanAll();
+            this.EventsHolder.clear();
+            for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                tuples.clear();
+            }
+            this.status.source_status_ini(this.executor);
+        } else {
+            if(in.isMarker()){
+                if (status.isMarkerArrived(in.getSourceTask())) {
+                    PRE_EXECUTE(in);
+                } else {
+                    if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                        //this.collector.ack(in,in.getMarker());
+                        switch (in.getMarker().getValue()){
+                            case "recovery":
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                            }
-                            break;
-                        case "snapshot":
-                            this.markerId = in.getBID();
-                            this.isSnapshot = true;
-                            if (TXN_PROCESS_FT()){
-                                /* When the wal is completed, the data can be consumed by the outside world */
-                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                            }
-                            break;
-                        case "finish":
-                            this.markerId = in.getBID();
-                            if(TXN_PROCESS_FT()){
-                                /* All the data has been executed */
-                                MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                            }
-                            this.context.stop_running();
-                            break;
+                                break;
+                            case "marker":
+                                this.markerId = in.getBID();
+                                if (TXN_PROCESS_FT()){
+                                    /* When the wal is completed, the data can be consumed by the outside world */
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                }
+                                break;
+                            case "snapshot":
+                                this.markerId = in.getBID();
+                                this.isSnapshot = true;
+                                if (TXN_PROCESS_FT()){
+                                    /* When the wal is completed, the data can be consumed by the outside world */
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                }
+                                break;
+                            case "finish":
+                                this.markerId = in.getBID();
+                                if(TXN_PROCESS_FT()){
+                                    /* All the data has been executed */
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                }
+                                this.context.stop_running();
+                                break;
+                        }
                     }
                 }
+            }else {
+                execute_ts_normal(in);
             }
-        }else {
-            execute_ts_normal(in);
         }
-
     }
 
     @Override
@@ -84,14 +99,6 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS_FT();
-                break;
-            case 2:
-                this.SyncRegisterRecovery();
-                this.collector.cleanAll();
-                this.EventsHolder.clear();
-                for (Queue<Tuple> tuples : bufferedTuples.values()) {
-                    tuples.clear();
-                }
                 break;
         }
         return transactionSuccess;

@@ -22,7 +22,7 @@ public class TxnContext {
 
 
     public TxnContext(int thread_Id, int fid, long bid) {
-        this.thread_Id=thread_Id;
+        this.thread_Id = thread_Id;
         this.thisOpId = null;
         this.fid = fid;
         this.bid = bid;

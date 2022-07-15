@@ -2,6 +2,7 @@ package streamprocess.components.operators.api;
 
 import System.measure.MeasureTools;
 import System.tools.SortHelper;
+import UserApplications.CONTROL;
 import applications.events.InputDataStore.InputStore;
 import applications.events.SL.DepositEvent;
 import applications.events.SL.TransactionEvent;
@@ -17,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import streamprocess.components.grouping.Grouping;
 import streamprocess.components.topology.TopologyComponent;
 import streamprocess.controller.output.InFlightLog.MultiStreamInFlightLog;
+import streamprocess.execution.runtime.tuple.Tuple;
+import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.faulttolerance.FaultToleranceConstants;
 import streamprocess.faulttolerance.checkpoint.emitMarker;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
@@ -47,9 +50,9 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     protected Queue<Long> storedSnapshotOffsets = new ArrayDeque<>();
 
     protected int tthread;
-    protected long start_time;
+    protected long snapshotRecordTime;
     protected long time_Interval;//ms
-
+    protected long failureRecordTime = -1;
     //TODO:BufferedWrite
 
     protected int taskId;
@@ -76,8 +79,8 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     }
     public boolean snapshot(){
         if(Time_Control){
-            if(System.currentTimeMillis() - start_time >= time_Interval){
-                this.start_time = System.currentTimeMillis();
+            if(System.currentTimeMillis() - snapshotRecordTime >= time_Interval){
+                this.snapshotRecordTime = System.currentTimeMillis();
                 return true;
             }else {
                 return false;
@@ -86,12 +89,26 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
             return bid % (checkpoint_interval * batch_number_per_wm) == 0;
         }
     }
+    public boolean failure(){
+        if (enable_states_lost) {
+            return failureTime > 0 && (System.currentTimeMillis() - failureRecordTime >= failureTime);
+        } else {
+            return false;
+        }
+    }
     public void forward_marker(int sourceId, long bid, Marker marker, String msg) throws InterruptedException{
         forward_marker(sourceId,DEFAULT_STREAM_ID,bid,marker,msg);
     }
     @Override
     public void forward_marker(int sourceTask, String streamId, long bid, Marker marker, String msg) throws InterruptedException {
-        if (this.marker()) {//emit marker tuple
+        if (failureFlagArrived && this.failure()){
+            Random random = new Random();
+            FailureFlag failureFlag = new FailureFlag(DEFAULT_STREAM_ID, System.currentTimeMillis(), bid, random.nextInt(PARTITION_NUM));
+            failureFlagBid.add(bid);
+            failureFlagArrived = false;
+            collector.broadcast_failureFlag(bid, failureFlag);
+        }
+        if (this.marker()) {
             if(enable_snapshot){
                 if (replay) {
                     if (bid == storedOffset) {
@@ -118,7 +135,6 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 multiStreamInFlightLog.addBatch(bid, DEFAULT_STREAM_ID);
             }
             myiteration ++;
-            success = false;
             epoch_size = bid - previous_bid;
             previous_bid = bid;
         }
@@ -165,10 +181,14 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
 
 
     @Override
-    public void ack_marker(Marker marker) {
-        success = true;
-        long elapsed_time = System.nanoTime() - boardcast_time;//the time elapsed for the system to handle the previous epoch.
-        double actual_system_throughput = epoch_size * 1E9 / elapsed_time;//events/ s
+    public void ack_Signal(Tuple message) {
+        failureRecordTime = System.currentTimeMillis();
+        if (!failureTimes.isEmpty()) {
+            failureTime = failureTimes.poll();
+            failureFlagArrived = true;
+        } else {
+            failureTime = -1;
+        }
     }
     public void stopRunning() throws InterruptedException {
         if(enable_wal|| enable_checkpoint ||enable_clr){
@@ -203,7 +223,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                 recoveryIDs.add(downExecutorIds.get(partitionId));
             }
         } else {
-            recoveryIDs = recoveryPartitionIds;
+            recoveryIDs = new ArrayList<>(recoveryPartitionIds);
         }
     }
 
@@ -232,7 +252,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
             if (checkpointId > lastSnapshotOffset){
                 LOG.info(executor.getOP_full() + " emit " + "snapshot @" + DateTime.now() + " SOURCE_CONTROL: " + checkpointId);
                 if (Time_Control){
-                    this.start_time = System.currentTimeMillis();
+                    this.snapshotRecordTime = System.currentTimeMillis();
                 }
                 this.FTM.spoutRegister(checkpointId);
                 collector.create_marker_boardcast(System.nanoTime(), DEFAULT_STREAM_ID, checkpointId, myiteration,"snapshot");

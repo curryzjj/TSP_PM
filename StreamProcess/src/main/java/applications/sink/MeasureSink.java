@@ -101,9 +101,6 @@ public class MeasureSink extends BaseSink {
                         }
                     }
                     switch (in.getMarker().getValue()) {
-                        case "recovery" :
-                            BUFFER_EXECUTE();
-                            break;
                         case "snapshot" :
                             this.FTM.sinkRegister(in.getBID());
                             BUFFER_EXECUTE();
@@ -247,9 +244,8 @@ public class MeasureSink extends BaseSink {
                     No_Exactly_Once_latency_map.add(latency / 1E6);
                     computationLatency = System.nanoTime();
                 }
-                if (in.getBID() == lastFailureTime) {
+                if (failureFlagBid.contains(in.getBID())) {
                     MeasureTools.ReExecute_time_finish(System.nanoTime());
-                    lastFailureTime = failureTime;
                 }
                 count ++;
             }

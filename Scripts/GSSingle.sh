@@ -3,15 +3,15 @@ function ResetParameters() {
   app="GS_txn"
   FTOptions=0
   failureModel=2
-  failureFrequency=2
+  failureFrequency=4
   tthreads=16
   snapshot=2
 
   #System Configurations
   Arrival_Control=1
-  targetHz=150000
+  targetHz=200000
   Time_Control=1
-  time_Interval=1000
+  time_Interval=3000
   timeSliceLengthMs=1000
   input_store_batch=20000
   #shellcheck disable=SC2006
@@ -26,7 +26,7 @@ function ResetParameters() {
   RATIO_OF_DEPENDENCY=1000
   complexity=0
   NUM_ACCESSES=2
-  partition_num_per_txn=8
+  partition_num_per_txn=16
   partition_num=16
 }
 function runFTStream() {
@@ -83,7 +83,7 @@ function runFTStream() {
 function baselineEvaluation() {
   ResetParameters
   RATIO_OF_READ=500
-  for FTOptions in 6
+  for FTOptions in 1 2 3 4
       do runFTStream
       done
   ResetParameters
