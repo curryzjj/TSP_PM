@@ -153,7 +153,7 @@ public class  AppRunner extends baseRunner {
        CONTROL.PARTITION_NUM = config.getInt("partition_num");
        CONTROL.Exactly_Once = config.getBoolean("Exactly_Once");
        CONTROL.COMPLEXITY = config.getInt("complexity");
-       //Set failure time, starts after five seconds, Adjust the failure interval according to different failure frequencies
+       //Set failure time, starts after ten seconds, Adjust the failure interval according to different failure frequencies
         if (CONTROL.enable_states_lost && config.getInt("failureFrequency") > 0) {
             failureInterval = 100 * 1000 / config.getInt("failureFrequency");
             failureTimes = config.getInt("failureFrequency");

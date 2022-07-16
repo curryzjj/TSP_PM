@@ -97,6 +97,6 @@ public class CONTROL {
                     failureTimes --;
                 }
             }
-        },  6000, failureInterval);//ms
+        },  10000, failureInterval);//ms
     }
 }

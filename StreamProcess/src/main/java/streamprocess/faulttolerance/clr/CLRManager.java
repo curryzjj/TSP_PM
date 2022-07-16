@@ -114,6 +114,7 @@ public class CLRManager extends FTManager {
                 }
                 if(callFaultTolerance.containsValue(Recovery)){
                     LOG.info("CLRManager received all bolt register and start recovery");
+                    failureFlag.compareAndSet(true, false);
                     failureTimes ++;
                     List<Integer> recoveryIds;
                     long alignOffset;
