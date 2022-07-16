@@ -1,6 +1,7 @@
 package applications.bolts.transactional.sl;
 
 import System.measure.MeasureTools;
+import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
@@ -9,6 +10,9 @@ import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
+
+import static UserApplications.CONTROL.PARTITION_NUM;
+import static UserApplications.CONTROL.rnd;
 
 public class SLBolt_TStream_Wal extends SLBolt_TStream{
     private static final long serialVersionUID = -7240496876968212299L;
@@ -19,12 +23,11 @@ public class SLBolt_TStream_Wal extends SLBolt_TStream{
 
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-        if (in.isFailureFlag()) {
-            FailureFlag failureFlag = in.getFailureFlag();
+        if(CONTROL.failureFlag.get()){
             if (this.executor.isFirst_executor()) {
-                this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
+                this.db.getTxnProcessingEngine().mimicFailure(rnd.nextInt(PARTITION_NUM));
+                CONTROL.failureFlagBid.add(in.getBID());
             }
-            this.collector.ack(in);
             this.SyncRegisterRecovery();
             this.collector.cleanAll();
             this.EventsHolder.clear();

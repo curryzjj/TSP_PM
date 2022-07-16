@@ -1,6 +1,7 @@
 package applications.bolts.transactional.tp;
 
 import System.measure.MeasureTools;
+import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
 import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.runtime.tuple.Tuple;
@@ -25,13 +26,13 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
 
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-        if (in.isFailureFlag()) {
-            FailureFlag failureFlag = in.getFailureFlag();
+        if (failureFlag.get()) {
+            int lostPartitionId = rnd.nextInt(PARTITION_NUM);
             if (this.executor.isFirst_executor()) {
-                this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
+                this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                CONTROL.failureFlagBid.add(in.getBID());
             }
-            this.recoveryPartitionIds.add((int) failureFlag.getValue());
-            this.collector.ack(in);
+            this.recoveryPartitionIds.add(lostPartitionId);
             this.SyncRegisterRecovery();
             if (enable_align_wait){
                 this.collector.cleanAll();
