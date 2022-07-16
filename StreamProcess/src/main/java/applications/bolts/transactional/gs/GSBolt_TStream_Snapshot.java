@@ -11,6 +11,9 @@ import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
+import static UserApplications.CONTROL.PARTITION_NUM;
+import static UserApplications.CONTROL.rnd;
+
 public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
     private static final long serialVersionUID = 6126484047591969728L;
     public GSBolt_TStream_Snapshot(int fid) {
@@ -20,7 +23,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(CONTROL.failureFlag.get()){
             if (this.executor.isFirst_executor()) {
-                this.db.getTxnProcessingEngine().mimicFailure(0);
+                this.db.getTxnProcessingEngine().mimicFailure(rnd.nextInt(PARTITION_NUM));
                 CONTROL.failureFlagBid.add(in.getBID());
             }
             this.SyncRegisterRecovery();
