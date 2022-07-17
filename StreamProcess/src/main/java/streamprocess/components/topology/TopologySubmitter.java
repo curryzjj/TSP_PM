@@ -50,6 +50,6 @@ public class TopologySubmitter {
         //start
         OM.start();
         CONTROL.startFailureRecord();
-        return  g.topology;
+        return g.topology;
     }
 }

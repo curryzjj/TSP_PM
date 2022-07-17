@@ -23,7 +23,6 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if (failureFlag.get()) {
-            int lostPartitionId = rnd.nextInt(PARTITION_NUM);
             if (this.executor.isFirst_executor()) {
                 this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
                 CONTROL.failureFlagBid.add(in.getBID());

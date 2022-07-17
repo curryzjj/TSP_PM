@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CONTROL {
     //Failure Flag
     public static AtomicBoolean failureFlag = new AtomicBoolean(false);
+    public static int lostPartitionId = 0;
     //application related.
     public static boolean Arrival_Control = false;
     public static int NUM_EVENTS = 40000000; //different input events.. TODO: It must be kept small as GC pressure increases rapidly. Fix this in future work.
@@ -93,8 +94,12 @@ public class CONTROL {
                 if (failureTimes == 0) {
                     FailureTimer.cancel();
                 } else {
-                    failureFlag.compareAndSet(false, true);
-                    failureTimes --;
+                    //Remove this hard cord
+                    while (SOURCE_CONTROL.getInstance().counter != 0) {
+                        lostPartitionId = rnd.nextInt(PARTITION_NUM);
+                        failureFlag.compareAndSet(false, true);
+                        failureTimes --;
+                    }
                 }
             }
         },  10000, failureInterval);//ms

@@ -11,8 +11,7 @@ import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
-import static UserApplications.CONTROL.PARTITION_NUM;
-import static UserApplications.CONTROL.rnd;
+import static UserApplications.CONTROL.*;
 
 public class SLBolt_TStream_Wal extends SLBolt_TStream{
     private static final long serialVersionUID = -7240496876968212299L;
@@ -25,7 +24,7 @@ public class SLBolt_TStream_Wal extends SLBolt_TStream{
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(CONTROL.failureFlag.get()){
             if (this.executor.isFirst_executor()) {
-                this.db.getTxnProcessingEngine().mimicFailure(rnd.nextInt(PARTITION_NUM));
+                this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
                 CONTROL.failureFlagBid.add(in.getBID());
             }
             this.SyncRegisterRecovery();
