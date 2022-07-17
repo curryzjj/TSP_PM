@@ -96,10 +96,15 @@ public class CONTROL {
                 } else {
                     //Remove this hard cord
                     while (SOURCE_CONTROL.getInstance().counter != 0) {
-                        lostPartitionId = rnd.nextInt(PARTITION_NUM);
-                        failureFlag.compareAndSet(false, true);
-                        failureTimes --;
+                        try {
+                            Thread.sleep(1500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
+                    lostPartitionId = rnd.nextInt(PARTITION_NUM);
+                    failureFlag.compareAndSet(false, true);
+                    failureTimes --;
                 }
             }
         },  10000, failureInterval);//ms
