@@ -149,7 +149,7 @@ public class CLRManager extends FTManager {
                     }
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     this.db.getTxnProcessingEngine().cleanOperations();
-                    SOURCE_CONTROL.getInstance().ResetAll();
+                    SOURCE_CONTROL.getInstance().config(PARTITION_NUM);
                     this.SnapshotOffset.clear();
                     this.g.getSink().clean_status();
                     notifyAllComplete();

@@ -4,7 +4,7 @@ function ResetParameters() {
   app="GS_txn"
   FTOptions=0
   failureModel=2
-  failureFrequency=2
+  failureFrequency=4
   tthreads=16
   snapshot=2
 
@@ -90,6 +90,7 @@ function runFTStream() {
 #Arrival Rate
 function ArrivalRateEvaluation() {
   ResetParameters
+  systemRuntime=60
   for targetHz in 100000 150000 200000 250000 300000
   do
   for FTOptions in 1 2 3 4
@@ -101,6 +102,7 @@ function ArrivalRateEvaluation() {
 #Table Size
 function TableSizeEvaluation() {
   ResetParameters
+  systemRuntime=60
   for NUM_ITEMS in 20480 40960 81920 163840 327680 655360
   do
   for FTOptions in 1 2 3 4
@@ -112,6 +114,7 @@ function TableSizeEvaluation() {
 #ZIP_Skew
 function TableSizeEvaluation() {
   ResetParameters
+  systemRuntime=60
   for ZIP_SKEW in 200 400 600 800 1000
   do
   for FTOptions in 1 2 3 4
@@ -123,6 +126,7 @@ function TableSizeEvaluation() {
 #Ratio of read
 function ReadRatioEvaluation() {
   ResetParameters
+  systemRuntime=60
   for RATIO_OF_READ in 200 400 600 800 1000
   do
   for FTOptions in 1 2 3 4
@@ -134,6 +138,7 @@ function ReadRatioEvaluation() {
 #Ratio of dependency
 function DependencyRatioEvaluation() {
   ResetParameters
+  systemRuntime=60
   partition_num_per_txn=8
   for RATIO_OF_DEPENDENCY in 200 400 600 800 1000
   do
@@ -146,6 +151,7 @@ function DependencyRatioEvaluation() {
 #Partition_num_per_txn
 function PartitionNumPerTxnEvaluation() {
   ResetParameters
+  systemRuntime=60
   RATIO_OF_DEPENDENCY=500
   for partition_num_per_txn in 2 4 6 8 10 12 16
   do
@@ -158,6 +164,7 @@ function PartitionNumPerTxnEvaluation() {
 #Complexity
 function ComplexityEvaluation() {
   ResetParameters
+  systemRuntime=60
   for complexity in 0 20000 40000 60000 80000 10000
   do
   for FTOptions in 1 2 3 4
@@ -169,6 +176,7 @@ function ComplexityEvaluation() {
 #failureFrequency
 function FailureFrequencyEvaluation() {
   ResetParameters
+  systemRuntime=60
   for failureFrequency in 1 2 3 4 5 6 7 8 9 10
   do
   for FTOptions in 1 2 3 4
@@ -180,6 +188,7 @@ function FailureFrequencyEvaluation() {
 #CheckpointInterval
 function CheckpointIntervalEvaluation() {
   ResetParameters
+  systemRuntime=60
   for time_Interval in 1000 2000 3000 4000 5000
   do
   for FTOptions in 1 2 3 4

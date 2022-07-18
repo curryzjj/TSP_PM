@@ -328,11 +328,11 @@ public class TxnProcessingEngine {
             this.walManager.addLogForBatch(mark_ID);
         }
         this.markerId = mark_ID;
-        SOURCE_CONTROL.getInstance().Wait_Start(thread_id);
-        if (SOURCE_CONTROL.getInstance().isArrived.containsValue(false)) {
+        if (SOURCE_CONTROL.getInstance().Wait_Start(thread_id)) {
+            int size = evaluation(thread_id,mark_ID);
+        } else {
             return false;
         }
-        int size = evaluation(thread_id,mark_ID);
         //implement the SOURCE_CONTROL sync for all threads to come to this line.
         SOURCE_CONTROL.getInstance().Wait_End(thread_id);
         return true;
