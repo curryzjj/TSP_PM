@@ -5,7 +5,6 @@ import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
 import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.IOException;
@@ -158,6 +157,31 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                 this.AsyncReConstructRequest();
                 transactionSuccess=this.TXN_PROCESS_FT();
                 break;
+            case 2:
+                if (this.executor.isFirst_executor()) {
+                    this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                    CONTROL.failureFlagBid.add(markerId);
+                }
+                this.recoveryPartitionIds.add(lostPartitionId);
+                this.SyncRegisterRecovery();
+                if (enable_align_wait){
+                    this.collector.cleanAll();
+                } else {
+                    for (int partitionId:this.db.getTxnProcessingEngine().getRecoveryRangeId()) {
+                        if(executor.getExecutorID() == executor.operator.getExecutorIDList().get(partitionId)) {
+                            this.collector.cleanAll();
+                            break;
+                        }
+                    }
+                }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
+                }
+                this.EventsHolder.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
+                break;
         }
         return transactionSuccess;
     }
@@ -179,6 +203,31 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
                 transactionSuccess=this.TXN_PROCESS();
+                break;
+            case 2:
+                if (this.executor.isFirst_executor()) {
+                    this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                    CONTROL.failureFlagBid.add(markerId);
+                }
+                this.recoveryPartitionIds.add(lostPartitionId);
+                this.SyncRegisterRecovery();
+                if (enable_align_wait){
+                    this.collector.cleanAll();
+                } else {
+                    for (int partitionId:this.db.getTxnProcessingEngine().getRecoveryRangeId()) {
+                        if(executor.getExecutorID() == executor.operator.getExecutorIDList().get(partitionId)) {
+                            this.collector.cleanAll();
+                            break;
+                        }
+                    }
+                }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
+                }
+                this.EventsHolder.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
                 break;
         }
         return transactionSuccess;

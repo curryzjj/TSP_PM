@@ -98,6 +98,18 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS_FT();
                 break;
+            case 2:
+                if (this.executor.isFirst_executor()) {
+                    this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                    CONTROL.failureFlagBid.add(markerId);
+                }
+                this.SyncRegisterRecovery();
+                this.collector.cleanAll();
+                this.EventsHolder.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
+                break;
         }
         return transactionSuccess;
     }
@@ -121,6 +133,18 @@ public class OBBolt_TStream_Snapshot extends OBBolt_TStream{
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS();
+                break;
+            case 2:
+                if (this.executor.isFirst_executor()) {
+                    this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                    CONTROL.failureFlagBid.add(markerId);
+                }
+                this.SyncRegisterRecovery();
+                this.collector.cleanAll();
+                this.EventsHolder.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
                 break;
         }
         return transactionSuccess;

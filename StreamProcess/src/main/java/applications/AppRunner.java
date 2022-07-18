@@ -155,7 +155,7 @@ public class  AppRunner extends baseRunner {
        CONTROL.COMPLEXITY = config.getInt("complexity");
        //Set failure time, starts after ten seconds, Adjust the failure interval according to different failure frequencies
         if (CONTROL.enable_states_lost && config.getInt("failureFrequency") > 0) {
-            failureInterval = 80 * 1000 / config.getInt("failureFrequency");
+            failureInterval = config.getInt("systemRuntime") * 1000 / config.getInt("failureFrequency");
             failureTimes = config.getInt("failureFrequency");
         }
     }

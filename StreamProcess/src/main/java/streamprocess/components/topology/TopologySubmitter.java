@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 import static UserApplications.CONTROL.enable_shared_state;
+import static UserApplications.CONTROL.enable_states_lost;
 import static streamprocess.execution.affinity.SequentialBinding.SequentialBindingDB;
 
 public class TopologySubmitter {
@@ -49,7 +50,11 @@ public class TopologySubmitter {
         }
         //start
         OM.start();
-        CONTROL.startFailureRecord();
+        if (enable_states_lost) {
+            CONTROL.startFailureRecord();
+        } else {
+            CONTROL.FailureTimer.cancel();
+        }
         return g.topology;
     }
 }

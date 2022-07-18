@@ -114,6 +114,9 @@ public abstract class baseRunner {
     public int spoutThread = 1;
     @Parameter(names = {"--sinkThread"}, description = "Number of sink", required = false)
     public int sinkThread = 1;
+    @Parameter(names = {"--systemRuntime"}, description = "System runtime", required = false)
+    public int systemRuntime = 60;
+
 
     //Algorithm Configuration
     @Parameter(names = {"--Time_Control"}, description = "time interval or number interval", required = false)
@@ -197,6 +200,7 @@ public abstract class baseRunner {
         config.put("batch_number_per_wm",batch_number_per_wm);
         config.put("spoutThread",spoutThread);
         config.put("sinkThread",sinkThread);
+        config.put("systemRuntime", systemRuntime);
         if (isParallel == 1){
             config.put("isParallel",true);
         } else {

@@ -15,6 +15,7 @@ function ResetParameters() {
   time_Interval=3000
   timeSliceLengthMs=1000
   input_store_batch=20000
+  systemRuntime=80
   #shellcheck disable=SC2006
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
@@ -29,6 +30,9 @@ function ResetParameters() {
   NUM_ACCESSES=2
   partition_num_per_txn=8
   partition_num=16
+  sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/gstxn/
+  sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/checkpoint
+  sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/wal
 }
 function runFTStream() {
   echo "java -Xms100g -Xmx100g -jar -XX:+UseG1GC -d64 /home/jjzhao/TSP_PM/StreamProcess/target/StreamProcess-1.0-SNAPSHOT-jar-with-dependencies \
@@ -44,6 +48,7 @@ function runFTStream() {
             --time_Interval $time_Interval \
             --timeSliceLengthMs $timeSliceLengthMs \
             --input_store_batch $input_store_batch \
+            --systemRuntime $systemRuntime \
             --batch_number_per_wm $batch_number_per_wm \
             --NUM_ITEMS $NUM_ITEMS \
             --NUM_EVENTS $NUM_EVENTS \
@@ -69,6 +74,7 @@ function runFTStream() {
               --time_Interval $time_Interval \
               --timeSliceLengthMs $timeSliceLengthMs \
               --input_store_batch $input_store_batch \
+              --systemRuntime $systemRuntime \
               --batch_number_per_wm $batch_number_per_wm \
               --NUM_ITEMS $NUM_ITEMS \
               --NUM_EVENTS $NUM_EVENTS \
@@ -161,9 +167,20 @@ function ComplexityEvaluation() {
   ResetParameters
 }
 #failureFrequency
-function ComplexityEvaluation() {
+function FailureFrequencyEvaluation() {
   ResetParameters
   for failureFrequency in 1 2 3 4 5 6 7 8 9 10
+  do
+  for FTOptions in 1 2 3 4
+      do runFTStream
+      done
+  done
+  ResetParameters
+}
+#CheckpointInterval
+function CheckpointIntervalEvaluation() {
+  ResetParameters
+  for time_Interval in 1000 2000 3000 4000 5000
   do
   for FTOptions in 1 2 3 4
       do runFTStream
@@ -179,10 +196,6 @@ function baselineEvaluation() {
   DependencyRatioEvaluation
   PartitionNumPerTxnEvaluation
   ComplexityEvaluation
-
+  CheckpointIntervalEvaluation
 }
-
-sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/gstxn/
-sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/checkpoint
-sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/wal
 baselineEvaluation

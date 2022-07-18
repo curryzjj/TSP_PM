@@ -328,16 +328,15 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     }
 
     private void TRANSFER_REQUEST_CORE(TransactionEvent event) throws InterruptedException {
-        //SchemaRecord schemaRecord = event.src_account_value.getRecord();
-//        if (schemaRecord == null) {
-//            System.out.println(event.getBid());
-//        }
-//        schemaRecord = event.src_asset_value.getRecord();
-//        if (schemaRecord == null) {
-//            System.out.println(event.getBid());
-//        }
-       // event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0], event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
-        event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0]);
+        SchemaRecord schemaRecord = event.src_account_value.getRecord();
+        if (schemaRecord == null) {
+            System.out.println(event.getBid());
+        }
+        schemaRecord = event.src_asset_value.getRecord();
+        if (schemaRecord == null) {
+            System.out.println(event.getBid());
+        }
+        event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0], event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
     }
     protected void DEPOSITE_REQUEST_CORE(DepositEvent event) {
         event.transactionResult = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0]);

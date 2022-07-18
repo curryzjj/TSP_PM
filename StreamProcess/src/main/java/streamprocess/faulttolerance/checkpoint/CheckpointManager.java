@@ -144,6 +144,7 @@ public class CheckpointManager extends FTManager {
                         }
                     }
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                    this.db.getTxnProcessingEngine().cleanOperations();
                     this.SnapshotOffset.clear();
                     this.g.getSink().clean_status();
                     notifyAllComplete();

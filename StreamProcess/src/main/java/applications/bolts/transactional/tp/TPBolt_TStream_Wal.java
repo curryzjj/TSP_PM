@@ -98,6 +98,18 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS_FT();
                 break;
+            case 2:
+                if (this.executor.isFirst_executor()) {
+                    this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                    CONTROL.failureFlagBid.add(markerId);
+                }
+                this.SyncRegisterRecovery();
+                this.collector.cleanAll();
+                this.LREvents.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
+                break;
         }
         return transactionSuccess;
     }

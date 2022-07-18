@@ -1,19 +1,17 @@
 package UserApplications;
 
-import java.util.HashMap;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
+import java.util.Map;
+import java.util.concurrent.*;
 
 /**
  * used in the TxnProcessing Engine to switch between two models
  */
 public class SOURCE_CONTROL {
-    public long counter = 0;
+    public ConcurrentHashMap<Integer, Boolean> isArrived;
     private static SOURCE_CONTROL ourInstance = new SOURCE_CONTROL();
     private CyclicBarrier start_barrier;
     private CyclicBarrier end_barrier;
     private CyclicBarrier final_end_barrier;
-    private HashMap<Integer,Integer> iteration;
     public static SOURCE_CONTROL getInstance(){
         return ourInstance;
     }
@@ -21,34 +19,37 @@ public class SOURCE_CONTROL {
         start_barrier = new CyclicBarrier(number_threads);
         end_barrier = new CyclicBarrier(number_threads);
         final_end_barrier = new CyclicBarrier(number_threads);
-        iteration = new HashMap<>();
-        for (int i=0;i<number_threads;i++){
-            iteration.put(i,0);
+        isArrived = new ConcurrentHashMap<>();
+        for (int i = 0; i < number_threads; i++){
+            isArrived.put( i, false);
         }
     }
     public void Wait_Start(int thread_Id){
         try{
-            start_barrier.await();
-            counter ++;
+            isArrived.put(thread_Id, true);
+            start_barrier.await(2, TimeUnit.SECONDS);
         } catch (BrokenBarrierException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
             e.printStackTrace();
         }
     }
     public void Wait_End(int thread_Id){
         try{
             end_barrier.await();
-            if (thread_Id == 0) {
-                ResetCount();
-            }
+            Reset(thread_Id);
         } catch (BrokenBarrierException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
-    public void ResetCount() {
-        counter = 0;
+    public void Reset(int thread_Id) {
+        isArrived.put(thread_Id, false);
+    }
+    public void ResetAll() {
+        isArrived.forEach((key, value) -> isArrived.put(key, false));
     }
 }

@@ -187,6 +187,7 @@ public class LoggerManager extends FTManager {
                     }
                     this.SnapshotOffset = new ArrayDeque<>();
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                    this.db.getTxnProcessingEngine().cleanOperations();
                     notifyAllComplete();
                     lock.notifyAll();
                 } else if (callLog.containsValue(Persist)){

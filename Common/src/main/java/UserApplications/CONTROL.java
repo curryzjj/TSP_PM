@@ -94,14 +94,6 @@ public class CONTROL {
                 if (failureTimes == 0) {
                     FailureTimer.cancel();
                 } else {
-                    //Remove this hard cord
-                    while (SOURCE_CONTROL.getInstance().counter != 0) {
-                        try {
-                            Thread.sleep(1500);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
                     lostPartitionId = rnd.nextInt(PARTITION_NUM);
                     failureFlag.compareAndSet(false, true);
                     failureTimes --;

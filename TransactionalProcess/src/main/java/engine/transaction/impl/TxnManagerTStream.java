@@ -125,7 +125,7 @@ public class TxnManagerTStream extends TxnManagerDedicated {
         String primaryKey=tableRecord.record_.GetPrimaryKey();
         ConcurrentHashMap<String, MyList<Operation>> holder = instance.getHolder(srcTable).rangeMap.get(getTaskId(primaryKey)).holder_v1;
         holder.putIfAbsent(primaryKey,new MyList<>(srcTable,primaryKey, getPartitionId(primaryKey)));
-        holder.get(primaryKey).add(new Operation(srcTable,txn_context,bid,accessType,tableRecord,record_ref,function));
+        holder.get(primaryKey).add(new Operation(srcTable, txn_context, bid, accessType, tableRecord, record_ref, function));
     }
     private void operation_chain_construction_modify_read(String table_name, long bid, MetaTypes.AccessType accessType, TableRecord d_record, SchemaRecordRef record_ref, Function function
             , TableRecord[] condition_records, Condition condition, TxnContext txn_context, boolean[] success) {
@@ -153,12 +153,16 @@ public class TxnManagerTStream extends TxnManagerDedicated {
     }
     @Override
     public int start_evaluate(int thread_id, long mark_ID) throws InterruptedException, BrokenBarrierException, IOException, DatabaseException {
-        /** Pay attention to concurrency control */
-        instance.start_evaluation(thread_id,mark_ID);
-        if (instance.isTransactionAbort) {
-            return 1;
+        /* Pay attention to concurrency control */
+        if (instance.start_evaluation(thread_id,mark_ID)) {
+            if (instance.isTransactionAbort) {
+                return 1;
+            } else {
+                return 0;
+            }
         } else {
-            return 0;
+            /* Some failures have happened */
+            return 2;
         }
     }
 }

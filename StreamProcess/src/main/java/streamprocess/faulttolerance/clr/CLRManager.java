@@ -7,6 +7,7 @@ import System.FileSystem.Path;
 import System.measure.MeasureTools;
 import System.util.Configuration;
 import System.util.OsUtils;
+import UserApplications.SOURCE_CONTROL;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.shapshot.SnapshotResult;
@@ -147,6 +148,8 @@ public class CLRManager extends FTManager {
                         }
                     }
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                    this.db.getTxnProcessingEngine().cleanOperations();
+                    SOURCE_CONTROL.getInstance().ResetAll();
                     this.SnapshotOffset.clear();
                     this.g.getSink().clean_status();
                     notifyAllComplete();
