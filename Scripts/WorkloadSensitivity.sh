@@ -30,11 +30,11 @@ function ResetParameters() {
   NUM_ACCESSES=2
   partition_num_per_txn=8
   partition_num=16
+}
+function runFTStream() {
   sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/gstxn/
   sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/checkpoint
   sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/wal
-}
-function runFTStream() {
   echo "java -Xms100g -Xmx100g -jar -XX:+UseG1GC -d64 /home/jjzhao/TSP_PM/StreamProcess/target/StreamProcess-1.0-SNAPSHOT-jar-with-dependencies \
             --app $app \
             --FTOptions $FTOptions \
@@ -91,6 +91,16 @@ function runFTStream() {
 function ArrivalRateEvaluation() {
   ResetParameters
   systemRuntime=60
+  failureFrequency=6
+  for targetHz in 100000 150000 200000 250000 300000
+  do
+  for FTOptions in 1 2 3 4
+      do runFTStream
+      done
+  done
+  ResetParameters
+  systemRuntime=60
+  failureFrequency=2
   for targetHz in 100000 150000 200000 250000 300000
   do
   for FTOptions in 1 2 3 4
@@ -112,7 +122,7 @@ function TableSizeEvaluation() {
   ResetParameters
 }
 #ZIP_Skew
-function TableSizeEvaluation() {
+function ZIPSkewEvaluation() {
   ResetParameters
   systemRuntime=60
   for ZIP_SKEW in 200 400 600 800 1000
@@ -126,20 +136,24 @@ function TableSizeEvaluation() {
 #Ratio of read
 function ReadRatioEvaluation() {
   ResetParameters
-  systemRuntime=60
-  for RATIO_OF_READ in 200 400 600 800 1000
-  do
-  for FTOptions in 1 2 3 4
-      do runFTStream
-      done
-  done
-  ResetParameters
+    systemRuntime=60
+    failureFrequency=6
+    partition_num_per_txn=16
+    for RATIO_OF_READ in 200 400 600 800 1000
+    do
+    for FTOptions in 1 2 3 4
+        do runFTStream
+        done
+    done
+    ResetParameters
 }
 #Ratio of dependency
 function DependencyRatioEvaluation() {
   ResetParameters
   systemRuntime=60
-  partition_num_per_txn=8
+  partition_num_per_txn=16
+  failureFrequency=6
+  RATIO_OF_READ=500
   for RATIO_OF_DEPENDENCY in 200 400 600 800 1000
   do
   for FTOptions in 1 2 3 4
@@ -147,12 +161,24 @@ function DependencyRatioEvaluation() {
       done
   done
   ResetParameters
+    systemRuntime=60
+    partition_num_per_txn=16
+    failureFrequency=6
+    RATIO_OF_READ=0
+    for RATIO_OF_DEPENDENCY in 200 400 600 800 1000
+    do
+    for FTOptions in 1 2 3 4
+        do runFTStream
+        done
+    done
+  ResetParameters
 }
 #Partition_num_per_txn
 function PartitionNumPerTxnEvaluation() {
   ResetParameters
   systemRuntime=60
   RATIO_OF_DEPENDENCY=500
+  failureFrequency=6
   for partition_num_per_txn in 2 4 6 8 10 12 16
   do
   for FTOptions in 1 2 3 4
@@ -177,12 +203,20 @@ function ComplexityEvaluation() {
 function FailureFrequencyEvaluation() {
   ResetParameters
   systemRuntime=60
-  for failureFrequency in 1 2 3 4 5 6 7 8 9 10
+  for failureFrequency in 2 4 6
   do
   for FTOptions in 1 2 3 4
       do runFTStream
       done
   done
+  ResetParameters
+  systemRuntime=80
+    for failureFrequency in 8 10
+    do
+    for FTOptions in 1 2 3 4
+        do runFTStream
+        done
+    done
   ResetParameters
 }
 #CheckpointInterval
@@ -201,6 +235,7 @@ function baselineEvaluation() {
   ResetParameters
   ArrivalRateEvaluation
   TableSizeEvaluation
+  ZIPSkewEvaluation
   ReadRatioEvaluation
   DependencyRatioEvaluation
   PartitionNumPerTxnEvaluation
