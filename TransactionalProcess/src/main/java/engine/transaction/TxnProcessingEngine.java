@@ -14,7 +14,7 @@ import engine.transaction.function.DEC;
 import engine.transaction.function.INC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import utils.SOURCE_CONTROL;
+import UserApplications.SOURCE_CONTROL;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -91,7 +91,7 @@ public class TxnProcessingEngine {
     private ConcurrentHashMap<String, Holder_in_range> holder_by_stage;//multi table support. <table_name, Holder_in_range>
 
     public class Holder {
-        public ConcurrentHashMap<String, MyList<Operation>> holder_v1=new ConcurrentHashMap<>();//multi operation support. <key, list of operations>
+        public ConcurrentHashMap<String, MyList<Operation>> holder_v1 = new ConcurrentHashMap<>();//multi operation support. <key, list of operations>
     }
     public class Holder_in_range{
         public ConcurrentHashMap<Integer,Holder> rangeMap = new ConcurrentHashMap<>();//multi range support. <rangeId, holder>
@@ -105,7 +105,16 @@ public class TxnProcessingEngine {
     public Holder_in_range getHolder(String table_name) {
         return holder_by_stage.get(table_name);
     }
-
+    public void cleanOperations(){
+        for (Holder_in_range holder_in_range:holder_by_stage.values()){
+            for (int thread_Id = 0; thread_Id < num_op; thread_Id ++) {
+                Holder holder = holder_in_range.rangeMap.get(thread_Id);
+                for (MyList operations :holder.holder_v1.values()){
+                    operations.clear();
+                }
+            }
+        }
+    }
     //Task_Process
     public void engine_init(Integer first_exe,Integer last_exe,Integer executorNode_num,int tp){
         //used in the ExecutionManager
@@ -313,16 +322,20 @@ public class TxnProcessingEngine {
     }
 
     //evaluation
-    public void start_evaluation(int thread_id, long mark_ID) throws InterruptedException {//each operation thread called this function
+    public boolean start_evaluation(int thread_id, long mark_ID) throws InterruptedException {//each operation thread called this function
         //implement the SOURCE_CONTROL sync for all threads to come to this line to ensure chains are constructed for the current batch.
         if (enable_wal || enable_undo_log) {
             this.walManager.addLogForBatch(mark_ID);
         }
         this.markerId = mark_ID;
-        SOURCE_CONTROL.getInstance().Wait_Start(thread_id);
-        int size = evaluation(thread_id,mark_ID);
+        if (SOURCE_CONTROL.getInstance().Wait_Start(thread_id)) {
+            int size = evaluation(thread_id,mark_ID);
+        } else {
+            return false;
+        }
         //implement the SOURCE_CONTROL sync for all threads to come to this line.
         SOURCE_CONTROL.getInstance().Wait_End(thread_id);
+        return true;
     }
     public int evaluation(int thread_Id, long mark_ID) throws InterruptedException{
         Collection<Callable<Object>> callables = new Vector<>();

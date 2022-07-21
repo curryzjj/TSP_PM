@@ -81,7 +81,7 @@ function runFTStream() {
 }
 function baselineEvaluation() {
  ResetParameters
-   for FTOptions in 1 2 3 4 5 6
+   for FTOptions in 1 2 3 4
        do runFTStream
        done
 }

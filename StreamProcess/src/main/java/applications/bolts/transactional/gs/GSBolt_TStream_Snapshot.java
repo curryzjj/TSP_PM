@@ -1,6 +1,7 @@
 package applications.bolts.transactional.gs;
 
 import System.measure.MeasureTools;
+import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
@@ -10,6 +11,8 @@ import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
+import static UserApplications.CONTROL.*;
+
 public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
     private static final long serialVersionUID = 6126484047591969728L;
     public GSBolt_TStream_Snapshot(int fid) {
@@ -17,19 +20,18 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
     }
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-        if (in.isFailureFlag()) {
-            FailureFlag failureFlag = in.getFailureFlag();
+        if(CONTROL.failureFlag.get()){
             if (this.executor.isFirst_executor()) {
-                this.db.getTxnProcessingEngine().mimicFailure((Integer) failureFlag.getValue());
+                this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                CONTROL.failureFlagBid.add(in.getBID());
             }
-            this.collector.ack(in);
             this.SyncRegisterRecovery();
             this.collector.cleanAll();
             this.EventsHolder.clear();
             for (Queue<Tuple> tuples : bufferedTuples.values()) {
                 tuples.clear();
             }
-        } else {
+        }else {
             if(in.isMarker()){
                 if (status.isMarkerArrived(in.getSourceTask())) {
                     PRE_EXECUTE(in);
@@ -93,6 +95,18 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS_FT();
                 break;
+            case 2:
+                if (this.executor.isFirst_executor()) {
+                    this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                    CONTROL.failureFlagBid.add(markerId);
+                }
+                this.SyncRegisterRecovery();
+                this.collector.cleanAll();
+                this.EventsHolder.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
+                break;
         }
         return transactionSuccess;
     }
@@ -116,6 +130,18 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS();
+                break;
+            case 2:
+                if (this.executor.isFirst_executor()) {
+                    this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                    CONTROL.failureFlagBid.add(markerId);
+                }
+                this.SyncRegisterRecovery();
+                this.collector.cleanAll();
+                this.EventsHolder.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
                 break;
         }
         return transactionSuccess;

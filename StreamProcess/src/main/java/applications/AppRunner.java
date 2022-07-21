@@ -153,21 +153,15 @@ public class  AppRunner extends baseRunner {
        CONTROL.PARTITION_NUM = config.getInt("partition_num");
        CONTROL.Exactly_Once = config.getBoolean("Exactly_Once");
        CONTROL.COMPLEXITY = config.getInt("complexity");
-       //Set failure time, starts after five seconds, Adjust the failure interval according to different failure frequencies
+       //Set failure time, starts after ten seconds, Adjust the failure interval according to different failure frequencies
         if (CONTROL.enable_states_lost && config.getInt("failureFrequency") > 0) {
-            int interval;
-            CONTROL.failureTimes.add(5000);
-            interval = 80 / config.getInt("failureFrequency");
-            for (int i = 1; i < config.getInt("failureFrequency"); i++) {
-                CONTROL.failureTimes.add(interval * 1000);
-            }
-            CONTROL.failureTime = failureTimes.poll();
+            failureInterval = config.getInt("systemRuntime") * 1000 / config.getInt("failureFrequency");
+            failureTimes = config.getInt("failureFrequency");
         }
-        System.out.println(failureTimes);
     }
 
     private static double runTopologyLocally(Topology topology, Configuration conf) throws UnhandledCaseException, InterruptedException, IOException {
-        TopologySubmitter submitter=new TopologySubmitter();
+        TopologySubmitter submitter = new TopologySubmitter();
         final_topology = submitter.submitTopology(topology,conf);
         executorThread sinkThread = submitter.getOM().getEM().getSinkThread();
         long start = System.currentTimeMillis();

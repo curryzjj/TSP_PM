@@ -1,8 +1,12 @@
 package UserApplications;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CONTROL {
+    //Failure Flag
+    public static AtomicBoolean failureFlag = new AtomicBoolean(false);
+    public static int lostPartitionId = 0;
     //application related.
     public static boolean Arrival_Control = false;
     public static int NUM_EVENTS = 40000000; //different input events.. TODO: It must be kept small as GC pressure increases rapidly. Fix this in future work.
@@ -30,9 +34,9 @@ public class CONTROL {
     // fault tolerance related.
     public static boolean enable_transaction_abort = false;
     public static boolean enable_states_lost = false;
-    public static int failureTime = 0;
+    public static int failureInterval = 0;
     public static Queue<Long> failureFlagBid = new ArrayDeque<>();
-    public static Queue<Integer> failureTimes = new ArrayDeque<>();
+    public static int failureTimes = 0;
     public static boolean Exactly_Once = false;
     //Measure Methods
     public static boolean enable_checkpoint = false;
@@ -77,10 +81,24 @@ public class CONTROL {
 
 //    boolean enable_pushdown = false;//enabled by default.
     public static SplittableRandom rnd = new SplittableRandom(1234);
-    public static  Timer timer =new Timer();
+    public static Timer SinkTimer = new Timer();
+    public static Timer FailureTimer = new Timer();
     public static void randomDelay() {
         long start = System.nanoTime();
         while (System.nanoTime() - start < COMPLEXITY) {}
     }
-
+    public static void startFailureRecord() {
+        FailureTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (failureTimes == 0) {
+                    FailureTimer.cancel();
+                } else {
+                    lostPartitionId = rnd.nextInt(PARTITION_NUM);
+                    failureFlag.compareAndSet(false, true);
+                    failureTimes --;
+                }
+            }
+        },  10000, failureInterval);//ms
+    }
 }

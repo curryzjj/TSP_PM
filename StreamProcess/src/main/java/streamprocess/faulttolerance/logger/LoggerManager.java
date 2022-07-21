@@ -7,6 +7,8 @@ import System.FileSystem.Path;
 import System.measure.MeasureTools;
 import System.util.Configuration;
 import System.util.OsUtils;
+import UserApplications.CONTROL;
+import UserApplications.SOURCE_CONTROL;
 import engine.Database;
 import engine.log.LogResult;
 import engine.shapshot.SnapshotResult;
@@ -158,6 +160,7 @@ public class LoggerManager extends FTManager {
                     lock.notifyAll();
                 }else if(callLog.containsValue(Recovery)){
                     LOG.info("LoggerManager received all register and start recovery");
+                    failureFlag.compareAndSet(true, false);
                     failureTimes ++;
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(snapshotFile);
                     long theLastLSN = getLastGlobalLSN(walFile);
@@ -185,6 +188,8 @@ public class LoggerManager extends FTManager {
                     }
                     this.SnapshotOffset = new ArrayDeque<>();
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
+                    this.db.getTxnProcessingEngine().cleanOperations();
+                    SOURCE_CONTROL.getInstance().config(PARTITION_NUM);
                     notifyAllComplete();
                     lock.notifyAll();
                 } else if (callLog.containsValue(Persist)){

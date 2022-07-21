@@ -1,6 +1,7 @@
 package applications.bolts.transactional.tp;
 
 import System.measure.MeasureTools;
+import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
@@ -10,6 +11,8 @@ import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
+import static UserApplications.CONTROL.*;
+
 public class TPBolt_TStream_Wal extends TPBolt_TStream{
     private static final long serialVersionUID = 2082014261100781714L;
     public TPBolt_TStream_Wal(int fid) {
@@ -17,12 +20,11 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
     }
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-        if (in.isFailureFlag()) {
-            FailureFlag failureFlag = in.getFailureFlag();
+        if(CONTROL.failureFlag.get()){
             if (this.executor.isFirst_executor()) {
-                this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
+                this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                CONTROL.failureFlagBid.add(in.getBID());
             }
-            this.collector.ack(in);
             this.SyncRegisterRecovery();
             this.collector.cleanAll();
             this.LREvents.clear();
@@ -95,6 +97,18 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS_FT();
+                break;
+            case 2:
+                if (this.executor.isFirst_executor()) {
+                    this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                    CONTROL.failureFlagBid.add(markerId);
+                }
+                this.SyncRegisterRecovery();
+                this.collector.cleanAll();
+                this.LREvents.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
                 break;
         }
         return transactionSuccess;

@@ -1,6 +1,7 @@
 package applications.bolts.transactional.ob;
 
 import System.measure.MeasureTools;
+import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
 import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.runtime.tuple.Tuple;
@@ -24,13 +25,12 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
 
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
-        if (in.isFailureFlag()) {
-            FailureFlag failureFlag = in.getFailureFlag();
+        if (failureFlag.get()) {
             if (this.executor.isFirst_executor()) {
-                this.db.getTxnProcessingEngine().mimicFailure((int) failureFlag.getValue());
+                this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                CONTROL.failureFlagBid.add(in.getBID());
             }
-            this.recoveryPartitionIds.add((int) failureFlag.getValue());
-            this.collector.ack(in);
+            this.recoveryPartitionIds.add(lostPartitionId);
             this.SyncRegisterRecovery();
             if (enable_align_wait){
                 this.collector.cleanAll();
@@ -153,6 +153,31 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS_FT();
                 break;
+            case 2:
+                if (this.executor.isFirst_executor()) {
+                    this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                    CONTROL.failureFlagBid.add(markerId);
+                }
+                this.recoveryPartitionIds.add(lostPartitionId);
+                this.SyncRegisterRecovery();
+                if (enable_align_wait){
+                    this.collector.cleanAll();
+                } else {
+                    for (int partitionId:this.db.getTxnProcessingEngine().getRecoveryRangeId()) {
+                        if(executor.getExecutorID() == executor.operator.getExecutorIDList().get(partitionId)) {
+                            this.collector.cleanAll();
+                            break;
+                        }
+                    }
+                }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
+                }
+                this.EventsHolder.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
+                break;
         }
         return transactionSuccess;
     }
@@ -176,6 +201,31 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                 this.SyncRegisterUndo();
                 this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS();
+                break;
+            case 2:
+                if (this.executor.isFirst_executor()) {
+                    this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                    CONTROL.failureFlagBid.add(markerId);
+                }
+                this.recoveryPartitionIds.add(lostPartitionId);
+                this.SyncRegisterRecovery();
+                if (enable_align_wait){
+                    this.collector.cleanAll();
+                } else {
+                    for (int partitionId:this.db.getTxnProcessingEngine().getRecoveryRangeId()) {
+                        if(executor.getExecutorID() == executor.operator.getExecutorIDList().get(partitionId)) {
+                            this.collector.cleanAll();
+                            break;
+                        }
+                    }
+                }
+                if (enable_upstreamBackup) {
+                    this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
+                }
+                this.EventsHolder.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
                 break;
         }
         return transactionSuccess;

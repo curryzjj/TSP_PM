@@ -1,4 +1,6 @@
 import java.io.Closeable;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -14,13 +16,19 @@ public class ClockTest {
             timer = new Timer();
         }
         public void start() {
-            timer.scheduleAtFixedRate(new TimerTask() {
+            timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                   System.out.println(iteration);
-                  iteration++;
+                    try {
+                        Thread.sleep(5000);
+                        System.out.println("a");
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    iteration ++;
                 }
-            }, 1000, 1000);
+            }, 1000, 5000);
         }
         public synchronized boolean tick(int myiteration) {
             return myiteration <= iteration;
@@ -32,7 +40,7 @@ public class ClockTest {
         }
     }
     public static void main(String[] args) throws InterruptedException {
-        Clock c=new Clock(100);
-        //c.start();
+        Clock c = new Clock(100);
+        c.start();
     }
 }

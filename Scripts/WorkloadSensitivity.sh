@@ -4,7 +4,7 @@ function ResetParameters() {
   app="GS_txn"
   FTOptions=0
   failureModel=2
-  failureFrequency=2
+  failureFrequency=4
   tthreads=16
   snapshot=2
 
@@ -15,6 +15,7 @@ function ResetParameters() {
   time_Interval=3000
   timeSliceLengthMs=1000
   input_store_batch=20000
+  systemRuntime=80
   #shellcheck disable=SC2006
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
@@ -31,6 +32,9 @@ function ResetParameters() {
   partition_num=16
 }
 function runFTStream() {
+  sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/gstxn/
+  sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/checkpoint
+  sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/wal
   echo "java -Xms100g -Xmx100g -jar -XX:+UseG1GC -d64 /home/jjzhao/TSP_PM/StreamProcess/target/StreamProcess-1.0-SNAPSHOT-jar-with-dependencies \
             --app $app \
             --FTOptions $FTOptions \
@@ -44,6 +48,7 @@ function runFTStream() {
             --time_Interval $time_Interval \
             --timeSliceLengthMs $timeSliceLengthMs \
             --input_store_batch $input_store_batch \
+            --systemRuntime $systemRuntime \
             --batch_number_per_wm $batch_number_per_wm \
             --NUM_ITEMS $NUM_ITEMS \
             --NUM_EVENTS $NUM_EVENTS \
@@ -69,6 +74,7 @@ function runFTStream() {
               --time_Interval $time_Interval \
               --timeSliceLengthMs $timeSliceLengthMs \
               --input_store_batch $input_store_batch \
+              --systemRuntime $systemRuntime \
               --batch_number_per_wm $batch_number_per_wm \
               --NUM_ITEMS $NUM_ITEMS \
               --NUM_EVENTS $NUM_EVENTS \
@@ -84,6 +90,17 @@ function runFTStream() {
 #Arrival Rate
 function ArrivalRateEvaluation() {
   ResetParameters
+  systemRuntime=60
+  failureFrequency=6
+  for targetHz in 100000 150000 200000 250000 300000
+  do
+  for FTOptions in 1 2 3 4
+      do runFTStream
+      done
+  done
+  ResetParameters
+  systemRuntime=60
+  failureFrequency=2
   for targetHz in 100000 150000 200000 250000 300000
   do
   for FTOptions in 1 2 3 4
@@ -95,6 +112,7 @@ function ArrivalRateEvaluation() {
 #Table Size
 function TableSizeEvaluation() {
   ResetParameters
+  systemRuntime=60
   for NUM_ITEMS in 20480 40960 81920 163840 327680 655360
   do
   for FTOptions in 1 2 3 4
@@ -104,8 +122,9 @@ function TableSizeEvaluation() {
   ResetParameters
 }
 #ZIP_Skew
-function TableSizeEvaluation() {
+function ZIPSkewEvaluation() {
   ResetParameters
+  systemRuntime=60
   for ZIP_SKEW in 200 400 600 800 1000
   do
   for FTOptions in 1 2 3 4
@@ -117,18 +136,24 @@ function TableSizeEvaluation() {
 #Ratio of read
 function ReadRatioEvaluation() {
   ResetParameters
-  for RATIO_OF_READ in 200 400 600 800 1000
-  do
-  for FTOptions in 1 2 3 4
-      do runFTStream
-      done
-  done
-  ResetParameters
+    systemRuntime=60
+    failureFrequency=6
+    partition_num_per_txn=16
+    for RATIO_OF_READ in 200 400 600 800 1000
+    do
+    for FTOptions in 1 2 3 4
+        do runFTStream
+        done
+    done
+    ResetParameters
 }
 #Ratio of dependency
 function DependencyRatioEvaluation() {
   ResetParameters
-  partition_num_per_txn=8
+  systemRuntime=60
+  partition_num_per_txn=16
+  failureFrequency=6
+  RATIO_OF_READ=500
   for RATIO_OF_DEPENDENCY in 200 400 600 800 1000
   do
   for FTOptions in 1 2 3 4
@@ -136,11 +161,24 @@ function DependencyRatioEvaluation() {
       done
   done
   ResetParameters
+    systemRuntime=60
+    partition_num_per_txn=16
+    failureFrequency=6
+    RATIO_OF_READ=0
+    for RATIO_OF_DEPENDENCY in 200 400 600 800 1000
+    do
+    for FTOptions in 1 2 3 4
+        do runFTStream
+        done
+    done
+  ResetParameters
 }
 #Partition_num_per_txn
 function PartitionNumPerTxnEvaluation() {
   ResetParameters
+  systemRuntime=60
   RATIO_OF_DEPENDENCY=500
+  failureFrequency=6
   for partition_num_per_txn in 2 4 6 8 10 12 16
   do
   for FTOptions in 1 2 3 4
@@ -152,6 +190,7 @@ function PartitionNumPerTxnEvaluation() {
 #Complexity
 function ComplexityEvaluation() {
   ResetParameters
+  systemRuntime=60
   for complexity in 0 20000 40000 60000 80000 10000
   do
   for FTOptions in 1 2 3 4
@@ -161,9 +200,30 @@ function ComplexityEvaluation() {
   ResetParameters
 }
 #failureFrequency
-function ComplexityEvaluation() {
+function FailureFrequencyEvaluation() {
   ResetParameters
-  for failureFrequency in 1 2 3 4 5 6 7 8 9 10
+  systemRuntime=60
+  for failureFrequency in 2 4 6
+  do
+  for FTOptions in 1 2 3 4
+      do runFTStream
+      done
+  done
+  ResetParameters
+  systemRuntime=80
+    for failureFrequency in 8 10
+    do
+    for FTOptions in 1 2 3 4
+        do runFTStream
+        done
+    done
+  ResetParameters
+}
+#CheckpointInterval
+function CheckpointIntervalEvaluation() {
+  ResetParameters
+  systemRuntime=60
+  for time_Interval in 1000 2000 3000 4000 5000
   do
   for FTOptions in 1 2 3 4
       do runFTStream
@@ -175,14 +235,11 @@ function baselineEvaluation() {
   ResetParameters
   ArrivalRateEvaluation
   TableSizeEvaluation
+  ZIPSkewEvaluation
   ReadRatioEvaluation
   DependencyRatioEvaluation
   PartitionNumPerTxnEvaluation
   ComplexityEvaluation
-
+  CheckpointIntervalEvaluation
 }
-
-sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/gstxn/
-sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/checkpoint
-sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txngs/wal
 baselineEvaluation

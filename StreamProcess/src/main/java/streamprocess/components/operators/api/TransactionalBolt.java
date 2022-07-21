@@ -11,7 +11,7 @@ import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 import streamprocess.faulttolerance.checkpoint.emitMarker;
-import utils.SOURCE_CONTROL;
+import UserApplications.SOURCE_CONTROL;
 
 
 import java.io.IOException;
