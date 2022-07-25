@@ -51,7 +51,9 @@ public class Metrics {
         public static DescriptiveStatistics[] transaction_construction_time;
         public static long[] transaction_construction_begin;
         public static double[] transaction_construction_acc;
-
+        //Abort Time
+        public static DescriptiveStatistics[] transaction_abort_time;
+        public static long[] transaction_abort_begin_time;
 
         public static ConcurrentHashMap<Integer,Double> Avg_WaitTime;
         public static ConcurrentHashMap<Integer,Double> Avg_CommitTime;
@@ -71,8 +73,10 @@ public class Metrics {
             transaction_construction_begin = new long[tthread_num];
             transaction_construction_acc = new double[tthread_num];
             transaction_run_time = new DescriptiveStatistics[tthread_num];
+            transaction_abort_time =  new DescriptiveStatistics[tthread_num];
             transaction_post_time = new DescriptiveStatistics[tthread_num];
             transaction_begin_time = new long[tthread_num];
+            transaction_abort_begin_time = new long[tthread_num];
             transaction_post_begin_time = new long[tthread_num];
             for (int i = 0 ; i < tthread_num; i++){
                 Help_Log[i] = new DescriptiveStatistics();

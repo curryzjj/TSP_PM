@@ -107,11 +107,11 @@ public abstract class TxnManagerDedicated implements TxnManager{
     }
     public boolean Asy_WriteRecord(TxnContext txn_context, String srcTable, String primary_key, List<DataBox> value, double[] enqueue_time) throws DatabaseException {
         MetaTypes.AccessType accessType = MetaTypes.AccessType.WRITE_ONLY;
-        String tableName="";
+        String tableName = " ";
         if(enable_states_partition){
-            tableName=srcTable+"_"+ getPartitionId(primary_key);
+            tableName = srcTable+"_"+ getPartitionId(primary_key);
         }else{
-            tableName=srcTable;
+            tableName = srcTable;
         }
         TableRecord t_record = storageManager.getTable(tableName).SelectKeyRecord(primary_key);
         if (t_record != null) {
@@ -126,9 +126,9 @@ public abstract class TxnManagerDedicated implements TxnManager{
         MetaTypes.AccessType accessType = MetaTypes.AccessType.WRITE_ONLY;
         String tableName="";
         if(enable_states_partition){
-            tableName=srcTable+"_"+ getPartitionId(primary_key);
+            tableName = srcTable+"_"+ getPartitionId(primary_key);
         }else{
-            tableName=srcTable;
+            tableName = srcTable;
         }
         TableRecord t_record = storageManager.getTable(tableName).SelectKeyRecord(primary_key);
         if (t_record != null) {

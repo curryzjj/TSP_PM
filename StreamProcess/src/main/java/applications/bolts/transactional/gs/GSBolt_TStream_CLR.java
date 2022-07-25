@@ -154,8 +154,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                 break;
             case 1:
                 this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS_FT();
+                transactionSuccess = this.TXN_PROCESS_FT();
                 break;
             case 2:
                 if (this.executor.isFirst_executor()) {
@@ -201,7 +200,6 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                 break;
             case 1:
                 this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
                 transactionSuccess=this.TXN_PROCESS();
                 break;
             case 2:

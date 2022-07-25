@@ -137,13 +137,13 @@ public class CheckpointManager extends FTManager {
                     MeasureTools.State_load_begin(System.nanoTime());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     MeasureTools.State_load_finish(System.nanoTime());
-                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
                     LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     synchronized (lock){
                         while (callRecovery.containsValue(NULL)){
                             lock.wait();
                         }
                     }
+                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     this.db.getTxnProcessingEngine().cleanOperations();
                     SOURCE_CONTROL.getInstance().config(PARTITION_NUM);

@@ -18,9 +18,9 @@ public class LogRecord implements Serializable {
     /* used to undo transaction in the transaction abort phase  */
     private TableRecord copyTableRecord;
     protected final String split_exp = ";";
-    public LogRecord(String key,String tableName){
-        this.key=key;
-        this.tableName=tableName;
+    public LogRecord(String key, String tableName){
+        this.key = key;
+        this.tableName = tableName;
     }
     //used in recovery
     public LogRecord(String recoveryString){

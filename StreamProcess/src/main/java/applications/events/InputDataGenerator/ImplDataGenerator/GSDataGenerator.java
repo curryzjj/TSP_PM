@@ -20,7 +20,7 @@ import java.util.*;
 import static UserApplications.CONTROL.*;
 
 public class GSDataGenerator extends InputDataGenerator {
-    private static final Logger LOG=LoggerFactory.getLogger(GSDataGenerator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GSDataGenerator.class);
     private static final long serialVersionUID = 8857832060697651311L;
 
     @Override

@@ -96,7 +96,6 @@ public class  GSBolt_TStream_Wal extends GSBolt_TStream{
                 break;
             case 1:
                 this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
                 transactionSuccess = this.TXN_PROCESS_FT();
                 break;
             case 2:

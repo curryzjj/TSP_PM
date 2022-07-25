@@ -212,9 +212,11 @@ public class MeasureSink extends BaseSink {
 
     @Override
     protected void EXECUTE(Tuple in) {
+        if (failureFlagBid.contains(in.getBID())) {
+            MeasureTools.ReExecute_time_finish(System.nanoTime());
+        }
         boolean finish = (boolean) in.getValue(0);
         if (!finish) {
-            //LOG.info("The tuple ("+in.getBID()+ ") is abort");
             if (enable_determinants_log) {
                 if (in.getValue(1) != null) {
                     InsideDeterminant insideDeterminant = (InsideDeterminant) in.getValue(1);
@@ -243,9 +245,6 @@ public class MeasureSink extends BaseSink {
                 if ((System.nanoTime() - computationLatency) / 1E9 > 0.5) {
                     No_Exactly_Once_latency_map.add(latency / 1E6);
                     computationLatency = System.nanoTime();
-                }
-                if (failureFlagBid.contains(in.getBID())) {
-                    MeasureTools.ReExecute_time_finish(System.nanoTime());
                 }
                 count ++;
             }

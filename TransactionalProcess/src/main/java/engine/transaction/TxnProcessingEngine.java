@@ -1,12 +1,13 @@
 package engine.transaction;
 
 import UserApplications.CONTROL;
+import engine.Meta.MetaTypes;
 import engine.log.WALManager;
 import engine.table.datatype.DataBox;
 import engine.table.datatype.DataBoxImpl.DoubleDataBox;
 import engine.table.datatype.DataBoxImpl.IntDataBox;
 import engine.table.tableRecords.SchemaRecord;
-import engine.transaction.common.MyList;
+import engine.transaction.common.OperationChain;
 import engine.transaction.common.Operation;
 import engine.transaction.function.AVG;
 import engine.log.LogRecord;
@@ -25,7 +26,7 @@ import static UserApplications.CONTROL.*;
 
 public class TxnProcessingEngine {
     private static final Logger LOG= LoggerFactory.getLogger(TxnProcessingEngine.class);
-    private static TxnProcessingEngine instance=new TxnProcessingEngine();
+    private static TxnProcessingEngine instance = new TxnProcessingEngine();
     public static TxnProcessingEngine getInstance() {
         return instance;
     }
@@ -39,7 +40,6 @@ public class TxnProcessingEngine {
     private long markerId;
     private ExecutorServiceInstance standalone_engine;
     /* Abort transactions <bid> */
-    private ConcurrentSkipListSet<Long> transactionAbort;
     public Boolean isTransactionAbort = false;
     private List<Integer> dropTable;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
@@ -52,7 +52,6 @@ public class TxnProcessingEngine {
         if (enable_undo_log || enable_wal) {
             this.walManager = new WALManager(PARTITION_NUM);
         }
-        this.transactionAbort=new ConcurrentSkipListSet<>();
         this.dropTable = new ArrayList<>();
         switch(app){
             case "TP_txn":
@@ -91,7 +90,7 @@ public class TxnProcessingEngine {
     private ConcurrentHashMap<String, Holder_in_range> holder_by_stage;//multi table support. <table_name, Holder_in_range>
 
     public class Holder {
-        public ConcurrentHashMap<String, MyList<Operation>> holder_v1 = new ConcurrentHashMap<>();//multi operation support. <key, list of operations>
+        public ConcurrentHashMap<String, OperationChain<Operation>> holder_v1 = new ConcurrentHashMap<>();//multi operation support. <key, list of operations>
     }
     public class Holder_in_range{
         public ConcurrentHashMap<Integer,Holder> rangeMap = new ConcurrentHashMap<>();//multi range support. <rangeId, holder>
@@ -109,8 +108,10 @@ public class TxnProcessingEngine {
         for (Holder_in_range holder_in_range:holder_by_stage.values()){
             for (int thread_Id = 0; thread_Id < num_op; thread_Id ++) {
                 Holder holder = holder_in_range.rangeMap.get(thread_Id);
-                for (MyList operations :holder.holder_v1.values()){
-                    operations.clear();
+                for (OperationChain operationChain :holder.holder_v1.values()){
+                    operationChain.isExecuted = false;
+                    operationChain.needAbortHandling.compareAndSet(true, false);
+                    operationChain.clear();
                 }
             }
         }
@@ -118,10 +119,10 @@ public class TxnProcessingEngine {
     //Task_Process
     public void engine_init(Integer first_exe,Integer last_exe,Integer executorNode_num,int tp){
         //used in the ExecutionManager
-        this.first_exe=first_exe;
-        this.last_exe=last_exe;
-        num_op=executorNode_num;
-        barrier=new CyclicBarrier(num_op);
+        this.first_exe = first_exe;
+        this.last_exe = last_exe;
+        num_op = executorNode_num;
+        barrier = new CyclicBarrier(num_op);
         if(enable_work_partition){
             if(island==-1){//partition as the core
                 for(int i = 0; i < tp; i++){
@@ -199,31 +200,38 @@ public class TxnProcessingEngine {
         }
         @Override
         public Object call() throws Exception {
-            process((MyList<Operation>) operation_chain, markId);
+            process((OperationChain<Operation>) operation_chain, markId);
             return null;
         }
     }
-    private void process(MyList<Operation> operation_chain, long mark_ID){
+    private void process(OperationChain<Operation> operation_chain, long mark_ID){
         if (operation_chain.size() > 0){
             operation_chain.logRecord.setCopyTableRecord(operation_chain.first().s_record);
+            operation_chain.isExecuted = true;
             if (enable_undo_log) {
                 this.walManager.addLogRecord(operation_chain);
             }
         }
         boolean cleanVersion = true;
-        while (true){
-            Operation operation = operation_chain.pollFirst();
-            if(operation == null) return;
-            process(operation, mark_ID, operation_chain.getLogRecord(), cleanVersion);
+        for (Operation operation : operation_chain) {
             if (cleanVersion) {
+                operation.s_record.clean_map();
                 cleanVersion = false;
+            }
+            if (operation.operationStateType.equals(MetaTypes.OperationStateType.EXECUTED)
+                    || operation.operationStateType.equals(MetaTypes.OperationStateType.ABORTED)
+                    || operation.isFailed)
+                continue;
+            process(operation, mark_ID , operation_chain.getLogRecord(), cleanVersion);
+            if (operation.isFailed) {
+                operation.stateTransition(MetaTypes.OperationStateType.ABORTED);
+                operation.txn_context.checkTransactionAbort(operation, operation_chain);
+            } else {
+                operation.stateTransition(MetaTypes.OperationStateType.EXECUTED);
             }
         }
     }
-    private void process(Operation operation, long mark_id, LogRecord logRecord, boolean cleanVersion) {
-        if (cleanVersion) {
-            operation.s_record.clean_map();
-        }
+    private void process(Operation operation, long markerId, LogRecord logRecord, boolean cleanVersion) {
         switch (operation.accessType){
             case READ_WRITE_READ:
                 if (app.equals("TP_txn")){
@@ -251,7 +259,7 @@ public class TxnProcessingEngine {
             break;
             case WRITE_ONLY:
                 if (app.equals("OB_txn")) {
-                   this.OB_Alert_Fun(operation);
+                    this.OB_Alert_Fun(operation);
                 } else if(app.equals("GS_txn")) {
                     this.GS_Write_Fun(operation);
                 }
@@ -295,14 +303,32 @@ public class TxnProcessingEngine {
 
     private int submit_task(int thread_Id,Holder holder,Collection<Callable<Object>> callables, long mark_ID) {
         int sum = 0;
-        for (MyList<Operation> operation_chain : holder.holder_v1.values()) {
+        for (OperationChain<Operation> operation_chain : holder.holder_v1.values()) {
+            if (operation_chain.isExecuted) {
+                boolean needReExecuted = false;
+                if (operation_chain.needAbortHandling.get()) {
+                    for (Operation operation : operation_chain) {
+                        if (operation_chain.failedOperations.contains(operation) && operation.operationStateType.equals(MetaTypes.OperationStateType.EXECUTED)) {
+                            needReExecuted = true;
+                            operation.stateTransition(MetaTypes.OperationStateType.ABORTED);
+                        } else {
+                            operation.stateTransition(MetaTypes.OperationStateType.READY);
+                        }
+                    }
+                    if (!needReExecuted) {
+                        operation_chain.needAbortHandling.compareAndSet(true, false);
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
+            }
             if (operation_chain.size() > 0) {
-                sum=sum+operation_chain.size();
-                boolean flag=Thread.currentThread().isInterrupted();
+                sum = sum + operation_chain.size();
+                boolean flag = Thread.currentThread().isInterrupted();
                 if (!flag) {
                     if (enable_engine) {
                         Task task = new Task(operation_chain, mark_ID);
-                       // LOG.info("Submit operation_chain:" + OsUtils.Addresser.addressOf(operation_chain) + " with size:" + operation_chain.size());
                         callables.add(task);
                     }
                 }
@@ -329,7 +355,7 @@ public class TxnProcessingEngine {
         }
         this.markerId = mark_ID;
         if (SOURCE_CONTROL.getInstance().Wait_Start(thread_id)) {
-            int size = evaluation(thread_id,mark_ID);
+            int size = evaluation(thread_id, mark_ID);
         } else {
             return false;
         }
@@ -373,16 +399,13 @@ public class TxnProcessingEngine {
             }
         }
     }
-    public ConcurrentSkipListSet<Long> getTransactionAbort() {
-        return transactionAbort;
-    }
     //Functions to process the operation
-    private void SL_Depo_Fun(Operation operation){
+    private boolean SL_Depo_Fun(Operation operation){
         if (enable_transaction_abort) {
             if (operation.function.delta_long < 0) {
-                this.transactionAbort.add(operation.bid);
                 this.isTransactionAbort = true;
-                return;
+                operation.isFailed = true;
+                return false;
             }
         }
         SchemaRecord srcRecord = operation.s_record.readPreValues(operation.bid);
@@ -391,8 +414,9 @@ public class TxnProcessingEngine {
         tempo_record.getValues().get(operation.column_id).incLong(operation.function.delta_long);
         operation.s_record.updateMultiValues(operation.bid, tempo_record);
         CONTROL.randomDelay();
+        return true;
     }
-    private void SL_Transfer_Fun(Operation operation, boolean isRead){
+    private boolean SL_Transfer_Fun(Operation operation, boolean isRead){
         SchemaRecord preValues;
         if (isRead && operation.record_ref.cnt != 0) {
             preValues = operation.record_ref.getRecord();
@@ -417,12 +441,14 @@ public class TxnProcessingEngine {
             operation.d_record.updateMultiValues(operation.bid, tempo_record);
             operation.success[0]=true;
             CONTROL.randomDelay();
+            return true;
         }else {
             if (enable_transaction_abort) {
-                this.transactionAbort.add(operation.bid);
                 this.isTransactionAbort = true;
+                operation.isFailed = true;
             }
             operation.success[0] = false;
+            return false;
         }
     }
     private boolean OB_Buying_Fun(Operation operation) {
@@ -433,8 +459,8 @@ public class TxnProcessingEngine {
         long bid_qty = operation.condition.arg2;
         if (enable_transaction_abort) {
             if (bid_qty < 0) {
-                this.transactionAbort.add(operation.bid);
                 this.isTransactionAbort = true;
+                operation.isFailed = true;
                 return false;
             }
         }
@@ -453,8 +479,8 @@ public class TxnProcessingEngine {
         List<DataBox> values = src_record.getValues();
         if (enable_transaction_abort) {
             if (operation.function.delta_long < 0) {
-                this.transactionAbort.add(operation.bid);
                 this.isTransactionAbort = true;
+                operation.isFailed = true;
                 return false;
             }
         }
@@ -467,8 +493,8 @@ public class TxnProcessingEngine {
     private boolean OB_Alert_Fun(Operation operation) {
         if (enable_transaction_abort) {
             if (operation.value == -1) {
-                this.transactionAbort.add(operation.bid);
                 this.isTransactionAbort = true;
+                operation.isFailed = true;
                 return false;
             }
         }
@@ -479,8 +505,8 @@ public class TxnProcessingEngine {
     private boolean GS_Write_Fun(Operation operation) {
         if (enable_transaction_abort) {
             if (operation.value_list.size() == 0) {
-                this.transactionAbort.add(operation.bid);
                 this.isTransactionAbort = true;
+                operation.isFailed = true;
                 return false;
             }
         }
@@ -495,8 +521,8 @@ public class TxnProcessingEngine {
         if(operation.function instanceof AVG){
             if (enable_transaction_abort) {
                 if (operation.function.delta_double >= 180) {
-                    this.transactionAbort.add(operation.bid);
-                    this.isTransactionAbort=true;
+                    this.isTransactionAbort = true;
+                    operation.isFailed = true;
                     return false;
                 }
             }

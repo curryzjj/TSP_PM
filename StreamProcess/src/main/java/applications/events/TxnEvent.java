@@ -64,6 +64,6 @@ public class TxnEvent {
     }
 
     public TxnEvent cloneEvent() {
-        return new TxnEvent(bid,pid, Arrays.toString(bid_array),number_of_partitions,isAbort);
+        return new TxnEvent(bid, pid, Arrays.toString(bid_array), number_of_partitions,isAbort);
     }
 }

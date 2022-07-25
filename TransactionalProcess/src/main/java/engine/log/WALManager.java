@@ -2,7 +2,7 @@ package engine.log;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.log.LogStream.*;
-import engine.transaction.common.MyList;
+import engine.transaction.common.OperationChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,12 +64,12 @@ public class WALManager {
 
     /**
      * called by the {@link engine.transaction.TxnProcessingEngine} to add logRecord
-     * @param myList
+     * @param operationChain
      */
-    public void addLogRecord(MyList myList){
-        if(!holder_by_tableName.get(myList.getTable_name()).hasKey.containsKey(myList.getPrimaryKey())){
-            holder_by_tableName.get(myList.getTable_name()).holder_by_range.get(myList.getPartitionId()).get(globalLSN).add(myList.getLogRecord());
-            holder_by_tableName.get(myList.getTable_name()).hasKey.put(myList.getPrimaryKey(), true);
+    public void addLogRecord(OperationChain operationChain){
+        if(!holder_by_tableName.get(operationChain.getTable_name()).hasKey.containsKey(operationChain.getPrimaryKey())){
+            holder_by_tableName.get(operationChain.getTable_name()).holder_by_range.get(operationChain.getPartitionId()).get(globalLSN).add(operationChain.getLogRecord());
+            holder_by_tableName.get(operationChain.getTable_name()).hasKey.put(operationChain.getPrimaryKey(), true);
         }
     }
     public UpdateLogWrite asyncCommitLog(long globalLSN, long timestamp, LogStreamFactory logStreamFactory) throws IOException {

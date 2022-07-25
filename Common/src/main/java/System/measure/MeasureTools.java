@@ -46,9 +46,6 @@ public class MeasureTools {
     public static void Upstream_backup_acc(int executorId, long time) {
         upstream_backup_acc[executorId] = upstream_backup_acc[executorId] + (time - upstream_backup_begin[executorId]) / 1E6;
     }
-    public static void Upstream_backup_finish(int executorId, long time) {
-        upstream_backup_time[executorId].addValue((time - upstream_backup_begin[executorId]) / 1E6);
-    }
     public static void Upstream_backup_finish_acc(int executorId) {
         upstream_backup_time[executorId].addValue(upstream_backup_acc[executorId]);
         upstream_backup_acc[executorId] = 0;
@@ -104,6 +101,13 @@ public class MeasureTools {
         transaction_construction_time[threadId].addValue(transaction_construction_acc[threadId]);
         transaction_construction_acc[threadId] = 0;
     }
+    //Txn_Abort_Time
+    public static void startTransactionAbort(int threadId, long time) {
+        transaction_abort_begin_time[threadId] = time;
+    }
+    public static void finishTransactionAbort(int threadId, long time) {
+        transaction_run_time[threadId].addValue((time-transaction_abort_begin_time[threadId])/1E6);
+    }
     //FileSize Measure
     public static void setSnapshotFileSize(List<Path> paths){
         int i = 0;
@@ -151,7 +155,7 @@ public class MeasureTools {
     public static void Align_time_finish(long time) {
         align_time.addValue((time - align_time_begin) / 1E6);
     }
-    //ReExecute_time
+    //RedoLog_time
     public static void RedoLog_time_begin(long time) {
         RedoLog_time_begin = time;
     }
