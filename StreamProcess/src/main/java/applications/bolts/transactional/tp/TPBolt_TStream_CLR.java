@@ -148,7 +148,6 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
                 break;
             case 1:
                 this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
                 transactionSuccess=this.TXN_PROCESS_FT();
                 break;
             case 2:
@@ -197,7 +196,6 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
                 break;
             case 1:
                 this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
                 transactionSuccess=this.TXN_PROCESS();
                 break;
             case 2:

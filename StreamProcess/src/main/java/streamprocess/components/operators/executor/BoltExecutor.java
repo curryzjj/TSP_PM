@@ -102,7 +102,7 @@ public abstract class BoltExecutor implements IExecutor {
 
     @Override
     public void ackCommit() {
-        this.op.isCommit =true;
+        this.op.isCommit = true;
     }
     @Override
     public void ackCommit(long offset) {

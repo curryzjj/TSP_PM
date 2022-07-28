@@ -184,6 +184,9 @@ public class MeasureTools {
     public static void setLatencyMap(int threadId, List<Double> result) {
         Performance.latency_map.put(threadId,result);
     }
+    public static void setCheckpointTimes(int checkpointTimes) {
+        Performance.CheckpointTimes = checkpointTimes;
+    }
     private static void PerformanceReport(String baseDirectory, StringBuilder sb) throws IOException {
         sb.append("\n");
         String statsFolderPath = baseDirectory + "_overview.txt";
@@ -248,6 +251,7 @@ public class MeasureTools {
         sb.append("\n" + walFileSize + " KB" +  "\n");
         fileWriter.write("SnapshotSize: " + snapshotFileSize + " MB" + "\n");
         fileWriter.write("WALSize: " + walFileSize + " KB" +  "\n");
+        fileWriter.write("Snapshot Times: " + Performance.CheckpointTimes + "\n");
     }
     private static void RuntimeLatencyReport(String baseDirectory) throws IOException {
         String statsFolderPath = baseDirectory + "_latency";

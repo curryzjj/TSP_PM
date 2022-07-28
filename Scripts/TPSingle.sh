@@ -14,6 +14,7 @@ function ResetParameters() {
   time_Interval=1000
   timeSliceLengthMs=1000
   input_store_batch=20000
+  systemRuntime=80
   #shellcheck disable=SC2006
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
@@ -30,6 +31,9 @@ function ResetParameters() {
   partition_num=16
 }
 function runFTStream() {
+  rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/tptxn/
+  rm -rf /mnt/nvme0n1p2/jjzhao/app/txntp/checkpoint
+  rm -rf /mnt/nvme0n1p2/jjzhao/app/txntp/wal
   echo "java -Xms100g -Xmx100g -jar -XX:+UseG1GC -d64 /home/jjzhao/TSP_PM/StreamProcess/target/StreamProcess-1.0-SNAPSHOT-jar-with-dependencies \
             --app $app \
             --FTOptions $FTOptions \
@@ -43,6 +47,7 @@ function runFTStream() {
             --time_Interval $time_Interval \
             --timeSliceLengthMs $timeSliceLengthMs \
             --input_store_batch $input_store_batch \
+            --systemRuntime $systemRuntime \
             --batch_number_per_wm $batch_number_per_wm \
             --NUM_ITEMS $NUM_ITEMS \
             --NUM_EVENTS $NUM_EVENTS \
@@ -68,6 +73,7 @@ function runFTStream() {
               --time_Interval $time_Interval \
               --timeSliceLengthMs $timeSliceLengthMs \
               --input_store_batch $input_store_batch \
+              --systemRuntime $systemRuntime \
               --batch_number_per_wm $batch_number_per_wm \
               --NUM_ITEMS $NUM_ITEMS \
               --NUM_EVENTS $NUM_EVENTS \
@@ -87,6 +93,4 @@ function baselineEvaluation() {
             do runFTStream
             done
 }
-sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/benchmarks/tptxn/
-sudo rm -rf /mnt/nvme0n1p2/jjzhao/app/txntp/checkpoint
 baselineEvaluation

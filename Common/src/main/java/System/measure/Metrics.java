@@ -12,6 +12,7 @@ public class Metrics {
         public static ConcurrentHashMap<Integer,DescriptiveStatistics> Latency;
         public static ConcurrentHashMap<Integer, List<Double>> latency_map;
         public static ConcurrentHashMap<Integer,List<Double>> throughput_map;
+        public static int CheckpointTimes;
         public static void Initialize() {
             AvgThroughput = new ConcurrentHashMap<>();
             Latency = new ConcurrentHashMap<>();
@@ -55,8 +56,6 @@ public class Metrics {
         public static DescriptiveStatistics[] transaction_abort_time;
         public static long[] transaction_abort_begin_time;
 
-        public static ConcurrentHashMap<Integer,Double> Avg_WaitTime;
-        public static ConcurrentHashMap<Integer,Double> Avg_CommitTime;
         public static void Initialize(int tthread_num) {
             upstream_backup_time = new DescriptiveStatistics[tthread_num + 1];
             upstream_backup_begin = new long[tthread_num + 1];
@@ -122,7 +121,7 @@ public class Metrics {
             ReExecute_time = new DescriptiveStatistics();
         }
     }
-    public static final LocalFileSystem localFileSystem=new LocalFileSystem();
+    public static final LocalFileSystem localFileSystem = new LocalFileSystem();
     public static int FT;
     public static void Initialize(int partition_num,int tthread_num,int FT_) {
         snapshot_file_size = new DescriptiveStatistics[partition_num];

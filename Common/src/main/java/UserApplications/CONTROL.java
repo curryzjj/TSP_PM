@@ -7,7 +7,6 @@ public class CONTROL {
     //Failure Flag
     public static AtomicBoolean failureFlag = new AtomicBoolean(false);
     public static int lostPartitionId = 0;
-    public static Queue<Integer> lostPartitionIds = new ArrayDeque<>();
     //application related.
     public static boolean Arrival_Control = false;
     public static int NUM_EVENTS = 40000000; //different input events.. TODO: It must be kept small as GC pressure increases rapidly. Fix this in future work.
@@ -93,6 +92,7 @@ public class CONTROL {
             @Override
             public void run() {
                 if (failureTimes == 0) {
+                    lostPartitionId = 0;
                     FailureTimer.cancel();
                 } else {
                     lostPartitionId = rnd.nextInt(PARTITION_NUM);

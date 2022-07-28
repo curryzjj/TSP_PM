@@ -140,7 +140,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
         int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
-        boolean transactionSuccess=FT==0;
+        boolean transactionSuccess = FT==0;
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
@@ -200,7 +200,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                 break;
             case 1:
                 this.SyncRegisterUndo();
-                transactionSuccess=this.TXN_PROCESS();
+                transactionSuccess = this.TXN_PROCESS();
                 break;
             case 2:
                 if (this.executor.isFirst_executor()) {

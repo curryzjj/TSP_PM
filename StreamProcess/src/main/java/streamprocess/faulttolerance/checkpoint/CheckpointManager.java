@@ -7,7 +7,6 @@ import System.FileSystem.Path;
 import System.measure.MeasureTools;
 import System.util.Configuration;
 import System.util.OsUtils;
-import UserApplications.CONTROL;
 import UserApplications.SOURCE_CONTROL;
 import engine.Database;
 import engine.shapshot.SnapshotResult;
@@ -143,9 +142,8 @@ public class CheckpointManager extends FTManager {
                             lock.wait();
                         }
                     }
-                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
-                    this.db.getTxnProcessingEngine().cleanOperations();
+                    this.db.getTxnProcessingEngine().cleanAllOperations();
                     SOURCE_CONTROL.getInstance().config(PARTITION_NUM);
                     this.SnapshotOffset.clear();
                     this.g.getSink().clean_status();
@@ -156,7 +154,7 @@ public class CheckpointManager extends FTManager {
                     LOG.debug("CheckpointManager received all register and start undo");
                     this.db.undoFromWAL();
                     LOG.info("Undo log complete!");
-                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
+                    this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
                     notifyBoltComplete();
                     lock.notifyAll();
                 } else if(callSnapshot.containsValue(Snapshot)){

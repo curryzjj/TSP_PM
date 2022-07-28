@@ -124,13 +124,11 @@ public class TxnManagerTStream extends TxnManagerDedicated {
     @Override
     public int start_evaluate(int thread_id, long mark_ID) throws InterruptedException, BrokenBarrierException, IOException, DatabaseException {
         /* Pay attention to concurrency control */
-        if (instance.start_evaluation(thread_id,mark_ID)) {
-            if (instance.isTransactionAbort) {
+        if (instance.start_evaluation(thread_id, mark_ID)) {
+            if (instance.isTransactionAbort.get()) {
                 return 1;
             } else {
-                if (thread_id == 0) {
-                    this.instance.cleanOperations();
-                }
+                this.instance.cleanOperations(thread_id);
                 return 0;
             }
         } else {

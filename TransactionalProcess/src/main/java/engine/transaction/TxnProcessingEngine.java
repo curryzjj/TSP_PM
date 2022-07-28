@@ -21,6 +21,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static UserApplications.CONTROL.*;
 
@@ -39,8 +40,7 @@ public class TxnProcessingEngine {
     private WALManager walManager;
     private long markerId;
     private ExecutorServiceInstance standalone_engine;
-    /* Abort transactions <bid> */
-    public Boolean isTransactionAbort = false;
+    public AtomicBoolean isTransactionAbort = new AtomicBoolean(false);
     private List<Integer> dropTable;
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
     //initialize
@@ -104,7 +104,7 @@ public class TxnProcessingEngine {
     public Holder_in_range getHolder(String table_name) {
         return holder_by_stage.get(table_name);
     }
-    public void cleanOperations(){
+    public void cleanAllOperations(){
         for (Holder_in_range holder_in_range:holder_by_stage.values()){
             for (int thread_Id = 0; thread_Id < num_op; thread_Id ++) {
                 Holder holder = holder_in_range.rangeMap.get(thread_Id);
@@ -113,6 +113,16 @@ public class TxnProcessingEngine {
                     operationChain.needAbortHandling.compareAndSet(true, false);
                     operationChain.clear();
                 }
+            }
+        }
+    }
+    public void cleanOperations(int threadId) {
+        for (Holder_in_range holder_in_range:holder_by_stage.values()){
+            Holder holder = holder_in_range.rangeMap.get(threadId);
+            for (OperationChain operationChain :holder.holder_v1.values()){
+                operationChain.isExecuted = false;
+                operationChain.needAbortHandling.compareAndSet(true, false);
+                operationChain.clear();
             }
         }
     }
@@ -403,7 +413,7 @@ public class TxnProcessingEngine {
     private boolean SL_Depo_Fun(Operation operation){
         if (enable_transaction_abort) {
             if (operation.function.delta_long < 0) {
-                this.isTransactionAbort = true;
+                this.isTransactionAbort.compareAndSet(false, true);
                 operation.isFailed = true;
                 return false;
             }
@@ -444,7 +454,7 @@ public class TxnProcessingEngine {
             return true;
         }else {
             if (enable_transaction_abort) {
-                this.isTransactionAbort = true;
+                this.isTransactionAbort.compareAndSet(false, true);
                 operation.isFailed = true;
             }
             operation.success[0] = false;
@@ -459,7 +469,7 @@ public class TxnProcessingEngine {
         long bid_qty = operation.condition.arg2;
         if (enable_transaction_abort) {
             if (bid_qty < 0) {
-                this.isTransactionAbort = true;
+                this.isTransactionAbort.compareAndSet(false, true);
                 operation.isFailed = true;
                 return false;
             }
@@ -479,7 +489,7 @@ public class TxnProcessingEngine {
         List<DataBox> values = src_record.getValues();
         if (enable_transaction_abort) {
             if (operation.function.delta_long < 0) {
-                this.isTransactionAbort = true;
+                this.isTransactionAbort.compareAndSet(false, true);
                 operation.isFailed = true;
                 return false;
             }
@@ -493,7 +503,7 @@ public class TxnProcessingEngine {
     private boolean OB_Alert_Fun(Operation operation) {
         if (enable_transaction_abort) {
             if (operation.value == -1) {
-                this.isTransactionAbort = true;
+                this.isTransactionAbort.compareAndSet(false, true);
                 operation.isFailed = true;
                 return false;
             }
@@ -505,7 +515,7 @@ public class TxnProcessingEngine {
     private boolean GS_Write_Fun(Operation operation) {
         if (enable_transaction_abort) {
             if (operation.value_list.size() == 0) {
-                this.isTransactionAbort = true;
+                this.isTransactionAbort.compareAndSet(false, true);
                 operation.isFailed = true;
                 return false;
             }
@@ -521,7 +531,7 @@ public class TxnProcessingEngine {
         if(operation.function instanceof AVG){
             if (enable_transaction_abort) {
                 if (operation.function.delta_double >= 180) {
-                    this.isTransactionAbort = true;
+                    this.isTransactionAbort.compareAndSet(false, true);
                     operation.isFailed = true;
                     return false;
                 }

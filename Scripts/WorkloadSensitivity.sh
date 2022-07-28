@@ -231,6 +231,23 @@ function CheckpointIntervalEvaluation() {
   done
   ResetParameters
 }
+#Abort
+function AbortFrequencyEvaluation(){
+  ResetParameters
+  systemRuntime=80
+  RATIO_OF_READ=0
+  RATIO_OF_DEPENDENCY=500
+  partition_num_per_txn=16
+  failureFrequency=6
+  failureModel=3
+  for RATIO_OF_ABORT in 700 900
+  do
+  for FTOptions in 3
+      do runFTStream
+      done
+  done
+  ResetParameters
+}
 function baselineEvaluation() {
   ResetParameters
   ArrivalRateEvaluation
