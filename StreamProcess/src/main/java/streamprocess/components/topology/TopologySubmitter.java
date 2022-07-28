@@ -14,8 +14,7 @@ import streamprocess.optimization.OptimizationManager;
 import java.io.IOException;
 import java.util.Collection;
 
-import static UserApplications.CONTROL.enable_shared_state;
-import static UserApplications.CONTROL.enable_states_lost;
+import static UserApplications.CONTROL.*;
 import static streamprocess.execution.affinity.SequentialBinding.SequentialBindingDB;
 
 public class TopologySubmitter {
@@ -50,7 +49,7 @@ public class TopologySubmitter {
         }
         //start
         OM.start();
-        if (enable_states_lost) {
+        if (enable_states_lost && failureTimes > 0) {
             CONTROL.startFailureRecord();
         } else {
             CONTROL.FailureTimer.cancel();

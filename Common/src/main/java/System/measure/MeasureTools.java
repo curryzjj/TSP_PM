@@ -180,6 +180,9 @@ public class MeasureTools {
     public static void setLatencyMap(int threadId, List<Double> result) {
         Performance.latency_map.put(threadId,result);
     }
+    public static void setCheckpointTimes(int checkpointTimes) {
+        Performance.CheckpointTimes = checkpointTimes;
+    }
     private static void PerformanceReport(String baseDirectory, StringBuilder sb) throws IOException {
         sb.append("\n");
         String statsFolderPath = baseDirectory + "_overview.txt";
@@ -244,6 +247,7 @@ public class MeasureTools {
         sb.append("\n" + walFileSize + " KB" +  "\n");
         fileWriter.write("SnapshotSize: " + snapshotFileSize + " MB" + "\n");
         fileWriter.write("WALSize: " + walFileSize + " KB" +  "\n");
+        fileWriter.write("Snapshot Times: " + Performance.CheckpointTimes + "\n");
     }
     private static void RuntimeLatencyReport(String baseDirectory) throws IOException {
         String statsFolderPath = baseDirectory + "_latency";
@@ -353,7 +357,7 @@ public class MeasureTools {
                 transactionPostTime = transaction_post_time[threadId].getMean() + transactionPostTime;
                 fileWriter.write(output + "\n");
             }
-        } else if (FT == 5 || FT == 6) {
+        } else if (FT == 3 || FT == 4) {
             for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
                 String output = String.format("%d\t" +
                                 "%-10.2f\t" +
@@ -377,7 +381,7 @@ public class MeasureTools {
                 inputStoreTime = input_store_time.getMean() + inputStoreTime;
                 snapshotTime = Snapshot_time.getMean() - transaction_post_time[threadId].getMean() + snapshotTime;
                 helpLog = Help_Log[threadId].getMean() + helpLog;
-                upstreamBackupTime = upstream_backup_time[threadId].getMean() + upstream_backup_time[0].getMean() + upstreamBackupTime;
+                upstreamBackupTime = upstream_backup_time[threadId + 1].getMean() +  upstreamBackupTime;
                 transactionConstructionTime = transaction_construction_time[threadId].getMean() + transactionConstructionTime;
                 transactionRunTime = transaction_run_time[threadId].getMean() + transactionRunTime;
                 transactionPostTime = transaction_post_time[threadId].getMean() - upstream_backup_time[threadId + 1].getMean() + transactionPostTime;

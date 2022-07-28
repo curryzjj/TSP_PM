@@ -41,6 +41,7 @@ public class MeasureSink extends BaseSink {
     private FileSystem localFS;
     protected static boolean profile = false;
     private int exe;
+    private int CheckpointTimes = 0;
 
     protected static final List<Double> throughput_map = new ArrayList<>();
     /** <bid,timestamp> */
@@ -261,6 +262,7 @@ public class MeasureSink extends BaseSink {
         MeasureTools.setThroughputMap(thisTaskId, throughput_map);
         MeasureTools.setLatencyMap(thisTaskId, No_Exactly_Once_latency_map);
         MeasureTools.setLatency(thisTaskId, latency);
+        MeasureTools.setCheckpointTimes(CheckpointTimes);
     }
 
     public long getCount() {
