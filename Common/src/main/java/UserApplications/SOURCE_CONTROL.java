@@ -21,6 +21,7 @@ public class SOURCE_CONTROL {
             start_barrier.await(2, TimeUnit.SECONDS);
             return true;
         } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+            System.out.println("TimeOut");
            return false;
         }
     }
