@@ -13,6 +13,7 @@ public class Metrics {
         public static ConcurrentHashMap<Integer, List<Double>> latency_map;
         public static ConcurrentHashMap<Integer,List<Double>> throughput_map;
         public static int CheckpointTimes;
+        public static long SystemRuntime;
         public static void Initialize() {
             AvgThroughput = new ConcurrentHashMap<>();
             Latency = new ConcurrentHashMap<>();

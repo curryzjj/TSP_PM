@@ -183,6 +183,9 @@ public class MeasureTools {
     public static void setCheckpointTimes(int checkpointTimes) {
         Performance.CheckpointTimes = checkpointTimes;
     }
+    public static void setSystemRuntime(long systemRuntime) {
+        Performance.SystemRuntime = systemRuntime;
+    }
     private static void PerformanceReport(String baseDirectory, StringBuilder sb) throws IOException {
         sb.append("\n");
         String statsFolderPath = baseDirectory + "_overview.txt";
@@ -248,6 +251,7 @@ public class MeasureTools {
         fileWriter.write("SnapshotSize: " + snapshotFileSize + " MB" + "\n");
         fileWriter.write("WALSize: " + walFileSize + " KB" +  "\n");
         fileWriter.write("Snapshot Times: " + Performance.CheckpointTimes + "\n");
+        fileWriter.write("SystemRuntime: " + Performance.SystemRuntime + "\n");
     }
     private static void RuntimeLatencyReport(String baseDirectory) throws IOException {
         String statsFolderPath = baseDirectory + "_latency";

@@ -104,6 +104,7 @@ public class MeasureSink extends BaseSink {
                     switch (in.getMarker().getValue()) {
                         case "snapshot" :
                             this.FTM.sinkRegister(in.getBID());
+                            CheckpointTimes ++;
                             BUFFER_EXECUTE();
                             break;
                         case "marker" :
@@ -263,6 +264,7 @@ public class MeasureSink extends BaseSink {
         MeasureTools.setLatencyMap(thisTaskId, No_Exactly_Once_latency_map);
         MeasureTools.setLatency(thisTaskId, latency);
         MeasureTools.setCheckpointTimes(CheckpointTimes);
+        MeasureTools.setSystemRuntime((long) ((System.nanoTime() - startTime) / 1E9));
     }
 
     public long getCount() {
