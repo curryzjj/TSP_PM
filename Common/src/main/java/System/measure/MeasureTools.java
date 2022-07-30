@@ -377,10 +377,10 @@ public class MeasureTools {
                         , input_store_time.getMean()
                         , Snapshot_time.getMean() - transaction_post_time[threadId].getMean()
                         , Help_Log[threadId].getMean()
-                        , upstream_backup_time[threadId + 1].getMean() + upstream_backup_time[0].getMean()
+                        , upstream_backup_time[threadId + 1].getMean()
                         , transaction_construction_time[threadId].getMean()
                         , transaction_run_time[threadId].getMean()
-                        , transaction_post_time[threadId].getMean() - upstream_backup_time[threadId].getMean()
+                        , transaction_post_time[threadId].getMean() - upstream_backup_time[threadId + 1].getMean()
                 );
                 inputStoreTime = input_store_time.getMean() + inputStoreTime;
                 snapshotTime = Snapshot_time.getMean() - transaction_post_time[threadId].getMean() + snapshotTime;

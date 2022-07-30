@@ -35,6 +35,9 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
         }else{
             record_at_ts = versions.get(ts);
         }
+        if (record_at_ts == null) {
+            return record_;
+        }
         return record_at_ts;
     }
     public void updateMultiValues(long ts, SchemaRecord record){
@@ -43,18 +46,8 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
     public void clean_map() {
         versions.headMap(versions.lastKey(), false).clear();
     }
-    public void clean_map(long ts) {
-        SchemaRecord record_at_ts = null;
-        Map.Entry<Long,SchemaRecord> entry = versions.lowerEntry(ts);
-        if (entry != null){
-            versions.clear();
-            versions.put(entry.getKey(), entry.getValue());
-        }else{
-            record_at_ts = versions.get(ts);
-            versions.clear();
-            versions.put(ts,record_at_ts);
-        }
-
+    public void Undo_map() {
+        versions.headMap(versions.firstKey(), false).clear();
     }
     public TableRecord cloneTableRecord() throws IOException, ClassNotFoundException {
         return (TableRecord) Serialize.cloneObject(this);

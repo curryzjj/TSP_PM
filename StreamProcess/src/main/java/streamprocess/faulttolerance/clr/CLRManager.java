@@ -158,7 +158,7 @@ public class CLRManager extends FTManager {
                     LOG.info("CLRManager received all bolt register and start snpshot");
                     MeasureTools.startSnapshot(System.nanoTime());
                     SnapshotResult snapshotResult = this.db.parallelSnapshot(this.SnapshotOffset.poll(),00000L);
-                    this.snapshotResults.put(snapshotResult.getCheckpointId(),snapshotResult);
+                    this.snapshotResults.put(snapshotResult.getCheckpointId(), snapshotResult);
                     MeasureTools.finishSnapshot(System.nanoTime());
                     MeasureTools.setSnapshotFileSize(snapshotResult.getSnapshotPaths());
                     notifySnapshotComplete();

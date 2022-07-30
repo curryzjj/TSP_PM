@@ -318,11 +318,13 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
 
     @Override
     protected void REQUEST_CORE() throws InterruptedException {
-        for (TxnEvent event:EventsHolder){
-            if(event instanceof TransactionEvent){
-                TRANSFER_REQUEST_CORE((TransactionEvent) event);
-            }else {
-                DEPOSITE_REQUEST_CORE((DepositEvent) event);
+        if (this.markerId > recoveryId) {
+            for (TxnEvent event : EventsHolder) {
+                if (event instanceof TransactionEvent) {
+                    TRANSFER_REQUEST_CORE((TransactionEvent) event);
+                } else {
+                    DEPOSITE_REQUEST_CORE((DepositEvent) event);
+                }
             }
         }
     }
