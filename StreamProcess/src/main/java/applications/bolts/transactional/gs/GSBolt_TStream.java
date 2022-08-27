@@ -38,7 +38,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
 
     @Override
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
-        TxnContext txnContext=new TxnContext(thread_Id,this.fid,in.getBID());
+        TxnContext txnContext = new TxnContext(thread_Id,this.fid,in.getBID());
         MicroEvent event = (MicroEvent) in.getValue(0);
         MeasureTools.Transaction_construction_begin(thread_Id, System.nanoTime());
         if (event.READ_EVENT()) {//read
