@@ -91,7 +91,7 @@ public class InMemoryDataBase extends Database {
 
     @Override
     public boolean undoFromWAL() throws IOException, DatabaseException {
-        return this.txnProcessingEngine.getWalManager().undoLog(this, this.txnProcessingEngine.getRecoveryRangeId());
+        return this.txnProcessingEngine.getWalManager().undoLog(this);
     }
 
     @Override

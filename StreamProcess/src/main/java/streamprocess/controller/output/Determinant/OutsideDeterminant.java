@@ -1,9 +1,10 @@
 package streamprocess.controller.output.Determinant;
 
-import applications.events.TxnEvent;
+import engine.table.tableRecords.SchemaRecord;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -13,6 +14,7 @@ public class OutsideDeterminant implements Serializable {
     private static final long serialVersionUID = 1697109885782459412L;
     public String outSideEvent;
     public List<Integer> targetPartitionIds = new ArrayList<>();
+    public HashMap<String, SchemaRecord> ackValues;
     public void setOutSideEvent(String outSideEvent) {
         this.outSideEvent = outSideEvent;
     }
@@ -21,5 +23,8 @@ public class OutsideDeterminant implements Serializable {
             return;
         }
         this.targetPartitionIds.add(targetIds);
+    }
+    public void setAckValues(String key, SchemaRecord schemaRecord) {
+        this.ackValues.put(key, schemaRecord);
     }
 }

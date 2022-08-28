@@ -6,7 +6,6 @@ import engine.Exception.DatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 
 import java.io.IOException;
 import java.util.Queue;
@@ -95,9 +94,9 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
                 BUFFER_PROCESS();
                 break;
             case 1:
-                this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
+                MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
                 transactionSuccess = this.TXN_PROCESS_FT();
+                MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
             case 2:
                 if (this.executor.isFirst_executor()) {
@@ -131,9 +130,9 @@ public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
                 BUFFER_PROCESS();
                 break;
             case 1:
-                this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
+                MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
                 transactionSuccess = this.TXN_PROCESS();
+                MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
             case 2:
                 if (this.executor.isFirst_executor()) {

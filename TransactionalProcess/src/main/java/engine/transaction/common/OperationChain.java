@@ -2,11 +2,15 @@ package engine.transaction.common;
 
 import engine.log.LogRecord;
 
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static UserApplications.CONTROL.enable_states_partition;
 
-public class MyList<O> extends ConcurrentSkipListSet<O> {
+public class OperationChain<O> extends ConcurrentSkipListSet<O> {
+    private static final long serialVersionUID = 8184166807062657412L;
     public String getPrimaryKey() {
         return primaryKey;
     }
@@ -26,15 +30,19 @@ public class MyList<O> extends ConcurrentSkipListSet<O> {
     private final int partitionId;
     public LogRecord logRecord;
 
+    public AtomicBoolean needAbortHandling = new AtomicBoolean(false);
+    public Queue<Operation> failedOperations = new ArrayDeque<>();
+    public boolean isExecuted = false;
 
-    public MyList(String table_name, String primaryKey, int partitionId) {
+
+    public OperationChain(String table_name, String primaryKey, int partitionId) {
         this.table_name = table_name;
         this.primaryKey = primaryKey;
         this.partitionId = partitionId;
         if(enable_states_partition){
-            this.logRecord =new LogRecord(primaryKey,table_name+"_"+ partitionId);
+            this.logRecord = new LogRecord(primaryKey,table_name+"_"+ partitionId);
         }else{
-            this.logRecord =new LogRecord(primaryKey,table_name);
+            this.logRecord = new LogRecord(primaryKey,table_name);
         }
     }
 }

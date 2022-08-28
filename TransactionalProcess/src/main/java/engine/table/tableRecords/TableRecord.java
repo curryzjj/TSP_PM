@@ -46,10 +46,11 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
     public void clean_map() {
         versions.headMap(versions.lastKey(), false).clear();
     }
-    public void Undo_map() {
-        versions.headMap(versions.firstKey(), false).clear();
-    }
     public TableRecord cloneTableRecord() throws IOException, ClassNotFoundException {
         return (TableRecord) Serialize.cloneObject(this);
+    }
+    public void undoRecord(TableRecord tableRecord) {
+        this.record_ = tableRecord.record_;
+        this.versions = tableRecord.versions;
     }
 }

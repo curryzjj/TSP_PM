@@ -96,9 +96,9 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
                 BUFFER_PROCESS();
                 break;
             case 1:
-                this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
+                MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
                 transactionSuccess = this.TXN_PROCESS_FT();
+                MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
             case 2:
                 if (this.executor.isFirst_executor()) {
@@ -132,9 +132,9 @@ public class SLBolt_TStream_Snapshot extends SLBolt_TStream {
                 BUFFER_PROCESS();
                 break;
             case 1:
-                this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
+                MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
                 transactionSuccess = this.TXN_PROCESS();
+                MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
             case 2:
                 if (this.executor.isFirst_executor()) {
