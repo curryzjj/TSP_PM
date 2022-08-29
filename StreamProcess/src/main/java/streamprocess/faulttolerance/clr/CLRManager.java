@@ -165,8 +165,6 @@ public class CLRManager extends FTManager {
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Undo)){
                     LOG.info("CLRManager received all register and start undo");
-                    this.db.undoFromWAL();
-                    LOG.info("Undo log complete!");
                     this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
                     notifyBoltComplete();
                     lock.notifyAll();

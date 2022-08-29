@@ -14,7 +14,7 @@ public class OutsideDeterminant implements Serializable {
     private static final long serialVersionUID = 1697109885782459412L;
     public String outSideEvent;
     public List<Integer> targetPartitionIds = new ArrayList<>();
-    public HashMap<String, SchemaRecord> ackValues;
+    public HashMap<String, SchemaRecord> ackValues = new HashMap<>();
     public void setOutSideEvent(String outSideEvent) {
         this.outSideEvent = outSideEvent;
     }

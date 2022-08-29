@@ -18,7 +18,6 @@ import static UserApplications.CONTROL.*;
 
 public class SLBolt_TStream_CLR extends SLBolt_TStream {
     private static final long serialVersionUID = 8318429594401042174L;
-
     public SLBolt_TStream_CLR(int fid) {super(fid);}
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {

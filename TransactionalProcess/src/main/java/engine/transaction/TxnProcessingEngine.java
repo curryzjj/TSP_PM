@@ -98,7 +98,7 @@ public class TxnProcessingEngine {
         public Holder_in_range(Integer num_op){
             int i;
             for (i = 0; i < num_op; i++){
-                rangeMap.put(i,new Holder());
+                rangeMap.put(i, new Holder());
             }
         }
     }
@@ -109,8 +109,11 @@ public class TxnProcessingEngine {
         for (Holder_in_range holder_in_range:holder_by_stage.values()){
             for (int thread_Id = 0; thread_Id < num_op; thread_Id ++) {
                 Holder holder = holder_in_range.rangeMap.get(thread_Id);
-                for (OperationChain operations :holder.holder_v1.values()){
-                    operations.clear();
+                for (OperationChain operationChain :holder.holder_v1.values()){
+                    operationChain.isExecuted = false;
+                    operationChain.needAbortHandling.compareAndSet(true, false);
+                    operationChain.clear();
+                    operationChain.failedOperations.clear();
                 }
             }
         }
@@ -122,6 +125,7 @@ public class TxnProcessingEngine {
                 operationChain.isExecuted = false;
                 operationChain.needAbortHandling.compareAndSet(true, false);
                 operationChain.clear();
+                operationChain.failedOperations.clear();
             }
         }
     }
@@ -317,9 +321,11 @@ public class TxnProcessingEngine {
                 boolean needReExecuted = false;
                 if (operation_chain.needAbortHandling.get()) {
                     for (Operation operation : operation_chain) {
-                        if (operation_chain.failedOperations.contains(operation) && operation.operationStateType.equals(MetaTypes.OperationStateType.EXECUTED)) {
-                            operation.stateTransition(MetaTypes.OperationStateType.ABORTED);
-                            needReExecuted = true;
+                        if (operation_chain.failedOperations.contains(operation)) {
+                            if (operation.operationStateType.equals(MetaTypes.OperationStateType.EXECUTED)) {
+                                operation.stateTransition(MetaTypes.OperationStateType.ABORTED);
+                                needReExecuted = true;
+                            }
                         } else {
                             operation.stateTransition(MetaTypes.OperationStateType.READY);
                         }
@@ -362,16 +368,15 @@ public class TxnProcessingEngine {
     public boolean start_evaluation(int thread_id, long mark_ID) throws InterruptedException {//each operation thread called this function
         //implement the SOURCE_CONTROL sync for all threads to come to this line to ensure chains are constructed for the current batch.
         if (enable_wal || enable_undo_log) {
-            this.walManager.addLogForBatch(mark_ID);
+            this.walManager.addLogForBatch(mark_ID, thread_id);
         }
         this.markerId = mark_ID;
         if (SOURCE_CONTROL.getInstance().Wait_Start(thread_id)) {
+            this.isTransactionAbort.compareAndSet(true, false);
             int size = evaluation(thread_id,mark_ID);
         } else {
             return false;
         }
-        //implement the SOURCE_CONTROL sync for all threads to come to this line.
-        SOURCE_CONTROL.getInstance().Wait_End(thread_id);
         return true;
     }
     public int evaluation(int thread_Id, long mark_ID) throws InterruptedException{

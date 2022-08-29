@@ -34,12 +34,10 @@ public class WALManager {
                 this.hasKey = new ConcurrentHashMap<>();
             }
         }
-        public void addUndoLog(long g) {
+        public void addUndoLog(long g, int threadId) {
             globalLSN = g;
             hasKey.clear();
-            for (int i:holder_by_range.keySet()){
-                holder_by_range.get(i).putIfAbsent(g, new Vector<>());
-            }
+            holder_by_range.get(threadId).putIfAbsent(g, new Vector<>());
         }
     }
     public WALManager(int partitionNum){
@@ -127,9 +125,9 @@ public class WALManager {
         }
         return true;
     }
-    public void addLogForBatch(long markerId) {
+    public void addLogForBatch(long markerId, int threadId) {
         for(WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
-           logRecordsInRange.addUndoLog(markerId);
+           logRecordsInRange.addUndoLog(markerId, threadId);
         }
     }
     public void close(){

@@ -1,5 +1,6 @@
 package engine.transaction.impl;
 
+import UserApplications.SOURCE_CONTROL;
 import engine.Exception.DatabaseException;
 import engine.Meta.MetaTypes;
 import engine.storage.AbstractStorageManager;
@@ -106,7 +107,7 @@ public class TxnManagerTStream extends TxnManagerDedicated {
             , TableRecord[] condition_records, Condition condition, TxnContext txn_context, boolean[] success) {
         String primaryKey = d_record.record_.GetPrimaryKey();
         ConcurrentHashMap<String, OperationChain<Operation>> holder = instance.getHolder(table_name).rangeMap.get(getTaskId(primaryKey)).holder_v1;
-        holder.putIfAbsent(primaryKey, new OperationChain(table_name, primaryKey,getPartitionId(primaryKey)));
+        holder.putIfAbsent(primaryKey, new OperationChain(table_name, primaryKey, getPartitionId(primaryKey)));
         Operation operation = new Operation(table_name, d_record, d_record, record_ref, bid, accessType, function, condition_records, condition, txn_context, success);
         holder.get(primaryKey).add(operation);
         txn_context.addBrotherOperations(operation, holder.get(primaryKey));
@@ -138,9 +139,13 @@ public class TxnManagerTStream extends TxnManagerDedicated {
         /* Pay attention to concurrency control */
         if (instance.start_evaluation(thread_id,mark_ID)) {
             if (instance.isTransactionAbort.get()) {
+                //implement the SOURCE_CONTROL sync for all threads to come to this line.
+                SOURCE_CONTROL.getInstance().Wait_End(thread_id);
                 return 1;
             } else {
                 this.instance.cleanOperations(thread_id);
+                //implement the SOURCE_CONTROL sync for all threads to come to this line.
+                SOURCE_CONTROL.getInstance().Wait_End(thread_id);
                 return 0;
             }
         } else {

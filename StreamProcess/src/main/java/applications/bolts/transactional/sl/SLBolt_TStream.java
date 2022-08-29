@@ -237,7 +237,11 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                         InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                         insideDeterminant.setAbort(true);
                         MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                        transactionResult = ((TransactionEvent) event).transaction_result;
+                        if (event instanceof TransactionEvent) {
+                            transactionResult = ((TransactionEvent) event).transaction_result;
+                        } else {
+                            transactionResult = ((DepositEvent) event).transactionResult;
+                        }
                         targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, event.getTimestamp());
                     } else {
                         OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
