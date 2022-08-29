@@ -3,9 +3,9 @@ function ResetParameters() {
   app="SL_txn"
   FTOptions=0
   failureModel=2
-  failureFrequency=4
+  failureFrequency=6
   tthreads=16
-  snapshot=10
+  snapshot=2
 
   #System Configurations
   Arrival_Control=1
@@ -24,7 +24,7 @@ function ResetParameters() {
   ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0
-  RATIO_OF_DEPENDENCY=500
+  RATIO_OF_DEPENDENCY=1000
   complexity=0
   NUM_ACCESSES=2
   partition_num_per_txn=2
@@ -88,7 +88,7 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-    for FTOptions in 1 2 3 4
+    for FTOptions in 4
         do runFTStream
         done
 }

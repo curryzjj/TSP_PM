@@ -2,7 +2,7 @@ function ResetParameters() {
   app="OB_txn"
   FTOptions=0
   failureModel=2
-  failureFrequency=4
+  failureFrequency=6
   tthreads=16
   snapshot=2
 
@@ -11,7 +11,7 @@ function ResetParameters() {
   targetHz=200000
   Time_Control=1
   time_Interval=3000
-  timeSliceLengthMs=3000
+  timeSliceLengthMs=1000
   input_store_batch=20000
   systemRuntime=80
   #shellcheck disable=SC2006
@@ -87,7 +87,7 @@ function runFTStream() {
 }
 function baselineEvaluation() {
  ResetParameters
-   for FTOptions in 1 2 3 4
+   for FTOptions in 1
        do runFTStream
        done
 }
