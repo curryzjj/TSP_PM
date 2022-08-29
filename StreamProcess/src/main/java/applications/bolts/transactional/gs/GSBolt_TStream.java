@@ -77,7 +77,14 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     }
 
     void determinant_read_construct(MicroEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
-        if (event.getBid() >= recoveryId) {
+        if (event.getBid() < recoveryId) {
+            for (CausalService c:this.causalService.values()) {
+                if (c.abortEvent.contains(event.getBid())){
+                    event.txnContext.isAbort.compareAndSet(false,true);
+                    return;
+                }
+            }
+        } else {
             read_construct(event, txnContext);
         }
     }
@@ -86,6 +93,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
                 if (c.abortEvent.contains(event.getBid())){
+                    event.txnContext.isAbort.compareAndSet(false,true);
                     return;
                 }
             }

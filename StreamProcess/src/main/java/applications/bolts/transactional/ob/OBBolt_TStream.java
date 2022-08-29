@@ -130,6 +130,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
                 if (c.abortEvent.contains(event.getBid())){
+                    event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
             }
@@ -146,6 +147,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
                 if (c.abortEvent.contains(event.getBid())){
+                    event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
             }
@@ -162,6 +164,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
                 if (c.abortEvent.contains(event.getBid())){
+                    event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
             }
