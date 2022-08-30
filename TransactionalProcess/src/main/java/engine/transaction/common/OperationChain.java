@@ -3,7 +3,9 @@ package engine.transaction.common;
 import engine.log.LogRecord;
 
 import java.util.ArrayDeque;
+import java.util.List;
 import java.util.Queue;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -31,7 +33,7 @@ public class OperationChain<O> extends ConcurrentSkipListSet<O> {
     public LogRecord logRecord;
 
     public AtomicBoolean needAbortHandling = new AtomicBoolean(false);
-    public Queue<Operation> failedOperations = new ArrayDeque<>();
+    public List<Operation> failedOperations = new Vector<>();
     public boolean isExecuted = false;
 
 

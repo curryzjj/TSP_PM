@@ -178,14 +178,12 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
         collector.create_marker_boardcast(boardcast_time, DEFAULT_STREAM_ID, bid, myiteration, "finish");
         try {
             clock.close();
-            //inputDataGenerator.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
         LOG.info("Spout sent marker "+ myiteration);
         LOG.info("Spout sent snapshot " + checkpoint_counter);
         this.earlier_finish = true;
-        //context.stop_running();
     }
 
     @Override
