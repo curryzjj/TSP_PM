@@ -111,6 +111,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
                     if (event.getBid() < markerId) {
                         TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
+                        event.setTxnContext(txnContext);
                         if (event instanceof BuyingEvent) {
                             Determinant_Buying_request_construct((BuyingEvent) event, txnContext);
                         } else if (event instanceof AlertEvent){

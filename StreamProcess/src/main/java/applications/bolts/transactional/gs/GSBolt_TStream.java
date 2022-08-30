@@ -114,6 +114,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                     TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
                     if (event.getBid() < markId) {
                         TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
+                        event.setTxnContext(txnContext);
                         MicroEvent microEvent = (MicroEvent) event;
                         if (microEvent.READ_EVENT()) {
                             determinant_read_construct(microEvent, txnContext);
