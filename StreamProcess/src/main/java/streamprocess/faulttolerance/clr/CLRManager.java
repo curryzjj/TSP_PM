@@ -140,7 +140,6 @@ public class CLRManager extends FTManager {
                     MeasureTools.State_load_begin(System.nanoTime());
                     this.db.recoveryFromTargetSnapshot(lastSnapshotResult, recoveryIds);
                     MeasureTools.State_load_finish(System.nanoTime());
-                    this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
                     LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     synchronized (lock){
                         while (callRecovery.containsValue(NULL)){
@@ -149,6 +148,7 @@ public class CLRManager extends FTManager {
                     }
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     this.db.getTxnProcessingEngine().cleanAllOperations();
+                    this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
                     SOURCE_CONTROL.getInstance().config(PARTITION_NUM);
                     this.SnapshotOffset.clear();
                     this.g.getSink().clean_status();

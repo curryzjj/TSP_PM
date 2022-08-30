@@ -154,6 +154,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                 break;
             case 1:
                 MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
+                SyncRegisterUndo();
                 transactionSuccess = this.TXN_PROCESS_FT();
                 MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
@@ -203,6 +204,7 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                 break;
             case 1:
                 MeasureTools.Transaction_abort_begin(thread_Id, System.nanoTime());
+                SyncRegisterUndo();
                 transactionSuccess = this.TXN_PROCESS();
                 MeasureTools.Transaction_abort_finish(thread_Id, System.nanoTime());
                 break;

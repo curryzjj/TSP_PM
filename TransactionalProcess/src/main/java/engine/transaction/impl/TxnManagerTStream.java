@@ -139,13 +139,11 @@ public class TxnManagerTStream extends TxnManagerDedicated {
         /* Pay attention to concurrency control */
         if (instance.start_evaluation(thread_id,mark_ID)) {
             if (instance.isTransactionAbort.get()) {
-                //implement the SOURCE_CONTROL sync for all threads to come to this line.
-                SOURCE_CONTROL.getInstance().Wait_End(thread_id);
                 return 1;
             } else {
                 this.instance.cleanOperations(thread_id);
-                //implement the SOURCE_CONTROL sync for all threads to come to this line.
                 SOURCE_CONTROL.getInstance().Wait_End(thread_id);
+                //implement the SOURCE_CONTROL sync for all threads to come to this line.
                 return 0;
             }
         } else {

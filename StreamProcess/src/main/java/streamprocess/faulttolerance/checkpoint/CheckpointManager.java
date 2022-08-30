@@ -153,8 +153,6 @@ public class CheckpointManager extends FTManager {
                     lock.notifyAll();
                 }else if(callSnapshot.containsValue(Undo)){
                     LOG.debug("CheckpointManager received all register and start undo");
-                    this.db.undoFromWAL();
-                    LOG.info("Undo log complete!");
                     this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
                     notifyBoltComplete();
                     lock.notifyAll();

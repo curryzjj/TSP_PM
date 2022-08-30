@@ -211,6 +211,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                     TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
                     if (event.getBid() < markId) {
                         TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
+                        event.setTxnContext(txnContext);
                         if (event instanceof DepositEvent) {
                             DeterminantDepositRequestConstruct((DepositEvent) event, txnContext);
                         } else {
