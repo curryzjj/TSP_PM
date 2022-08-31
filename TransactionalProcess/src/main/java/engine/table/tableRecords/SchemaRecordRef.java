@@ -8,7 +8,6 @@ import java.util.concurrent.RejectedExecutionException;
 public class SchemaRecordRef {
     private volatile SchemaRecord record;
     public int cnt = 0;
-    private String name;
     public void setRecord(SchemaRecord record){
         this.record = record;
         cnt++;//what is this for

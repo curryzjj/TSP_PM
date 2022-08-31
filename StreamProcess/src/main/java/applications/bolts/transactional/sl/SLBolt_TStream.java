@@ -20,7 +20,6 @@ import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.faulttolerance.clr.CausalService;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
@@ -43,55 +42,39 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         MeasureTools.Transaction_construction_begin(this.thread_Id, System.nanoTime());
         TxnContext txnContext = new TxnContext(thread_Id, this.fid, in.getBID());
         TxnEvent event = (TxnEvent) in.getValue(0);
+        event.setTxnContext(txnContext);
         if (event instanceof DepositEvent) {
             if (enable_determinants_log) {
                 DeterminantDepositRequestConstruct((DepositEvent) event, txnContext);
             } else {
-                Deposit_Request_Construct((DepositEvent) event, txnContext,false);
+                Deposit_Request_Construct((DepositEvent) event, txnContext);
             }
         } else {
             if (enable_determinants_log) {
                 DeterminantTransferRequestConstruct((TransactionEvent) event, txnContext);
             } else {
-                TransferRequestConstruct((TransactionEvent) event, txnContext,false);
+                TransferRequestConstruct((TransactionEvent) event, txnContext);
             }
         }
         MeasureTools.Transaction_construction_acc(this.thread_Id, System.nanoTime());
     }
-    protected boolean Deposit_Request_Construct(DepositEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
-        boolean flag = transactionManager.Asy_ModifyRecord(txnContext,"T_accounts",event.getAccountId(),new INC(event.getAccountTransfer()));
-        if(!flag){
-            int targetId;
-            if (enable_determinants_log) {
-                InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
-                insideDeterminant.setAbort(true);
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false,insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
-            } else {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false,null, event.getTimestamp());//the tuple is finished.//the tuple is abort.
-            }
-            if (enable_upstreamBackup) {
-                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new TransactionResult(event.getBid(), event.getTimestamp(), false));
-            }
-            return false;
+    protected void Deposit_Request_Construct(DepositEvent event, TxnContext txnContext) throws DatabaseException {
+        transactionManager.Asy_ModifyRecord(txnContext,"T_accounts",event.getAccountId(), new INC(event.getAccountTransfer()));
+        transactionManager.Asy_ModifyRecord(txnContext,"T_assets",event.getBookEntryId(), new INC(event.getBookEntryTransfer()));
+        EventsHolder.add(event);
+        if (enable_recovery_dependency) {
+            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
+            String[] keys = new String[]{event.getAccountId(), event.getBookEntryId()};
+            this.updateRecoveryDependency(keys, true);
+            MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
         }
-        transactionManager.Asy_ModifyRecord(txnContext,"T_assets",event.getBookEntryId(),new INC(event.getBookEntryTransfer()));
-        if(!isReConstruct){
-            EventsHolder.add(event);
-            if (enable_recovery_dependency) {
-                MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
-                String[] keys = new String[]{event.getAccountId(), event.getBookEntryId()};
-                this.updateRecoveryDependency(keys,true);
-                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-            }
-        }
-        return true;
     }
-    protected boolean TransferRequestConstruct(TransactionEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
+    protected void TransferRequestConstruct(TransactionEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         String[] accTable = new String[]{"T_accounts"};
         String[] astTable = new String[]{"T_assets"};
         String[] accID = new String[]{event.getSourceAccountId()};
         String[] astID = new String[]{event.getSourceBookEntryId()};
-        boolean flag = transactionManager.Asy_ModifyRecord(txnContext,
+        transactionManager.Asy_ModifyRecord(txnContext,
                 "T_accounts",
                 event.getSourceAccountId(),
                 new DEC(event.getAccountTransfer()),
@@ -101,20 +84,6 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                         event.getMinAccountBalance(),
                         event.getAccountTransfer()),
                 event.success);
-        if(!flag){
-            int targetId;
-            if (enable_determinants_log) {
-                InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
-                insideDeterminant.setAbort(true);
-                targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,event.getTimestamp());//the tuple is finished.//the tuple is abort.
-            } else {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
-            }
-            if (enable_upstreamBackup) {
-                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new TransactionResult(event.getBid(), event.getTimestamp(), false));
-            }
-            return false;
-        }
         transactionManager.Asy_ModifyRecord(txnContext,
                 "T_assets",
                 event.getSourceBookEntryId(),
@@ -144,22 +113,20 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 new Condition(event.getMinAccountBalance(),
                         event.getBookEntryTransfer()),
                 event.success);   //asynchronously return.
-        if(!isReConstruct){
-            EventsHolder.add(event);
-            if (enable_recovery_dependency) {
-                MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
-                String[] keys = new String[]{event.getSourceAccountId(),event.getTargetAccountId(),event.getSourceBookEntryId(), event.getTargetBookEntryId()};
-                this.updateRecoveryDependency(keys,true);
-                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-            }
+        EventsHolder.add(event);
+        if (enable_recovery_dependency) {
+        MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
+        String[] keys = new String[]{event.getSourceAccountId(),event.getTargetAccountId(),event.getSourceBookEntryId(), event.getTargetBookEntryId()};
+        this.updateRecoveryDependency(keys,true);
+        MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
         }
-        return true;
     }
 
     protected void DeterminantDepositRequestConstruct(DepositEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() <= recoveryId) {
             for (CausalService c:this.causalService.values()) {
                 if (c.abortEvent.contains(event.getBid())){
+                    event.txnContext.isAbort.compareAndSet(false,true);
                     return;
                 }
             }
@@ -170,13 +137,14 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 transactionManager.Asy_ModifyRecord(txnContext,"T_assets",event.getBookEntryId(),new INC(event.getBookEntryTransfer()));
             }
         } else {
-            Deposit_Request_Construct(event, txnContext, false);
+            Deposit_Request_Construct(event, txnContext);
         }
     }
     protected void DeterminantTransferRequestConstruct(TransactionEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() <= recoveryId) {
             for (CausalService c:this.causalService.values()) {
                 if (c.abortEvent.contains(event.getBid())){
+                    event.txnContext.isAbort.compareAndSet(false,true);
                     return;
                 }
             }
@@ -232,24 +200,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                         event.success);
             }
         } else {
-            TransferRequestConstruct(event, txnContext, false);
-        }
-    }
-
-    protected void AsyncReConstructRequest() throws InterruptedException, DatabaseException {
-        Iterator<TxnEvent> it = EventsHolder.iterator();
-        while (it.hasNext()) {
-            TxnEvent event = it.next();
-            TxnContext txnContext = new TxnContext(thread_Id, this.fid, event.getBid());
-            if(event instanceof DepositEvent){
-                if(!Deposit_Request_Construct((DepositEvent) event,txnContext,true)){
-                    it.remove();
-                }
-            }else{
-                if(!TransferRequestConstruct((TransactionEvent) event,txnContext,true)){
-                    it.remove();
-                }
-            }
+            TransferRequestConstruct(event, txnContext);
         }
     }
 
@@ -260,9 +211,12 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                     TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
                     if (event.getBid() < markId) {
                         TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
+                        event.setTxnContext(txnContext);
                         if (event instanceof DepositEvent) {
                             DeterminantDepositRequestConstruct((DepositEvent) event, txnContext);
                         } else {
+                            ((TransactionEvent) event).src_account_value.setRecord(outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceAccountId()));
+                            ((TransactionEvent) event).src_asset_value.setRecord(outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceBookEntryId()));
                             DeterminantTransferRequestConstruct((TransactionEvent) event, txnContext);
                         }
                     } else {
@@ -278,33 +232,52 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         //deduplication at upstream
         if (this.markerId > recoveryId) {
             for (TxnEvent event:EventsHolder){
-                OutsideDeterminant outsideDeterminant = null;
                 TransactionResult transactionResult = null;
+                int targetId;
                 if (enable_determinants_log) {
                     MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
-                    outsideDeterminant = new OutsideDeterminant();
-                    outsideDeterminant.setOutSideEvent(event.toString());
-                    String[] keys;
-                    if(event instanceof TransactionEvent){
-                        keys = new String[]{((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent)event).getSourceAccountId(),
-                                ((TransactionEvent)event).getTargetAccountId(), ((TransactionEvent)event).getTargetBookEntryId()};
-                        transactionResult = ((TransactionEvent) event).transaction_result;
-                    }else{
-                        keys = new String[]{((DepositEvent)event).getAccountId(), ((DepositEvent)event).getBookEntryId()};
-                        transactionResult = ((DepositEvent) event).transactionResult;
-                    }
-                    for (String id : keys) {
-                        if (this.getPartitionId(id) != event.getPid()) {
-                            outsideDeterminant.setTargetPartitionId(this.getPartitionId(id));
+                    if (event.txnContext.isAbort.get()) {
+                        InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
+                        insideDeterminant.setAbort(true);
+                        MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
+                        if (event instanceof TransactionEvent) {
+                            transactionResult = ((TransactionEvent) event).transaction_result;
+                        } else {
+                            transactionResult = ((DepositEvent) event).transactionResult;
+                        }
+                        targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, event.getTimestamp());
+                    } else {
+                        OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
+                        outsideDeterminant.setOutSideEvent(event.toString());
+                        String[] keys;
+                        if(event instanceof TransactionEvent){
+                            keys = new String[]{((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent)event).getSourceAccountId(),
+                                    ((TransactionEvent)event).getTargetAccountId(), ((TransactionEvent)event).getTargetBookEntryId()};
+                            transactionResult = ((TransactionEvent) event).transaction_result;
+                            outsideDeterminant.setAckValues(((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent) event).src_account_value.getRecord());
+                            outsideDeterminant.setAckValues(((TransactionEvent)event).getSourceBookEntryId(), ((TransactionEvent) event).src_asset_value.getRecord());
+                        }else{
+                            keys = new String[]{((DepositEvent)event).getAccountId(), ((DepositEvent)event).getBookEntryId()};
+                            transactionResult = ((DepositEvent) event).transactionResult;
+                        }
+                        for (String id : keys) {
+                            if (this.getPartitionId(id) != event.getPid()) {
+                                outsideDeterminant.setTargetPartitionId(this.getPartitionId(id));
+                            }
+                        }
+                        MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
+                        if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
+                            targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished.
+                        } else {
+                            targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
                         }
                     }
-                    MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                }
-                int targetId;
-                if (outsideDeterminant!=null && !outsideDeterminant.targetPartitionIds.isEmpty()) {
-                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished.
                 } else {
-                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
+                    if (event.txnContext.isAbort.get()) {
+                        targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished.
+                    } else {
+                        targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
+                    }
                 }
                 if (enable_upstreamBackup) {
                     MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
@@ -329,16 +302,12 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         }
     }
 
-    private void TRANSFER_REQUEST_CORE(TransactionEvent event) throws InterruptedException {
-        SchemaRecord schemaRecord = event.src_account_value.getRecord();
-        if (schemaRecord == null) {
-            System.out.println(event.getBid());
+    private void TRANSFER_REQUEST_CORE(TransactionEvent event) {
+        if (event.txnContext.isAbort.get()) {
+            event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), false);
+        } else {
+            event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0], event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
         }
-        schemaRecord = event.src_asset_value.getRecord();
-        if (schemaRecord == null) {
-            System.out.println(event.getBid());
-        }
-        event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0], event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
     }
     protected void DEPOSITE_REQUEST_CORE(DepositEvent event) {
         event.transactionResult = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0]);

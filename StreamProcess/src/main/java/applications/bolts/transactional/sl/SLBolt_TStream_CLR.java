@@ -18,7 +18,6 @@ import static UserApplications.CONTROL.*;
 
 public class SLBolt_TStream_CLR extends SLBolt_TStream {
     private static final long serialVersionUID = 8318429594401042174L;
-
     public SLBolt_TStream_CLR(int fid) {super(fid);}
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
@@ -146,9 +145,10 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                 BUFFER_PROCESS();
                 break;
             case 1:
-                this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS_FT();
+                MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
+                SyncRegisterUndo();
+                transactionSuccess = this.TXN_PROCESS_FT();
+                MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
             case 2:
                 if (this.executor.isFirst_executor()) {
@@ -182,7 +182,7 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
+        int FT = transactionManager.start_evaluate(thread_Id, this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         boolean transactionSuccess = FT == 0;
         switch (FT){
@@ -195,9 +195,10 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                 BUFFER_PROCESS();
                 break;
             case 1:
-                this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS();
+                MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
+                SyncRegisterUndo();
+                transactionSuccess = this.TXN_PROCESS();
+                MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
             case 2:
                 if (this.executor.isFirst_executor()) {

@@ -1,5 +1,7 @@
 package applications.events;
 
+import engine.transaction.TxnContext;
+
 import java.util.Arrays;
 
 public class TxnEvent {
@@ -11,6 +13,7 @@ public class TxnEvent {
     public boolean[] success;
     protected long timestamp;
     protected boolean isAbort;
+    public TxnContext txnContext;
 
     public TxnEvent(long bid, int pid, long[] bid_array, int number_of_partitions, boolean isAbort) {
         this.bid = bid;
@@ -61,6 +64,10 @@ public class TxnEvent {
 
     public boolean isAbort() {
         return isAbort;
+    }
+
+    public void setTxnContext(TxnContext txnContext) {
+        this.txnContext = txnContext;
     }
 
     public TxnEvent cloneEvent() {

@@ -153,9 +153,10 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
                 BUFFER_PROCESS();
                 break;
             case 1:
-                this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS_FT();
+                MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
+                SyncRegisterUndo();
+                transactionSuccess = this.TXN_PROCESS_FT();
+                MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
             case 2:
                 if (this.executor.isFirst_executor()) {
@@ -194,15 +195,18 @@ public class GSBolt_TStream_CLR extends GSBolt_TStream {
         boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
+                MeasureTools.startPostTransaction(this.thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
+                MeasureTools.finishPostTransaction(this.thread_Id, System.nanoTime());
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
                 break;
             case 1:
-                this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS();
+                MeasureTools.Transaction_abort_begin(thread_Id, System.nanoTime());
+                SyncRegisterUndo();
+                transactionSuccess = this.TXN_PROCESS();
+                MeasureTools.Transaction_abort_finish(thread_Id, System.nanoTime());
                 break;
             case 2:
                 if (this.executor.isFirst_executor()) {

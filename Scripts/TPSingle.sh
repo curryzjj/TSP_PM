@@ -3,7 +3,7 @@ function ResetParameters() {
   app="TP_txn"
   FTOptions=0
   failureModel=2
-  failureFrequency=2
+  failureFrequency=6
   tthreads=16
   snapshot=2
 
@@ -11,7 +11,7 @@ function ResetParameters() {
   Arrival_Control=1
   targetHz=200000
   Time_Control=1
-  time_Interval=1000
+  time_Interval=3000
   timeSliceLengthMs=1000
   input_store_batch=20000
   systemRuntime=80
@@ -19,12 +19,12 @@ function ResetParameters() {
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
   #Workload Configurations
-  NUM_ITEMS=40960
+  NUM_ITEMS=20480
   NUM_EVENTS=16000000
   ZIP_SKEW=400
   RATIO_OF_READ=500
   RATIO_OF_ABORT=0
-  RATIO_OF_DEPENDENCY=500
+  RATIO_OF_DEPENDENCY=1000
   complexity=0
   NUM_ACCESSES=2
   partition_num_per_txn=2
@@ -88,7 +88,7 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-      for FTOptions in 1 2 3 4
+      for FTOptions in 4
           do runFTStream
           done
 }

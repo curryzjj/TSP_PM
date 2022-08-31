@@ -16,7 +16,6 @@ import streamprocess.components.operators.base.transaction.TransactionalBoltTStr
 import streamprocess.faulttolerance.clr.CausalService;
 
 import java.util.ArrayDeque;
-import java.util.Iterator;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
@@ -40,30 +39,16 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
         if (enable_determinants_log) {
             Determinant_REQUEST_CONSTRUCT(event, txnContext);
         } else {
-            REQUEST_CONSTRUCT(event, txnContext, false);
+            REQUEST_CONSTRUCT(event, txnContext);
         }
         MeasureTools.Transaction_construction_acc(this.thread_Id, System.nanoTime());
     }
-    protected boolean REQUEST_CONSTRUCT(TollProcessingEvent event, TxnContext txnContext, boolean isReConstruct) throws DatabaseException, InterruptedException {
-        boolean flag = transactionManager.Asy_ModifyRecord_Read(txnContext
+    protected void REQUEST_CONSTRUCT(TollProcessingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
+        transactionManager.Asy_ModifyRecord_Read(txnContext
                 , "segment_speed"
                 ,String.valueOf(event.getSegmentId())
                 ,event.getSpeed_value()[0]//holder to be filled up
                 ,new AVG(event.getSpeedValue()));
-        if(!flag){
-            int targetId;
-            if (enable_determinants_log) {
-                InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
-                insideDeterminant.setAbort(true);
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, event.getTimestamp());//the tuple is finished.//the tuple is abort.
-            } else {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null , event.getTimestamp());//the tuple is finished.//the tuple is abort.
-            }
-            if (enable_upstreamBackup) {
-                this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new TollProcessingResult(event.getBid(), event.getTimestamp(), -1));
-            }
-            return false;
-        }
         transactionManager.Asy_ModifyRecord_Read(txnContext
                 ,"segment_cnt"
                 ,String.valueOf(event.getSegmentId())
@@ -73,20 +58,18 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
             transactionManager.Asy_ReadRecord(txnContext, "segment_speed", String.valueOf(event.getKeys()[i]), event.getSpeed_value()[i], null);
             transactionManager.Asy_ReadRecord(txnContext, "segment_cnt", String.valueOf(event.getKeys()[i]), event.getCount_value()[i], null);
         }
-        if (!isReConstruct) {
-            LREvents.add(event);
-            if (enable_recovery_dependency) {
-                MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
-                this.updateRecoveryDependency(new int[]{event.getSegmentId()}, true);
-                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-            }
+        LREvents.add(event);
+        if (enable_recovery_dependency) {
+            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
+            this.updateRecoveryDependency(new int[]{event.getSegmentId()}, true);
+            MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
         }
-        return true;
     }
     protected void Determinant_REQUEST_CONSTRUCT(TollProcessingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
                 if (c.abortEvent.contains(event.getBid())){
+                    event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
             }
@@ -101,17 +84,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                     ,event.getSpeed_value()[0]
                     ,new CNT(event.getVid()));
         } else {
-            REQUEST_CONSTRUCT(event, txnContext, false);
-        }
-    }
-    protected void AsyncReConstructRequest() throws DatabaseException, InterruptedException {
-        for (Iterator<TollProcessingEvent> it = LREvents.iterator(); it.hasNext(); ) {
-            TollProcessingEvent event = it.next();
-            TxnContext txnContext = new TxnContext(thread_Id, this.fid, event.getBid());
-            boolean flag = REQUEST_CONSTRUCT(event, txnContext, true);
-            if(!flag){
-                it.remove();
-            }
+            REQUEST_CONSTRUCT(event, txnContext);
         }
     }
     protected void REQUEST_CORE() {
@@ -142,15 +115,19 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     }
     int TP_REQUEST_POST(TollProcessingEvent event) throws InterruptedException {
         //Nothing to determinant log
-        double spendValue = 0;
-        int cntValue = 0;
-        for (int i =0; i < NUM_ACCESSES; i++) {
-            spendValue = spendValue + event.spendValues[i];
-            cntValue = cntValue + event.cntValues[i];
+        if (event.txnContext.isAbort.get()) {
+            return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished.
+        } else {
+            double spendValue = 0;
+            int cntValue = 0;
+            for (int i =0; i < NUM_ACCESSES; i++) {
+                spendValue = spendValue + event.spendValues[i];
+                cntValue = cntValue + event.cntValues[i];
+            }
+            //Some UDF function
+            event.toll = spendValue / cntValue;
+            return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), event.toll);//the tuple is finished.
         }
-        //Some UDF function
-        event.toll = spendValue / cntValue;
-        return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), event.toll);//the tuple is finished.
     }
 
     protected void CommitOutsideDeterminant(long markerId) {

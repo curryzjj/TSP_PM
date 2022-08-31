@@ -138,9 +138,8 @@ public class CLRManager extends FTManager {
                     }
                     MeasureTools.Align_time_finish(System.nanoTime());
                     MeasureTools.State_load_begin(System.nanoTime());
-                    this.db.recoveryFromTargetSnapshot(lastSnapshotResult,recoveryIds);
+                    this.db.recoveryFromTargetSnapshot(lastSnapshotResult, recoveryIds);
                     MeasureTools.State_load_finish(System.nanoTime());
-                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
                     LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     synchronized (lock){
                         while (callRecovery.containsValue(NULL)){
@@ -148,7 +147,8 @@ public class CLRManager extends FTManager {
                         }
                     }
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
-                    this.db.getTxnProcessingEngine().cleanOperations();
+                    this.db.getTxnProcessingEngine().cleanAllOperations();
+                    this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
                     SOURCE_CONTROL.getInstance().config(PARTITION_NUM);
                     this.SnapshotOffset.clear();
                     this.g.getSink().clean_status();
@@ -161,14 +161,12 @@ public class CLRManager extends FTManager {
                     this.snapshotResults.put(snapshotResult.getCheckpointId(), snapshotResult);
                     MeasureTools.finishSnapshot(System.nanoTime());
                     MeasureTools.setSnapshotFileSize(snapshotResult.getSnapshotPaths());
-                    notifySnapshotComplete();
+                    notifyBoltComplete();
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Undo)){
                     LOG.info("CLRManager received all register and start undo");
-                    this.db.undoFromWAL();
-                    LOG.info("Undo log complete!");
-                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
-                    notifySnapshotComplete();
+                    this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
+                    notifyBoltComplete();
                     lock.notifyAll();
                 }
             }
@@ -191,7 +189,7 @@ public class CLRManager extends FTManager {
         db.cleanUndoLog(checkpointId);
         return true;
     }
-    public void notifySnapshotComplete() throws Exception {
+    public void notifyBoltComplete() throws Exception {
         for(int id: callFaultTolerance.keySet()){
             g.getExecutionNode(id).ackCommit();
         }
@@ -210,8 +208,6 @@ public class CLRManager extends FTManager {
     private boolean not_all_register(){
         return callFaultTolerance.containsValue(NULL);
     }
-
-
 
     private void callFaultTolerance_ini(){
         for (ExecutionNode e:g.getExecutionNodeArrayList()){

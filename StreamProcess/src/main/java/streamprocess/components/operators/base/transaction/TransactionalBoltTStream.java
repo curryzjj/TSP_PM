@@ -174,21 +174,6 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         }
         LOG.info("Align offset is  " + this.recoveryId);
     }
-    /**
-     * To register recovery when there is a failure(snapshot)
-     * @throws InterruptedException
-     */
-    protected void registerRecovery() throws InterruptedException {
-        this.lock=this.getContext().getRM().getLock();
-        this.getContext().getRM().boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Recovery);
-        synchronized (lock){
-            while (!isCommit){
-                LOG.debug(this.executor.getOP_full()+" is waiting for the Recovery");
-                lock.wait();
-            }
-        }
-        isCommit=false;
-    }
     public int getPartitionId(String key){
         Integer _key = Integer.valueOf(key);
         return _key / partition_delta;

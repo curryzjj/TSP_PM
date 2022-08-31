@@ -28,9 +28,7 @@ public class SOURCE_CONTROL {
     public void Wait_End(int thread_Id){
         try{
             end_barrier.await();
-        } catch (BrokenBarrierException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (BrokenBarrierException | InterruptedException e) {
             e.printStackTrace();
         }
     }

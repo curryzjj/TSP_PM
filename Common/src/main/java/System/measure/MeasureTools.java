@@ -104,6 +104,13 @@ public class MeasureTools {
         transaction_construction_time[threadId].addValue(transaction_construction_acc[threadId]);
         transaction_construction_acc[threadId] = 0;
     }
+    //Txn_Abort_Time
+    public static void Transaction_abort_begin(int threadId, long time) {
+        transaction_abort_begin[threadId] = time;
+    }
+    public static void Transaction_abort_finish(int threadId, long time) {
+        transaction_abort_time[threadId].addValue((time - transaction_abort_begin[threadId]) / 1E6);
+    }
     //FileSize Measure
     public static void setSnapshotFileSize(List<Path> paths){
         int i = 0;
@@ -229,7 +236,7 @@ public class MeasureTools {
             sb.append("\n" + percentile[i]+ " : " + totalTailLatency / Performance.Latency.size() + "\n");
         }
         FileSizeReport(fileWriter, sb);
-        RuntimeBreakdownReport(fileWriter, sb);
+        TotalRuntimeBreakdownReport(fileWriter, sb);
         if (enable_states_lost) {
             RecoveryBreakdownReport(fileWriter, sb);
         }
@@ -323,18 +330,20 @@ public class MeasureTools {
     }
     private static void RuntimeBreakdownReport(BufferedWriter fileWriter, StringBuilder sb) throws IOException {
         sb.append("\n");
-        fileWriter.write("thread_id\t WaitTime \t Input-Store\t Snapshot\t HelpLog \t UpStream \t Construction_time \t Txn_time \t Post_time \n");
+        fileWriter.write("thread_id\t WaitTime \t Input-Store\t Snapshot\t HelpLog \t UpStream \t Construction_time \t Txn_time \t Abort_time \t Post_time \n");
         sb.append("\n");
         double helpLog = 0;
         double upstreamBackupTime = 0;
         double transactionConstructionTime = 0;
         double transactionRunTime = 0;
+        double transactionAbortTime = 0;
         double transactionPostTime = 0;
         double inputStoreTime = 0 ;
         double snapshotTime = 0;
         if (FT == 1) {
             for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
                 String output = String.format("%d\t" +
+                                "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
@@ -351,6 +360,7 @@ public class MeasureTools {
                         , 0.0
                         , transaction_construction_time[threadId].getMean()
                         , transaction_run_time[threadId].getMean()
+                        , transaction_abort_time[threadId].getMean() - transaction_post_time[threadId].getMean()
                         , transaction_post_time[threadId].getMean()
                 );
                 inputStoreTime = input_store_time.getMean() + inputStoreTime;
@@ -358,12 +368,14 @@ public class MeasureTools {
                 helpLog = Wal_time.getMean() - transaction_post_time[threadId].getMean() + helpLog;
                 transactionConstructionTime = transaction_construction_time[threadId].getMean() + transactionConstructionTime;
                 transactionRunTime = transaction_run_time[threadId].getMean() + transactionRunTime;
+                transactionAbortTime = transaction_abort_time[threadId].getMean() - transaction_post_time[threadId].getMean() + transactionAbortTime;
                 transactionPostTime = transaction_post_time[threadId].getMean() + transactionPostTime;
                 fileWriter.write(output + "\n");
             }
         } else if (FT == 3 || FT == 4) {
             for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
                 String output = String.format("%d\t" +
+                                "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
@@ -380,6 +392,7 @@ public class MeasureTools {
                         , upstream_backup_time[threadId + 1].getMean()
                         , transaction_construction_time[threadId].getMean()
                         , transaction_run_time[threadId].getMean()
+                        , transaction_abort_time[threadId].getMean() - transaction_post_time[threadId].getMean()
                         , transaction_post_time[threadId].getMean() - upstream_backup_time[threadId + 1].getMean()
                 );
                 inputStoreTime = input_store_time.getMean() + inputStoreTime;
@@ -388,12 +401,14 @@ public class MeasureTools {
                 upstreamBackupTime = upstream_backup_time[threadId + 1].getMean() +  upstreamBackupTime;
                 transactionConstructionTime = transaction_construction_time[threadId].getMean() + transactionConstructionTime;
                 transactionRunTime = transaction_run_time[threadId].getMean() + transactionRunTime;
+                transactionAbortTime =transaction_abort_time[threadId].getMean() - transaction_post_time[threadId].getMean() + transactionAbortTime;
                 transactionPostTime = transaction_post_time[threadId].getMean() - upstream_backup_time[threadId + 1].getMean() + transactionPostTime;
                 fileWriter.write(output + "\n");
             }
         } else if (FT == 2){
             for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
                 String output = String.format("%d\t" +
+                                "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
@@ -410,18 +425,21 @@ public class MeasureTools {
                         , 0.0
                         , transaction_construction_time[threadId].getMean()
                         , transaction_run_time[threadId].getMean()
+                        , transaction_abort_time[threadId].getMean() - transaction_post_time[threadId].getMean()
                         , transaction_post_time[threadId].getMean()
                 );
                 inputStoreTime = input_store_time.getMean() + inputStoreTime;
                 snapshotTime = Snapshot_time.getMean() - transaction_post_time[threadId].getMean() + snapshotTime;
                 transactionConstructionTime = transaction_construction_time[threadId].getMean() + transactionConstructionTime;
                 transactionRunTime = transaction_run_time[threadId].getMean() + transactionRunTime;
+                transactionAbortTime = transaction_abort_time[threadId].getMean() - transaction_post_time[threadId].getMean() + transactionAbortTime;
                 transactionPostTime = transaction_post_time[threadId].getMean() + transactionPostTime;
                 fileWriter.write(output + "\n");
             }
         } else {
             for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
                 String output = String.format("%d\t" +
+                                "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
                                 "%-10.2f\t" +
@@ -438,17 +456,20 @@ public class MeasureTools {
                         , 0.0
                         , transaction_construction_time[threadId].getMean()
                         , transaction_run_time[threadId].getMean()
+                        , transaction_abort_time[threadId].getMean() - transaction_post_time[threadId].getMean()
                         , transaction_post_time[threadId].getMean()
                 );
                 transactionConstructionTime = transaction_construction_time[threadId].getMean() + transactionConstructionTime;
                 transactionRunTime = transaction_run_time[threadId].getMean() + transactionRunTime;
                 transactionPostTime = transaction_post_time[threadId].getMean() + transactionPostTime;
+                transactionAbortTime = transaction_abort_time[threadId].getMean() - transaction_post_time[threadId].getMean() + transactionAbortTime;
                 fileWriter.write(output + "\n");
             }
         }
         String output = String.format(
                 "%-10.2f\t" +
                 "%-10.2f\t" +
+                        "%-10.2f\t" +
                         "%-10.2f\t" +
                         "%-10.2f\t" +
                         "%-10.2f\t" +
@@ -462,9 +483,162 @@ public class MeasureTools {
                 , upstreamBackupTime / PARTITION_NUM
                 , transactionConstructionTime / PARTITION_NUM
                 , transactionRunTime / PARTITION_NUM
+                , transactionAbortTime / PARTITION_NUM
                 , transactionPostTime / PARTITION_NUM
         );
-        sb.append("thread_id\t WaitTime \t Input-Store\t Snapshot\t HelpLog \t UpStream \t Construction_time \t Txn_time \t Post_time \n");
+        sb.append("thread_id\t WaitTime \t Input-Store\t Snapshot\t HelpLog \t UpStream \t Construction_time \t Txn_time \t Abort_time \t Post_time \n");
+        sb.append(output);
+        fileWriter.write(output + "\n");
+    }
+    private static void TotalRuntimeBreakdownReport(BufferedWriter fileWriter, StringBuilder sb) throws IOException{
+        sb.append("\n");
+        fileWriter.write("thread_id \t Input-Store\t Snapshot\t HelpLog \t UpStream \t Construction_time \t Txn_time \t Abort_time \t Post_time \n");
+        sb.append("\n");
+        double helpLog = 0;
+        double upstreamBackupTime = 0;
+        double transactionConstructionTime = 0;
+        double transactionRunTime = 0;
+        double transactionAbortTime = 0;
+        double transactionPostTime = 0;
+        double inputStoreTime = 0 ;
+        double snapshotTime = 0;
+        if (FT == 1) {
+            for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
+                String output = String.format("%d\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t"
+                        , threadId
+                        , input_store_time.getSum()
+                        , Snapshot_time.getSum() - transaction_post_time[threadId].getSum()
+                        , Wal_time.getSum() - transaction_post_time[threadId].getSum()
+                        , 0.0
+                        , transaction_construction_time[threadId].getSum()
+                        , transaction_run_time[threadId].getSum()
+                        , transaction_abort_time[threadId].getSum() - transaction_post_time[threadId].getSum()
+                        , transaction_post_time[threadId].getSum()
+                );
+                inputStoreTime = input_store_time.getSum() + inputStoreTime;
+                snapshotTime = Snapshot_time.getSum() - transaction_post_time[threadId].getSum() + snapshotTime;
+                helpLog = Wal_time.getSum() - transaction_post_time[threadId].getSum() + helpLog;
+                transactionConstructionTime = transaction_construction_time[threadId].getSum() + transactionConstructionTime;
+                transactionRunTime = transaction_run_time[threadId].getSum() + transactionRunTime;
+                transactionAbortTime = transaction_abort_time[threadId].getSum() - transaction_post_time[threadId].getSum() + transactionAbortTime;
+                transactionPostTime = transaction_post_time[threadId].getSum() + transactionPostTime;
+                fileWriter.write(output + "\n");
+            }
+        } else if (FT == 3 || FT == 4) {
+            for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
+                String output = String.format("%d\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t"
+                        , threadId
+                        , input_store_time.getSum()
+                        , Snapshot_time.getSum() - transaction_post_time[threadId].getSum()
+                        , Help_Log[threadId].getSum()
+                        , upstream_backup_time[threadId + 1].getSum()
+                        , transaction_construction_time[threadId].getSum()
+                        , transaction_run_time[threadId].getSum()
+                        , transaction_abort_time[threadId].getSum() - transaction_post_time[threadId].getSum()
+                        , transaction_post_time[threadId].getSum() - upstream_backup_time[threadId + 1].getSum()
+                );
+                inputStoreTime = input_store_time.getSum() + inputStoreTime;
+                snapshotTime = Snapshot_time.getSum() - transaction_post_time[threadId].getSum() + snapshotTime;
+                helpLog = Help_Log[threadId].getSum() + helpLog;
+                upstreamBackupTime = upstream_backup_time[threadId + 1].getSum() +  upstreamBackupTime;
+                transactionConstructionTime = transaction_construction_time[threadId].getSum() + transactionConstructionTime;
+                transactionRunTime = transaction_run_time[threadId].getSum() + transactionRunTime;
+                transactionAbortTime =transaction_abort_time[threadId].getSum() - transaction_post_time[threadId].getSum() + transactionAbortTime;
+                transactionPostTime = transaction_post_time[threadId].getSum() - upstream_backup_time[threadId + 1].getSum() + transactionPostTime;
+                fileWriter.write(output + "\n");
+            }
+        } else if (FT == 2){
+            for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
+                String output = String.format("%d\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t"
+                        , threadId
+                        , input_store_time.getSum()
+                        , Snapshot_time.getSum() - transaction_post_time[threadId].getSum()
+                        , 0.0
+                        , 0.0
+                        , transaction_construction_time[threadId].getSum()
+                        , transaction_run_time[threadId].getSum()
+                        , transaction_abort_time[threadId].getSum() - transaction_post_time[threadId].getSum()
+                        , transaction_post_time[threadId].getSum()
+                );
+                inputStoreTime = input_store_time.getSum() + inputStoreTime;
+                snapshotTime = Snapshot_time.getSum() - transaction_post_time[threadId].getSum() + snapshotTime;
+                transactionConstructionTime = transaction_construction_time[threadId].getSum() + transactionConstructionTime;
+                transactionRunTime = transaction_run_time[threadId].getSum() + transactionRunTime;
+                transactionAbortTime = transaction_abort_time[threadId].getSum() - transaction_post_time[threadId].getSum() + transactionAbortTime;
+                transactionPostTime = transaction_post_time[threadId].getSum() + transactionPostTime;
+                fileWriter.write(output + "\n");
+            }
+        } else {
+            for (int threadId = 0; threadId < PARTITION_NUM; threadId ++){
+                String output = String.format("%d\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t" +
+                                "%-10.2f\t"
+                        , threadId
+                        , 0.0
+                        , 0.0
+                        , 0.0
+                        , 0.0
+                        , transaction_construction_time[threadId].getSum()
+                        , transaction_run_time[threadId].getSum()
+                        , transaction_abort_time[threadId].getSum() - transaction_post_time[threadId].getSum()
+                        , transaction_post_time[threadId].getSum()
+                );
+                transactionConstructionTime = transaction_construction_time[threadId].getSum() + transactionConstructionTime;
+                transactionRunTime = transaction_run_time[threadId].getSum() + transactionRunTime;
+                transactionPostTime = transaction_post_time[threadId].getSum() + transactionPostTime;
+                transactionAbortTime = transaction_abort_time[threadId].getSum() - transaction_post_time[threadId].getSum() + transactionAbortTime;
+                fileWriter.write(output + "\n");
+            }
+        }
+        String output = String.format(
+                        "%-10.2f\t" +
+                        "%-10.2f\t" +
+                        "%-10.2f\t" +
+                        "%-10.2f\t" +
+                        "%-10.2f\t" +
+                        "%-10.2f\t" +
+                        "%-10.2f\t" +
+                        "%-10.2f\t"
+                , inputStoreTime / PARTITION_NUM / 1E3
+                , snapshotTime / PARTITION_NUM / 1E3
+                , helpLog / PARTITION_NUM / 1E3
+                , upstreamBackupTime / PARTITION_NUM / 1E3
+                , transactionConstructionTime / PARTITION_NUM / 1E3
+                , transactionRunTime / PARTITION_NUM / 1E3
+                , transactionAbortTime / PARTITION_NUM / 1E3
+                , transactionPostTime / PARTITION_NUM / 1E3
+        );
+        sb.append("Input-Store\t Snapshot\t HelpLog \t UpStream \t Construction_time \t Txn_time \t Abort_time \t Post_time \n");
         sb.append(output);
         fileWriter.write(output + "\n");
     }
@@ -477,11 +651,11 @@ public class MeasureTools {
                             "%-10.2f\t" +
                             "%-10.2f\t" +
                             "%-10.2f\t"
-                    , input_load_time.getMean()
-                    , state_load_time.getMean()
+                    , input_load_time.getSum()
+                    , state_load_time.getSum()
                     , 0.0
-                    , RedoLog_time.getMean()
-                    , ReExecute_time.getMean()
+                    , RedoLog_time.getSum()
+                    , ReExecute_time.getSum()
             );
             fileWriter.write(output + "\n");
         } else if (FT == 2){
@@ -491,11 +665,11 @@ public class MeasureTools {
                             "%-10.2f\t" +
                             "%-10.2f\t" +
                             "%-10.2f\t"
-                    , input_load_time.getMean()
-                    , state_load_time.getMean()
+                    , input_load_time.getSum() / 1E3
+                    , state_load_time.getSum() / 1E3
                     , 0.0
                     , 0.0
-                    , ReExecute_time.getMean()
+                    , ReExecute_time.getSum() / 1E3
             );
         } else {
             output = String.format(
@@ -504,11 +678,11 @@ public class MeasureTools {
                             "%-10.2f\t" +
                             "%-10.2f\t" +
                             "%-10.2f\t"
-                    , input_load_time.getMean()
-                    , state_load_time.getMean()
-                    , align_time.getMean()
+                    , input_load_time.getSum() / 1E3
+                    , state_load_time.getSum() / 1E3
+                    , align_time.getSum() / 1E3
                     , 0.0
-                    , ReExecute_time.getMean()
+                    , ReExecute_time.getSum() / 1E3
             );
         }
         fileWriter.write("\n Input-load\t State-load\t Align \t RedoLog \t ReExecute \n");

@@ -14,8 +14,6 @@ import java.util.Objects;
  * A wrapper class for an individual d_record. Simply stores a list of DataBoxes.
  */
 public class SchemaRecord implements Serializable {
-    public boolean is_visible;
-    public RecordSchema schema_ptr;
     private RowID id;
     private volatile List<DataBox> values;
     private final DataBox single_value;//only used by TSTREAM.
@@ -50,13 +48,6 @@ public class SchemaRecord implements Serializable {
      */
     public String GetPrimaryKey() {
         return values.get(0).getString();
-    }
-    public String GetSecondaryKey(int i) {
-        return values.get(i).getString();
-    }
-    public void CopyFrom(SchemaRecord src_record) {
-        this.id = src_record.id;
-        this.values = new ArrayList<>(src_record.values);
     }
     public void updateValues(List<DataBox> values) {
         this.values = Utils.memcpy(values);

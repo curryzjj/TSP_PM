@@ -147,9 +147,9 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
                 BUFFER_PROCESS();
                 break;
             case 1:
-                this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS_FT();
+                MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
+                transactionSuccess = this.TXN_PROCESS_FT();
+                MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
             case 2:
                 if (this.executor.isFirst_executor()) {
@@ -196,9 +196,9 @@ public class TPBolt_TStream_CLR extends TPBolt_TStream{
                 BUFFER_PROCESS();
                 break;
             case 1:
-                this.SyncRegisterUndo();
-                this.AsyncReConstructRequest();
-                transactionSuccess=this.TXN_PROCESS();
+                MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
+                transactionSuccess = this.TXN_PROCESS();
+                MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
             case 2:
                 if (this.executor.isFirst_executor()) {

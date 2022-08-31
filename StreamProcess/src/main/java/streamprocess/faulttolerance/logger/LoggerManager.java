@@ -7,7 +7,6 @@ import System.FileSystem.Path;
 import System.measure.MeasureTools;
 import System.util.Configuration;
 import System.util.OsUtils;
-import UserApplications.CONTROL;
 import UserApplications.SOURCE_CONTROL;
 import engine.Database;
 import engine.log.LogResult;
@@ -152,10 +151,8 @@ public class LoggerManager extends FTManager {
                     return;
                 }
                 if(callLog.containsValue(Undo)){
-                    LOG.debug("LoggerManager received all register and start Undo");
-                    this.db.undoFromWAL();
-                    LOG.debug("Undo log complete!");
-                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
+                    LOG.info("LoggerManager received all register and start Undo");
+                    this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
                     notifyLogComplete();
                     lock.notifyAll();
                 }else if(callLog.containsValue(Recovery)){
@@ -188,7 +185,8 @@ public class LoggerManager extends FTManager {
                     }
                     this.SnapshotOffset = new ArrayDeque<>();
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
-                    this.db.getTxnProcessingEngine().cleanOperations();
+                    this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
+                    this.db.getTxnProcessingEngine().cleanAllOperations();
                     SOURCE_CONTROL.getInstance().config(PARTITION_NUM);
                     notifyAllComplete();
                     lock.notifyAll();

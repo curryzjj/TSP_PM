@@ -3,7 +3,7 @@ function ResetParameters() {
   app="GS_txn"
   FTOptions=0
   failureModel=2
-  failureFrequency=4
+  failureFrequency=6
   tthreads=16
   snapshot=2
 
@@ -89,7 +89,7 @@ function runFTStream() {
 function baselineEvaluation() {
   ResetParameters
   RATIO_OF_READ=500
-  for FTOptions in 1 2 3 4
+  for FTOptions in 1
       do runFTStream
       done
   ResetParameters

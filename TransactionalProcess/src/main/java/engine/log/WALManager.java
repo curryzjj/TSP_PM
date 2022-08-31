@@ -2,7 +2,7 @@ package engine.log;
 import engine.Database;
 import engine.Exception.DatabaseException;
 import engine.log.LogStream.*;
-import engine.transaction.common.MyList;
+import engine.transaction.common.OperationChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,22 +24,20 @@ public class WALManager {
     private long globalLSN;
     public class LogRecords_in_range{
         //<partitionId,<markId,Vector>>
-        public ConcurrentHashMap<Integer,ConcurrentHashMap<Long,Vector<LogRecord>>> holder_by_range = new ConcurrentHashMap<>();
+        public ConcurrentHashMap<Integer,ConcurrentHashMap<Long, Vector<LogRecord>>> holder_by_range = new ConcurrentHashMap<>();
         public ConcurrentHashMap<String,Boolean> hasKey;
         public LogRecords_in_range(Integer num_op){
             int i;
-            for (i=0;i<num_op;i++){
-                ConcurrentHashMap<Long,Vector<LogRecord>> logRecords = new ConcurrentHashMap<>();
-                holder_by_range.put(i,logRecords);
+            for (i = 0; i < num_op; i++){
+                ConcurrentHashMap<Long, Vector<LogRecord>> logRecords = new ConcurrentHashMap<>();
+                holder_by_range.put(i, logRecords);
                 this.hasKey = new ConcurrentHashMap<>();
             }
         }
-        public void addUndoLog(long g) {
+        public void addUndoLog(long g, int threadId) {
             globalLSN = g;
             hasKey.clear();
-            for (int i:holder_by_range.keySet()){
-                holder_by_range.get(i).putIfAbsent(g,new Vector<>());
-            }
+            holder_by_range.get(threadId).putIfAbsent(g, new Vector<>());
         }
     }
     public WALManager(int partitionNum){
@@ -64,12 +62,12 @@ public class WALManager {
 
     /**
      * called by the {@link engine.transaction.TxnProcessingEngine} to add logRecord
-     * @param myList
+     * @param operationChain
      */
-    public void addLogRecord(MyList myList){
-        if(!holder_by_tableName.get(myList.getTable_name()).hasKey.containsKey(myList.getPrimaryKey())){
-            holder_by_tableName.get(myList.getTable_name()).holder_by_range.get(myList.getPartitionId()).get(globalLSN).add(myList.getLogRecord());
-            holder_by_tableName.get(myList.getTable_name()).hasKey.put(myList.getPrimaryKey(), true);
+    public void addLogRecord(OperationChain operationChain){
+        if(!holder_by_tableName.get(operationChain.getTable_name()).hasKey.containsKey(operationChain.getPrimaryKey())){
+            holder_by_tableName.get(operationChain.getTable_name()).holder_by_range.get(operationChain.getPartitionId()).get(globalLSN).add(operationChain.getLogRecord());
+            holder_by_tableName.get(operationChain.getTable_name()).hasKey.put(operationChain.getPrimaryKey(), true);
         }
     }
     public UpdateLogWrite asyncCommitLog(long globalLSN, long timestamp, LogStreamFactory logStreamFactory) throws IOException {
@@ -81,16 +79,14 @@ public class WALManager {
             return new UpdateLogAsyncWrite(holder_by_tableName,logStreamWithResultProvider,timestamp,globalLSN);
         }
     }
-    public boolean undoLog(Database db,List<Integer> rangeId) throws IOException, DatabaseException {
+    public boolean undoLog(Database db) throws IOException, DatabaseException {
         for(WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
             for(Map.Entry holder_by_range:logRecordsInRange.holder_by_range.entrySet()){
-                if(!rangeId.contains(holder_by_range.getKey())){
-                    Vector<LogRecord> logRecords = ((ConcurrentHashMap<Long,Vector<LogRecord>>) holder_by_range.getValue()).get(globalLSN);
-                    Iterator<LogRecord> logRecordIterator = logRecords.iterator();
-                    while (logRecordIterator.hasNext()){
-                        LogRecord logRecord =logRecordIterator.next();
-                        db.InsertRecord(logRecord.getTableName(), logRecord.getCopyTableRecord());
-                    }
+                Vector<LogRecord> logRecords = ((ConcurrentHashMap<Long,Vector<LogRecord>>) holder_by_range.getValue()).get(globalLSN);
+                Iterator<LogRecord> logRecordIterator = logRecords.iterator();
+                while (logRecordIterator.hasNext()){
+                    LogRecord logRecord = logRecordIterator.next();
+                    db.InsertRecord(logRecord.getTableName(), logRecord.getCopyTableRecord());
                 }
             }
         }
@@ -129,9 +125,9 @@ public class WALManager {
         }
         return true;
     }
-    public void addLogForBatch(long markerId) {
+    public void addLogForBatch(long markerId, int threadId) {
         for(WALManager.LogRecords_in_range logRecordsInRange:holder_by_tableName.values()){
-           logRecordsInRange.addUndoLog(markerId);
+           logRecordsInRange.addUndoLog(markerId, threadId);
         }
     }
     public void close(){

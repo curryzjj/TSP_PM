@@ -22,9 +22,9 @@ public class ShareTable extends BaseTable {
     public ShareTable(RecordSchema schema, String table_Id,boolean is_thread_safe) {
         super(schema, table_Id);
         if(is_thread_safe){
-            primary_index_=new HashTableIndex();
+            primary_index_ = new HashTableIndex();
         }else{
-            primary_index_=new StdUnorderedIndex();//not know why
+            primary_index_ = new StdUnorderedIndex();//not know why
         }
     }
 

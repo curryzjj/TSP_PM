@@ -7,7 +7,6 @@ import System.FileSystem.Path;
 import System.measure.MeasureTools;
 import System.util.Configuration;
 import System.util.OsUtils;
-import UserApplications.CONTROL;
 import UserApplications.SOURCE_CONTROL;
 import engine.Database;
 import engine.shapshot.SnapshotResult;
@@ -137,7 +136,7 @@ public class CheckpointManager extends FTManager {
                     MeasureTools.State_load_begin(System.nanoTime());
                     this.db.reloadStateFromSnapshot(lastSnapshotResult);
                     MeasureTools.State_load_finish(System.nanoTime());
-                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
+                    this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
                     LOG.info("Reload state at " + lastSnapshotResult.getCheckpointId() + " complete!");
                     synchronized (lock){
                         while (callRecovery.containsValue(NULL)){
@@ -145,7 +144,7 @@ public class CheckpointManager extends FTManager {
                         }
                     }
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
-                    this.db.getTxnProcessingEngine().cleanOperations();
+                    this.db.getTxnProcessingEngine().cleanAllOperations();
                     SOURCE_CONTROL.getInstance().config(PARTITION_NUM);
                     this.SnapshotOffset.clear();
                     this.g.getSink().clean_status();
@@ -153,10 +152,8 @@ public class CheckpointManager extends FTManager {
                     LOG.info("Recovery complete!");
                     lock.notifyAll();
                 }else if(callSnapshot.containsValue(Undo)){
-                    LOG.debug("CheckpointManager received all register and start undo");
-                    this.db.undoFromWAL();
-                    LOG.info("Undo log complete!");
-                    this.db.getTxnProcessingEngine().isTransactionAbort = false;
+                    LOG.info("CheckpointManager received all register and start undo");
+                    this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
                     notifyBoltComplete();
                     lock.notifyAll();
                 } else if(callSnapshot.containsValue(Snapshot)){
