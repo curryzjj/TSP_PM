@@ -23,11 +23,11 @@ function ResetParameters() {
   NUM_EVENTS=16000000
   ZIP_SKEW=400
   RATIO_OF_READ=500
-  RATIO_OF_ABORT=0
-  RATIO_OF_DEPENDENCY=1000
+  RATIO_OF_ABORT=100
+  RATIO_OF_DEPENDENCY=200
   complexity=0
   NUM_ACCESSES=2
-  partition_num_per_txn=2
+  partition_num_per_txn=8
   partition_num=16
 }
 function runFTStream() {

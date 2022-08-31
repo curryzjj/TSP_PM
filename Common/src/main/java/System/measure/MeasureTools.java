@@ -651,11 +651,11 @@ public class MeasureTools {
                             "%-10.2f\t" +
                             "%-10.2f\t" +
                             "%-10.2f\t"
-                    , input_load_time.getMean()
-                    , state_load_time.getMean()
+                    , input_load_time.getSum()
+                    , state_load_time.getSum()
                     , 0.0
-                    , RedoLog_time.getMean()
-                    , ReExecute_time.getMean()
+                    , RedoLog_time.getSum()
+                    , ReExecute_time.getSum()
             );
             fileWriter.write(output + "\n");
         } else if (FT == 2){
