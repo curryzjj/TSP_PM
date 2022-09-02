@@ -16,7 +16,6 @@ import streamprocess.execution.runtime.threads.boltThread;
 import streamprocess.execution.runtime.threads.executorThread;
 import streamprocess.execution.runtime.threads.spoutThread;
 import streamprocess.faulttolerance.FTManager;
-import streamprocess.faulttolerance.recovery.RecoveryManager;
 import streamprocess.optimization.OptimizationManager;
 
 import java.io.IOException;
@@ -58,16 +57,14 @@ public class ExecutionManager {
      * All executors have to sync_ratio for OM to start, so it's safe to do initialization here. E.g., initialize database.
      */
     public void distributeTasks(Configuration conf, ExecutionPlan plan, CountDownLatch latch, boolean benchmark,
-                                 boolean profile, Database db, Platform p, FTManager FTM, RecoveryManager RM, EventGenerator eventGenerator) throws UnhandledCaseException, IOException {
+                                 boolean profile, Database db, Platform p, FTManager FTM, EventGenerator eventGenerator) throws UnhandledCaseException, IOException {
         assert plan !=null;
         loadTargetHz =(int) conf.getDouble("targetHz",10000000);
         LOG.info("Finally, targetHZ set to:" + loadTargetHz);
         timeSliceLengthMs = conf.getInt("timeSliceLengthMs");
         g.build_inputSchedule();
         clock = new Clock(conf.getDouble("time_Interval", 1));
-        if(enable_checkpoint ||enable_wal || enable_clr){
-            this.startFaultTolerance(RM,FTM);
-        }
+        this.startFaultTolerance(FTM);
         if (enable_shared_state){
             HashMap<Integer, List<Integer>> stage_map = new HashMap<>();
             for (ExecutionNode e : g.getExecutionNodeArrayList()) {
@@ -95,10 +92,10 @@ public class ExecutionManager {
         executorThread thread = null;
         for (ExecutionNode e : g.getExecutionNodeArrayList()) {
             switch(e.operator.type){
-                case spoutType:thread = launchSpout_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM,RM,eventGenerator),conf,plan.toSocket(e.getExecutorID()),latch);
+                case spoutType:thread = launchSpout_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM,eventGenerator),conf,plan.toSocket(e.getExecutorID()),latch);
                 break;
                 case boltType:
-                case sinkType:thread = launchBolt_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM,RM,eventGenerator),conf,plan.toSocket(e.getExecutorID()),latch);
+                case sinkType:thread = launchBolt_SingleCore(e,new TopologyContext(g,db,plan,e,ThreadMap,HPCMonotor,FTM,eventGenerator),conf,plan.toSocket(e.getExecutorID()),latch);
                 break;
                 case virtualType:
                     LOG.info("Won't launch virtual ground");
@@ -172,7 +169,7 @@ public class ExecutionManager {
     public executorThread getSpoutThread(){
         return ThreadMap.get(g.getSpoutThread());
     }
-    public void startFaultTolerance(RecoveryManager RM,FTManager FTM) throws IOException {
+    public void startFaultTolerance(FTManager FTM) throws IOException {
         this.FTM = FTM;
         FTM.initialize(false);
         FTManagerThread = new Thread(FTM);
@@ -194,5 +191,8 @@ public class ExecutionManager {
         }else if(enable_parallel && enable_snapshot){
             snapshotExecutor.shutdown();
         }
+    }
+    public void dumpResultDatabase() throws IOException {
+        this.g.topology.db.dumpResultDatabase();
     }
 }

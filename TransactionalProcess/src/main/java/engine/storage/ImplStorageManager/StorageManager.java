@@ -1,7 +1,9 @@
 package engine.storage.ImplStorageManager;
 
+import System.tools.SortHelper;
 import System.tools.StringHelper;
 import System.util.Configuration;
+import System.util.OsUtils;
 import engine.Exception.DatabaseException;
 import engine.Meta.RegisteredKeyValueStateBackendMetaInfo;
 import engine.Meta.RegisteredStateMetaInfoBase;
@@ -20,25 +22,38 @@ import utils.ResourceGuard;
 import utils.TransactionalProcessConstants;
 import utils.TransactionalProcessConstants.DataBoxTypes;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 
+import static java.nio.file.StandardOpenOption.APPEND;
 import static utils.TransactionalProcessConstants.SnapshotExecutionType.SYNCHRONOUS;
 
 public class StorageManager extends AbstractStorageManager {
     private KeyGroupRange keyGroupRange;
     private final InMemorySnapshotStrategyBase<?> checkpointSnapshotStrategy;
     protected CloseableRegistry cancelStreamRegistry;
-    private final LinkedHashMap<String,InMemoryKvStateInfo> kvStateInformation;
+    private final LinkedHashMap<String, InMemoryKvStateInfo> kvStateInformation;
+    private String application;
+    private int FTOptions;
+    private int FailureTimes;
+    private String FileDirectory;
     public StorageManager(CloseableRegistry cancelStreamRegistry, Configuration config){
         kvStateInformation=new LinkedHashMap<>();
         tables=new ConcurrentHashMap<>();
         this.cancelStreamRegistry=cancelStreamRegistry;
         this.checkpointSnapshotStrategy=initializeCheckpointStrategies(config);
+        this.FileDirectory = config.getString("metrics.output");
+        this.application = config.getString("application");
+        this.FTOptions =  config.getInt("FTOptions");
+        this.FailureTimes =  config.getInt("failureFrequency");
     }
 
     public BaseTable getTable(String tableName) throws DatabaseException {
@@ -168,6 +183,30 @@ public class StorageManager extends AbstractStorageManager {
                 SYNCHRONOUS,
                 cancelStreamRegistry
         ).parallelSnapshot(checkpointId, timestamp, streamFactory, checkpointOptions);
+    }
+
+    @Override
+    public void dumpDataBase() throws IOException {
+        String filePath = this.FileDirectory + OsUtils.osWrapperPostFix("Database")
+                + OsUtils.osWrapperPostFix(this.application)
+                + OsUtils.osWrapperPostFix(String.valueOf(this.FTOptions))
+                + OsUtils.osWrapperPostFix(String.valueOf(this.FailureTimes));
+        File file = new File(filePath);
+        file.mkdirs();
+        if (file.exists())
+            file.delete();
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        BufferedWriter fileWriter = Files.newBufferedWriter(Paths.get(file.getPath()), APPEND);
+        ArrayList<String> tableNames = SortHelper.sortString(this.tables.keySet());
+        for (String tableName: tableNames) {
+            this.tables.get(tableName).DumpRecord(fileWriter);
+        }
+        fileWriter.flush();
+        fileWriter.close();
     }
 
 }

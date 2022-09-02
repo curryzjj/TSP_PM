@@ -2,6 +2,7 @@ package applications;
 
 import System.Platform.Platform;
 import System.measure.MeasureTools;
+import System.tools.PrecisionComputation;
 import System.util.Configuration;
 import System.util.OsUtils;
 import UserApplications.CONTROL;
@@ -68,6 +69,7 @@ public class  AppRunner extends baseRunner {
         //Set the fault tolerance mechanisms
         switch (config.getInt("FTOptions")){
             case 0:
+                CONTROL.enable_undo_log = true;
                 break;
             case 1:
                 CONTROL.enable_wal = true;
@@ -174,10 +176,9 @@ public class  AppRunner extends baseRunner {
         Thread.sleep((long) (3 * 1E3 * 1));
         submitter.getOM().join();
         try {
+            submitter.getOM().getEM().closeFTM();
+            submitter.getOM().getEM().dumpResultDatabase();
             final_topology.db.close();
-            if(enable_wal|| enable_checkpoint ||enable_clr){
-                submitter.getOM().getEM().closeFTM();
-            }
             submitter.getOM().getEM().exit();
         } catch (IOException e) {
             e.printStackTrace();
@@ -227,6 +228,9 @@ public class  AppRunner extends baseRunner {
                 config.getInt("failureModel"),
                 config.getInt("failureFrequency"),
                 config.getInt("FTOptions"));
+        double precision = PrecisionComputation.precisionComputation(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
+        System.out.println(precision);
+        MeasureTools.setPrecision(precision);
         MeasureTools.METRICS_REPORT(directory);
     }
     public static void main(String[] args) throws UnhandledCaseException, InterruptedException, IOException {

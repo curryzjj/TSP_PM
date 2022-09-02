@@ -60,4 +60,5 @@ public abstract class AbstractStorageManager {
                                                                                           long timestamp,
                                                                                           @Nonnull CheckpointStreamFactory streamFactory,
                                                                                           @Nonnull CheckpointOptions checkpointOptions) throws Exception;
+    public abstract void dumpDataBase() throws IOException;
 }

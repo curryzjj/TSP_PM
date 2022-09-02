@@ -29,7 +29,7 @@ public final class Serialize {
         target.write(record);
     }
     public static byte[] serializeKey(){
-return null;
+        return null;
     }
 
     public static Object cloneObject(Object o) throws IOException, ClassNotFoundException {

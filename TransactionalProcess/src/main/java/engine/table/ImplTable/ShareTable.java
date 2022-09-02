@@ -12,6 +12,7 @@ import engine.table.tableRecords.TableRecord;
 import engine.table.tableRecords.TableRecords;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
@@ -77,6 +78,11 @@ public class ShareTable extends BaseTable {
     @Override
     public Set getKey() {
         return primary_index_.getKeys();
+    }
+
+    @Override
+    public void DumpRecord(BufferedWriter bufferedWriter) throws IOException {
+        this.primary_index_.DumpRecords(bufferedWriter);
     }
 
 }

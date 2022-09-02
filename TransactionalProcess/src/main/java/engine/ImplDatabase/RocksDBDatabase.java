@@ -111,4 +111,9 @@ public class RocksDBDatabase extends Database {
     public void setWalPath(String filename) {
 
     }
+
+    @Override
+    public void dumpResultDatabase() throws IOException {
+
+    }
 }

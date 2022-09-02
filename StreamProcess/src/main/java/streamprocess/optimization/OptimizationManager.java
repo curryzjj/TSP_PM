@@ -12,11 +12,11 @@ import streamprocess.components.topology.Topology;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionManager;
 import streamprocess.execution.ExecutionPlan;
+import streamprocess.faulttolerance.BaseManager;
 import streamprocess.faulttolerance.FTManager;
 import streamprocess.faulttolerance.checkpoint.CheckpointManager;
 import streamprocess.faulttolerance.clr.CLRManager;
 import streamprocess.faulttolerance.logger.LoggerManager;
-import streamprocess.faulttolerance.recovery.RecoveryManager;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -38,7 +38,6 @@ public class OptimizationManager extends Thread {
     private ExecutionPlan executionPlan;
     private ExecutionManager EM;
     private FTManager FTM;
-    private RecoveryManager RM;
     private EventGenerator eventGenerator;
     public CountDownLatch latch;
     private long profiling_gaps = 10000;//10 seconds.
@@ -66,12 +65,14 @@ public class OptimizationManager extends Thread {
             FTM = new LoggerManager(g,conf,db);
         }else if(enable_clr){
             FTM = new CLRManager(g,conf,db);
+        }else {
+            FTM = new BaseManager(g,conf,db);
         }
         eventGenerator = new EventGenerator(conf, latch);
         eventGenerator.start();
         executionPlan = new ExecutionPlan(null,null);
         executionPlan.setProfile();
-        EM.distributeTasks(conf, executionPlan, latch,false,false, db, p, FTM, RM, eventGenerator);
+        EM.distributeTasks(conf, executionPlan, latch,false,false, db, p, FTM, eventGenerator);
         final String dumpLocks = AffinityLock.dumpLocks();
         return executionPlan;
     }

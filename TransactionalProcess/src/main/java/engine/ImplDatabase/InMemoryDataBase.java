@@ -158,4 +158,9 @@ public class InMemoryDataBase extends Database {
             dir.mkdirs();
         }
     }
+
+    @Override
+    public void dumpResultDatabase() throws IOException {
+        this.storageManager.dumpDataBase();
+    }
 }

@@ -64,7 +64,7 @@ public class UpdateLogAsyncWrite implements UpdateLogWrite {
     }
     private void writeLogRecord(DataOutputView outputView,LogRecord logRecord) throws IOException {
         if (logRecord.getUpdateTableRecord()!=null){
-            String str=logRecord.toSerializableString();
+            String str = logRecord.toSerializableString();
             outputView.writeInt(str.getBytes(StandardCharsets.UTF_8).length);
             outputView.write(str.getBytes(StandardCharsets.UTF_8));
         }

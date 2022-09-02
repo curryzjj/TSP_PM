@@ -5,7 +5,9 @@ import engine.table.stats.TableStats;
 import engine.table.tableRecords.TableRecord;
 import engine.table.tableRecords.TableRecords;
 
+import java.io.BufferedWriter;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,6 +30,8 @@ public abstract class BaseTable implements ITable {
     public abstract Iterator<String> keyIterator();
     public abstract int keySize();
     public abstract Set getKey();
+
+    public abstract void DumpRecord(BufferedWriter bufferedWriter) throws IOException;
 
     public RecordSchema getSchema() {
         return schema;

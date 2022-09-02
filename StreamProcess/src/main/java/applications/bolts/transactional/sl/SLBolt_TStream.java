@@ -251,7 +251,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                         outsideDeterminant.setOutSideEvent(event.toString());
                         String[] keys;
                         if(event instanceof TransactionEvent){
-                            keys = new String[]{((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent)event).getSourceAccountId(),
+                            keys = new String[]{((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent)event).getSourceBookEntryId(),
                                     ((TransactionEvent)event).getTargetAccountId(), ((TransactionEvent)event).getTargetBookEntryId()};
                             transactionResult = ((TransactionEvent) event).transaction_result;
                             outsideDeterminant.setAckValues(((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent) event).src_account_value.getRecord());
