@@ -447,7 +447,7 @@ public class TxnProcessingEngine {
             SchemaRecord tempo_record;
             tempo_record = new SchemaRecord(values);//tempo record
             //apply functions.
-            tempo_record.getValues().get(1).incLong(sourceBalance, operation.function.delta_long);//compute.
+            tempo_record.getValues().get(1).incLong(operation.function.delta_long);//compute.
             operation.d_record.updateMultiValues(operation.bid, tempo_record);
             operation.success[0] = true;
             CONTROL.randomDelay();
@@ -473,7 +473,7 @@ public class TxnProcessingEngine {
             SchemaRecord tempo_record;
             tempo_record = new SchemaRecord(values);//tempo record
             //apply function.
-            tempo_record.getValues().get(1).decLong(sourceBalance, operation.function.delta_long);//compute.
+            tempo_record.getValues().get(1).decLong(operation.function.delta_long);//compute.
             operation.d_record.updateMultiValues(operation.bid, tempo_record);
             operation.success[0] = true;
             CONTROL.randomDelay();
