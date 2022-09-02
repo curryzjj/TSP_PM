@@ -121,11 +121,14 @@ public class TxnProcessingEngine {
     public void cleanOperations(int threadId) {
         for (Holder_in_range holder_in_range:holder_by_stage.values()){
             Holder holder = holder_in_range.rangeMap.get(threadId);
-            for (OperationChain operationChain :holder.holder_v1.values()){
+            for (OperationChain<Operation> operationChain :holder.holder_v1.values()){
                 operationChain.isExecuted = false;
                 operationChain.needAbortHandling.compareAndSet(true, false);
-                operationChain.clear();
                 operationChain.failedOperations.clear();
+                if (operationChain.size() != 0) {
+                    operationChain.first().s_record.clean_map();
+                    operationChain.clear();
+                }
             }
         }
     }
@@ -225,12 +228,7 @@ public class TxnProcessingEngine {
                 this.walManager.addLogRecord(operation_chain);
             }
         }
-        boolean cleanVersion = true;
         for (Operation operation:operation_chain) {
-            if (cleanVersion) {
-                operation.s_record.clean_map();
-                cleanVersion = false;
-            }
             if (operation.operationStateType.equals(MetaTypes.OperationStateType.EXECUTED)
                     || operation.operationStateType.equals(MetaTypes.OperationStateType.ABORTED)
                     || operation.isFailed) {
