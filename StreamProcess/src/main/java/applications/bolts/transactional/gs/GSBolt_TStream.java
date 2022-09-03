@@ -110,9 +110,9 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     protected void CommitOutsideDeterminant(long markId) throws DatabaseException, InterruptedException {
         if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
             for (CausalService c:this.causalService.values()) {
-                for (OutsideDeterminant outsideDeterminant:c.outsideDeterminant) {
+                for (OutsideDeterminant outsideDeterminant:c.outsideDeterminantList.get(markId)) {
                     TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
-                    if (event.getBid() < markId) {
+                    if (event.getBid() <= markId) {
                         TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
                         event.setTxnContext(txnContext);
                         MicroEvent microEvent = (MicroEvent) event;

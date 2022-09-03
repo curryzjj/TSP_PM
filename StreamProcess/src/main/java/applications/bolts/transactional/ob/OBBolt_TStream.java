@@ -107,9 +107,9 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void CommitOutsideDeterminant(long markerId) throws DatabaseException, InterruptedException {
         if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
             for (CausalService c:this.causalService.values()) {
-                for (OutsideDeterminant outsideDeterminant:c.outsideDeterminant) {
+                for (OutsideDeterminant outsideDeterminant:c.outsideDeterminantList.get(markerId)) {
                     TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
-                    if (event.getBid() < markerId) {
+                    if (event.getBid() <= markerId) {
                         TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
                         event.setTxnContext(txnContext);
                         if (event instanceof BuyingEvent) {

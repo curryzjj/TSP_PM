@@ -25,11 +25,11 @@ public class PrecisionComputation {
             String baseString = baseScanner.nextLine();
             String compareString = scanner.nextLine();
             if (!baseString.equals(compareString)) {
-                System.out.println(baseString);
-                System.out.println(compareString);
                 errorNum ++;
             }
         }
+        System.out.println(errorNum);
+        System.out.println(sum);
         scanner.close();
         baseScanner.close();
         return (sum - errorNum) / sum;
