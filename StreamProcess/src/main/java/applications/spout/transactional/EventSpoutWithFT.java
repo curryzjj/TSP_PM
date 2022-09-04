@@ -5,7 +5,6 @@ import System.measure.MeasureTools;
 import System.util.OsUtils;
 import applications.events.InputDataStore.InputStore;
 import applications.events.TxnEvent;
-import com.oracle.tools.packager.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.TransactionalSpoutFT;
