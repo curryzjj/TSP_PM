@@ -81,6 +81,7 @@ public abstract class DataBox implements Comparable,Cloneable, Serializable {
     public void decLong(SchemaRecord s_record, long delta) {
         throw new DataBoxException("not string type");
     }
+    public void decLong(long delta){decLong(getLong(),delta);}
     public void decLong(long current_value, long delta) {
         throw new DataBoxException("not string type");
     }

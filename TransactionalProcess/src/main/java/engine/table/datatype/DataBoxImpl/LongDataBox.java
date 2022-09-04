@@ -87,6 +87,11 @@ public class LongDataBox extends DataBox {
     }
 
     @Override
+    public void decLong(long delta) {
+        this.i = i - delta;
+    }
+
+    @Override
     public TransactionalProcessConstants.DataBoxTypes type() {
         return TransactionalProcessConstants.DataBoxTypes.LONG;
     }

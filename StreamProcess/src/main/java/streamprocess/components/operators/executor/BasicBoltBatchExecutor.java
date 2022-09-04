@@ -28,10 +28,6 @@ public class BasicBoltBatchExecutor extends BoltExecutor{
         super.prepare(stormConf, context, collector);
     }
 
-    @Override
-    public void cleanup() {
-        _op.cleanup();
-    }
 
     public void callback(int callee, Tuple message) {
         _op.callback(callee, message);
@@ -43,11 +39,6 @@ public class BasicBoltBatchExecutor extends BoltExecutor{
     }
 
     @Override
-    public void ackCommit(long offset) {
-        this._op.cleanEpoch(offset);
-    }
-
-    @Override
     public RecoveryDependency ackRecoveryDependency() {
         return this._op.returnRecoveryDependency();
     }
@@ -56,13 +47,6 @@ public class BasicBoltBatchExecutor extends BoltExecutor{
     public ConcurrentHashMap<Integer, CausalService> ackCausalService() {
         return this._op.returnCausalService();
     }
-
-
-    @Override
-    public void recoveryInput(long offset, List<Integer> recoveryExecutorIDs, long alignOffset) throws FileNotFoundException, InterruptedException {
-
-    }
-
 
     public void execute(JumboTuple in) throws InterruptedException, DatabaseException, BrokenBarrierException {
         try {

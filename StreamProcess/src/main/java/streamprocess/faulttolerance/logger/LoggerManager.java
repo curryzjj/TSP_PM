@@ -188,7 +188,7 @@ public class LoggerManager extends FTManager {
                     this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
                     this.db.getTxnProcessingEngine().cleanAllOperations();
                     SOURCE_CONTROL.getInstance().config(PARTITION_NUM);
-                    notifyAllComplete();
+                    notifyAllComplete(theLastLSN);
                     lock.notifyAll();
                 } else if (callLog.containsValue(Persist)){
                     LOG.info("LoggerManager received all register and start commit log");
@@ -226,17 +226,17 @@ public class LoggerManager extends FTManager {
 
     private void notifyLogComplete() {
         for(int id:callLog.keySet()){
-            g.getExecutionNode(id).ackCommit();
+            g.getExecutionNode(id).ackCommit(false, 0L);
         }
         this.callLog_ini();
     }
-    public void notifyAllComplete() throws Exception {
+    public void notifyAllComplete(long alignMarkerId) throws Exception {
         for(int id:callLog.keySet()){
-            g.getExecutionNode(id).ackCommit();
+            g.getExecutionNode(id).ackCommit(true, alignMarkerId);
         }
         this.callLog_ini();
         for(int id:callRecovery.keySet()){
-            g.getExecutionNode(id).ackCommit();
+            g.getExecutionNode(id).ackCommit(true, alignMarkerId);
         }
         this.callRecovery_ini();
     }

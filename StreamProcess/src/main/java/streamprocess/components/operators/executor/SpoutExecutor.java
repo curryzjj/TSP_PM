@@ -30,24 +30,10 @@ public abstract class SpoutExecutor implements IExecutor {
         return op.getFid();
     }
 
-    @Override
-    public void ackSignal(Tuple message) {
-        ((emitMarker) op).ack_Signal(message);
-    }
-
-    @Override
-    public void earlier_clean_state(Marker marker) {
-
-    }
 
     public boolean IsStateful() {
         return op.IsStateful();
     }
-
-    public void forceStop() {
-        op.forceStop();
-    }
-
 
 
     public double getEmpty() {

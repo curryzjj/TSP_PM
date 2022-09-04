@@ -66,9 +66,9 @@ public class TransactionEvent extends TxnEvent {
         this.accountTransfer = accountTransfer;
         this.bookEntryTransfer = bookEntryTransfer;
         if (isAbort) {
-            this.minAccountBalance = MAX_BALANCE;
-        } else {
             this.minAccountBalance = MIN_BALANCE;
+        } else {
+            this.minAccountBalance = MAX_BALANCE;
         }
         this.timestamp = timestamp;
     }

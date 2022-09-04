@@ -152,7 +152,7 @@ public class CLRManager extends FTManager {
                     SOURCE_CONTROL.getInstance().config(PARTITION_NUM);
                     this.SnapshotOffset.clear();
                     this.g.getSink().clean_status();
-                    notifyAllComplete();
+                    notifyAllComplete(alignOffset);
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Snapshot)) {
                     LOG.info("CLRManager received all bolt register and start snpshot");
@@ -191,17 +191,17 @@ public class CLRManager extends FTManager {
     }
     public void notifyBoltComplete() throws Exception {
         for(int id: callFaultTolerance.keySet()){
-            g.getExecutionNode(id).ackCommit();
+            g.getExecutionNode(id).ackCommit(false, 0L);
         }
         this.callFaultTolerance_ini();
     }
-    private void notifyAllComplete() {
+    private void notifyAllComplete(long alignMakerId) {
         for(int id: callFaultTolerance.keySet()){
-            g.getExecutionNode(id).ackCommit();
+            g.getExecutionNode(id).ackCommit(true, alignMakerId);
         }
         this.callFaultTolerance_ini();
         for(int id:callRecovery.keySet()){
-            g.getExecutionNode(id).ackCommit();
+            g.getExecutionNode(id).ackCommit(true, alignMakerId);
         }
         this.callRecovery_ini();
     }

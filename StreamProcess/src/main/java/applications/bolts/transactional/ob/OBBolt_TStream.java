@@ -107,9 +107,9 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void CommitOutsideDeterminant(long markerId) throws DatabaseException, InterruptedException {
         if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
             for (CausalService c:this.causalService.values()) {
-                for (OutsideDeterminant outsideDeterminant:c.outsideDeterminant) {
+                for (OutsideDeterminant outsideDeterminant:c.outsideDeterminantList.get(markerId)) {
                     TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
-                    if (event.getBid() < markerId) {
+                    if (event.getBid() <= markerId) {
                         TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
                         event.setTxnContext(txnContext);
                         if (event instanceof BuyingEvent) {
@@ -130,7 +130,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void Determinant_Topping_request_construct(ToppingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEvent.contains(event.getBid())){
+                if (c.abortEventList.get(markerId).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
@@ -147,7 +147,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void Determinant_Alert_request_construct(AlertEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEvent.contains(event.getBid())){
+                if (c.abortEventList.get(markerId).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
@@ -164,7 +164,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void Determinant_Buying_request_construct(BuyingEvent event,TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEvent.contains(event.getBid())){
+                if (c.abortEventList.get(markerId).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }

@@ -121,11 +121,14 @@ public class TxnProcessingEngine {
     public void cleanOperations(int threadId) {
         for (Holder_in_range holder_in_range:holder_by_stage.values()){
             Holder holder = holder_in_range.rangeMap.get(threadId);
-            for (OperationChain operationChain :holder.holder_v1.values()){
+            for (OperationChain<Operation> operationChain :holder.holder_v1.values()){
                 operationChain.isExecuted = false;
                 operationChain.needAbortHandling.compareAndSet(true, false);
-                operationChain.clear();
                 operationChain.failedOperations.clear();
+                if (operationChain.size() != 0) {
+                    operationChain.first().s_record.clean_map();
+                    operationChain.clear();
+                }
             }
         }
     }
@@ -225,12 +228,7 @@ public class TxnProcessingEngine {
                 this.walManager.addLogRecord(operation_chain);
             }
         }
-        boolean cleanVersion = true;
         for (Operation operation:operation_chain) {
-            if (cleanVersion) {
-                operation.s_record.clean_map();
-                cleanVersion = false;
-            }
             if (operation.operationStateType.equals(MetaTypes.OperationStateType.EXECUTED)
                     || operation.operationStateType.equals(MetaTypes.OperationStateType.ABORTED)
                     || operation.isFailed) {
@@ -325,7 +323,7 @@ public class TxnProcessingEngine {
                 if (operation_chain.needAbortHandling.get()) {
                     for (Operation operation : operation_chain) {
                         if (operation_chain.failedOperations.contains(operation)) {
-                            if (operation.operationStateType.equals(MetaTypes.OperationStateType.EXECUTED)) {
+                            if (!operation.operationStateType.equals(MetaTypes.OperationStateType.ABORTED)) {
                                 operation.stateTransition(MetaTypes.OperationStateType.ABORTED);
                                 needReExecuted = true;
                             }
@@ -448,18 +446,19 @@ public class TxnProcessingEngine {
             List<DataBox> values = srcRecord.getValues();
             SchemaRecord tempo_record;
             tempo_record = new SchemaRecord(values);//tempo record
-            tempo_record.getValues().get(1).incLong(sourceBalance, operation.function.delta_long);//compute.
+            //apply functions.
+            tempo_record.getValues().get(1).incLong(operation.function.delta_long);//compute.
             operation.d_record.updateMultiValues(operation.bid, tempo_record);
             operation.success[0] = true;
             CONTROL.randomDelay();
+            if (operation.record_ref.isEmpty()) {
+                operation.record_ref.setRecord(operation.condition_records[0].readPreValues(operation.bid));
+            }
         } else {
             if (enable_transaction_abort) {
                 operation.isFailed = true;
             }
             operation.success[0] = false;
-        }
-        if (operation.record_ref.isEmpty()) {
-            operation.record_ref.setRecord(operation.condition_records[0].readPreValues(operation.bid));
         }
     }
     private void SL_Transfer_Fun(Operation operation){
@@ -474,12 +473,7 @@ public class TxnProcessingEngine {
             SchemaRecord tempo_record;
             tempo_record = new SchemaRecord(values);//tempo record
             //apply function.
-            if (operation.function instanceof INC) {
-                tempo_record.getValues().get(1).incLong(sourceBalance, operation.function.delta_long);//compute.
-            } else if (operation.function instanceof DEC) {
-                tempo_record.getValues().get(1).decLong(sourceBalance, operation.function.delta_long);//compute.
-            } else
-                throw new UnsupportedOperationException();
+            tempo_record.getValues().get(1).decLong(operation.function.delta_long);//compute.
             operation.d_record.updateMultiValues(operation.bid, tempo_record);
             operation.success[0] = true;
             CONTROL.randomDelay();
@@ -522,7 +516,7 @@ public class TxnProcessingEngine {
             }
         }
         if(operation.function instanceof INC){
-            values.get(operation.column_id).setLong(values.get(operation.column_id).getLong()+operation.function.delta_long);
+            values.get(operation.column_id).setLong(values.get(operation.column_id).getLong() + operation.function.delta_long);
         }
         CONTROL.randomDelay();
         return true;

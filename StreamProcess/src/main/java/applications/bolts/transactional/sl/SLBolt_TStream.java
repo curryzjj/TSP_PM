@@ -123,9 +123,9 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     }
 
     protected void DeterminantDepositRequestConstruct(DepositEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
-        if (event.getBid() <= recoveryId) {
+        if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEvent.contains(event.getBid())){
+                if (c.abortEventList.get(markerId).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false,true);
                     return;
                 }
@@ -141,9 +141,9 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         }
     }
     protected void DeterminantTransferRequestConstruct(TransactionEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
-        if (event.getBid() <= recoveryId) {
+        if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEvent.contains(event.getBid())){
+                if (c.abortEventList.get(markerId).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false,true);
                     return;
                 }
@@ -207,20 +207,16 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     protected void CommitOutsideDeterminant(long markId) throws DatabaseException, InterruptedException {
         if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
             for (CausalService c:this.causalService.values()) {
-                for (OutsideDeterminant outsideDeterminant:c.outsideDeterminant) {
+                for (OutsideDeterminant outsideDeterminant:c.outsideDeterminantList.get(markId)) {
                     TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
-                    if (event.getBid() < markId) {
-                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
-                        event.setTxnContext(txnContext);
-                        if (event instanceof DepositEvent) {
-                            DeterminantDepositRequestConstruct((DepositEvent) event, txnContext);
-                        } else {
-                            ((TransactionEvent) event).src_account_value.setRecord(outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceAccountId()));
-                            ((TransactionEvent) event).src_asset_value.setRecord(outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceBookEntryId()));
-                            DeterminantTransferRequestConstruct((TransactionEvent) event, txnContext);
-                        }
+                    TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
+                    event.setTxnContext(txnContext);
+                    if (event instanceof DepositEvent) {
+                        DeterminantDepositRequestConstruct((DepositEvent) event, txnContext);
                     } else {
-                        break;
+                        ((TransactionEvent) event).src_account_value.setRecord(outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceAccountId()));
+                        ((TransactionEvent) event).src_asset_value.setRecord(outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceBookEntryId()));
+                        DeterminantTransferRequestConstruct((TransactionEvent) event, txnContext);
                     }
                 }
             }
@@ -251,7 +247,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                         outsideDeterminant.setOutSideEvent(event.toString());
                         String[] keys;
                         if(event instanceof TransactionEvent){
-                            keys = new String[]{((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent)event).getSourceAccountId(),
+                            keys = new String[]{((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent)event).getSourceBookEntryId(),
                                     ((TransactionEvent)event).getTargetAccountId(), ((TransactionEvent)event).getTargetBookEntryId()};
                             transactionResult = ((TransactionEvent) event).transaction_result;
                             outsideDeterminant.setAckValues(((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent) event).src_account_value.getRecord());

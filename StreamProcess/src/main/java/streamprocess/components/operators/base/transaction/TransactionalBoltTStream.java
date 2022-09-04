@@ -1,6 +1,5 @@
 package streamprocess.components.operators.base.transaction;
 
-import System.measure.MeasureTools;
 import engine.Exception.DatabaseException;
 import engine.transaction.impl.TxnManagerTStream;
 import org.slf4j.Logger;
@@ -16,8 +15,6 @@ import streamprocess.execution.runtime.collector.OutputCollector;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.FaultToleranceConstants;
 import streamprocess.faulttolerance.clr.CausalService;
-import streamprocess.faulttolerance.clr.ComputationLogic;
-import streamprocess.faulttolerance.clr.ComputationTask;
 
 import java.io.IOException;
 import java.util.*;
@@ -164,11 +161,8 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
                     for (int lostPartitionId : this.recoveryPartitionIds) {
                         if (!enable_key_based || this.executor.operator.getExecutorIDList().get(lostPartitionId) == this.executor.getExecutorID()) {
                             this.causalService.put(e.getExecutorID(),e.askCausalService().get(lostPartitionId));
-                            this.recoveryId = this.causalService.get(e.getExecutorID()).currentMarkerId;
                         }
                     }
-                } else if (enable_recovery_dependency){
-                    this.recoveryId = e.ackRecoveryDependency().currentMarkId;
                 }
             }
         }
@@ -198,5 +192,10 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         if (enable_upstreamBackup) {
             this.multiStreamInFlightLog.cleanEpoch(offset, DEFAULT_STREAM_ID);
         }
+    }
+
+    @Override
+    public void setRecoveryId(long alignMarkerId){
+        this.recoveryId = alignMarkerId;
     }
 }

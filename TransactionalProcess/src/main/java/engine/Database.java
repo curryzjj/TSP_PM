@@ -21,7 +21,6 @@ import java.util.concurrent.RunnableFuture;
 import static UserApplications.CONTROL.enable_parallel;
 
 public abstract class Database {
-    public int numTransactions=0;//current number of activate transactions
     protected AbstractStorageManager storageManager;
     protected AbstractRecoveryManager recoveryManager;
     protected TxnProcessingEngine txnProcessingEngine;
@@ -127,4 +126,6 @@ public abstract class Database {
     }
 
     public abstract void setWalPath(String filename) throws IOException;
+
+    public abstract void dumpResultDatabase() throws IOException;
 }

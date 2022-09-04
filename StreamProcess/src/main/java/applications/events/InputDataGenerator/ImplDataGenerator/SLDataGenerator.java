@@ -154,12 +154,12 @@ public class SLDataGenerator extends InputDataGenerator {
         final int account = param.keys()[0];
         final int book = param.keys()[1];
         final long accountsDeposit = rnd.nextLong(MAX_ACCOUNT_DEPOSIT) + 500;
-        final long deposit= rnd.nextLong(MAX_BOOK_DEPOSIT) + 500;
+        final long bookDeposit= rnd.nextLong(MAX_BOOK_DEPOSIT) + 500;
         current_bid++;
         if (random.nextInt(1000) < RATIO_OF_ABORT) {
-            return new DepositEvent(bid, current_pid, bid_array, partition_num, String.valueOf(account), String.valueOf(book), MAX_BALANCE, MAX_BALANCE, true);
+            return new DepositEvent(bid, current_pid, bid_array, partition_num, String.valueOf(account), String.valueOf(book), MIN_BALANCE, MIN_BALANCE, true);
         } else {
-            return new DepositEvent(bid, current_pid, bid_array, partition_num, String.valueOf(account), String.valueOf(book), accountsDeposit, deposit, false);
+            return new DepositEvent(bid, current_pid, bid_array, partition_num, String.valueOf(account), String.valueOf(book), accountsDeposit, bookDeposit, false);
         }
 
     }
@@ -176,9 +176,9 @@ public class SLDataGenerator extends InputDataGenerator {
         final int targetBook = param.keys()[3];
         current_bid++;
         if (random.nextInt(1000) < RATIO_OF_ABORT) {
-            return new TransactionEvent(bid, current_pid, bid_array, partition_num, String.valueOf(sourceAcct),  String.valueOf(sourceBook), String.valueOf(targetAcct), String.valueOf(targetBook), accountsTransfer, transfer, MAX_BALANCE,true);
+            return new TransactionEvent(bid, current_pid, bid_array, partition_num, String.valueOf(sourceAcct),  String.valueOf(sourceBook), String.valueOf(targetAcct), String.valueOf(targetBook), accountsTransfer, transfer, MIN_BALANCE,true);
         } else {
-            return new TransactionEvent(bid, current_pid, bid_array, partition_num, String.valueOf(sourceAcct),  String.valueOf(sourceBook), String.valueOf(targetAcct), String.valueOf(targetBook), accountsTransfer, transfer, MIN_BALANCE,false);
+            return new TransactionEvent(bid, current_pid, bid_array, partition_num, String.valueOf(sourceAcct),  String.valueOf(sourceBook), String.valueOf(targetAcct), String.valueOf(targetBook), accountsTransfer, transfer, MAX_BALANCE,false);
         }
     }
 }

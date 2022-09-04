@@ -2,6 +2,7 @@ package engine.index;
 
 import engine.table.tableRecords.TableRecord;
 
+import java.io.BufferedWriter;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -23,6 +24,11 @@ public class StdUnorderedIndex extends BaseUnorderedIndex{
 
     @Override
     public void clean() {
+    }
+
+    @Override
+    public void DumpRecords(BufferedWriter bufferedWriter) {
+
     }
 
     @Override

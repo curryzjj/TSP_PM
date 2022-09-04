@@ -151,6 +151,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     @Override
     protected void replayInput() throws InterruptedException, FileNotFoundException {
         MeasureTools.ReExecute_time_begin(System.nanoTime());
+        LOG.info("Spout: Align offset is " + AlignMarkerId);
         while(replay) {
             TxnEvent event = replayInputFromSSD();
             if (event != null) {

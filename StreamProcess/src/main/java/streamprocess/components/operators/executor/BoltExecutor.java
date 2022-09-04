@@ -13,11 +13,14 @@ import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.clr.CausalService;
 import streamprocess.faulttolerance.clr.RecoveryDependency;
 
+import java.io.FileNotFoundException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class BoltExecutor implements IExecutor {
+    private static final long serialVersionUID = -462759707942430500L;
     private final Operator op;
 
     BoltExecutor(Operator op) {
@@ -41,24 +44,6 @@ public abstract class BoltExecutor implements IExecutor {
     @Override
     public int getID() { return op.getId(); }
     @Override
-    public double get_read_selectivity() { return op.read_selectivity; }
-
-    @Override
-    public Map<String, Double> get_input_selectivity() {
-        return op.input_selectivity;
-    }
-
-    @Override
-    public Map<String, Double> get_output_selectivity() {
-        return op.output_selectivity;
-    }
-
-    @Override
-    public double get_branch_selectivity() {
-        return op.branch_selectivity;
-    }
-
-    @Override
     public String getConfigPrefix() {
         return op.getConfigPrefix();
     }
@@ -72,36 +57,16 @@ public abstract class BoltExecutor implements IExecutor {
     public void display() {
         op.display();
     }
-
     @Override
-    public double getResults() {
-        return op.getResults();
-    }
-
-    @Override
-    public double getLoops() {
-        return op.loops;
-    }
-
-    @Override
-    public boolean isScalable() {
-        return op.scalable;
-    }
-    @Override
-    public Integer default_scale(Configuration conf) {
-        return op.default_scale(conf);
-    }
-
-    @Override
-    public void earlier_clean_state(Marker marker) { }
-
-    @Override
-    public void ackSignal(Tuple message) {
+    public void recoveryInput(long offset, List<Integer> recoveryExecutorIDs, long alignOffset) throws FileNotFoundException, InterruptedException {
 
     }
 
     @Override
-    public void ackCommit() {
+    public void ackCommit(boolean isRecovery, long alignMarkerId) {
+        if (isRecovery) {
+            this.op.setRecoveryId(alignMarkerId);
+        }
         this.op.isCommit =true;
     }
     @Override
@@ -126,11 +91,6 @@ public abstract class BoltExecutor implements IExecutor {
     @Override
     public boolean IsStateful() {
         return op.IsStateful();
-    }
-
-    @Override
-    public void forceStop() {
-        op.forceStop();
     }
 
     @Override

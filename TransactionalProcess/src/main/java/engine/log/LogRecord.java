@@ -27,10 +27,14 @@ public class LogRecord implements Serializable {
         String[] split = recoveryString.split(";");
         this.tableName=split[1];
         this.key=split[0];
-        String[] values=split[2].split(",");
-        this.values=values;
-
+        this.timestamp = Long.parseLong(split[2]);
+        this.values = split[3].split(",");
     }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
     public String getTableName() {
         return tableName;
     }
@@ -64,10 +68,13 @@ public class LogRecord implements Serializable {
     }
 
     public String toSerializableString() throws IOException {
-        StringBuilder sb=new StringBuilder();
+        this.updateTableRecord.clean_map();
+        StringBuilder sb = new StringBuilder();
         sb.append(this.key);//key
         sb.append(split_exp);
         sb.append(this.tableName);
+        sb.append(split_exp);
+        sb.append(this.updateTableRecord.versions.lastKey().toString());
         sb.append(split_exp);
         sb.append(this.updateTableRecord.record_.toString());
         return sb.toString();

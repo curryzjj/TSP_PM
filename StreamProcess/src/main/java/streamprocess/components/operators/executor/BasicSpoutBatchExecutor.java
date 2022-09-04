@@ -1,6 +1,5 @@
 package streamprocess.components.operators.executor;
 
-import System.util.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.AbstractSpout;
@@ -19,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class BasicSpoutBatchExecutor extends SpoutExecutor{
     private static final Logger LOG= LoggerFactory.getLogger(BasicSpoutBatchExecutor.class);
+    private static final long serialVersionUID = -4090523103960738532L;
     private final AbstractSpout _op;
 
     public BasicSpoutBatchExecutor(AbstractSpout op) {
@@ -34,27 +34,6 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
     @Override
     public int getID() {
         return _op.getId();
-    }
-
-
-    @Override
-    public double get_read_selectivity() {
-        return _op.read_selectivity;
-    }
-
-    @Override
-    public Map<String, Double> get_input_selectivity() {
-        return _op.input_selectivity;
-    }
-
-    @Override
-    public Map<String, Double> get_output_selectivity() {
-        return _op.output_selectivity;
-    }
-
-    @Override
-    public double get_branch_selectivity() {
-        return _op.branch_selectivity;
     }
 
     @Override
@@ -73,32 +52,12 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
     }
 
     @Override
-    public double getResults() {
-        return _op.getResults();
-    }
-
-    @Override
-    public double getLoops() {
-        return _op.getLoops();
-    }
-
-    @Override
-    public boolean isScalable() {
-        return _op.scalable;
-    }
-
-    @Override
-    public Integer default_scale(Configuration conf) {
-        return _op.default_scale(conf);
-    }
-
-    @Override
     public void clean_status() {
         this._op.clean_status();
     }
 
     @Override
-    public void ackCommit() {
+    public void ackCommit(boolean isRecovery, long alignMarkerId) {
         this._op.isCommit =true;
     }
 
@@ -122,10 +81,6 @@ public class BasicSpoutBatchExecutor extends SpoutExecutor{
         return this._op.returnCausalService();
     }
 
-    @Override
-    public void cleanup() {
-
-    }
 
     @Override
     public void callback(int callee, Tuple message) {

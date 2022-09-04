@@ -275,6 +275,11 @@ public class RocksDBManager extends AbstractStorageManager {
         return null;
     }
 
+    @Override
+    public void dumpDataBase() throws IOException {
+
+    }
+
     public void createTableRange(int table_count){
         this.keyGroupRange=new KeyGroupRange(0,table_count-1);
         this.checkpointSnapshotStrategy.keyGroupRange=this.keyGroupRange;

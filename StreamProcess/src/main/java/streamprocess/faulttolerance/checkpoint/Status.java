@@ -78,7 +78,6 @@ public class Status implements Serializable {
         if (all_dst_ack()) {
             LOG.info(executor.getOP_full() + " received ack of message" + message.getFailureFlag().msgId + " from all consumers.");
             dst_status_init(executor);//reset state.
-            executor.ackSignal(message);
         }
     }
 
@@ -88,7 +87,6 @@ public class Status implements Serializable {
             if (enable_debug)
                 LOG.info(executor.getOP_full() + " received ack of message "+ message.getFailureFlag().msgId + " from all consumers.");
             dst_status_init(executor);
-            executor.ackSignal(message);
         }
     }
 }

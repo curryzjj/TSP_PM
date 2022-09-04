@@ -10,6 +10,7 @@ import engine.table.RecordSchema;
 import engine.table.datatype.DataBox;
 import engine.table.datatype.serialize.Deserialize;
 import engine.table.keyGroup.KeyGroupRangeOffsets;
+import engine.table.tableRecords.SchemaRecord;
 import engine.table.tableRecords.TableRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,6 +153,7 @@ public class AbstractRecoveryManager {
                             }
                         }
                         db.getStorageManager().getTable(logRecord.getTableName()).SelectKeyRecord(logRecord.getKey()).record_.updateValues(boxes);
+                        db.getStorageManager().getTable(logRecord.getTableName()).SelectKeyRecord(logRecord.getKey()).updateMultiValues(logRecord.getTimestamp());
                     }
                     commitLogRecords.clear();
                     isNewLSN = false;
@@ -214,7 +216,7 @@ public class AbstractRecoveryManager {
         //return Deserialize.Deserialize2Object(re,TableRecord.class.getClassLoader());
     }
     private static LogRecord getLogRecord(DataInputViewStreamWrapper inputViewStreamWrapper,int len) throws IOException, ClassNotFoundException {
-        byte[] re=new byte[len];
+        byte[] re = new byte[len];
         inputViewStreamWrapper.readFully(re);
         String str= new String(re, UTF_8);
         LogRecord logRecord = new LogRecord(str);

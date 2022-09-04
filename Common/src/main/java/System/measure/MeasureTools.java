@@ -193,6 +193,7 @@ public class MeasureTools {
     public static void setSystemRuntime(long systemRuntime) {
         Performance.SystemRuntime = systemRuntime;
     }
+    public static void setPrecision(double precision){Performance.Precision = precision;}
     private static void PerformanceReport(String baseDirectory, StringBuilder sb) throws IOException {
         sb.append("\n");
         String statsFolderPath = baseDirectory + "_overview.txt";
@@ -222,6 +223,7 @@ public class MeasureTools {
         sb.append("\n" + totalAvgLatency/Performance.Latency.size() + "\n");
         fileWriter.write("Throughput: " + totalThroughput / Performance.AvgThroughput.size() + "\n");
         fileWriter.write("Avg_latency: " + totalAvgLatency / Performance.Latency.size() + "\n");
+        fileWriter.write("Precision: " + Performance.Precision + "\n");
         fileWriter.write("Percentile\t Latency\n");
         double percentile[] = new double[]{0.5, 20, 40, 60, 80, 99};
         for (int i = 0; i < percentile.length; i ++){
