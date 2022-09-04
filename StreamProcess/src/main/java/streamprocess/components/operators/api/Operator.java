@@ -312,7 +312,8 @@ public abstract class Operator implements Serializable{
     }
 
     public void cleanEpoch(long offset){
-
+    }
+    public void setRecoveryId(long alignMarkerId){
     }
 
     public void clean_status(){

@@ -67,7 +67,7 @@ public class BaseManager extends FTManager{
     }
     public void notifyBoltComplete() throws Exception {
         for(int id: callAbort.keySet()){
-            g.getExecutionNode(id).ackCommit();
+            g.getExecutionNode(id).ackCommit(false, 0L);
         }
         this.callAbort_ini();
     }

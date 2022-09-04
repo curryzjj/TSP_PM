@@ -246,12 +246,11 @@ public class ExecutionNode implements Serializable {
         op.display();
     }
 
-    public void ackSignal(Tuple message) {
-        op.ackSignal(message);
+    //Recovery or Undo Commit
+    public void ackCommit(boolean isRecovery, long alignMarkerId){
+        op.ackCommit(isRecovery, alignMarkerId);
     }
-    public void ackCommit(){
-        op.ackCommit();
-    }
+    //Checkpoint Commit
     public void ackCommit(long offset){
         op.ackCommit(offset);
     }

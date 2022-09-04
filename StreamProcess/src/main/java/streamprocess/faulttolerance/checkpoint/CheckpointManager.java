@@ -148,7 +148,7 @@ public class CheckpointManager extends FTManager {
                     SOURCE_CONTROL.getInstance().config(PARTITION_NUM);
                     this.SnapshotOffset.clear();
                     this.g.getSink().clean_status();
-                    notifyAllComplete();
+                    notifyAllComplete(lastSnapshotResult.getCheckpointId());
                     LOG.info("Recovery complete!");
                     lock.notifyAll();
                 }else if(callSnapshot.containsValue(Undo)){
@@ -188,17 +188,17 @@ public class CheckpointManager extends FTManager {
     }
     public void notifyBoltComplete() throws Exception {
         for(int id:callSnapshot.keySet()){
-            g.getExecutionNode(id).ackCommit();
+            g.getExecutionNode(id).ackCommit(false, 0L);
         }
         this.callSnapshot_ini();
     }
-    public void notifyAllComplete() throws Exception {
+    public void notifyAllComplete(long alignMarkerId) throws Exception {
         for(int id:callSnapshot.keySet()){
-            g.getExecutionNode(id).ackCommit();
+            g.getExecutionNode(id).ackCommit(true, alignMarkerId);
         }
         this.callSnapshot_ini();
         for(int id:callRecovery.keySet()){
-            g.getExecutionNode(id).ackCommit();
+            g.getExecutionNode(id).ackCommit(true, alignMarkerId);
         }
         this.callRecovery_ini();
     }
