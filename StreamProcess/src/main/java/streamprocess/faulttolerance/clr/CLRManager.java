@@ -191,7 +191,7 @@ public class CLRManager extends FTManager {
     }
     public void notifyBoltComplete() throws Exception {
         for(int id: callFaultTolerance.keySet()){
-            g.getExecutionNode(id).ackCommit(true, 0L);
+            g.getExecutionNode(id).ackCommit(false, 0L);
         }
         this.callFaultTolerance_ini();
     }
