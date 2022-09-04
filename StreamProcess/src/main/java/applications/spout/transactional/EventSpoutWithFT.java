@@ -5,6 +5,7 @@ import System.measure.MeasureTools;
 import System.util.OsUtils;
 import applications.events.InputDataStore.InputStore;
 import applications.events.TxnEvent;
+import com.oracle.tools.packager.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.api.TransactionalSpoutFT;
@@ -151,6 +152,7 @@ public class EventSpoutWithFT extends TransactionalSpoutFT {
     @Override
     protected void replayInput() throws InterruptedException, FileNotFoundException {
         MeasureTools.ReExecute_time_begin(System.nanoTime());
+        LOG.info("Spout: Align offset is " + AlignMarkerId);
         while(replay) {
             TxnEvent event = replayInputFromSSD();
             if (event != null) {

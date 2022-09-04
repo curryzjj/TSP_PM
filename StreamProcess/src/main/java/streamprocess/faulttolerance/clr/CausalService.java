@@ -23,7 +23,6 @@ public class CausalService implements Serializable {
         insideDeterminant = new ConcurrentHashMap<>();
         outsideDeterminantList = new ConcurrentHashMap<>();
         outsideDeterminant = new ArrayList<>();
-        currentMarkerId = 0;
         abortEvent = new ArrayList<>();
     }
     public void addInsideDeterminant(InsideDeterminant insideDeterminant) {

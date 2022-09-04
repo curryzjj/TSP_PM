@@ -27,7 +27,6 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                 CONTROL.failureFlagBid.add(in.getBID());
             }
             this.recoveryPartitionIds.add(lostPartitionId);
-            this.SyncRegisterRecovery();
             if (enable_align_wait){
                 this.collector.cleanAll();
             } else {
@@ -38,6 +37,7 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                     }
                 }
             }
+            this.SyncRegisterRecovery();
             if (enable_upstreamBackup) {
                 this.multiStreamInFlightLog.cleanAll(DEFAULT_STREAM_ID);
             }

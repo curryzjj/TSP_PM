@@ -22,7 +22,7 @@ public class RecoveryDependency {
         }
     }
     public RecoveryDependency(ConcurrentHashMap<Integer, List<Integer>> lastDependency, long currentMarkId) {
-        this.recoveryDependency =new ConcurrentHashMap<>();
+        this.recoveryDependency = new ConcurrentHashMap<>();
         for (int id : lastDependency.keySet()) {
             List<Integer> dependencyId = new ArrayList<>(lastDependency.get(id));
             this.recoveryDependency.put(id,dependencyId);
