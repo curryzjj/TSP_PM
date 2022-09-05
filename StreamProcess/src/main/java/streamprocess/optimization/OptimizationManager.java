@@ -15,6 +15,7 @@ import streamprocess.execution.ExecutionPlan;
 import streamprocess.faulttolerance.BaseManager;
 import streamprocess.faulttolerance.FTManager;
 import streamprocess.faulttolerance.checkpoint.CheckpointManager;
+import streamprocess.faulttolerance.checkpoint.ConsistentCheckpointManager;
 import streamprocess.faulttolerance.clr.CLRManager;
 import streamprocess.faulttolerance.logger.LoggerManager;
 
@@ -59,13 +60,15 @@ public class OptimizationManager extends Thread {
         this.topology = topology;
         EM = new ExecutionManager(g,conf,this,db,p);
         latch = new CountDownLatch(g.getExecutionNodeArrayList().size() + 1 + 1 - 1);//+1:OM +1:EventGenerator -1:virtual
-        if(enable_checkpoint){
-            FTM = new CheckpointManager(g,conf,db);
-        }else if(enable_wal){
+        if(enable_checkpoint && consistentSnapshot){//ISC
+            FTM = new ConsistentCheckpointManager(g,conf,db);
+        } else if(enable_wal){//WSC
             FTM = new LoggerManager(g,conf,db);
-        }else if(enable_clr){
+        }else if(enable_clr){//Local rollback
             FTM = new CLRManager(g,conf,db);
-        }else {
+        }else if(enable_checkpoint) {
+            FTM = new CheckpointManager(g, conf, db);
+        } else{
             FTM = new BaseManager(g,conf,db);
         }
         eventGenerator = new EventGenerator(conf, latch);

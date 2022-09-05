@@ -12,10 +12,12 @@ import java.nio.charset.StandardCharsets;
 public class TableSingleStateIterator implements SingleStateIterator {
     @Nonnull private final InMemoryTableIteratorWrapper iterator;
     private final int kvStateId;
+    private long offset;
     private boolean Valid;
-    public TableSingleStateIterator(@Nonnull InMemoryTableIteratorWrapper inMemoryTableIteratorWrapper,int kvStateId){
-        this.iterator=inMemoryTableIteratorWrapper;
-        this.kvStateId=kvStateId;
+    public TableSingleStateIterator(@Nonnull InMemoryTableIteratorWrapper inMemoryTableIteratorWrapper,int kvStateId, long offset){
+        this.iterator = inMemoryTableIteratorWrapper;
+        this.kvStateId = kvStateId;
+        this.offset = offset;
     }
     @Override
     public void next() {
@@ -35,10 +37,10 @@ public class TableSingleStateIterator implements SingleStateIterator {
     @Override
     public byte[] value() {
         try {
-            TableRecord tableRecord = iterator.next();
-            tableRecord.clean_map();
+            TableRecord tableRecord = iterator.next().cloneTableRecord();
+            tableRecord.takeSnapshot(offset);
             return Serialize.serializeObject(tableRecord);
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
         return new byte[0];

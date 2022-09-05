@@ -7,16 +7,19 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public class TableRecord implements Comparable<TableRecord>, Serializable {
     private static final long serialVersionUID = -6940843588636593468L;
     public ConcurrentSkipListMap<Long, SchemaRecord> versions = new ConcurrentSkipListMap<>();//TODO: In fact... there can be at most only one write to the d_record concurrently. It is safe to just use sorted hashmap.
+    public ConcurrentSkipListMap<Long, SchemaRecord> checkpointVersions = new ConcurrentSkipListMap<>();
     public SchemaRecord record_;
     public TableRecord(SchemaRecord record){
         record_ = record;
         SchemaRecord schemaRecord = new SchemaRecord(record_.getValues());
         this.updateMultiValues(0, schemaRecord);
+        checkpointVersions.put(0L, schemaRecord);
     }
     @Override
     public int compareTo(@NotNull TableRecord o) {
@@ -50,6 +53,7 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
         versions.clear();
         record_.updateValues(lastRecord.getValues());
         versions.put(ts, lastRecord);
+        checkpointVersions.put(ts, lastRecord);
     }
     public TableRecord cloneTableRecord() throws IOException, ClassNotFoundException {
         return (TableRecord) Serialize.cloneObject(this);
@@ -57,5 +61,16 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
     public void undoRecord(TableRecord tableRecord) {
         this.record_.updateValues(tableRecord.record_.getValues());
         this.versions = tableRecord.versions;
+    }
+    public void takeSnapshot(long offset) {
+        Map.Entry<Long,SchemaRecord> entry = versions.lowerEntry(offset);
+        if (entry == null) {
+            entry = checkpointVersions.lowerEntry(offset);
+        }
+        versions.clear();
+        checkpointVersions.clear();
+        record_.updateValues(entry.getValue().getValues());
+        versions.put(offset, entry.getValue());
+        checkpointVersions.put(offset, entry.getValue());
     }
 }

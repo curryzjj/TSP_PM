@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static UserApplications.CONTROL.*;
 
 public class TxnProcessingEngine {
-    private static final Logger LOG= LoggerFactory.getLogger(TxnProcessingEngine.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TxnProcessingEngine.class);
     private static TxnProcessingEngine instance=new TxnProcessingEngine();
     public static TxnProcessingEngine getInstance() {
         return instance;

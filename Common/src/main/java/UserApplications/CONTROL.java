@@ -54,6 +54,9 @@ public class CONTROL {
     public static boolean enable_align_wait = false;
     public static boolean enable_determinants_log = false;
     public static boolean enable_recovery_dependency = false;
+
+    public static boolean consistentSnapshot = true;
+
     //latency related.
     public static boolean enable_latency_measurement = true;//
 
@@ -99,6 +102,6 @@ public class CONTROL {
                     failureTimes --;
                 }
             }
-        },  10000, failureInterval);//ms
+        },  7000, failureInterval);//ms
     }
 }

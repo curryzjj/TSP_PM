@@ -20,8 +20,10 @@ public class TableStatePerKeyGroupMerageIterator implements TableStateIterator {
     private boolean valid;
     public SingleStateIterator currentSubIterator;
     private int iteratorFlag=0;
+    private long offset;
 
-    public TableStatePerKeyGroupMerageIterator(CloseableRegistry closeableRegistry,List<Tuple2<InMemoryTableIteratorWrapper, Integer>> kvStateIterators) throws IOException {
+    public TableStatePerKeyGroupMerageIterator(CloseableRegistry closeableRegistry,List<Tuple2<InMemoryTableIteratorWrapper, Integer>> kvStateIterators, long offset) throws IOException {
+        this.offset = offset;
         this.closeableRegistry = closeableRegistry;
         if (kvStateIterators.size() > 0) {
             this.heap = buildIteratorHeap(kvStateIterators);
@@ -46,7 +48,7 @@ public class TableStatePerKeyGroupMerageIterator implements TableStateIterator {
         for (Tuple2<InMemoryTableIteratorWrapper, Integer> tableIteratorWithKVStateId : kvStateIterators) {
             final InMemoryTableIteratorWrapper inMemoryTableIterator = tableIteratorWithKVStateId._1;
             if (inMemoryTableIterator.isValid()) {
-                TableSingleStateIterator wrappingIterator=new TableSingleStateIterator(inMemoryTableIterator,tableIteratorWithKVStateId._2);
+                TableSingleStateIterator wrappingIterator=new TableSingleStateIterator(inMemoryTableIterator,tableIteratorWithKVStateId._2,offset);
                 iteratorPriorityQueue.add(wrappingIterator);
                 closeableRegistry.registerCloseable(wrappingIterator);
                 closeableRegistry.unregisterCloseable(inMemoryTableIterator);

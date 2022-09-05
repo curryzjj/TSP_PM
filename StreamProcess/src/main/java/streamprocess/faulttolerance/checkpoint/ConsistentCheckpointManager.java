@@ -22,21 +22,17 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 
 import static System.Constants.SSD_Path;
 import static UserApplications.CONTROL.*;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
-import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.Snapshot;
 import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastCommitSnapshotResult;
 
-public class CheckpointManager extends FTManager {
-    private final Logger LOG= LoggerFactory.getLogger(CheckpointManager.class);
+public class ConsistentCheckpointManager extends FTManager {
+    private final Logger LOG= LoggerFactory.getLogger(ConsistentCheckpointManager.class);
     public boolean running=true;
     private Path Current_Path;
     private FileSystem localFS;
@@ -45,16 +41,14 @@ public class CheckpointManager extends FTManager {
     private Database db;
     private Configuration conf;
     private Object lock;
-    private ConcurrentHashMap<Long, SnapshotResult> snapshotResults = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Long,SnapshotResult> snapshotResults = new ConcurrentHashMap<>();
     private boolean close;
     private Queue<Long> SnapshotOffset;
-    private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callFaultTolerance;
+    private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callSnapshot;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callRecovery;
-    private Queue<Long> commitOffset;
-    public CheckpointManager(ExecutionGraph g, Configuration conf, Database db){
+    public ConsistentCheckpointManager(ExecutionGraph g, Configuration conf, Database db){
         this.SnapshotOffset = new ArrayDeque<>();
-        this.commitOffset = new ArrayDeque<>();
-        this.callFaultTolerance = new ConcurrentHashMap<>();
+        this.callSnapshot = new ConcurrentHashMap<>();
         this.callRecovery = new ConcurrentHashMap<>();
         this.lock = new Object();
         this.conf = conf;
@@ -94,8 +88,8 @@ public class CheckpointManager extends FTManager {
         return true;
     }
     public void boltRegister(int executorId,FaultToleranceConstants.FaultToleranceStatus status){
-        if(callFaultTolerance.containsKey(executorId)){
-            callFaultTolerance.put(executorId, status);
+        if(callSnapshot.containsKey(executorId)){
+            callSnapshot.put(executorId, status);
         }else{
             callRecovery.put(executorId,status);
         }
@@ -110,7 +104,7 @@ public class CheckpointManager extends FTManager {
     private void callSnapshot_ini(){
         for (ExecutionNode e:g.getExecutionNodeArrayList()){
             if(e.op.IsStateful()){
-                this.callFaultTolerance.put(e.getExecutorID(),NULL);
+                this.callSnapshot.put(e.getExecutorID(),NULL);
             }
         }
     }
@@ -121,19 +115,19 @@ public class CheckpointManager extends FTManager {
             }
         }
     }
-    private boolean not_all_register(){
-        return callFaultTolerance.containsValue(NULL);
+    private boolean not_all_registerSnapshot(){
+        return callSnapshot.containsValue(NULL);
     }
     private void execute() throws Exception {
         while (running){
             synchronized (lock){
-                while(not_all_register()&&!close){
+                while(not_all_registerSnapshot()&&!close){
                     lock.wait();
                 }
                 if(close){
                     return;
                 }
-                if(callFaultTolerance.containsValue(Recovery)){
+                if(callSnapshot.containsValue(Recovery)){
                     LOG.info("CheckpointManager received all register and start recovery");
                     failureFlag.compareAndSet(true, false);
                     failureTimes ++;
@@ -157,12 +151,12 @@ public class CheckpointManager extends FTManager {
                     notifyAllComplete(lastSnapshotResult.getCheckpointId());
                     LOG.info("Recovery complete!");
                     lock.notifyAll();
-                }else if(callFaultTolerance.containsValue(Undo)){
+                }else if(callSnapshot.containsValue(Undo)){
                     LOG.info("CheckpointManager received all register and start undo");
                     this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
                     notifyBoltComplete();
                     lock.notifyAll();
-                } else if(callFaultTolerance.containsValue(Snapshot)){
+                } else if(callSnapshot.containsValue(Snapshot)){
                     LOG.info("CheckpointManager received all register and start snapshot");
                     SnapshotResult snapshotResult;
                     MeasureTools.startSnapshot(System.nanoTime());
@@ -175,35 +169,31 @@ public class CheckpointManager extends FTManager {
                     MeasureTools.finishSnapshot(System.nanoTime());
                     MeasureTools.setSnapshotFileSize(snapshotResult.getSnapshotPaths());
                     this.snapshotResults.put(snapshotResult.getCheckpointId(),snapshotResult);
-                    if (commitOffset.contains(snapshotResult.getCheckpointId())) {
-                        this.commitCurrentLog(commitOffset.poll());
-                    }
                     notifyBoltComplete();
+                    lock.notifyAll();
                 }
             }
         }
     }
     public boolean commitCurrentLog(long id) throws IOException {
-        if (this.snapshotResults.get(id) != null) {
-            LocalDataOutputStream localDataOutputStream = new LocalDataOutputStream(checkpointFile);
-            DataOutputStream dataOutputStream = new DataOutputStream(localDataOutputStream);
-            byte[] result = Serialize.serializeObject(this.snapshotResults.get(id));
-            int len = result.length;
-            dataOutputStream.writeInt(len);
-            dataOutputStream.write(result);
-            dataOutputStream.flush();
-            dataOutputStream.close();
-            LOG.info("CheckpointManager commit the checkpoint to the current.log");
-        }else  {
-            this.commitOffset.add(id);
-        }
+        LocalDataOutputStream localDataOutputStream = new LocalDataOutputStream(checkpointFile);
+        DataOutputStream dataOutputStream = new DataOutputStream(localDataOutputStream);
+        byte[] result = Serialize.serializeObject(this.snapshotResults.get(id));
+        int len = result.length;
+        dataOutputStream.writeInt(len);
+        dataOutputStream.write(result);
+        dataOutputStream.close();
+        LOG.info("CheckpointManager commit the checkpoint to the current.log");
         return true;
     }
     public void notifyBoltComplete() throws Exception {
+        for(int id:callSnapshot.keySet()){
+            g.getExecutionNode(id).ackCommit(false, 0L);
+        }
         this.callSnapshot_ini();
     }
     public void notifyAllComplete(long alignMarkerId) throws Exception {
-        for(int id: callFaultTolerance.keySet()){
+        for(int id:callSnapshot.keySet()){
             g.getExecutionNode(id).ackCommit(true, alignMarkerId);
         }
         this.callSnapshot_ini();

@@ -71,21 +71,21 @@ public class  AppRunner extends baseRunner {
             case 0:
                 CONTROL.enable_undo_log = true;
                 break;
-            case 1:
+            case 1://WSC
                 CONTROL.enable_wal = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
                 break;
-            case 2:
+            case 2://ISC
                 CONTROL.enable_checkpoint = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
                 break;
-            case 3:
+            case 3://IRollback
                 CONTROL.enable_clr = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
@@ -95,7 +95,7 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_recovery_dependency = true;
                 break;
-            case 4:
+            case 4://DRollback
                 CONTROL.enable_clr = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
@@ -105,7 +105,15 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_determinants_log = true;
                 break;
-            case 5:
+            case 5://Conventional Checkpoint
+                CONTROL.enable_checkpoint = true;
+                CONTROL.consistentSnapshot = false;
+                CONTROL.enable_input_store = true;
+                CONTROL.enable_snapshot = true;
+                CONTROL.enable_undo_log = true;
+                CONTROL.enable_parallel = true;
+                break;
+            case 9:
                 CONTROL.enable_clr = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
@@ -116,7 +124,7 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_recovery_dependency = true;
                 break;
-            case 6:
+            case 10:
                 CONTROL.enable_clr = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;

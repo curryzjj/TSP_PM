@@ -24,22 +24,26 @@ public class InMemoryFullSnapshotResources implements FullSnapshotResources {
     private final Map<String, BaseTable> tables;
     private final List<StorageManager.InMemoryKvStateInfo> Meta;
     private final KeyGroupRange keyGroupRange;
+    private long offset;
 
     public InMemoryFullSnapshotResources(ResourceGuard.Lease lease,
                                          Map<String, BaseTable> tables,
                                          List<StorageManager.InMemoryKvStateInfo> meta,
                                          List<StateMetaInfoSnapshot> stateMetaInfoSnapshots,
-                                         KeyGroupRange keyGroupRange) {
+                                         KeyGroupRange keyGroupRange,
+                                         long offset) {
         this.stateMetaInfoSnapshots = stateMetaInfoSnapshots;
         this.lease = lease;
         this.tables = tables;
         Meta = meta;
         this.keyGroupRange = keyGroupRange;
+        this.offset = offset;
     }
     public static InMemoryFullSnapshotResources create(final LinkedHashMap<String, StorageManager.InMemoryKvStateInfo> kvStateInformation,
                                                        final Map<String, BaseTable> tables,
                                                        final ResourceGuard ResourceGuard,
-                                                       final KeyGroupRange keyGroupRange) throws IOException {
+                                                       final KeyGroupRange keyGroupRange,
+                                                       long offset) throws IOException {
         final List<StateMetaInfoSnapshot> stateMetaInfoSnapshots=new ArrayList<>(kvStateInformation.size());
         final List<StorageManager.InMemoryKvStateInfo> metaDataCopy=new ArrayList<>(kvStateInformation.size());
         for(StorageManager.InMemoryKvStateInfo stateInfo:kvStateInformation.values()){
@@ -48,7 +52,7 @@ public class InMemoryFullSnapshotResources implements FullSnapshotResources {
             metaDataCopy.add(stateInfo);
         }
         final ResourceGuard.Lease lease = ResourceGuard.acquireResource();
-        return new InMemoryFullSnapshotResources(lease,tables,metaDataCopy,stateMetaInfoSnapshots,keyGroupRange);
+        return new InMemoryFullSnapshotResources(lease,tables,metaDataCopy,stateMetaInfoSnapshots,keyGroupRange,offset);
     }
     @Override
     public List<StateMetaInfoSnapshot> getMetaInfoSnapshots() {
@@ -60,7 +64,7 @@ public class InMemoryFullSnapshotResources implements FullSnapshotResources {
         CloseableRegistry closeableRegistry = new CloseableRegistry();
         try{
             List<Tuple2<InMemoryTableIteratorWrapper,Integer>> kvStateIterators = createKVStateIterators(closeableRegistry);
-            return new TableStatePerKeyGroupMerageIterator(closeableRegistry,kvStateIterators);
+            return new TableStatePerKeyGroupMerageIterator(closeableRegistry,kvStateIterators,offset);
         } catch (IOException e) {
             // If anything goes wrong, clean up our stuff. If things went smoothly the
             // merging iterator is now responsible for closing the resources

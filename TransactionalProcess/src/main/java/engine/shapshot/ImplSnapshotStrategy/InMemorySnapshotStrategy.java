@@ -32,7 +32,7 @@ public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullS
 
     @Override
     public FullSnapshotResources syncPrepareResources(long checkpointId) throws Exception {
-        return InMemoryFullSnapshotResources.create(kvStateInformation,tables, resourceGuard,keyGroupRange);
+        return InMemoryFullSnapshotResources.create(kvStateInformation,tables, resourceGuard,keyGroupRange, checkpointId);
     }
 
     @Override
@@ -47,7 +47,7 @@ public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullS
                     kvStateInformation.put(tableName, this.kvStateInformation.get(tableName));
                 }
             }
-            resources.add(InMemoryFullSnapshotResources.create(kvStateInformation, tables, resourceGuard, keyGroupRange));
+            resources.add(InMemoryFullSnapshotResources.create(kvStateInformation, tables, resourceGuard, keyGroupRange, checkpointId));
         }
         return resources;
     }
