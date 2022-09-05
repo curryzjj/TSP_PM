@@ -112,9 +112,9 @@ public class SLBolt_TStream_Local extends SLBolt_TStream_Conventional{
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
         int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
-        this.AsyncRegisterPersist();
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         boolean transactionSuccess = FT==0;
+        this.AsyncRegisterPersist();
         switch (FT){
             case 0:
                 MeasureTools.startPostTransaction(this.thread_Id, System.nanoTime());
