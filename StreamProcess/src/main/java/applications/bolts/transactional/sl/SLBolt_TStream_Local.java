@@ -118,16 +118,17 @@ public class SLBolt_TStream_Local extends SLBolt_TStream_Conventional{
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
-                SOURCE_CONTROL.getInstance().Wait_End(thread_Id);
-                MeasureTools.startPostTransaction(this.thread_Id, System.nanoTime());
+                MeasureTools.startPostTransaction(thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
-                MeasureTools.finishPostTransaction(this.thread_Id, System.nanoTime());
+                MeasureTools.finishPostTransaction(thread_Id, System.nanoTime());
+                this.SyncCommitLog();
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
                 break;
             case 1:
                 MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
+                SyncRegisterUndo();
                 transactionSuccess = this.TXN_PROCESS_FT();
                 MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
@@ -168,17 +169,16 @@ public class SLBolt_TStream_Local extends SLBolt_TStream_Conventional{
         boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
-                this.AsyncRegisterPersist();
-                SOURCE_CONTROL.getInstance().Wait_End(thread_Id);
-                MeasureTools.startPostTransaction(this.thread_Id, System.nanoTime());
+                MeasureTools.startPostTransaction(thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
-                MeasureTools.finishPostTransaction(this.thread_Id, System.nanoTime());
+                MeasureTools.finishPostTransaction(thread_Id, System.nanoTime());
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
                 break;
             case 1:
                 MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
+                SyncRegisterUndo();
                 transactionSuccess = this.TXN_PROCESS();
                 MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;

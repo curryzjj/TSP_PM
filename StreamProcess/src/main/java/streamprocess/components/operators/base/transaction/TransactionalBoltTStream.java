@@ -1,7 +1,6 @@
 package streamprocess.components.operators.base.transaction;
 
 import engine.Exception.DatabaseException;
-import engine.transaction.impl.ConventionalTxnManager;
 import engine.transaction.impl.TxnManagerTStream;
 import org.slf4j.Logger;
 import streamprocess.components.grouping.Grouping;
@@ -44,11 +43,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     @Override
     public void initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
         super.initialize(thread_Id, thisTaskId, graph);
-        if (conventional) {
-            transactionManager = new ConventionalTxnManager(db.getStorageManager(),this.context.getThisComponentId(),thread_Id,NUM_SEGMENTS,this.context.getThisComponent().getNumTasks());
-        } else {
-            transactionManager = new TxnManagerTStream(db.getStorageManager(),this.context.getThisComponentId(),thread_Id,NUM_SEGMENTS,this.context.getThisComponent().getNumTasks());
-        }
+        transactionManager = new TxnManagerTStream(db.getStorageManager(),this.context.getThisComponentId(),thread_Id,NUM_SEGMENTS,this.context.getThisComponent().getNumTasks());
         partition_delta=(int) Math.ceil(NUM_ITEMS / (double) PARTITION_NUM);//NUM_ITEMS / partition_num;
         if(enable_recovery_dependency){
             this.epochInfo = new EpochInfo(0L,this.executor.getExecutorID());

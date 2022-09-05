@@ -56,7 +56,6 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
         versions.clear();
         record_.updateValues(lastRecord.getValues());
         versions.put(ts, lastRecord);
-        checkpointVersions.put(ts, lastRecord);
     }
     public TableRecord cloneTableRecord() throws IOException, ClassNotFoundException {
         return (TableRecord) Serialize.cloneObject(this);
@@ -64,13 +63,5 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
     public void undoRecord(TableRecord tableRecord) {
         this.record_.updateValues(tableRecord.record_.getValues());
         this.versions = tableRecord.versions;
-    }
-    public void takeSnapshot(long offset) {
-        Map.Entry<Long,SchemaRecord> entry = checkpointVersions.lowerEntry(offset);
-        versions.clear();
-        checkpointVersions.clear();
-        record_.updateValues(entry.getValue().getValues());
-        versions.put(offset, entry.getValue());
-        checkpointVersions.put(offset, entry.getValue());
     }
 }

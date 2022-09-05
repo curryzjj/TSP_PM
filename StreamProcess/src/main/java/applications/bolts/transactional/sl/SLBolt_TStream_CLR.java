@@ -5,7 +5,6 @@ import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
 import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.IOException;
@@ -145,13 +144,13 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                 REQUEST_CORE();
                 REQUEST_POST();
                 MeasureTools.finishPostTransaction(this.thread_Id, System.nanoTime());
-                //this.SyncCommitLog();
+                this.SyncCommitLog();
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
                 break;
             case 1:
                 MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
-                //SyncRegisterUndo();
+                SyncRegisterUndo();
                 transactionSuccess = this.TXN_PROCESS_FT();
                 MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
@@ -201,7 +200,7 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                 break;
             case 1:
                 MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
-                //SyncRegisterUndo();
+                SyncRegisterUndo();
                 transactionSuccess = this.TXN_PROCESS();
                 MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;

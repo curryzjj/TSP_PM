@@ -9,6 +9,8 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import static UserApplications.CONTROL.conventional;
+
 public class TableSingleStateIterator implements SingleStateIterator {
     @Nonnull private final InMemoryTableIteratorWrapper iterator;
     private final int kvStateId;
@@ -38,7 +40,7 @@ public class TableSingleStateIterator implements SingleStateIterator {
     public byte[] value() {
         try {
             TableRecord tableRecord = iterator.next().cloneTableRecord();
-            tableRecord.takeSnapshot(offset);
+            tableRecord.clean_map();
             return Serialize.serializeObject(tableRecord);
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();

@@ -190,9 +190,9 @@ public class CLRManager extends FTManager {
         return true;
     }
     public void notifyBoltComplete() throws Exception {
-//        for(int id: callFaultTolerance.keySet()){
-//            g.getExecutionNode(id).ackCommit(false, 0L);
-//        }
+        for(int id: callFaultTolerance.keySet()){
+            g.getExecutionNode(id).ackCommit(false, 0L);
+        }
         this.callFaultTolerance_ini();
     }
     private void notifyAllComplete(long alignMakerId) {
