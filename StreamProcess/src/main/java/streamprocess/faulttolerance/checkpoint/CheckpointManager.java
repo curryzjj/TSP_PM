@@ -68,7 +68,7 @@ public class CheckpointManager extends FTManager {
             this.Current_Path = new Path(SSD_Path.concat(conf.getString("checkpointPath")),"CURRENT");
             this.localFS = new LocalFileSystem();
         }
-        this.callSnapshot_ini();
+        this.callFaultTolerance_ini();
         this.callRecovery_ini();
     }
 
@@ -107,7 +107,7 @@ public class CheckpointManager extends FTManager {
         return this.commitCurrentLog(id);
     }
 
-    private void callSnapshot_ini(){
+    private void callFaultTolerance_ini(){
         for (ExecutionNode e:g.getExecutionNodeArrayList()){
             if(e.op.IsStateful()){
                 this.callFaultTolerance.put(e.getExecutorID(),NULL);
@@ -157,11 +157,6 @@ public class CheckpointManager extends FTManager {
                     notifyAllComplete(lastSnapshotResult.getCheckpointId());
                     LOG.info("Recovery complete!");
                     lock.notifyAll();
-                }else if(callFaultTolerance.containsValue(Undo)){
-                    LOG.info("CheckpointManager received all register and start undo");
-                    this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
-                    notifyBoltComplete();
-                    lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Snapshot)){
                     LOG.info("CheckpointManager received all register and start snapshot");
                     SnapshotResult snapshotResult;
@@ -200,13 +195,13 @@ public class CheckpointManager extends FTManager {
         return true;
     }
     public void notifyBoltComplete() throws Exception {
-        this.callSnapshot_ini();
+        this.callFaultTolerance_ini();
     }
     public void notifyAllComplete(long alignMarkerId) throws Exception {
         for(int id: callFaultTolerance.keySet()){
             g.getExecutionNode(id).ackCommit(true, alignMarkerId);
         }
-        this.callSnapshot_ini();
+        this.callFaultTolerance_ini();
         for(int id:callRecovery.keySet()){
             g.getExecutionNode(id).ackCommit(true, alignMarkerId);
         }

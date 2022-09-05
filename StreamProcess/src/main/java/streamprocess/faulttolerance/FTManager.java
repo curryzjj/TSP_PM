@@ -1,11 +1,6 @@
 package streamprocess.faulttolerance;
 
-import streamprocess.faulttolerance.clr.ComputationLogic;
-import streamprocess.faulttolerance.clr.ComputationTask;
-
 import java.io.IOException;
-import java.util.List;
-import java.util.Queue;
 
 public abstract class FTManager extends Thread {
     public boolean running = true;
