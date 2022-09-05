@@ -66,10 +66,7 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
         this.versions = tableRecord.versions;
     }
     public void takeSnapshot(long offset) {
-        Map.Entry<Long,SchemaRecord> entry = versions.lowerEntry(offset);
-        if (entry == null) {
-            entry = checkpointVersions.lowerEntry(offset);
-        }
+        Map.Entry<Long,SchemaRecord> entry = checkpointVersions.lowerEntry(offset);
         versions.clear();
         checkpointVersions.clear();
         record_.updateValues(entry.getValue().getValues());

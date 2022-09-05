@@ -2,6 +2,7 @@ package applications.bolts.transactional.sl;
 
 import System.measure.MeasureTools;
 import UserApplications.CONTROL;
+import UserApplications.SOURCE_CONTROL;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
@@ -114,9 +115,10 @@ public class SLBolt_TStream_Local extends SLBolt_TStream_Conventional{
         int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         boolean transactionSuccess = FT==0;
-        this.AsyncRegisterPersist();
         switch (FT){
             case 0:
+                this.AsyncRegisterPersist();
+                SOURCE_CONTROL.getInstance().Wait_End(thread_Id);
                 MeasureTools.startPostTransaction(this.thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
@@ -126,7 +128,7 @@ public class SLBolt_TStream_Local extends SLBolt_TStream_Conventional{
                 break;
             case 1:
                 MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
-                transactionSuccess = this.TXN_PROCESS();
+                transactionSuccess = this.TXN_PROCESS_FT();
                 MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
             case 2:
@@ -166,6 +168,8 @@ public class SLBolt_TStream_Local extends SLBolt_TStream_Conventional{
         boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
+                this.AsyncRegisterPersist();
+                SOURCE_CONTROL.getInstance().Wait_End(thread_Id);
                 MeasureTools.startPostTransaction(this.thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();

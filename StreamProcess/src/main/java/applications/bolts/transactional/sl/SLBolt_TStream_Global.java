@@ -2,6 +2,7 @@ package applications.bolts.transactional.sl;
 
 import System.measure.MeasureTools;
 import UserApplications.CONTROL;
+import UserApplications.SOURCE_CONTROL;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
 
@@ -12,10 +13,10 @@ import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.lostPartitionId;
 
-public class SLBolt_TStream_GLobal extends SLBolt_TStream_Conventional {
+public class SLBolt_TStream_Global extends SLBolt_TStream_Conventional {
     private static final long serialVersionUID = -6850817297803528978L;
 
-    public SLBolt_TStream_GLobal(int fid) {
+    public SLBolt_TStream_Global(int fid) {
         super(fid);
     }
 
@@ -83,9 +84,10 @@ public class SLBolt_TStream_GLobal extends SLBolt_TStream_Conventional {
         int FT = transactionManager.start_evaluate(thread_Id, this.markerId);
         MeasureTools.finishTransaction(this.thread_Id, System.nanoTime());
         boolean transactionSuccess = FT == 0;
-        AsyncRegisterPersist();
         switch (FT){
             case 0:
+                AsyncRegisterPersist();
+                SOURCE_CONTROL.getInstance().Wait_End(thread_Id);
                 MeasureTools.startPostTransaction(thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
@@ -95,7 +97,7 @@ public class SLBolt_TStream_GLobal extends SLBolt_TStream_Conventional {
                 break;
             case 1:
                 MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
-                transactionSuccess = this.TXN_PROCESS();
+                transactionSuccess = this.TXN_PROCESS_FT();
                 MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
             case 2:
@@ -122,6 +124,7 @@ public class SLBolt_TStream_GLobal extends SLBolt_TStream_Conventional {
         boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
+                SOURCE_CONTROL.getInstance().Wait_End(thread_Id);
                 MeasureTools.startPostTransaction(thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
