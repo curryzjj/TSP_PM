@@ -3,9 +3,7 @@ package applications.bolts.transactional.sl;
 import System.measure.MeasureTools;
 import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
-import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.IOException;
@@ -15,10 +13,12 @@ import java.util.concurrent.ExecutionException;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
+import static UserApplications.CONTROL.enable_upstreamBackup;
 
-public class SLBolt_TStream_CLR extends SLBolt_TStream {
-    private static final long serialVersionUID = 8318429594401042174L;
-    public SLBolt_TStream_CLR(int fid) {super(fid);}
+public class SLBolt_TStream_Local extends SLBolt_TStream_Conventional{
+    private static final long serialVersionUID = 5796686220206329210L;
+
+    public SLBolt_TStream_Local(int fid) {super(fid);}
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if (failureFlag.get()) {
@@ -57,19 +57,10 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                                 break;
                             case "marker":
                                 this.markerId = in.getBID();
-                                if (enable_determinants_log && this.markerId <= recoveryId) {
-                                    this.CommitOutsideDeterminant(this.markerId);
-                                }
                                 if (TXN_PROCESS()){
                                     if (this.markerId > recoveryId) {
-                                        if (enable_recovery_dependency) {
-                                            Marker marker = in.getMarker().clone();
-                                            marker.setEpochInfo(this.epochInfo);
-                                            forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                            this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                                        } else {
-                                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                        }
+                                        Marker marker = in.getMarker().clone();
+                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
                                         if (enable_upstreamBackup) {
                                             this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                                         }
@@ -81,15 +72,9 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                             case "snapshot":
                                 this.markerId = in.getBID();
                                 this.isSnapshot = true;
-                                if (TXN_PROCESS_FT()){
-                                    if (enable_recovery_dependency) {
-                                        Marker marker = in.getMarker().clone();
-                                        marker.setEpochInfo(this.epochInfo);
-                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                        this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                                    } else {
-                                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                    }
+                                if (TXN_PROCESS_FT()) {
+                                    Marker marker = in.getMarker();
+                                    forward_marker(in.getSourceTask(), in.getBID(), marker, marker.getValue());
                                     if (enable_upstreamBackup) {
                                         this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
                                         this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
@@ -100,20 +85,11 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                                 break;
                             case "finish":
                                 this.markerId = in.getBID();
-                                if (enable_determinants_log && this.markerId <= recoveryId) {
-                                    this.CommitOutsideDeterminant(this.markerId);
-                                }
                                 if(TXN_PROCESS()){
                                     /* All the data has been executed */
                                     if (this.markerId > recoveryId) {
-                                        if (enable_recovery_dependency) {
-                                            Marker marker = in.getMarker().clone();
-                                            marker.setEpochInfo(this.epochInfo);
-                                            forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                            this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                                        } else {
-                                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                        }
+                                        Marker marker = in.getMarker().clone();
+                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
                                         if (enable_upstreamBackup) {
                                             this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                                         }
@@ -136,23 +112,21 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
         int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
+        this.AsyncRegisterPersist();
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         boolean transactionSuccess = FT==0;
         switch (FT){
             case 0:
-                this.AsyncRegisterPersist();
                 MeasureTools.startPostTransaction(this.thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
                 MeasureTools.finishPostTransaction(this.thread_Id, System.nanoTime());
-                this.SyncCommitLog();
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
                 break;
             case 1:
                 MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
-                SyncRegisterUndo();
-                transactionSuccess = this.TXN_PROCESS_FT();
+                transactionSuccess = this.TXN_PROCESS();
                 MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
             case 2:
@@ -201,7 +175,6 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                 break;
             case 1:
                 MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
-                SyncRegisterUndo();
                 transactionSuccess = this.TXN_PROCESS();
                 MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;

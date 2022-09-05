@@ -91,7 +91,9 @@ public class MeasureSink extends BaseSink {
             } else {
                 if (enable_recovery_dependency) {
                     addRecoveryDependency(in.getBID());
-                    this.recoveryDependency.get(in.getBID()).addDependency(in.getMarker().getEpochInfo());
+                    if (in.getMarker().getEpochInfo() != null) {
+                        this.recoveryDependency.get(in.getBID()).addDependency(in.getMarker().getEpochInfo());
+                    }
                 }
                 if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
                     this.currentMarkerId = in.getBID();

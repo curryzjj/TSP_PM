@@ -107,13 +107,35 @@ public class  AppRunner extends baseRunner {
                 break;
             case 5://Conventional Checkpoint
                 CONTROL.enable_checkpoint = true;
-                CONTROL.consistentSnapshot = false;
+                CONTROL.conventional = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
                 break;
-            case 9:
+            case 6://LG
+                CONTROL.enable_clr = true;
+                CONTROL.conventional = true;
+                CONTROL.enable_input_store = true;
+                CONTROL.enable_snapshot = true;
+                CONTROL.enable_undo_log = true;
+                CONTROL.enable_parallel = true;
+                CONTROL.enable_upstreamBackup = true;
+                CONTROL.enable_align_wait = true;
+                CONTROL.enable_recovery_dependency = true;
+                break;
+            case 7://Clonos
+                CONTROL.enable_clr = true;
+                CONTROL.conventional = true;
+                CONTROL.enable_input_store = true;
+                CONTROL.enable_snapshot = true;
+                CONTROL.enable_undo_log = true;
+                CONTROL.enable_parallel = true;
+                CONTROL.enable_upstreamBackup = true;
+                CONTROL.enable_align_wait = true;
+                CONTROL.enable_determinants_log = true;
+                break;
+            case 8:
                 CONTROL.enable_clr = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
@@ -124,7 +146,7 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_recovery_dependency = true;
                 break;
-            case 10:
+            case 9:
                 CONTROL.enable_clr = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;

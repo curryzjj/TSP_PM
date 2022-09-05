@@ -52,27 +52,34 @@ public class SL_txn extends TransactionalTopology {
                 grouping = new ShuffleGrouping(GrepSumConstants.Component.SPOUT);
             }
             if(enable_checkpoint){
-                if (consistentSnapshot) {
+                if (conventional) {
                     builder.setBolt(StreamLedgerConstants.Component.EXECUTOR,
-                            new SLBolt_TStream_ISC(0),
+                            new SLBolt_TStream_Checkpoint(0),
                             config.getInt(Executor_Threads),
                             grouping);
                 } else {
                     builder.setBolt(StreamLedgerConstants.Component.EXECUTOR,
-                            new SLBolt_TStream_Checkpoint(0),
+                            new SLBolt_TStream_ISC(0),
                             config.getInt(Executor_Threads),
                             grouping);
                 }
             }else if(enable_wal){
                 builder.setBolt(StreamLedgerConstants.Component.EXECUTOR,
-                        new SLBolt_TStream_Wal(0),
+                        new SLBolt_TStream_WSC(0),
                         config.getInt(Executor_Threads),
                         grouping);
             } else if(enable_clr) {
-                builder.setBolt(StreamLedgerConstants.Component.EXECUTOR,
-                        new SLBolt_TStream_CLR(0),
-                        config.getInt(Executor_Threads),
-                        grouping);
+                if (conventional) {
+                    builder.setBolt(StreamLedgerConstants.Component.EXECUTOR,
+                            new SLBolt_TStream_Local(0),
+                            config.getInt(Executor_Threads),
+                            grouping);
+                } else {
+                    builder.setBolt(StreamLedgerConstants.Component.EXECUTOR,
+                            new SLBolt_TStream_CLR(0),
+                            config.getInt(Executor_Threads),
+                            grouping);
+                }
             } else{
                 builder.setBolt(StreamLedgerConstants.Component.EXECUTOR,
                         new SLBolt_TStream_NoFT(0),

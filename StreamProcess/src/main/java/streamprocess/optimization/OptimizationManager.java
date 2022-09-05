@@ -14,9 +14,10 @@ import streamprocess.execution.ExecutionManager;
 import streamprocess.execution.ExecutionPlan;
 import streamprocess.faulttolerance.BaseManager;
 import streamprocess.faulttolerance.FTManager;
-import streamprocess.faulttolerance.checkpoint.CheckpointManager;
+import streamprocess.faulttolerance.checkpoint.GlobalManager;
 import streamprocess.faulttolerance.checkpoint.ConsistentCheckpointManager;
 import streamprocess.faulttolerance.clr.CLRManager;
+import streamprocess.faulttolerance.clr.LocalManager;
 import streamprocess.faulttolerance.logger.LoggerManager;
 
 import java.io.IOException;
@@ -56,20 +57,28 @@ public class OptimizationManager extends Thread {
     public ExecutionManager getEM(){
         return EM;
     }
-    public ExecutionPlan launch(Topology topology, Platform p, Database db) throws UnhandledCaseException, IOException {
+    public void launch(Topology topology, Platform p, Database db) throws UnhandledCaseException, IOException {
         this.topology = topology;
         EM = new ExecutionManager(g,conf,this,db,p);
         latch = new CountDownLatch(g.getExecutionNodeArrayList().size() + 1 + 1 - 1);//+1:OM +1:EventGenerator -1:virtual
-        if(enable_checkpoint && consistentSnapshot){//ISC
-            FTM = new ConsistentCheckpointManager(g,conf,db);
-        } else if(enable_wal){//WSC
-            FTM = new LoggerManager(g,conf,db);
-        }else if(enable_clr){//Local rollback
-            FTM = new CLRManager(g,conf,db);
-        }else if(enable_checkpoint) {
-            FTM = new CheckpointManager(g, conf, db);
-        } else{
-            FTM = new BaseManager(g,conf,db);
+        if (conventional) {
+            if (enable_checkpoint) {
+                FTM = new GlobalManager(g,conf,db);
+            } else if (enable_clr) {
+                FTM = new LocalManager(g,conf,db);
+            } else {
+                FTM = new BaseManager(g,conf,db);
+            }
+        } else {
+            if(enable_checkpoint){//ISC
+                FTM = new ConsistentCheckpointManager(g,conf,db);
+            } else if(enable_wal){//WSC
+                FTM = new LoggerManager(g,conf,db);
+            } else if(enable_clr){//D-Rollback and I-Rollback
+                FTM = new CLRManager(g,conf,db);
+            } else{
+                FTM = new BaseManager(g,conf,db);
+            }
         }
         eventGenerator = new EventGenerator(conf, latch);
         eventGenerator.start();
@@ -77,7 +86,6 @@ public class OptimizationManager extends Thread {
         executionPlan.setProfile();
         EM.distributeTasks(conf, executionPlan, latch,false,false, db, p, FTM, eventGenerator);
         final String dumpLocks = AffinityLock.dumpLocks();
-        return executionPlan;
     }
 
     @Override

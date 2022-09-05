@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.lostPartitionId;
 
-public class SLBolt_TStream_Checkpoint extends SLBolt_TStream {
+public class SLBolt_TStream_Checkpoint extends SLBolt_TStream_Conventional {
     private static final long serialVersionUID = -6850817297803528978L;
 
     public SLBolt_TStream_Checkpoint(int fid) {

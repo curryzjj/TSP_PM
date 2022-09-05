@@ -15,15 +15,17 @@ public class CausalService implements Serializable {
      */
     public long currentMarkerId;
     public ConcurrentHashMap<Long, InsideDeterminant> insideDeterminant;
+    public List<OutsideDeterminant> outsideDeterminant;
+    public List<Long> abortEvent;
     //markId, outsideDeterminant
     public ConcurrentHashMap<Long,List<OutsideDeterminant>> outsideDeterminantList;
     public ConcurrentHashMap<Long,List<Long>> abortEventList;
-    public List<OutsideDeterminant> outsideDeterminant;
-    public List<Long> abortEvent;
+    public ConcurrentHashMap<Long,ConcurrentHashMap<Long, InsideDeterminant>> insideDeterminantList;
     public CausalService() {
-        insideDeterminant = new ConcurrentHashMap<>();
+        insideDeterminantList = new ConcurrentHashMap<>();
         outsideDeterminantList = new ConcurrentHashMap<>();
         abortEventList = new ConcurrentHashMap<>();
+        insideDeterminant = new ConcurrentHashMap<>();
         outsideDeterminant = new ArrayList<>();
         abortEvent = new ArrayList<>();
     }
@@ -46,8 +48,10 @@ public class CausalService implements Serializable {
     public void setCurrentMarkerId(long currentMarkerId) {
         outsideDeterminantList.put(currentMarkerId, this.outsideDeterminant);
         abortEventList.put(currentMarkerId,this.abortEvent);
+        insideDeterminantList.put(currentMarkerId, insideDeterminant);
         this.abortEvent = new ArrayList<>();
         this.outsideDeterminant =  new ArrayList<>();
         this.currentMarkerId = currentMarkerId;
+        this.insideDeterminant = new ConcurrentHashMap<>();
     }
 }

@@ -13,10 +13,10 @@ import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.*;
 
-public class SLBolt_TStream_Wal extends SLBolt_TStream{
+public class SLBolt_TStream_WSC extends SLBolt_TStream{
     private static final long serialVersionUID = -7240496876968212299L;
 
-    public SLBolt_TStream_Wal(int fid) {
+    public SLBolt_TStream_WSC(int fid) {
         super(fid);
     }
 
