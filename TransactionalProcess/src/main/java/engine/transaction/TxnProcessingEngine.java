@@ -447,7 +447,7 @@ public class TxnProcessingEngine {
             SchemaRecord tempo_record;
             tempo_record = new SchemaRecord(values);//tempo record
             //apply functions.
-            tempo_record.getValues().get(1).incLong(operation.function.delta_long);//compute.
+            tempo_record.getValues().get(1).incLong((long) (operation.function.delta_long + sourceBalance * 0.1));//compute.
             operation.d_record.updateMultiValues(operation.bid, tempo_record);
             operation.success[0] = true;
             CONTROL.randomDelay();

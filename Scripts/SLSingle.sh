@@ -1,9 +1,9 @@
 #!/bin/bash
 function ResetParameters() {
   app="SL_txn"
-  FTOptions=0
+  FTOptions=6
   failureModel=3
-  failureFrequency=4
+  failureFrequency=0
   tthreads=16
   snapshot=2
 
@@ -11,10 +11,10 @@ function ResetParameters() {
   Arrival_Control=1
   targetHz=200000
   Time_Control=1
-  time_Interval=3000
+  time_Interval=5000
   timeSliceLengthMs=1000
   input_store_batch=20000
-  systemRuntime=80
+  systemRuntime=120
   #shellcheck disable=SC2006
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
@@ -22,9 +22,9 @@ function ResetParameters() {
   NUM_ITEMS=81920
   NUM_EVENTS=16000000
   ZIP_SKEW=400
-  RATIO_OF_READ=1000
+  RATIO_OF_READ=500
   RATIO_OF_ABORT=200
-  RATIO_OF_DEPENDENCY=200
+  RATIO_OF_DEPENDENCY=500
   complexity=0
   NUM_ACCESSES=2
   partition_num_per_txn=8
@@ -88,7 +88,7 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-    for FTOptions in 4
+     for failureFrequency in 1 3 5 7 9
         do runFTStream
         done
 }

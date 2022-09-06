@@ -121,7 +121,7 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
                 CONTROL.enable_upstreamBackup = true;
-                CONTROL.enable_align_wait = false;
+                CONTROL.enable_align_wait = true;
                 CONTROL.enable_recovery_dependency = true;
                 break;
             case 7://Clonos
@@ -132,7 +132,7 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
                 CONTROL.enable_upstreamBackup = true;
-                CONTROL.enable_align_wait = false;
+                CONTROL.enable_align_wait = true;
                 CONTROL.enable_determinants_log = true;
                 break;
             case 8:
