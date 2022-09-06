@@ -160,7 +160,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
                 if (enable_determinants_log) {
                     for (int lostPartitionId : this.recoveryPartitionIds) {
                         if (!enable_key_based || this.executor.operator.getExecutorIDList().get(lostPartitionId) == this.executor.getExecutorID()) {
-                            this.causalService.put(e.getExecutorID(),e.askCausalService().get(lostPartitionId));
+                            this.causalService.put(e.getExecutorID(), e.askCausalService().get(lostPartitionId));
                         }
                     }
                 }

@@ -17,6 +17,7 @@ import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
+import streamprocess.faulttolerance.clr.CausalService;
 
 import java.io.*;
 import java.util.*;
@@ -98,8 +99,8 @@ public class MeasureSink extends BaseSink {
                 if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
                     this.currentMarkerId = in.getBID();
                     if (enable_determinants_log) {
-                        for (Integer id:this.causalService.keySet()){
-                            causalService.get(id).setCurrentMarkerId(currentMarkerId);
+                        for (CausalService causalService : this.causalService.values()) {
+                            causalService.setCurrentMarkerId(currentMarkerId);
                         }
                     }
                     switch (in.getMarker().getValue()) {

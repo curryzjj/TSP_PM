@@ -108,7 +108,7 @@ public abstract class SLBolt_TStream_Conventional extends TransactionalBoltTStre
     protected void DeterminantDepositRequestConstruct(DepositEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEventList.get(markerId).contains(event.getBid())) {
+                if (c.getAbortEventsByMarkerId(markerId).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
@@ -119,7 +119,7 @@ public abstract class SLBolt_TStream_Conventional extends TransactionalBoltTStre
     protected void DeterminantTransferRequestConstruct(TransactionEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c : this.causalService.values()) {
-                InsideDeterminant insideDeterminant = c.insideDeterminantList.get(markerId).get(event.getBid());
+                InsideDeterminant insideDeterminant = c.getInsideDeterminantByMarkerId(markerId).get(event.getBid());
                 if (insideDeterminant.isAbort) {
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;

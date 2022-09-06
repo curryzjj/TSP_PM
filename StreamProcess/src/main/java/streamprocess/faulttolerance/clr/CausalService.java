@@ -1,5 +1,6 @@
 package streamprocess.faulttolerance.clr;
 
+import System.tools.SortHelper;
 import streamprocess.controller.output.Determinant.InsideDeterminant;
 import streamprocess.controller.output.Determinant.OutsideDeterminant;
 
@@ -41,17 +42,37 @@ public class CausalService implements Serializable {
     public void cleanDeterminant() {
         this.insideDeterminant.clear();
         this.outsideDeterminant.clear();
-        this.outsideDeterminantList.clear();
         this.abortEvent.clear();
+        this.outsideDeterminantList.clear();
+        this.abortEventList.clear();
+        this.insideDeterminantList.clear();
     }
 
     public void setCurrentMarkerId(long currentMarkerId) {
         outsideDeterminantList.put(currentMarkerId, this.outsideDeterminant);
-        abortEventList.put(currentMarkerId,this.abortEvent);
-        insideDeterminantList.put(currentMarkerId, insideDeterminant);
+        abortEventList.put(currentMarkerId, this.abortEvent);
+        insideDeterminantList.put(currentMarkerId, this.insideDeterminant);
         this.abortEvent = new ArrayList<>();
         this.outsideDeterminant =  new ArrayList<>();
-        this.currentMarkerId = currentMarkerId;
         this.insideDeterminant = new ConcurrentHashMap<>();
+        this.currentMarkerId = currentMarkerId;
+    }
+    public List<Long> getAbortEventsByMarkerId(long markerId){
+        ArrayList<Long> keys = SortHelper.sortKey(this.abortEventList.keySet());
+        for (long key:keys) {
+            if (key > markerId) {
+                return this.abortEventList.get(key);
+            }
+        }
+        return new ArrayList<>();
+    }
+    public ConcurrentHashMap<Long, InsideDeterminant> getInsideDeterminantByMarkerId(long markerId){
+        ArrayList<Long> keys = SortHelper.sortKey(this.insideDeterminantList.keySet());
+        for (long key:keys) {
+            if (key > markerId) {
+                return this.insideDeterminantList.get(key);
+            }
+        }
+        return new ConcurrentHashMap<>();
     }
 }

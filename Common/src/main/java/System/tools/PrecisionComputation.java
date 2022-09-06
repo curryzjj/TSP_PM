@@ -18,20 +18,16 @@ public class PrecisionComputation {
                 + OsUtils.osWrapperPostFix(String.valueOf(1));
         Scanner scanner = new Scanner(new File(filePath), "UTF-8");
         Scanner baseScanner = new Scanner(new File(basePath), "UTF-8");
-        double errorNum = 0;
+        double totalNum = 0;
         double sum = 0;
         while (baseScanner.hasNextLine()) {
-            sum ++;
-            String baseString = baseScanner.nextLine();
-            String compareString = scanner.nextLine();
-            if (!baseString.equals(compareString)) {
-                errorNum ++;
-            }
+            totalNum ++;
+            double baseString = Long.parseLong(baseScanner.nextLine().split(",")[1]);
+            double compareString = Long.parseLong(scanner.nextLine().split(",")[1]);
+            sum = sum + Math.abs(compareString - baseString) / baseString;
         }
-        System.out.println(errorNum);
-        System.out.println(sum);
         scanner.close();
         baseScanner.close();
-        return (sum - errorNum) / sum;
+        return sum / totalNum;
     }
 }
