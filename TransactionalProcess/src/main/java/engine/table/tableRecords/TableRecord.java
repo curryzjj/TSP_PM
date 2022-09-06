@@ -32,17 +32,17 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
         return record_.getId().getID();
     }
     public SchemaRecord readPreValues(long ts){
-//        SchemaRecord record_at_ts = null;
-//        Map.Entry<Long,SchemaRecord> entry = versions.lowerEntry(ts);
-//        if (entry != null){
-//            record_at_ts = entry.getValue();
-//        }else{
-//            record_at_ts = versions.get(ts);
-//        }
-//        if (record_at_ts == null) {
-//            return record_;
-//        }
-        return record_;
+        SchemaRecord record_at_ts = null;
+        Map.Entry<Long,SchemaRecord> entry = versions.lowerEntry(ts);
+        if (entry != null){
+            record_at_ts = entry.getValue();
+        }else{
+            record_at_ts = versions.get(ts);
+        }
+        if (record_at_ts == null) {
+            return new SchemaRecord(record_.getValues());
+        }
+        return record_at_ts;
     }
     public void updateMultiValues(long ts, SchemaRecord record){
         versions.put(ts, record);

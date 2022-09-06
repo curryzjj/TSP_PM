@@ -21,13 +21,13 @@ public class SchemaRecord implements Serializable {
         this.single_value = value;
     }
     public SchemaRecord(List<DataBox> values) {
-        this.values = values;
+        this.values = Utils.memcpy(values);
         single_value = null;
     }
     public SchemaRecord(SchemaRecord _record_ptr){
         this.id = _record_ptr.id;
-        this.values= Utils.memcpy(_record_ptr.values);
-        single_value=null;
+        this.values = Utils.memcpy(_record_ptr.values);
+        single_value = null;
     }
     public List<DataBox> getValues() {
         return this.values;

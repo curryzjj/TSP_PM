@@ -437,7 +437,7 @@ public class TxnProcessingEngine {
         if (!operation.record_ref.isEmpty()) {
             preValues = operation.record_ref.getRecord();
         } else {
-            preValues = operation.condition_records[0].readPreValues(operation.bid);
+            preValues = new SchemaRecord(operation.condition_records[0].record_.getValues()) ;
         }
         final long sourceBalance = preValues.getValues().get(1).getLong();
         //To contron the abort ratio, wo modify the violation of consistency property
@@ -452,7 +452,7 @@ public class TxnProcessingEngine {
             operation.success[0] = true;
             CONTROL.randomDelay();
             if (operation.record_ref.isEmpty()) {
-                operation.record_ref.setRecord(operation.condition_records[0].readPreValues(operation.bid));
+                operation.record_ref.setRecord(preValues);
             }
         } else {
             if (enable_transaction_abort) {
