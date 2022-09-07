@@ -125,11 +125,13 @@ public abstract class SLBolt_TStream_Conventional extends TransactionalBoltTStre
                     return;
                 } else {
                     InsideDeterminant insideDeterminant = c.getInsideDeterminantByMarkerId(event.getBid()).get(event.getBid());
-                    if (insideDeterminant.ackValues.containsKey(event.getSourceAccountId())) {
-                        event.src_account_value.setRecord(insideDeterminant.ackValues.get(event.getSourceBookEntryId()));
-                    }
-                    if (insideDeterminant.ackValues.containsKey(event.getSourceAccountId())) {
-                        event.src_asset_value.setRecord(insideDeterminant.ackValues.get(event.getSourceBookEntryId()));
+                    if (insideDeterminant != null) {
+                        if (insideDeterminant.ackValues.containsKey(event.getSourceAccountId())) {
+                            event.src_account_value.setRecord(insideDeterminant.ackValues.get(event.getSourceBookEntryId()));
+                        }
+                        if (insideDeterminant.ackValues.containsKey(event.getSourceAccountId())) {
+                            event.src_asset_value.setRecord(insideDeterminant.ackValues.get(event.getSourceBookEntryId()));
+                        }
                     }
                 }
             }

@@ -22,6 +22,7 @@ import streamprocess.faulttolerance.clr.CausalService;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
@@ -30,6 +31,7 @@ public class MeasureSink extends BaseSink {
     private static final long serialVersionUID = 6249684803036342603L;
     private static final Logger LOG = LoggerFactory.getLogger(MeasureSink.class);
     private final DescriptiveStatistics latency = new DescriptiveStatistics();
+    private final ConcurrentSkipListMap<Long,Double> results = new ConcurrentSkipListMap<>();
     //Exactly_Once
     protected final List<Double> latency_map = new ArrayList<>();
     //no_Exactly_Once
@@ -224,6 +226,7 @@ public class MeasureSink extends BaseSink {
                     this.causalService.get(insideDeterminant.partitionId).addAbortEvent(insideDeterminant.input);
                 }
             }
+            results.putIfAbsent(in.getBID(), 0.0);
             abortTransaction++;
         } else {
             if (Exactly_Once) {
@@ -248,6 +251,7 @@ public class MeasureSink extends BaseSink {
                     computationLatency = System.nanoTime();
                 }
                 count ++;
+                results.putIfAbsent(in.getBID(), (Double) in.getValue(3));
             }
         }
         if (failureFlagBid.contains(in.getBID())) {
