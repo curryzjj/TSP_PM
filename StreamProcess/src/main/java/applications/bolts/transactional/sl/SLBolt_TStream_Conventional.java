@@ -18,6 +18,7 @@ import streamprocess.faulttolerance.clr.CausalService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
@@ -108,7 +109,7 @@ public abstract class SLBolt_TStream_Conventional extends TransactionalBoltTStre
     protected void DeterminantDepositRequestConstruct(DepositEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.getAbortEventsByMarkerId(markerId).contains(event.getBid())){
+                if (c.getAbortEventsByMarkerId(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
@@ -119,11 +120,11 @@ public abstract class SLBolt_TStream_Conventional extends TransactionalBoltTStre
     protected void DeterminantTransferRequestConstruct(TransactionEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c : this.causalService.values()) {
-                InsideDeterminant insideDeterminant = c.getInsideDeterminantByMarkerId(markerId).get(event.getBid());
-                if (insideDeterminant.isAbort) {
+                if (c.getAbortEventsByMarkerId(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 } else {
+                    InsideDeterminant insideDeterminant = c.getInsideDeterminantByMarkerId(event.getBid()).get(event.getBid());
                     event.src_account_value.setRecord(insideDeterminant.ackValues.get(event.getSourceAccountId()));
                     event.src_asset_value.setRecord(insideDeterminant.ackValues.get(event.getSourceBookEntryId()));
                 }

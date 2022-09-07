@@ -125,7 +125,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     protected void DeterminantDepositRequestConstruct(DepositEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.getAbortEventsByMarkerId(markerId).contains(event.getBid())){
+                if (c.getAbortEventsByMarkerId(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false,true);
                     return;
                 }
@@ -143,7 +143,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
     protected void DeterminantTransferRequestConstruct(TransactionEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.getAbortEventsByMarkerId(markerId).contains(event.getBid())){
+                if (c.getAbortEventsByMarkerId(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false,true);
                     return;
                 }
