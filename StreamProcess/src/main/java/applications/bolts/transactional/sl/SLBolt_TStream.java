@@ -146,6 +146,14 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 if (c.getAbortEventsByMarkerId(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false,true);
                     return;
+                } else if (c.getInsideDeterminantByMarkerId(event.getBid()).containsKey(event.getBid())) {
+                    InsideDeterminant insideDeterminant = c.getInsideDeterminantByMarkerId(event.getBid()).get(event.getBid());
+                    if (insideDeterminant.ackValues.containsKey(event.getSourceAccountId())) {
+                        event.src_account_value.setRecord(insideDeterminant.ackValues.get(event.getSourceBookEntryId()));
+                    }
+                    if (insideDeterminant.ackValues.containsKey(event.getSourceAccountId())) {
+                        event.src_asset_value.setRecord(insideDeterminant.ackValues.get(event.getSourceBookEntryId()));
+                    }
                 }
             }
             String[] accTable = new String[]{"T_accounts"};
@@ -279,35 +287,43 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, event.getTimestamp());
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant,null, event.getTimestamp());
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
+                InsideDeterminant insideDeterminant = null;
                 String[] keys = new String[]{event.getSourceAccountId(), event.getSourceBookEntryId(),
                         event.getTargetAccountId(), event.getTargetBookEntryId()};
-                for (String id : keys) {
-                    if (this.getPartitionId(id) != event.getPid()) {
-                        outsideDeterminant.setTargetPartitionId(this.getPartitionId(id));
-                    }
+                if (this.getPartitionId(keys[1]) != event.getPid()) {
+                    outsideDeterminant.setTargetPartitionId(this.getPartitionId(keys[1]));
                 }
-                if (this.getPartitionId(keys[0]) != this.getPartitionId(keys[2])) {
+                if (this.getPartitionId(keys[2]) != event.getPid()) {
+                    outsideDeterminant.setTargetPartitionId(this.getPartitionId(keys[2]));
                     outsideDeterminant.setAckValues(keys[0], event.src_account_value.getRecord());
                 }
-                if (this.getPartitionId(keys[1]) != this.getPartitionId(keys[3])) {
-                    outsideDeterminant.setAckValues(keys[1], event.src_asset_value.getRecord());
+                if (this.getPartitionId(keys[3]) != event.getPid()) {
+                    outsideDeterminant.setTargetPartitionId(this.getPartitionId(keys[2]));
+                    if(this.getPartitionId(keys[3]) != this.getPartitionId(keys[1])) {
+                        outsideDeterminant.setAckValues(keys[1], event.src_asset_value.getRecord());
+                    }
+                } else {
+                    if (this.getPartitionId(keys[3]) != this.getPartitionId(keys[1])) {
+                        insideDeterminant = new InsideDeterminant(event.getBid(),event.getPid());
+                        insideDeterminant.setAckValues(keys[1], event.src_asset_value.getRecord());
+                    }
                 }
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
                     outsideDeterminant.setOutSideEvent(event.toString());
-                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, outsideDeterminant, event.getTimestamp());//the tuple is finished.
                 } else {
-                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, null, event.getTimestamp());//the tuple is finished.
                 }
             }
         } else {
             if (event.txnContext.isAbort.get()) {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp());//the tuple is finished.
             } else {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished.
             }
         }
         if (enable_upstreamBackup) {
@@ -325,7 +341,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, event.getTimestamp());
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp());
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
                 String[] keys = new String[]{((DepositEvent)event).getAccountId(), ((DepositEvent)event).getBookEntryId()};
@@ -337,16 +353,16 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
                     outsideDeterminant.setOutSideEvent(event.toString());
-                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, outsideDeterminant, event.getTimestamp());//the tuple is finished.
                 } else {
-                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished.
                 }
             }
         } else {
             if (event.txnContext.isAbort.get()) {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp());//the tuple is finished.
             } else {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished.
             }
         }
         if (enable_upstreamBackup) {

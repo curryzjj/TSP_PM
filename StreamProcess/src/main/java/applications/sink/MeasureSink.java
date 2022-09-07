@@ -226,7 +226,6 @@ public class MeasureSink extends BaseSink {
                     this.causalService.get(insideDeterminant.partitionId).addAbortEvent(insideDeterminant.input);
                 }
             }
-            results.putIfAbsent(in.getBID(), 0.0);
             abortTransaction++;
         } else {
             if (Exactly_Once) {
@@ -234,24 +233,22 @@ public class MeasureSink extends BaseSink {
             } else {
                 if (enable_determinants_log) {
                     if (in.getValue(1) != null) {
-                        if (in.getValue(1) instanceof InsideDeterminant) {
-                            InsideDeterminant insideDeterminant = (InsideDeterminant) in.getValue(1);
-                            this.causalService.get(insideDeterminant.partitionId).addInsideDeterminant(insideDeterminant);
-                        } else {
-                            for (int targetPartition:((OutsideDeterminant) in.getValue(1)).targetPartitionIds) {
-                                this.causalService.get(targetPartition).addOutsideDeterminant((OutsideDeterminant) in.getValue(1));
-                            }
+                        InsideDeterminant insideDeterminant = (InsideDeterminant) in.getValue(1);
+                        this.causalService.get(insideDeterminant.partitionId).addInsideDeterminant(insideDeterminant);
+                    }
+                    if (in.getValue(2) != null) {
+                        for (int targetPartition:((OutsideDeterminant) in.getValue(1)).targetPartitionIds) {
+                            this.causalService.get(targetPartition).addOutsideDeterminant((OutsideDeterminant) in.getValue(1));
                         }
                     }
                 }
-                long latency = System.nanoTime() - (long)in.getValue(2);
+                long latency = System.nanoTime() - (long)in.getValue(3);
                 this.latency.addValue(latency / 1E6);
                 if ((System.nanoTime() - computationLatency) / 1E9 > 0.5) {
                     No_Exactly_Once_latency_map.add(latency / 1E6);
                     computationLatency = System.nanoTime();
                 }
                 count ++;
-                results.putIfAbsent(in.getBID(), (Double) in.getValue(3));
             }
         }
         if (failureFlagBid.contains(in.getBID())) {
