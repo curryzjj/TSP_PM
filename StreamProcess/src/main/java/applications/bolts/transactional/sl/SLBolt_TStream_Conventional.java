@@ -125,8 +125,12 @@ public abstract class SLBolt_TStream_Conventional extends TransactionalBoltTStre
                     return;
                 } else {
                     InsideDeterminant insideDeterminant = c.getInsideDeterminantByMarkerId(event.getBid()).get(event.getBid());
-                    event.src_account_value.setRecord(insideDeterminant.ackValues.get(event.getSourceAccountId()));
-                    event.src_asset_value.setRecord(insideDeterminant.ackValues.get(event.getSourceBookEntryId()));
+                    if (insideDeterminant.ackValues.containsKey(event.getSourceAccountId())) {
+                        event.src_account_value.setRecord(insideDeterminant.ackValues.get(event.getSourceBookEntryId()));
+                    }
+                    if (insideDeterminant.ackValues.containsKey(event.getSourceAccountId())) {
+                        event.src_asset_value.setRecord(insideDeterminant.ackValues.get(event.getSourceBookEntryId()));
+                    }
                 }
             }
         }
@@ -150,13 +154,21 @@ public abstract class SLBolt_TStream_Conventional extends TransactionalBoltTStre
                     } else {
                         if(event instanceof TransactionEvent){
                             transactionResult = ((TransactionEvent) event).transaction_result;
-                            insideDeterminant.setAckValues(((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent) event).src_account_value.getRecord());
-                            insideDeterminant.setAckValues(((TransactionEvent)event).getSourceBookEntryId(), ((TransactionEvent) event).src_asset_value.getRecord());
+                            if (this.getPartitionId(((TransactionEvent)event).getSourceAccountId()) != event.getPid()) {
+                                insideDeterminant.setAckValues(((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent) event).src_account_value.getRecord());
+                            }
+                            if (this.getPartitionId(((TransactionEvent)event).getSourceBookEntryId()) != event.getPid()) {
+                                insideDeterminant.setAckValues(((TransactionEvent)event).getSourceBookEntryId(), ((TransactionEvent) event).src_asset_value.getRecord());
+                            }
                         }else{
                             transactionResult = ((DepositEvent) event).transactionResult;
                         }
                         MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                        targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, event.getTimestamp());//the tuple is finished.
+                        if (insideDeterminant.ackValues.size() != 0) {
+                            targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, event.getTimestamp());//the tuple is finished.
+                        } else {
+                            targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
+                        }
                     }
                 } else {
                     if (event.txnContext.isAbort.get()) {
