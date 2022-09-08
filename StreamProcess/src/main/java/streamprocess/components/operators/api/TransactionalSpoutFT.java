@@ -78,7 +78,7 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
     }
     public boolean snapshot(){
         if(Time_Control){
-            if(System.currentTimeMillis() - snapshotRecordTime >= time_Interval){
+            if(System.currentTimeMillis() - snapshotRecordTime >= time_Interval || checkpoint_counter == 0){
                 this.snapshotRecordTime = System.currentTimeMillis();
                 return true;
             }else {

@@ -3,6 +3,7 @@ function ResetParameters() {
   FTOptions=0
   failureModel=2
   failureFrequency=6
+  firstFailure=10000
   tthreads=16
   snapshot=2
 
@@ -38,6 +39,7 @@ function runFTStream() {
             --FTOptions $FTOptions \
             --failureModel $failureModel \
             --failureFrequency $failureFrequency \
+            --firstFailure $firstFailure \
             --tthreads $tthreads \
             --snapshot $snapshot \
             --Arrival_Control $Arrival_Control \
@@ -64,6 +66,7 @@ function runFTStream() {
               --FTOptions $FTOptions \
               --failureModel $failureModel \
               --failureFrequency $failureFrequency \
+              --firstFailure $firstFailure \
               --tthreads $tthreads \
               --snapshot $snapshot \
               --Arrival_Control $Arrival_Control \

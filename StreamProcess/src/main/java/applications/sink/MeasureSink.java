@@ -237,8 +237,8 @@ public class MeasureSink extends BaseSink {
                         this.causalService.get(insideDeterminant.partitionId).addInsideDeterminant(insideDeterminant);
                     }
                     if (in.getValue(2) != null) {
-                        for (int targetPartition:((OutsideDeterminant) in.getValue(1)).targetPartitionIds) {
-                            this.causalService.get(targetPartition).addOutsideDeterminant((OutsideDeterminant) in.getValue(1));
+                        for (int targetPartition:((OutsideDeterminant) in.getValue(2)).targetPartitionIds) {
+                            this.causalService.get(targetPartition).addOutsideDeterminant((OutsideDeterminant) in.getValue(2));
                         }
                     }
                 }

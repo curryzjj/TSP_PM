@@ -79,7 +79,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     void determinant_read_construct(MicroEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEventList.get(markerId).contains(event.getBid())){
+                if (c.abortEventList.get(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false,true);
                     return;
                 }
@@ -92,7 +92,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     protected void determinant_write_construct(MicroEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEventList.get(markerId).contains(event.getBid())){
+                if (c.abortEventList.get(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false,true);
                     return;
                 }
@@ -131,9 +131,11 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
 
     @Override
     protected void REQUEST_CORE() throws InterruptedException {
-        for (MicroEvent event:EventsHolder){
-            if (event.READ_EVENT()){
-                READ_CORE(event);
+        if (this.markerId > recoveryId) {
+            for (MicroEvent event:EventsHolder){
+                if (event.READ_EVENT()){
+                    READ_CORE(event);
+                }
             }
         }
     }
@@ -171,7 +173,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
         for (int i = 0; i < NUM_ACCESSES;i++){
             event.sum += event.result[i];
         }
-        return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), event.sum);//the tuple is finished finally.
+        return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), event.sum);//the tuple is finished finally.
     }
     protected int WRITE_POST(MicroEvent event) throws InterruptedException {
         if (enable_determinants_log) {
@@ -180,7 +182,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,event.getTimestamp());
+                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null, event.getTimestamp());
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
                 outsideDeterminant.setOutSideEvent(event.toString());
@@ -191,16 +193,16 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                 }
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (outsideDeterminant.targetPartitionIds.size() !=0 ) {
-                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, outsideDeterminant, event.getTimestamp());//the tuple is finished finally.
+                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, outsideDeterminant, event.getTimestamp());//the tuple is finished finally.
                 } else {
-                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
+                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished finally.
                 }
             }
         } else {
             if (event.txnContext.isAbort.get()) {
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false,null, null, event.getTimestamp());//the tuple is finished finally.
             } else {
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished finally.
             }
         }
     }

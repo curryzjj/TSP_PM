@@ -130,7 +130,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void Determinant_Topping_request_construct(ToppingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEventList.get(markerId).contains(event.getBid())){
+                if (c.abortEventList.get(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
@@ -147,7 +147,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void Determinant_Alert_request_construct(AlertEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEventList.get(markerId).contains(event.getBid())){
+                if (c.abortEventList.get(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
@@ -164,7 +164,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void Determinant_Buying_request_construct(BuyingEvent event,TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEventList.get(markerId).contains(event.getBid())){
+                if (c.abortEventList.get(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
@@ -226,7 +226,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,event.getTimestamp());
+                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null,event.getTimestamp());
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
                 outsideDeterminant.setOutSideEvent(event.toString());
@@ -237,16 +237,16 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 }
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (outsideDeterminant.targetPartitionIds.isEmpty()) {
-                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true,outsideDeterminant, event.getTimestamp());//the tuple is finished.
+                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true,null, outsideDeterminant, event.getTimestamp());//the tuple is finished.
                 } else {
-                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
+                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished.
                 }
             }
         } else {
             if (event.txnContext.isAbort.get()) {
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp());//the tuple is finished.
             } else {
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null,null, event.getTimestamp());//the tuple is finished.
             }
         }
     }
@@ -257,7 +257,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,event.getTimestamp());
+                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,null,event.getTimestamp());
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
                 outsideDeterminant.setOutSideEvent(event.toString());
@@ -268,16 +268,16 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 }
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
-                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true,outsideDeterminant, event.getTimestamp(), event.alert_result);//the tuple is finished.
+                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true,null,outsideDeterminant, event.getTimestamp(), event.alert_result);//the tuple is finished.
                 } else {
-                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, event.getTimestamp(), event.alert_result);//the tuple is finished.
+                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null,null, event.getTimestamp(), event.alert_result);//the tuple is finished.
                 }
             }
         } else {
             if (event.txnContext.isAbort.get()) {
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp());//the tuple is finished finally.
             } else {
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished finally.
             }
         }
     }
@@ -289,7 +289,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,event.getTimestamp());
+                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null, event.getTimestamp());
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
                 outsideDeterminant.setOutSideEvent(event.toString());
@@ -300,16 +300,16 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 }
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
-                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, outsideDeterminant, event.getTimestamp(), event.topping_result);//the tuple is finished.
+                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, outsideDeterminant, event.getTimestamp(), event.topping_result);//the tuple is finished.
                 } else {
-                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), event.topping_result);//the tuple is finished.
+                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), event.topping_result);//the tuple is finished.
                 }
             }
         } else {
             if (event.txnContext.isAbort.get()) {
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null,null, event.getTimestamp());//the tuple is finished finally.
             } else {
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished finally.
             }
         }
     }

@@ -37,6 +37,7 @@ public class CONTROL {
     public static int failureInterval = 0;
     public static Queue<Long> failureFlagBid = new ArrayDeque<>();
     public static int failureTimes = 0;
+    public static int firstFailure = 0;
     public static boolean Exactly_Once = false;
     //Measure Methods
     public static boolean enable_checkpoint = false;
@@ -102,6 +103,6 @@ public class CONTROL {
                     failureTimes --;
                 }
             }
-        },  20000, failureInterval);//ms
+        },  firstFailure, failureInterval);//ms
     }
 }

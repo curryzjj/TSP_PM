@@ -151,7 +151,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                     if (insideDeterminant.ackValues.containsKey(event.getSourceAccountId())) {
                         event.src_account_value.setRecord(insideDeterminant.ackValues.get(event.getSourceBookEntryId()));
                     }
-                    if (insideDeterminant.ackValues.containsKey(event.getSourceAccountId())) {
+                    if (insideDeterminant.ackValues.containsKey(event.getSourceBookEntryId())) {
                         event.src_asset_value.setRecord(insideDeterminant.ackValues.get(event.getSourceBookEntryId()));
                     }
                 }
@@ -301,7 +301,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                     outsideDeterminant.setAckValues(keys[0], event.src_account_value.getRecord());
                 }
                 if (this.getPartitionId(keys[3]) != event.getPid()) {
-                    outsideDeterminant.setTargetPartitionId(this.getPartitionId(keys[2]));
+                    outsideDeterminant.setTargetPartitionId(this.getPartitionId(keys[3]));
                     if(this.getPartitionId(keys[3]) != this.getPartitionId(keys[1])) {
                         outsideDeterminant.setAckValues(keys[1], event.src_asset_value.getRecord());
                     }

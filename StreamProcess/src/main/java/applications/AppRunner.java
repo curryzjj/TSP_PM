@@ -189,6 +189,7 @@ public class  AppRunner extends baseRunner {
         if (CONTROL.enable_states_lost && config.getInt("failureFrequency") > 0) {
             failureInterval = config.getInt("systemRuntime") * 1000 / config.getInt("failureFrequency");
             failureTimes = config.getInt("failureFrequency");
+            firstFailure = config.getInt("firstFailure");
         }
     }
 
