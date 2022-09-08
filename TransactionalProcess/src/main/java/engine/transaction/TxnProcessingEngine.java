@@ -507,7 +507,7 @@ public class TxnProcessingEngine {
         return true;
     }
     private boolean OB_Topping_Fun(Operation operation) {
-        SchemaRecord src_record=operation.s_record.record_;
+        SchemaRecord src_record = operation.s_record.record_;
         List<DataBox> values = src_record.getValues();
         if (enable_transaction_abort) {
             if (operation.function.delta_long < 0) {

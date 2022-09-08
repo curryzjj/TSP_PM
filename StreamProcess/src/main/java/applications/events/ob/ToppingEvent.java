@@ -59,9 +59,7 @@ public class ToppingEvent extends TxnEvent {
         String[] key_arrays = key_array.substring(1, key_array.length() - 1).split(",");
         this.itemId = new int[key_arrays.length];
         for (int i = 0; i < key_arrays.length; i++) {
-
             this.itemId[i] = Integer.parseInt(key_arrays[i].trim());
-
         }
 
         String[] top_arrays = top_array.substring(1, top_array.length() - 1).split(",");

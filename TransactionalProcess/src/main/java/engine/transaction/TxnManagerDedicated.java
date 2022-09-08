@@ -145,9 +145,9 @@ public abstract class TxnManagerDedicated implements TxnManager{
         MetaTypes.AccessType accessType = MetaTypes.AccessType.READ_WRITE;
         String tableName="";
         if(enable_states_partition){
-            tableName=srcTable+"_"+ getPartitionId(source_key);
+            tableName = srcTable+"_"+ getPartitionId(source_key);
         }else{
-            tableName=srcTable;
+            tableName = srcTable;
         }
         TableRecord t_record = storageManager.getTable(tableName).SelectKeyRecord(source_key);
 

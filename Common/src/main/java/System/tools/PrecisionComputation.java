@@ -18,6 +18,45 @@ public class PrecisionComputation {
                 + OsUtils.osWrapperPostFix(String.valueOf(1));
         Scanner scanner = new Scanner(new File(filePath), "UTF-8");
         Scanner baseScanner = new Scanner(new File(basePath), "UTF-8");
+        switch (application) {
+            case "GS_txn" :
+                return GSApplication(scanner, baseScanner);
+            case "SL_txn" :
+                return SLApplication(scanner, baseScanner);
+            case "OB_txn" :
+                return OBApplication(scanner, baseScanner);
+            case "TP_txn" :
+                return TPApplication(scanner, baseScanner);
+            default:
+                return 0.0;
+        }
+    }
+    public static double OBApplication(Scanner scanner, Scanner baseScanner) {
+        double totalNum = 0;
+        double sum = 0;
+        while (baseScanner.hasNextLine()) {
+            totalNum ++;
+            double priceDegradation;
+            double basePrice = Long.parseLong(baseScanner.nextLine().split(",")[1].trim());
+            double comparePrice = Long.parseLong(scanner.nextLine().split(",")[1].trim());
+            if (basePrice == 0) {
+                priceDegradation = Math.abs(basePrice - comparePrice) / (basePrice + 1);
+            } else {
+                priceDegradation = Math.abs(basePrice - comparePrice) / basePrice;
+            }
+            double qtyDegradation;
+            double baseQty = Long.parseLong(baseScanner.nextLine().split(",")[2]);
+            double compareQty = Long.parseLong(scanner.nextLine().split(",")[2]);
+            if (basePrice == 0) {
+                qtyDegradation = Math.abs(baseQty - compareQty) / (baseQty + 1);
+            } else {
+                qtyDegradation = Math.abs(baseQty - compareQty) / baseQty;
+            }
+            sum = sum + (priceDegradation + qtyDegradation) / 2;
+        }
+        return sum / totalNum;
+    }
+    public static double SLApplication(Scanner scanner, Scanner baseScanner) {
         double totalNum = 0;
         double sum = 0;
         while (baseScanner.hasNextLine()) {
@@ -29,5 +68,21 @@ public class PrecisionComputation {
         scanner.close();
         baseScanner.close();
         return sum / totalNum;
+    }
+    public static double GSApplication(Scanner scanner, Scanner baseScanner) {
+        double totalNum = 0;
+        double sum = 0;
+        while (baseScanner.hasNextLine()) {
+            totalNum ++;
+            double baseString = Long.parseLong(baseScanner.nextLine().split(",")[1].trim());
+            double compareString = Long.parseLong(scanner.nextLine().split(",")[1].trim());
+            sum = sum + Math.abs(compareString - baseString) / baseString;
+        }
+        scanner.close();
+        baseScanner.close();
+        return sum / totalNum;
+    }
+    public static double TPApplication(Scanner scanner, Scanner baseScanner) {
+        return 0;
     }
 }

@@ -109,9 +109,9 @@ public class GSInitializer extends TableInitilizer{
         }
     }
     public static String GenerateValue(int key) {
-        return rightpad(String.valueOf(key), VALUE_LEN);
+        return rightPad(String.valueOf(key), VALUE_LEN);
     }
-    private static String rightpad(@NotNull String text, int length) {
+    private static String rightPad(@NotNull String text, int length) {
         return StringUtils.rightPad(text, length); // Returns "****foobar"
 //        return String.format("%-" + length + "." + length + "s", text);
     }

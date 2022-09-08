@@ -51,11 +51,13 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
         versions.put(ts, record_);
     }
     public void clean_map() {
-        long ts = versions.lastKey();
-        SchemaRecord lastRecord = versions.get(ts);
-        versions.clear();
-        record_.updateValues(lastRecord.getValues());
-        versions.put(ts, lastRecord);
+        if (versions.size() > 1) {
+            long ts = versions.lastKey();
+            SchemaRecord lastRecord = versions.get(ts);
+            versions.clear();
+            record_.updateValues(lastRecord.getValues());
+            versions.put(ts, lastRecord);
+        }
     }
     public TableRecord cloneTableRecord() throws IOException, ClassNotFoundException {
         return (TableRecord) Serialize.cloneObject(this);

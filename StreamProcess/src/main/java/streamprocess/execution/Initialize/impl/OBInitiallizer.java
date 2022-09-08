@@ -45,7 +45,7 @@ public class OBInitiallizer extends TableInitilizer {
         dataBoxes.add(new LongDataBox());
         dataBoxes.add(new LongDataBox());
 
-        fieldNames.add("ID");//PK
+        fieldNames.add("ID");//OB
         fieldNames.add("Price");
         fieldNames.add("Qty");
 

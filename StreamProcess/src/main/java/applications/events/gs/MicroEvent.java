@@ -99,18 +99,16 @@ public class MicroEvent extends TxnEvent {
     public void setValues(int[] keys) {
         value = new ArrayList[NUM_ACCESSES];//Note, it should be arraylist instead of linkedlist as there's no add/remove later.
         for (int access_id = 0; access_id < NUM_ACCESSES; ++access_id) {
-            set_values(access_id, keys[access_id]);
+            set_values(access_id, keys[NUM_ACCESSES - 1 - access_id]);
         }
     }
     private void set_values(int access_id, int key) {
         List<DataBox> values = new ArrayList<>();
-        if (isAbort) {
-            value[access_id] = values;
-        } else {
+        if (!isAbort) {
             values.add(new IntDataBox(key));//key  4 bytes
             values.add(new StringDataBox(GenerateValue(key), VALUE_LEN));//value_list   32 bytes..
-            value[access_id] = values;
         }
+        value[access_id] = values;
     }
 
     @Override

@@ -93,7 +93,7 @@ function baselineEvaluation() {
   ResetParameters
   for FTOptions in 1 2 3 4
      do
-     for time_Interval in 2 4 6 8
+     for time_Interval in 2000 4000 6000 8000
         do runFTStream
         done
         done
