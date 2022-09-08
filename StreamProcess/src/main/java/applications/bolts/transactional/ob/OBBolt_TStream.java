@@ -234,7 +234,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     }
                 }
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                if (outsideDeterminant.targetPartitionIds.isEmpty()) {
+                if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
                     return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true,null, outsideDeterminant, event.getTimestamp());//the tuple is finished.
                 } else {
                     return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished.
@@ -266,7 +266,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 }
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
-                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true,null,outsideDeterminant, event.getTimestamp(), event.alert_result);//the tuple is finished.
+                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, outsideDeterminant, event.getTimestamp(), event.alert_result);//the tuple is finished.
                 } else {
                     return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null,null, event.getTimestamp(), event.alert_result);//the tuple is finished.
                 }
