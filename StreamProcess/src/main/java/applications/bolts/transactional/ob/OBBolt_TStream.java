@@ -107,9 +107,9 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void CommitOutsideDeterminant(long markerId) throws DatabaseException, InterruptedException {
         if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
             for (CausalService c:this.causalService.values()) {
-                for (OutsideDeterminant outsideDeterminant:c.outsideDeterminantList.get(markerId)) {
-                    TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
-                    if (event.getBid() <= markerId) {
+                if (c.outsideDeterminantList.get(markerId) != null) {
+                    for (OutsideDeterminant outsideDeterminant:c.outsideDeterminantList.get(markerId)) {
+                        TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
                         TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
                         event.setTxnContext(txnContext);
                         if (event instanceof BuyingEvent) {
@@ -119,8 +119,6 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                         } else {
                             Determinant_Topping_request_construct((ToppingEvent) event, txnContext);
                         }
-                    } else {
-                        break;
                     }
                 }
             }
@@ -130,7 +128,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void Determinant_Topping_request_construct(ToppingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEventList.get(event.getBid()).contains(event.getBid())){
+                if (c.getAbortEventsByMarkerId(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
@@ -147,7 +145,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void Determinant_Alert_request_construct(AlertEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEventList.get(event.getBid()).contains(event.getBid())){
+                if (c.getAbortEventsByMarkerId(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
@@ -164,7 +162,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected void Determinant_Buying_request_construct(BuyingEvent event,TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEventList.get(event.getBid()).contains(event.getBid())){
+                if (c.getAbortEventsByMarkerId(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
@@ -289,7 +287,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null, event.getTimestamp());
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp());
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
                 outsideDeterminant.setOutSideEvent(event.toString());

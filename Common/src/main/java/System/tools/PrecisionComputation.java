@@ -47,7 +47,7 @@ public class PrecisionComputation {
             double qtyDegradation;
             double baseQty = Long.parseLong(baseScanner.nextLine().split(",")[2]);
             double compareQty = Long.parseLong(scanner.nextLine().split(",")[2]);
-            if (basePrice == 0) {
+            if (baseQty == 0) {
                 qtyDegradation = Math.abs(baseQty - compareQty) / (baseQty + 1);
             } else {
                 qtyDegradation = Math.abs(baseQty - compareQty) / baseQty;

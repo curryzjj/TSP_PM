@@ -64,7 +64,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     protected void Determinant_REQUEST_CONSTRUCT(TollProcessingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
-                if (c.abortEventList.get(event.getBid()).contains(event.getBid())){
+                if (c.getAbortEventsByMarkerId(event.getBid()).contains(event.getBid())){
                     event.txnContext.isAbort.compareAndSet(false, true);
                     return;
                 }
