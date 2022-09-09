@@ -3,6 +3,7 @@ package engine.table.tableRecords;
 import engine.table.RecordSchema;
 import engine.table.RowID;
 import engine.table.datatype.DataBox;
+import utils.TransactionalProcessConstants;
 import utils.Utils;
 
 import java.io.Serializable;

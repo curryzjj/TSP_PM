@@ -91,7 +91,7 @@ public class TPInitializer extends TableInitilizer {
         SchemaRecord schemaRecord = new SchemaRecord(values);
         try {
             if(enable_states_partition){
-                db.InsertRecord("segment_cnt_"+getPartitionId(key), new TableRecord(schemaRecord));
+                db.InsertRecord("segment_cnt_" + getPartitionId(key), new TableRecord(schemaRecord));
             }else{
                 db.InsertRecord("segment_cnt", new TableRecord(schemaRecord));
             }

@@ -80,6 +80,9 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                             case "snapshot":
                                 this.markerId = in.getBID();
                                 this.isSnapshot = true;
+                                if (enable_determinants_log && this.markerId <= recoveryId) {
+                                    this.CommitOutsideDeterminant(this.markerId);
+                                }
                                 if (TXN_PROCESS_FT()){
                                     if (enable_recovery_dependency) {
                                         Marker marker = in.getMarker().clone();

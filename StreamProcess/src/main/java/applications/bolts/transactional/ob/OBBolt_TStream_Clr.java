@@ -85,10 +85,18 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                             case "snapshot":
                                 this.markerId = in.getBID();
                                 this.isSnapshot = true;
+                                if (enable_determinants_log && this.markerId <= recoveryId) {
+                                    this.CommitOutsideDeterminant(this.markerId);
+                                }
                                 if (TXN_PROCESS_FT()){
-                                    Marker marker = in.getMarker();
-                                    marker.setEpochInfo(this.epochInfo);
-                                    forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                    if (enable_recovery_dependency) {
+                                        Marker marker = in.getMarker();
+                                        marker.setEpochInfo(this.epochInfo);
+                                        this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
+                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                    } else {
+                                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    }
                                     if (enable_upstreamBackup) {
                                         this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
                                         this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);

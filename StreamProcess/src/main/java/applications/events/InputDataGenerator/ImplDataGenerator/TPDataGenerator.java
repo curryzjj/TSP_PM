@@ -49,7 +49,7 @@ public class TPDataGenerator extends InputDataGenerator {
     @Override
     public void generateEvent() {
         for(int i = 0; i < recordNum; i++){
-            TollProcessingEvent event= (TollProcessingEvent) this.create_new_event(current_bid);
+            TollProcessingEvent event = (TollProcessingEvent) this.create_new_event(current_bid);
             events.add(event);
         }
     }

@@ -8,6 +8,7 @@ import utils.TransactionalProcessConstants.DataBoxTypes;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Iterator;
 
 public class HashSetDataBox extends DataBox {
     private volatile HashSet set;
@@ -84,11 +85,10 @@ public class HashSetDataBox extends DataBox {
 
     @Override
     public String toString() {
-        String str = new String();
-        if(this.set.iterator().hasNext()){
-            Object a=this.set.iterator().next();
-            str=str+a.toString()+" ";
+        StringBuilder str = new StringBuilder();
+        for (Object a : this.set) {
+            str.append(a.toString()).append(" ");
         }
-        return str;
+        return str.toString();
     }
 }

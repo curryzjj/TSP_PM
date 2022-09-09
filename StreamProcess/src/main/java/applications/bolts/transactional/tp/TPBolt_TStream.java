@@ -35,6 +35,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
         TxnContext txnContext = new TxnContext(thread_Id, this.fid, in.getBID());
         TollProcessingEvent event = (TollProcessingEvent) in.getValue(0);
+        event.setTxnContext(txnContext);
         MeasureTools.Transaction_construction_begin(this.thread_Id, System.nanoTime());
         if (enable_determinants_log) {
             Determinant_REQUEST_CONSTRUCT(event, txnContext);
@@ -43,7 +44,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
         }
         MeasureTools.Transaction_construction_acc(this.thread_Id, System.nanoTime());
     }
-    protected void REQUEST_CONSTRUCT(TollProcessingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
+    protected void REQUEST_CONSTRUCT(TollProcessingEvent event, TxnContext txnContext) throws DatabaseException {
         transactionManager.Asy_ModifyRecord_Read(txnContext
                 , "segment_speed"
                 ,String.valueOf(event.getSegmentId())
@@ -77,7 +78,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
             transactionManager.Asy_ModifyRecord_Read(txnContext
                     ,"segment_cnt"
                     ,String.valueOf(event.getSegmentId())
-                    ,event.getSpeed_value()[0]
+                    ,event.getCount_value()[0]
                     ,new CNT(event.getVid()));
         } else {
             REQUEST_CONSTRUCT(event, txnContext);
@@ -117,7 +118,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant,null, event.getTimestamp());//the tuple is finished.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp());//the tuple is finished.
             } else {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 double spendValue = 0;
@@ -128,7 +129,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                 }
                 //Some UDF function
                 event.toll = spendValue / cntValue;
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp(), event.toll);//the tuple is finished.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true,null, null, event.getTimestamp(), event.toll);//the tuple is finished.
             }
         } else {
             if (event.txnContext.isAbort.get()) {

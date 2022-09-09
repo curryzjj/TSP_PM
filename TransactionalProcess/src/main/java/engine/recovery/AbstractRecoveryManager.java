@@ -145,7 +145,7 @@ public class AbstractRecoveryManager {
                                 case STRING:boxes.get(i).setString(values[i],values[i].length());
                                 break;
                                 case OTHERS:
-                                    String[] ints=values[i].split(" ");
+                                    String[] ints = values[i].split(" ");
                                     for(String s:ints){
                                         boxes.get(i).getHashSet().add(Integer.parseInt(s));
                                     }
