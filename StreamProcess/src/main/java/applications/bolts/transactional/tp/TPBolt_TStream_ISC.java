@@ -14,11 +14,11 @@ import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.*;
 
-public class TPBolt_TStream_Snapshot extends TPBolt_TStream {
-    private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream_Snapshot.class);
+public class TPBolt_TStream_ISC extends TPBolt_TStream {
+    private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream_ISC.class);
     private static final long serialVersionUID = 701564387363737406L;
 
-    public TPBolt_TStream_Snapshot(int fid) {
+    public TPBolt_TStream_ISC(int fid) {
         super(fid);
     }
 

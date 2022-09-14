@@ -259,9 +259,11 @@ public class  AppRunner extends baseRunner {
                 config.getInt("failureModel"),
                 config.getInt("failureFrequency"),
                 config.getInt("FTOptions"));
-        double precision = PrecisionComputation.precisionComputation(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
-        System.out.println(precision);
-        MeasureTools.setPrecision(precision);
+        MeasureTools.DumpOutputResult(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
+        double stateDegradation = PrecisionComputation.stateDegradation(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
+        double relativeError = PrecisionComputation.relativeError(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
+        MeasureTools.setStateDegradation(stateDegradation);
+        MeasureTools.setRelativeError(relativeError);
         MeasureTools.METRICS_REPORT(directory);
     }
     public static void main(String[] args) throws UnhandledCaseException, InterruptedException, IOException {

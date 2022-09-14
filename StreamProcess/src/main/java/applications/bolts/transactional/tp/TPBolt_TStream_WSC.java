@@ -13,9 +13,9 @@ import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.*;
 
-public class TPBolt_TStream_Wal extends TPBolt_TStream{
+public class TPBolt_TStream_WSC extends TPBolt_TStream{
     private static final long serialVersionUID = 2082014261100781714L;
-    public TPBolt_TStream_Wal(int fid) {
+    public TPBolt_TStream_WSC(int fid) {
         super(fid);
     }
     @Override

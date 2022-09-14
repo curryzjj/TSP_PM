@@ -1,10 +1,12 @@
 package System.measure;
 
 import System.FileSystem.ImplFS.LocalFileSystem;
+import System.sink.helper.ApplicationResult;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 public class Metrics {
     static class Performance {
@@ -12,14 +14,17 @@ public class Metrics {
         public static ConcurrentHashMap<Integer,DescriptiveStatistics> Latency;
         public static ConcurrentHashMap<Integer, List<Double>> latency_map;
         public static ConcurrentHashMap<Integer,List<Double>> throughput_map;
+        public static ConcurrentHashMap<Integer,ConcurrentSkipListMap<Long, ApplicationResult>> results_map;
         public static int CheckpointTimes;
         public static long SystemRuntime;
-        public static double Precision;
+        public static double StateDegradation;
+        public static double RelativeError;
         public static void Initialize() {
             AvgThroughput = new ConcurrentHashMap<>();
             Latency = new ConcurrentHashMap<>();
             latency_map = new ConcurrentHashMap<>();
             throughput_map = new ConcurrentHashMap<>();
+            results_map = new ConcurrentHashMap<>();
         }
     }
     //Runtime Breakdown

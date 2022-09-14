@@ -5,7 +5,6 @@ import applications.events.SL.TransactionEvent;
 import applications.events.SL.TransactionResult;
 import applications.events.TxnEvent;
 import engine.Exception.DatabaseException;
-import engine.table.tableRecords.SchemaRecord;
 import engine.transaction.TxnContext;
 import engine.transaction.function.Condition;
 import engine.transaction.function.DEC;
@@ -269,13 +268,13 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
 
     private void TRANSFER_REQUEST_CORE(TransactionEvent event) {
         if (event.txnContext.isAbort.get()) {
-            event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), false);
+            event.transaction_result = new TransactionResult(event.getBid(), false);
         } else {
-            event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0], event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
+            event.transaction_result = new TransactionResult(event.getBid(),  event.success[0], event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
         }
     }
     protected void DEPOSITE_REQUEST_CORE(DepositEvent event) {
-        event.transactionResult = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0]);
+        event.transactionResult = new TransactionResult(event.getBid(), event.success[0]);
     }
 
     protected void TRANSFER_POST(TransactionEvent event) throws InterruptedException {

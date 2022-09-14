@@ -131,12 +131,6 @@ public class LocalManager extends FTManager {
                     LOG.info("Recovery partitions are" + recoveryIds.toString() + "Align offset is  " + alignOffset);
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(SnapshotFile);
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(), recoveryIds, alignOffset);
-                    //undo to align offset
-//                    MeasureTools.Align_time_begin(System.nanoTime());
-//                    if (enable_align_wait) {
-//                        this.db.undoFromWALToTargetOffset(recoveryIds, alignOffset);
-//                    }
-                    MeasureTools.Align_time_finish(System.nanoTime());
                     MeasureTools.State_load_begin(System.nanoTime());
                     this.db.recoveryFromTargetSnapshot(lastSnapshotResult, recoveryIds);
                     MeasureTools.State_load_finish(System.nanoTime());

@@ -3,8 +3,10 @@ package applications.sink;
 import System.FileSystem.FileSystem;
 import System.FileSystem.ImplFS.LocalFileSystem;
 import System.measure.MeasureTools;
+import System.sink.helper.ApplicationResult;
 import System.util.Configuration;
 import UserApplications.CONTROL;
+import applications.events.TxnResult;
 import engine.Exception.DatabaseException;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
@@ -31,7 +33,7 @@ public class MeasureSink extends BaseSink {
     private static final long serialVersionUID = 6249684803036342603L;
     private static final Logger LOG = LoggerFactory.getLogger(MeasureSink.class);
     private final DescriptiveStatistics latency = new DescriptiveStatistics();
-    private final ConcurrentSkipListMap<Long,Double> results = new ConcurrentSkipListMap<>();
+    private final ConcurrentSkipListMap<Long, ApplicationResult> results = new ConcurrentSkipListMap<>();
     //Exactly_Once
     protected final List<Double> latency_map = new ArrayList<>();
     //no_Exactly_Once
@@ -218,6 +220,7 @@ public class MeasureSink extends BaseSink {
 
     @Override
     protected void EXECUTE(Tuple in) {
+        this.results.putIfAbsent(in.getBID(), (ApplicationResult) in.getValue(4));
         boolean finish = (boolean) in.getValue(0);
         if (!finish) {
             if (enable_determinants_log) {
@@ -267,6 +270,7 @@ public class MeasureSink extends BaseSink {
         MeasureTools.setLatency(thisTaskId, latency);
         MeasureTools.setCheckpointTimes(CheckpointTimes);
         MeasureTools.setSystemRuntime((long) ((System.nanoTime() - startTime) / 1E9));
+        MeasureTools.setResultsMap(thisTaskId,results);
     }
 
     public long getCount() {

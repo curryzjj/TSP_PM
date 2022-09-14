@@ -10,31 +10,30 @@ import engine.transaction.function.AVG;
 import engine.transaction.function.CNT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
 import streamprocess.controller.output.Determinant.InsideDeterminant;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
-import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
 import streamprocess.faulttolerance.clr.CausalService;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
+import static UserApplications.CONTROL.enable_upstreamBackup;
 
-public abstract class TPBolt_TStream extends TransactionalBoltTStream {
-    private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream.class);
-    private static final long serialVersionUID = -4887076370033768805L;
+public abstract class TPBolt_TStream_Conventional extends TransactionalBoltTStream {
+    private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream_Conventional.class);
+    private static final long serialVersionUID = -4409529489756312739L;
     ArrayDeque<TollProcessingEvent> LREvents = new ArrayDeque<>();
-    public TPBolt_TStream(int fid) {
+    public TPBolt_TStream_Conventional(int fid) {
         super(LOG, fid);
         this.configPrefix="tptxn";
         status = new Status();
         this.setStateful();
     }
-
     @Override
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
         TxnContext txnContext = new TxnContext(thread_Id, this.fid, in.getBID());
@@ -60,11 +59,6 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                 ,event.getCount_value()[0]
                 ,new CNT(event.getVid()));
         LREvents.add(event);
-        if (enable_recovery_dependency) {
-            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
-            this.updateRecoveryDependency(new int[]{event.getSegmentId()}, true);
-            MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-        }
     }
     protected void Determinant_REQUEST_CONSTRUCT(TollProcessingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
@@ -96,10 +90,10 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
         }
     }
     private void TS_REQUEST_CORE(TollProcessingEvent event) {
-       for (int i = 0; i < NUM_ACCESSES; i++) {
-           event.spendValues[i] = event.getSpeed_value()[i].getRecord().getValue().getDouble();
-           event.cntValues[i] = event.getCount_value()[i].getRecord().getValue().getInt();
-       }
+        for (int i = 0; i < NUM_ACCESSES; i++) {
+            event.spendValues[i] = event.getSpeed_value()[i].getRecord().getValue().getDouble();
+            event.cntValues[i] = event.getCount_value()[i].getRecord().getValue().getInt();
+        }
     }
     protected void REQUEST_POST() throws InterruptedException {
         if (this.markerId > recoveryId) {

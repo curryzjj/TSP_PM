@@ -149,7 +149,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                 }
                 if (enable_upstreamBackup) {
                     MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new MicroResult(event.getBid(), event.getTimestamp(), false, event.sum));
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new MicroResult(event.getBid(), event.sum));
                     MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                 }
             }

@@ -1,6 +1,8 @@
 package System.measure;
 
 import System.FileSystem.Path;
+import System.sink.helper.ApplicationResult;
+import System.util.OsUtils;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,8 +12,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import static System.measure.Metrics.*;
 import static System.measure.Metrics.Recovery_Breakdown.*;
@@ -187,13 +189,17 @@ public class MeasureTools {
     public static void setLatencyMap(int threadId, List<Double> result) {
         Performance.latency_map.put(threadId,result);
     }
+    public static void setResultsMap(int threadId, ConcurrentSkipListMap<Long, ApplicationResult> results) {
+        Performance.results_map.put(threadId,results);
+    }
     public static void setCheckpointTimes(int checkpointTimes) {
         Performance.CheckpointTimes = checkpointTimes;
     }
     public static void setSystemRuntime(long systemRuntime) {
         Performance.SystemRuntime = systemRuntime;
     }
-    public static void setPrecision(double precision){Performance.Precision = precision;}
+    public static void setStateDegradation(double stateDegradation){Performance.StateDegradation = stateDegradation;}
+    public static void setRelativeError(double relativeError){Performance.RelativeError = relativeError;}
     private static void PerformanceReport(String baseDirectory, StringBuilder sb) throws IOException {
         sb.append("\n");
         String statsFolderPath = baseDirectory + "_overview.txt";
@@ -221,9 +227,14 @@ public class MeasureTools {
         sb.append("\n" + totalThroughput + "\n");
         sb.append("=======Avg_latency=======");
         sb.append("\n" + totalAvgLatency/Performance.Latency.size() + "\n");
+        sb.append("=======StateDegradation=======");
+        sb.append("\n" + Performance.StateDegradation + "\n");
+        sb.append("=======RelativeError=======");
+        sb.append("\n" + Performance.RelativeError + "\n");
         fileWriter.write("Throughput: " + totalThroughput / Performance.AvgThroughput.size() + "\n");
         fileWriter.write("Avg_latency: " + totalAvgLatency / Performance.Latency.size() + "\n");
-        fileWriter.write("Precision: " + Performance.Precision + "\n");
+        fileWriter.write("StateDegradation: " + Performance.StateDegradation + "\n");
+        fileWriter.write("RelativeError: " + Performance.RelativeError + "\n");
         fileWriter.write("Percentile\t Latency\n");
         double percentile[] = new double[]{0.5, 20, 40, 60, 80, 99};
         for (int i = 0; i < percentile.length; i ++){
@@ -700,5 +711,29 @@ public class MeasureTools {
             RuntimeThroughputReport(baseDirectory);
             RuntimeLatencyReport(baseDirectory);
         }
+    }
+    public static void DumpOutputResult(String FileDirectory,String application, int FTOptions, int FailureTimes) throws IOException {
+        String filePath = FileDirectory + OsUtils.osWrapperPostFix("OutputResult")
+                + OsUtils.osWrapperPostFix(application)
+                + OsUtils.osWrapperPostFix(String.valueOf(FTOptions))
+                + OsUtils.osWrapperPostFix(String.valueOf(FailureTimes));
+        File file = new File(filePath);
+        file.mkdirs();
+        if (file.exists())
+            file.delete();
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        BufferedWriter bufferedWriter = Files.newBufferedWriter(Paths.get(file.getPath()), APPEND);
+        for (ConcurrentSkipListMap<Long, ApplicationResult> applicationResults : Performance.results_map.values()) {
+            for (ApplicationResult applicationResult : applicationResults.values()) {
+                bufferedWriter.write(applicationResult.toString());
+                bufferedWriter.write("\n");
+            }
+        }
+        bufferedWriter.flush();
+        bufferedWriter.close();
     }
 }

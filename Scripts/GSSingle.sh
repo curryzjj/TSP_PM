@@ -3,7 +3,7 @@ function ResetParameters() {
   app="GS_txn"
   FTOptions=0
   failureModel=3
-  failureFrequency=6
+  failureFrequency=2
   firstFailure=10000
   tthreads=16
   snapshot=2
@@ -15,7 +15,7 @@ function ResetParameters() {
   time_Interval=3000
   timeSliceLengthMs=1000
   input_store_batch=20000
-  systemRuntime=80
+  systemRuntime=120
   #shellcheck disable=SC2006
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
@@ -23,7 +23,7 @@ function ResetParameters() {
   NUM_ITEMS=163840
   NUM_EVENTS=16000000
   ZIP_SKEW=400
-  RATIO_OF_READ=500
+  RATIO_OF_READ=200
   RATIO_OF_ABORT=0
   RATIO_OF_DEPENDENCY=1000
   complexity=0

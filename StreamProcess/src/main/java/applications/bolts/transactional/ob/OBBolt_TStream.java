@@ -210,7 +210,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 }
                 if (enable_upstreamBackup) {
                     MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new OnlineBidingResult(event.getBid(), event.getTimestamp(), event.txnContext.isAbort.get()));
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new OnlineBidingResult(event.getBid(), 0));
                     MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                 }
             }

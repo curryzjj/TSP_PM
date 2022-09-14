@@ -2,13 +2,9 @@ package applications.topology.transactional;
 
 import System.util.Configuration;
 import UserApplications.constants.GrepSumConstants;
-import applications.bolts.transactional.tp.TPBolt_TStream_CLR;
-import applications.bolts.transactional.tp.TPBolt_TStream_NoFT;
-import applications.events.InputDataGenerator.ImplDataGenerator.TPDataGenerator;
+import applications.bolts.transactional.tp.*;
 import UserApplications.constants.TP_TxnConstants.Component;
 import UserApplications.constants.TP_TxnConstants.Field;
-import applications.bolts.transactional.tp.TPBolt_TStream_Snapshot;
-import applications.bolts.transactional.tp.TPBolt_TStream_Wal;
 import applications.events.InputDataStore.ImplDataStore.TPInputStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,23 +51,39 @@ public class TP_txn extends TransactionalTopology {
                 grouping = new ShuffleGrouping(GrepSumConstants.Component.SPOUT);
             }
             if(enable_checkpoint){
-                builder.setBolt(Component.EXECUTOR,
-                        new TPBolt_TStream_Snapshot(0),
-                        config.getInt(Executor_Threads,1),
-                        grouping
-                );
+                if (conventional) {
+                    builder.setBolt(Component.EXECUTOR,
+                            new TPBolt_TStream_Global(0),
+                            config.getInt(Executor_Threads,1),
+                            grouping
+                    );
+                } else {
+                    builder.setBolt(Component.EXECUTOR,
+                            new TPBolt_TStream_ISC(0),
+                            config.getInt(Executor_Threads,1),
+                            grouping
+                    );
+                }
             }else if(enable_wal){
                 builder.setBolt(Component.EXECUTOR,
-                        new TPBolt_TStream_Wal(0),
+                        new TPBolt_TStream_WSC(0),
                         config.getInt(Executor_Threads,1),
                         grouping
                 );
             }else if (enable_clr) {
-                builder.setBolt(Component.EXECUTOR,
-                        new TPBolt_TStream_CLR(0),
-                        config.getInt(Executor_Threads,1),
-                        grouping
-                );
+                if (conventional) {
+                    builder.setBolt(Component.EXECUTOR,
+                            new TPBolt_TStream_Local(0),
+                            config.getInt(Executor_Threads,1),
+                            grouping
+                    );
+                } else {
+                    builder.setBolt(Component.EXECUTOR,
+                            new TPBolt_TStream_CLR(0),
+                            config.getInt(Executor_Threads,1),
+                            grouping
+                    );
+                }
             } else {
                 builder.setBolt(Component.EXECUTOR,
                         new TPBolt_TStream_NoFT(0),

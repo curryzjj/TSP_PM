@@ -7,7 +7,7 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public class PrecisionComputation {
-    public static double precisionComputation(String FileDirectory, String application, int FTOption, int FailureTime) throws FileNotFoundException {
+    public static double stateDegradation(String FileDirectory, String application, int FTOption, int FailureTime) throws FileNotFoundException {
         String filePath = FileDirectory + OsUtils.osWrapperPostFix("Database")
                 + OsUtils.osWrapperPostFix(application)
                 + OsUtils.osWrapperPostFix(String.valueOf(FTOption))
@@ -30,6 +30,32 @@ public class PrecisionComputation {
             default:
                 return 0.0;
         }
+    }
+    public static double relativeError(String FileDirectory, String application, int FTOption, int FailureTime) throws FileNotFoundException {
+        String filePath = FileDirectory + OsUtils.osWrapperPostFix("OutputResult")
+                + OsUtils.osWrapperPostFix(application)
+                + OsUtils.osWrapperPostFix(String.valueOf(FTOption))
+                + OsUtils.osWrapperPostFix(String.valueOf(FailureTime));
+        String basePath = FileDirectory + OsUtils.osWrapperPostFix("OutputResult")
+                + OsUtils.osWrapperPostFix(application)
+                + OsUtils.osWrapperPostFix(String.valueOf(0))
+                + OsUtils.osWrapperPostFix(String.valueOf(0));
+        Scanner scanner = new Scanner(new File(filePath), "UTF-8");
+        Scanner baseScanner = new Scanner(new File(basePath), "UTF-8");
+        double totalNum = 0;
+        double sum = 0;
+        while (baseScanner.hasNextLine()) {
+            totalNum ++;
+            double resultDegradation = 0;
+            String[] baseResults = baseScanner.nextLine().split(";")[1].split(",");
+            String[] compareResults = scanner.nextLine().split(";")[1].split(",");
+            for (int i = 0; i < baseResults.length; i++) {
+                resultDegradation = resultDegradation
+                        + Math.abs(Double.parseDouble(compareResults[i]) - Double.parseDouble(baseResults[i])) / Double.parseDouble(baseResults[i]);
+            }
+            sum = sum + resultDegradation;
+        }
+        return sum / totalNum;
     }
     public static double OBApplication(Scanner scanner, Scanner baseScanner) {
         double totalNum = 0;
