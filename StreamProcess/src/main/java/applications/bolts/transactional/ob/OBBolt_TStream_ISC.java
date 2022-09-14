@@ -13,13 +13,11 @@ import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.*;
 
-public class OBBolt_TStream_Wal extends OBBolt_TStream{
-    private static final long serialVersionUID = -8626226381744987803L;
-
-    public OBBolt_TStream_Wal(int fid) {
+public class OBBolt_TStream_ISC extends OBBolt_TStream{
+    private static final long serialVersionUID = 6348137453264037834L;
+    public OBBolt_TStream_ISC(int fid) {
         super(fid);
     }
-
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(CONTROL.failureFlag.get()){
@@ -38,42 +36,41 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                 if (status.isMarkerArrived(in.getSourceTask())) {
                     PRE_EXECUTE(in);
                 } else {
-                    if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
-                        //this.collector.ack(in,in.getMarker());
+                    if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
                         switch (in.getMarker().getValue()){
                             case "recovery":
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
                                 break;
                             case "marker":
                                 this.markerId = in.getBID();
-                                if (TXN_PROCESS_FT()){
-                                    /* When the wal is completed, the data can be consumed by the outside world */
-                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                if (TXN_PROCESS()) {
                                     forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                                 }
                                 break;
                             case "snapshot":
                                 this.markerId = in.getBID();
                                 this.isSnapshot = true;
-                                if (TXN_PROCESS_FT()){
-                                    /* When the wal is completed, the data can be consumed by the outside world */
-                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
+                                if(TXN_PROCESS_FT()){
                                     forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                                 }
                                 break;
                             case "finish":
                                 this.markerId = in.getBID();
-                                if(TXN_PROCESS_FT()){
+                                if(TXN_PROCESS()){
                                     /* All the data has been executed */
-                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                                     forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    MeasureTools.Transaction_construction_finish_acc(this.thread_Id);
                                 }
                                 this.context.stop_running();
                                 break;
+                            default:
+                                throw new IllegalStateException("Unexpected value: " + in.getMarker().getValue());
                         }
                     }
                 }
-            }else {
+            }else{
                 execute_ts_normal(in);
             }
         }
@@ -82,7 +79,7 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
+        int FT=transactionManager.start_evaluate(thread_Id,this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         boolean transactionSuccess = FT == 0;
         switch (FT){
@@ -120,6 +117,38 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
 
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        return true;
+        MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
+        int FT = transactionManager.start_evaluate(thread_Id, this.markerId);
+        MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
+        boolean transactionSuccess=FT==0;
+        switch (FT){
+            case 0:
+                MeasureTools.startPostTransaction(thread_Id, System.nanoTime());
+                REQUEST_CORE();
+                REQUEST_POST();
+                MeasureTools.finishPostTransaction(thread_Id, System.nanoTime());
+                EventsHolder.clear();
+                BUFFER_PROCESS();
+                break;
+            case 1:
+                MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
+                SyncRegisterUndo();
+                transactionSuccess = this.TXN_PROCESS();
+                MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
+                break;
+            case 2:
+                if (this.executor.isFirst_executor()) {
+                    this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                    CONTROL.failureFlagBid.add(markerId);
+                }
+                this.SyncRegisterRecovery();
+                this.collector.cleanAll();
+                this.EventsHolder.clear();
+                for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                    tuples.clear();
+                }
+                break;
+        }
+        return transactionSuccess;
     }
 }

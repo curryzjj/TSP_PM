@@ -315,16 +315,16 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
                     outsideDeterminant.setOutSideEvent(event.toString());
-                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, outsideDeterminant, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValue().getLong(), (double) event.src_account_value.getRecord().getValue().getLong()}));//the tuple is finished.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, outsideDeterminant, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValues().get(1).getLong(), (double) event.src_account_value.getRecord().getValues().get(1).getLong()}));//the tuple is finished.
                 } else {
-                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValue().getLong(), (double) event.src_account_value.getRecord().getValue().getLong()}));//the tuple is finished.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValues().get(1).getLong(), (double) event.src_account_value.getRecord().getValues().get(1).getLong()}));//the tuple is finished.
                 }
             }
         } else {
             if (event.txnContext.isAbort.get()) {
                 targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));//the tuple is finished.
             } else {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValue().getLong(), (double) event.src_account_value.getRecord().getValue().getLong()}));//the tuple is finished.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValues().get(1).getLong(), (double) event.src_account_value.getRecord().getValues().get(1).getLong()}));//the tuple is finished.
             }
         }
         if (enable_upstreamBackup) {

@@ -3,11 +3,7 @@ package applications.topology.transactional;
 import System.util.Configuration;
 import UserApplications.constants.GrepSumConstants;
 import UserApplications.constants.OnlineBidingSystemConstants;
-import applications.bolts.transactional.ob.OBBolt_TStream_Clr;
-import applications.bolts.transactional.ob.OBBolt_TStream_NoFT;
-import applications.bolts.transactional.ob.OBBolt_TStream_Snapshot;
-import applications.bolts.transactional.ob.OBBolt_TStream_Wal;
-import applications.events.InputDataGenerator.ImplDataGenerator.OBDataGenerator;
+import applications.bolts.transactional.ob.*;
 import applications.events.InputDataStore.ImplDataStore.OBInputStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,20 +51,34 @@ public class OB_txn extends TransactionalTopology {
                grouping = new ShuffleGrouping(GrepSumConstants.Component.SPOUT);
            }
            if(enable_checkpoint){
-               builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
-                       new OBBolt_TStream_Snapshot(0),
-                       config.getInt(Executor_Threads),
-                       grouping);
+               if (conventional) {
+                   builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
+                           new OBBolt_TStream_Global(0),
+                           config.getInt(Executor_Threads),
+                           grouping);
+               } else {
+                   builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
+                           new OBBolt_TStream_ISC(0),
+                           config.getInt(Executor_Threads),
+                           grouping);
+               }
            }else if(enable_wal){
                builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
-                       new OBBolt_TStream_Wal(0),
+                       new OBBolt_TStream_WSC(0),
                        config.getInt(Executor_Threads),
                        grouping);
            }else if(enable_clr){
-               builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
-                       new OBBolt_TStream_Clr(0),
-                       config.getInt(Executor_Threads),
-                       grouping);
+               if (conventional) {
+                   builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
+                           new OBBolt_TStream_Local(0),
+                           config.getInt(Executor_Threads),
+                           grouping);
+               } else {
+                   builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
+                           new OBBolt_TStream_CLR(0),
+                           config.getInt(Executor_Threads),
+                           grouping);
+               }
            }else{
                builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
                        new OBBolt_TStream_NoFT(0),

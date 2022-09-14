@@ -192,13 +192,13 @@ public abstract class SLBolt_TStream_Conventional extends TransactionalBoltTStre
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant,null, event.getTimestamp(), new ApplicationResult(event.getBid(),new Double[]{-1.0}));
             } else {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValue().getLong(), (double) event.src_account_value.getRecord().getValue().getLong()}));//the tuple is finished.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValues().get(1).getLong(), (double) event.src_account_value.getRecord().getValues().get(1).getLong()}));//the tuple is finished.
             }
         } else {
             if (event.txnContext.isAbort.get()) {
                 targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));//the tuple is finished.
             } else {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValue().getLong(), (double) event.src_account_value.getRecord().getValue().getLong()}));//the tuple is finished.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValues().get(1).getLong(), (double) event.src_account_value.getRecord().getValues().get(1).getLong()}));//the tuple is finished.
             }
         }
         if (enable_upstreamBackup) {

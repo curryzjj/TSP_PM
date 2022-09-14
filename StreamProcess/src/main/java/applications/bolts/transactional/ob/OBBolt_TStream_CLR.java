@@ -16,10 +16,10 @@ import java.util.concurrent.ExecutionException;
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
 
-public class OBBolt_TStream_Clr extends OBBolt_TStream{
+public class OBBolt_TStream_CLR extends OBBolt_TStream{
     private static final long serialVersionUID = 2185341632820954575L;
 
-    public OBBolt_TStream_Clr(int fid) {
+    public OBBolt_TStream_CLR(int fid) {
         super(fid);
     }
 

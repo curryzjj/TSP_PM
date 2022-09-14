@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
 import streamprocess.controller.output.Determinant.InsideDeterminant;
-import streamprocess.controller.output.Determinant.OutsideDeterminant;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.faulttolerance.clr.CausalService;
@@ -21,17 +20,15 @@ import streamprocess.faulttolerance.clr.CausalService;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
-import static applications.events.DeserializeEventHelper.deserializeEvent;
+import static UserApplications.CONTROL.enable_determinants_log;
 
-
-public abstract class OBBolt_TStream extends TransactionalBoltTStream {
-    private static final Logger LOG= LoggerFactory.getLogger(OBBolt_TStream.class);
-    private static final long serialVersionUID = 6572082902742007113L;
+public abstract class OBBolt_TStream_Conventional extends TransactionalBoltTStream {
+    private static final Logger LOG= LoggerFactory.getLogger(OBBolt_TStream_Conventional.class);
+    private static final long serialVersionUID = -3453738938733934138L;
     List<TxnEvent> EventsHolder = new ArrayList<>();
-    public OBBolt_TStream(int fid) {
+    public OBBolt_TStream_Conventional(int fid) {
         super(LOG, fid);
         this.configPrefix="tpob";
         status = new Status();
@@ -70,26 +67,16 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
             transactionManager.Asy_ModifyRecord(txnContext, "goods", String.valueOf(event.getItemId()[i]), new INC(event.getItemTopUp()[i]), 2);//asynchronously return.
         }
         EventsHolder.add(event);//mark the tuple as ``in-complete"
-        if (enable_recovery_dependency) {
-            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
-            this.updateRecoveryDependency(event.getItemId(), true);
-            MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-        }
     }
     protected void Alert_request_construct(AlertEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         for (int i = 0; i < event.getNum_access(); i++){
             transactionManager.Asy_WriteRecord(txnContext, "goods", String.valueOf(event.getItemId()[i]), event.getAsk_price()[i], 1);//asynchronously return.
         }
         EventsHolder.add(event);//mark the tuple as ``in-complete"
-        if (enable_recovery_dependency) {
-            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
-            this.updateRecoveryDependency(event.getItemId(), true);
-            MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-        }
     }
     protected void Buying_request_construct(BuyingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         for (int i = 0; i < NUM_ACCESSES; i++) {
-           transactionManager.Asy_ModifyRecord(//TODO: add atomicity preserving later.
+            transactionManager.Asy_ModifyRecord(//TODO: add atomicity preserving later.
                     txnContext,
                     "goods",
                     String.valueOf(event.getItemId()[i]),
@@ -99,33 +86,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
             );
         }
         EventsHolder.add(event);//mark the tuple as ``in-complete"
-        if (enable_recovery_dependency) {
-            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
-            this.updateRecoveryDependency(event.getItemId(), true);
-            MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-        }
     }
-    protected void CommitOutsideDeterminant(long markerId) throws DatabaseException, InterruptedException {
-        if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
-            for (CausalService c:this.causalService.values()) {
-                if (c.outsideDeterminantList.get(markerId) != null) {
-                    for (OutsideDeterminant outsideDeterminant:c.outsideDeterminantList.get(markerId)) {
-                        TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
-                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
-                        event.setTxnContext(txnContext);
-                        if (event instanceof BuyingEvent) {
-                            Determinant_Buying_request_construct((BuyingEvent) event, txnContext);
-                        } else if (event instanceof AlertEvent){
-                            Determinant_Alert_request_construct((AlertEvent) event, txnContext);
-                        } else {
-                            Determinant_Topping_request_construct((ToppingEvent) event, txnContext);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     protected void Determinant_Topping_request_construct(ToppingEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
             for (CausalService c:this.causalService.values()) {
@@ -134,14 +95,8 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     return;
                 }
             }
-            for (int i = 0; i < NUM_ACCESSES; i++){
-                if (this.recoveryPartitionIds.contains(this.getPartitionId(String.valueOf(event.getItemId()[i])))) {
-                    transactionManager.Asy_ModifyRecord(txnContext, "goods", String.valueOf(event.getItemId()[i]), new INC(event.getItemTopUp()[i]), 2);//asynchronously return.
-                }
-            }
-        } else {
-            Topping_request_construct(event, txnContext);
         }
+        Topping_request_construct(event, txnContext);
     }
     protected void Determinant_Alert_request_construct(AlertEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
@@ -151,14 +106,8 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     return;
                 }
             }
-            for (int i = 0; i < NUM_ACCESSES; i++){
-                if (this.recoveryPartitionIds.contains(this.getPartitionId(String.valueOf(event.getItemId()[i])))) {
-                    transactionManager.Asy_WriteRecord(txnContext, "goods", String.valueOf(event.getItemId()[i]), event.getAsk_price()[i], 1);//asynchronously return.
-                }
-            }
-        } else {
-            Alert_request_construct(event, txnContext);
         }
+        Alert_request_construct(event, txnContext);
     }
     protected void Determinant_Buying_request_construct(BuyingEvent event,TxnContext txnContext) throws DatabaseException, InterruptedException {
         if (event.getBid() < recoveryId) {
@@ -168,21 +117,8 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     return;
                 }
             }
-            for (int i = 0; i < NUM_ACCESSES; i++) {
-                if (this.recoveryPartitionIds.contains(this.getPartitionId(String.valueOf(event.getItemId()[i])))) {
-                    transactionManager.Asy_ModifyRecord(//TODO: add atomicity preserving later.
-                            txnContext,
-                            "goods",
-                            String.valueOf(event.getItemId()[i]),
-                            new DEC(event.getBidQty(i)),
-                            new Condition(event.getBidPrice(i), event.getBidQty(i)),
-                            event.success
-                    );
-                }
-            }
-        } else {
-            Buying_request_construct(event, txnContext);
         }
+        Buying_request_construct(event, txnContext);
     }
     @Override
     protected void REQUEST_CORE() throws InterruptedException {
@@ -227,19 +163,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null,event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{-1.0}));
             } else {
-                OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
-                for (int itemId : event.getItemId()) {
-                    if (this.getPartitionId(String.valueOf(itemId)) != event.getPid()) {
-                        outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
-                    }
-                }
-                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
-                    outsideDeterminant.setOutSideEvent(event.toString());
-                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true,null, outsideDeterminant, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
-                } else {
-                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
-                }
+                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
             }
         } else {
             if (event.txnContext.isAbort.get()) {
@@ -258,19 +182,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,null,event.getTimestamp());
             } else {
-                OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
-                for (int itemId : event.getItemId()) {
-                    if (this.getPartitionId(String.valueOf(itemId)) != event.getPid()) {
-                        outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
-                    }
-                }
-                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
-                    outsideDeterminant.setOutSideEvent(event.toString());
-                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, outsideDeterminant, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));//the tuple is finished.
-                } else {
-                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null,null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
-                }
+                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null,null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
             }
         } else {
             if (event.txnContext.isAbort.get()) {
@@ -290,19 +202,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));
             } else {
-                OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
-                for (int itemId : event.getItemId()) {
-                    if (this.getPartitionId(String.valueOf(itemId)) != event.getPid()) {
-                        outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
-                    }
-                }
-                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
-                    outsideDeterminant.setOutSideEvent(event.toString());
-                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, outsideDeterminant, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));//the tuple is finished.
-                } else {
-                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), event.topping_result);//the tuple is finished.
-                }
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), event.topping_result);//the tuple is finished.
             }
         } else {
             if (event.txnContext.isAbort.get()) {
