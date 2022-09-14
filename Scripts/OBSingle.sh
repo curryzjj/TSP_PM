@@ -1,8 +1,9 @@
 function ResetParameters() {
   app="OB_txn"
   FTOptions=0
-  failureModel=2
+  failureModel=3
   failureFrequency=6
+  firstFailure=10000
   tthreads=16
   snapshot=2
 
@@ -13,7 +14,7 @@ function ResetParameters() {
   time_Interval=3000
   timeSliceLengthMs=1000
   input_store_batch=20000
-  systemRuntime=80
+  systemRuntime=120
   #shellcheck disable=SC2006
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
@@ -38,6 +39,7 @@ function runFTStream() {
             --FTOptions $FTOptions \
             --failureModel $failureModel \
             --failureFrequency $failureFrequency \
+            --firstFailure $firstFailure \
             --tthreads $tthreads \
             --snapshot $snapshot \
             --Arrival_Control $Arrival_Control \
@@ -64,6 +66,7 @@ function runFTStream() {
               --FTOptions $FTOptions \
               --failureModel $failureModel \
               --failureFrequency $failureFrequency \
+              --firstFailure $firstFailure \
               --tthreads $tthreads \
               --snapshot $snapshot \
               --Arrival_Control $Arrival_Control \
@@ -87,8 +90,12 @@ function runFTStream() {
 }
 function baselineEvaluation() {
  ResetParameters
-   for FTOptions in 1
-       do runFTStream
-       done
+   for FTOptions in 1 2 3 4
+      do
+        for time_Interval in 2000 4000 6000 8000
+           do
+             runFTStream
+           done
+      done
 }
 baselineEvaluation

@@ -7,16 +7,19 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public class TableRecord implements Comparable<TableRecord>, Serializable {
     private static final long serialVersionUID = -6940843588636593468L;
     public ConcurrentSkipListMap<Long, SchemaRecord> versions = new ConcurrentSkipListMap<>();//TODO: In fact... there can be at most only one write to the d_record concurrently. It is safe to just use sorted hashmap.
+    public ConcurrentSkipListMap<Long, SchemaRecord> checkpointVersions = new ConcurrentSkipListMap<>();
     public SchemaRecord record_;
     public TableRecord(SchemaRecord record){
         record_ = record;
         SchemaRecord schemaRecord = new SchemaRecord(record_.getValues());
         this.updateMultiValues(0, schemaRecord);
+        checkpointVersions.put(0L, schemaRecord);
     }
     @Override
     public int compareTo(@NotNull TableRecord o) {
@@ -36,6 +39,9 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
         }else{
             record_at_ts = versions.get(ts);
         }
+        if (record_at_ts == null) {
+            return new SchemaRecord(record_.getValues());
+        }
         return record_at_ts;
     }
     public void updateMultiValues(long ts, SchemaRecord record){
@@ -45,11 +51,13 @@ public class TableRecord implements Comparable<TableRecord>, Serializable {
         versions.put(ts, record_);
     }
     public void clean_map() {
-        long ts = versions.lastKey();
-        SchemaRecord lastRecord = versions.get(ts);
-        versions.clear();
-        record_.updateValues(lastRecord.getValues());
-        versions.put(ts, lastRecord);
+        if (versions.size() > 1) {
+            long ts = versions.lastKey();
+            SchemaRecord lastRecord = versions.get(ts);
+            versions.clear();
+            record_.updateValues(lastRecord.getValues());
+            versions.put(ts, lastRecord);
+        }
     }
     public TableRecord cloneTableRecord() throws IOException, ClassNotFoundException {
         return (TableRecord) Serialize.cloneObject(this);

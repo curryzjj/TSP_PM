@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static UserApplications.CONTROL.*;
 
 public class TxnProcessingEngine {
-    private static final Logger LOG= LoggerFactory.getLogger(TxnProcessingEngine.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TxnProcessingEngine.class);
     private static TxnProcessingEngine instance=new TxnProcessingEngine();
     public static TxnProcessingEngine getInstance() {
         return instance;
@@ -437,7 +437,7 @@ public class TxnProcessingEngine {
         if (!operation.record_ref.isEmpty()) {
             preValues = operation.record_ref.getRecord();
         } else {
-            preValues = operation.condition_records[0].readPreValues(operation.bid);
+            preValues = new SchemaRecord(operation.condition_records[0].record_.getValues()) ;
         }
         final long sourceBalance = preValues.getValues().get(1).getLong();
         //To contron the abort ratio, wo modify the violation of consistency property
@@ -447,12 +447,12 @@ public class TxnProcessingEngine {
             SchemaRecord tempo_record;
             tempo_record = new SchemaRecord(values);//tempo record
             //apply functions.
-            tempo_record.getValues().get(1).incLong(operation.function.delta_long);//compute.
+            tempo_record.getValues().get(1).incLong((long) (operation.function.delta_long + sourceBalance * 0.1));//compute.
             operation.d_record.updateMultiValues(operation.bid, tempo_record);
             operation.success[0] = true;
             CONTROL.randomDelay();
             if (operation.record_ref.isEmpty()) {
-                operation.record_ref.setRecord(operation.condition_records[0].readPreValues(operation.bid));
+                operation.record_ref.setRecord(preValues);
             }
         } else {
             if (enable_transaction_abort) {
@@ -507,7 +507,7 @@ public class TxnProcessingEngine {
         return true;
     }
     private boolean OB_Topping_Fun(Operation operation) {
-        SchemaRecord src_record=operation.s_record.record_;
+        SchemaRecord src_record = operation.s_record.record_;
         List<DataBox> values = src_record.getValues();
         if (enable_transaction_abort) {
             if (operation.function.delta_long < 0) {
@@ -549,7 +549,7 @@ public class TxnProcessingEngine {
         List<DataBox> srcRecord = operation.s_record.record_.getValues();
         if(operation.function instanceof AVG){
             if (enable_transaction_abort) {
-                if (operation.function.delta_double >= 180) {
+                if (operation.function.delta_double > 180) {
                     operation.isFailed = true;
                     return false;
                 }

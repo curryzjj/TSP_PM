@@ -5,7 +5,6 @@ import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
 import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.IOException;
@@ -81,10 +80,18 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                             case "snapshot":
                                 this.markerId = in.getBID();
                                 this.isSnapshot = true;
+                                if (enable_determinants_log && this.markerId <= recoveryId) {
+                                    this.CommitOutsideDeterminant(this.markerId);
+                                }
                                 if (TXN_PROCESS_FT()){
-                                    Marker marker = in.getMarker();
-                                    marker.setEpochInfo(this.epochInfo);
-                                    forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                    if (enable_recovery_dependency) {
+                                        Marker marker = in.getMarker().clone();
+                                        marker.setEpochInfo(this.epochInfo);
+                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
+                                        this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
+                                    } else {
+                                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    }
                                     if (enable_upstreamBackup) {
                                         this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
                                         this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);

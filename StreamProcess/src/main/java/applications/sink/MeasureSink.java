@@ -17,10 +17,12 @@ import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.runtime.tuple.JumboTuple;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
+import streamprocess.faulttolerance.clr.CausalService;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
@@ -29,6 +31,7 @@ public class MeasureSink extends BaseSink {
     private static final long serialVersionUID = 6249684803036342603L;
     private static final Logger LOG = LoggerFactory.getLogger(MeasureSink.class);
     private final DescriptiveStatistics latency = new DescriptiveStatistics();
+    private final ConcurrentSkipListMap<Long,Double> results = new ConcurrentSkipListMap<>();
     //Exactly_Once
     protected final List<Double> latency_map = new ArrayList<>();
     //no_Exactly_Once
@@ -91,13 +94,15 @@ public class MeasureSink extends BaseSink {
             } else {
                 if (enable_recovery_dependency) {
                     addRecoveryDependency(in.getBID());
-                    this.recoveryDependency.get(in.getBID()).addDependency(in.getMarker().getEpochInfo());
+                    if (in.getMarker().getEpochInfo() != null) {
+                        this.recoveryDependency.get(in.getBID()).addDependency(in.getMarker().getEpochInfo());
+                    }
                 }
                 if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
                     this.currentMarkerId = in.getBID();
                     if (enable_determinants_log) {
-                        for (Integer id:this.causalService.keySet()){
-                            causalService.get(id).setCurrentMarkerId(currentMarkerId);
+                        for (CausalService causalService : this.causalService.values()) {
+                            causalService.setCurrentMarkerId(currentMarkerId);
                         }
                     }
                     switch (in.getMarker().getValue()) {
@@ -228,17 +233,16 @@ public class MeasureSink extends BaseSink {
             } else {
                 if (enable_determinants_log) {
                     if (in.getValue(1) != null) {
-                        if (in.getValue(1) instanceof InsideDeterminant) {
-                            InsideDeterminant insideDeterminant = (InsideDeterminant) in.getValue(1);
-                            this.causalService.get(insideDeterminant.partitionId).addInsideDeterminant(insideDeterminant);
-                        } else {
-                            for (int targetPartition:((OutsideDeterminant) in.getValue(1)).targetPartitionIds) {
-                                this.causalService.get(targetPartition).addOutsideDeterminant((OutsideDeterminant) in.getValue(1));
-                            }
+                        InsideDeterminant insideDeterminant = (InsideDeterminant) in.getValue(1);
+                        this.causalService.get(insideDeterminant.partitionId).addInsideDeterminant(insideDeterminant);
+                    }
+                    if (in.getValue(2) != null) {
+                        for (int targetPartition:((OutsideDeterminant) in.getValue(2)).targetPartitionIds) {
+                            this.causalService.get(targetPartition).addOutsideDeterminant((OutsideDeterminant) in.getValue(2));
                         }
                     }
                 }
-                long latency = System.nanoTime() - (long)in.getValue(2);
+                long latency = System.nanoTime() - (long)in.getValue(3);
                 this.latency.addValue(latency / 1E6);
                 if ((System.nanoTime() - computationLatency) / 1E9 > 0.5) {
                     No_Exactly_Once_latency_map.add(latency / 1E6);

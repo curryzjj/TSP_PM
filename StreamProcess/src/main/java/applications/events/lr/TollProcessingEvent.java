@@ -86,7 +86,7 @@ public class TollProcessingEvent extends TxnEvent {
         sb.append(number_of_partitions).append(split_exp);//3-number_of_partition
         sb.append("TollProcessEvent").append(split_exp);//4-input_event type
         sb.append(Arrays.toString(keys)).append(split_exp);//5-keys
-        sb.append(speedValue).append(split_exp);//6-value
+        sb.append(speedValue).append(split_exp);//6-SpeedValue
         sb.append(Vid).append(split_exp);//7-Vid
         sb.append(timestamp).append(split_exp);//8-timestamp
         sb.append(isAbort);//9-isAbort

@@ -1,11 +1,10 @@
-package applications.bolts.transactional.ob;
+package applications.bolts.transactional.sl;
 
 import System.measure.MeasureTools;
 import UserApplications.CONTROL;
+import UserApplications.SOURCE_CONTROL;
 import engine.Exception.DatabaseException;
-import streamprocess.controller.output.Epoch.EpochInfo;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 import streamprocess.execution.runtime.tuple.msgs.Marker;
 
 import java.io.IOException;
@@ -15,14 +14,12 @@ import java.util.concurrent.ExecutionException;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
+import static UserApplications.CONTROL.enable_upstreamBackup;
 
-public class OBBolt_TStream_Clr extends OBBolt_TStream{
-    private static final long serialVersionUID = 2185341632820954575L;
+public class SLBolt_TStream_Local extends SLBolt_TStream_Conventional{
+    private static final long serialVersionUID = 5796686220206329210L;
 
-    public OBBolt_TStream_Clr(int fid) {
-        super(fid);
-    }
-
+    public SLBolt_TStream_Local(int fid) {super(fid);}
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if (failureFlag.get()) {
@@ -61,19 +58,10 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                                 break;
                             case "marker":
                                 this.markerId = in.getBID();
-                                if (enable_determinants_log && this.markerId <= recoveryId) {
-                                    this.CommitOutsideDeterminant(this.markerId);
-                                }
                                 if (TXN_PROCESS()){
                                     if (this.markerId > recoveryId) {
-                                        if (enable_recovery_dependency) {
-                                            Marker marker = in.getMarker().clone();
-                                            marker.setEpochInfo(this.epochInfo);
-                                            forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                            this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                                        } else {
-                                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                        }
+                                        Marker marker = in.getMarker().clone();
+                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
                                         if (enable_upstreamBackup) {
                                             this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                                         }
@@ -85,18 +73,9 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                             case "snapshot":
                                 this.markerId = in.getBID();
                                 this.isSnapshot = true;
-                                if (enable_determinants_log && this.markerId <= recoveryId) {
-                                    this.CommitOutsideDeterminant(this.markerId);
-                                }
-                                if (TXN_PROCESS_FT()){
-                                    if (enable_recovery_dependency) {
-                                        Marker marker = in.getMarker();
-                                        marker.setEpochInfo(this.epochInfo);
-                                        this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                    } else {
-                                        forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                    }
+                                if (TXN_PROCESS_FT()) {
+                                    Marker marker = in.getMarker();
+                                    forward_marker(in.getSourceTask(), in.getBID(), marker, marker.getValue());
                                     if (enable_upstreamBackup) {
                                         this.multiStreamInFlightLog.addEpoch(this.markerId, DEFAULT_STREAM_ID);
                                         this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
@@ -107,20 +86,11 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
                                 break;
                             case "finish":
                                 this.markerId = in.getBID();
-                                if (enable_determinants_log && this.markerId <= recoveryId) {
-                                    this.CommitOutsideDeterminant(this.markerId);
-                                }
                                 if(TXN_PROCESS()){
                                     /* All the data has been executed */
                                     if (this.markerId > recoveryId) {
-                                        if (enable_recovery_dependency) {
-                                            Marker marker = in.getMarker().clone();
-                                            marker.setEpochInfo(this.epochInfo);
-                                            forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
-                                            this.epochInfo = new EpochInfo(in.getBID(), executor.getExecutorID());
-                                        } else {
-                                            forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                        }
+                                        Marker marker = in.getMarker().clone();
+                                        forward_marker(in.getSourceTask(),in.getBID(),marker,marker.getValue());
                                         if (enable_upstreamBackup) {
                                             this.multiStreamInFlightLog.addBatch(this.markerId, DEFAULT_STREAM_ID);
                                         }
@@ -142,16 +112,16 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT = transactionManager.start_evaluate(thread_Id, this.markerId);
+        int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
-        boolean transactionSuccess = FT == 0;
+        boolean transactionSuccess = FT==0;
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
-                MeasureTools.startPostTransaction(this.thread_Id, System.nanoTime());
+                MeasureTools.startPostTransaction(thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
-                MeasureTools.finishPostTransaction(this.thread_Id, System.nanoTime());
+                MeasureTools.finishPostTransaction(thread_Id, System.nanoTime());
                 this.SyncCommitLog();
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
@@ -194,15 +164,15 @@ public class OBBolt_TStream_Clr extends OBBolt_TStream{
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
+        int FT = transactionManager.start_evaluate(thread_Id, this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
         boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
-                MeasureTools.startPostTransaction(this.thread_Id, System.nanoTime());
+                MeasureTools.startPostTransaction(thread_Id, System.nanoTime());
                 REQUEST_CORE();
                 REQUEST_POST();
-                MeasureTools.finishPostTransaction(this.thread_Id, System.nanoTime());
+                MeasureTools.finishPostTransaction(thread_Id, System.nanoTime());
                 EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
                 break;

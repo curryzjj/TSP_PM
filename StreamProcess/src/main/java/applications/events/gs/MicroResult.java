@@ -4,7 +4,7 @@ import applications.events.TxnResult;
 
 public class MicroResult extends TxnResult {
     private boolean isAbort;
-    private int sum;
+    public int sum;
     public MicroResult(long bid, long timestamp, boolean isAbort, int sum) {
         super(bid, timestamp);
         this.isAbort = isAbort;

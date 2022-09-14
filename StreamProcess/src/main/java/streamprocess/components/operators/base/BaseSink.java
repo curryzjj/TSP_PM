@@ -79,7 +79,7 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
         if(!this.recoveryDependency.containsKey(markerId)) {
             RecoveryDependency RD;
             if (recoveryDependency.get(currentMarkerId) != null) {
-                RD = new RecoveryDependency(this.recoveryDependency.get(currentMarkerId).getRecoveryDependency(),markerId);
+                RD = new RecoveryDependency(this.recoveryDependency.get(currentMarkerId).getRecoveryDependency(), markerId);
             } else {
                 RD = new RecoveryDependency(PARTITION_NUM, markerId);
             }

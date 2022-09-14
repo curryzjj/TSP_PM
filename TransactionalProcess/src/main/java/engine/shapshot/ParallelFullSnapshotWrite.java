@@ -30,7 +30,7 @@ import static engine.Database.snapshotExecutor;
 import static utils.FullSnapshotUtil.END_OF_KEY_GROUP_MARK;
 
 public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResultSupplier {
-    private final Logger LOG= LoggerFactory.getLogger(ParallelFullSnapshotWrite.class);
+    private final Logger LOG = LoggerFactory.getLogger(ParallelFullSnapshotWrite.class);
     private final List<CheckpointStreamWithResultProvider> providers;
     private final List<FullSnapshotResources> snapshotResources;
     private final long timestamp;
@@ -58,9 +58,9 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
                 Tuple2<Path,KeyGroupRangeOffsets> tuple = snapshotPaths.get(i).get();
                 results.put(i, tuple);
             } catch (ExecutionException e) {
-                System.out.println(e.getMessage());
+                LOG.info(e.getMessage());
             } catch (CancellationException e) {
-                System.out.println("Cancel");
+                LOG.info("Cancel");
             }
         }
         return new SnapshotResult(results, timestamp, checkpointId);

@@ -71,21 +71,21 @@ public class  AppRunner extends baseRunner {
             case 0:
                 CONTROL.enable_undo_log = true;
                 break;
-            case 1:
+            case 1://WSC
                 CONTROL.enable_wal = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
                 break;
-            case 2:
+            case 2://ISC
                 CONTROL.enable_checkpoint = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
                 CONTROL.enable_undo_log = true;
                 CONTROL.enable_parallel = true;
                 break;
-            case 3:
+            case 3://IRollback
                 CONTROL.enable_clr = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
@@ -95,7 +95,7 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_recovery_dependency = true;
                 break;
-            case 4:
+            case 4://DRollback
                 CONTROL.enable_clr = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
@@ -105,7 +105,37 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_determinants_log = true;
                 break;
-            case 5:
+            case 5://Conventional Checkpoint
+                CONTROL.enable_checkpoint = true;
+                CONTROL.conventional = true;
+                CONTROL.enable_input_store = true;
+                CONTROL.enable_snapshot = true;
+                CONTROL.enable_undo_log = true;
+                CONTROL.enable_parallel = true;
+                break;
+            case 6://LG
+                CONTROL.enable_clr = true;
+                CONTROL.conventional = true;
+                CONTROL.enable_input_store = true;
+                CONTROL.enable_snapshot = true;
+                CONTROL.enable_undo_log = true;
+                CONTROL.enable_parallel = true;
+                CONTROL.enable_upstreamBackup = true;
+                CONTROL.enable_align_wait = true;
+                CONTROL.enable_recovery_dependency = true;
+                break;
+            case 7://Clonos
+                CONTROL.enable_clr = true;
+                CONTROL.conventional = true;
+                CONTROL.enable_input_store = true;
+                CONTROL.enable_snapshot = true;
+                CONTROL.enable_undo_log = true;
+                CONTROL.enable_parallel = true;
+                CONTROL.enable_upstreamBackup = true;
+                CONTROL.enable_align_wait = true;
+                CONTROL.enable_determinants_log = true;
+                break;
+            case 8:
                 CONTROL.enable_clr = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
@@ -116,7 +146,7 @@ public class  AppRunner extends baseRunner {
                 CONTROL.enable_align_wait = true;
                 CONTROL.enable_recovery_dependency = true;
                 break;
-            case 6:
+            case 9:
                 CONTROL.enable_clr = true;
                 CONTROL.enable_input_store = true;
                 CONTROL.enable_snapshot = true;
@@ -159,6 +189,7 @@ public class  AppRunner extends baseRunner {
         if (CONTROL.enable_states_lost && config.getInt("failureFrequency") > 0) {
             failureInterval = config.getInt("systemRuntime") * 1000 / config.getInt("failureFrequency");
             failureTimes = config.getInt("failureFrequency");
+            CONTROL.firstFailure = config.getInt("firstFailure");
         }
     }
 

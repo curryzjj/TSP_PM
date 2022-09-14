@@ -64,14 +64,17 @@ public abstract class baseRunner {
     public String DataBase= "in-memory";
 
     //FaultTolerance
-    @Parameter(names = {"--FTOptions"}, description = "Which fault tolerance option, 0: no FT, 1: Wal, 2: Checkpoint, 3: CLR", required = false)
+    @Parameter(names = {"--FTOptions"}, description = "Which fault tolerance option, 0: no FT, 1: WSC, 2: ISC, 3: I-Rollback, 4: D-Rollback, 5: Global, 6 LG, 7: Clonos", required = false)
     public int FTOptions = 0;
     @Parameter(names = {"--failureModel"}, description = "No failure(0), Transaction Abort(1), State lost(2), Both(3)", required = false)
     public int failureModel= 0;
     @Parameter(names = {"--failureFrequency"}, description = "Failure Frequency", required = false)
     public int failureFrequency =0;
+    @Parameter(names = {"--firstFailure"}, description = "First failure time", required = false)
+    public int firstFailure = 10000;
     @Parameter(names = {"--Exactly_Once"}, description = "is Exactly_Once", required = false)
     public int Exactly_Once = 0;
+
 
     //Workload Configuration
     @Parameter(names = {"--Arrival_Control"}, description = "is Arrival_Control", required = false)
@@ -170,6 +173,7 @@ public abstract class baseRunner {
         config.put("FTOptions", FTOptions);
         config.put("failureModel",failureModel);
         config.put("failureFrequency",failureFrequency);
+        config.put("firstFailure", firstFailure);
         if (Exactly_Once == 1){
             config.put("Exactly_Once",true);
         } else {

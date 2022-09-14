@@ -1,9 +1,10 @@
 #!/bin/bash
 function ResetParameters() {
   app="SL_txn"
-  FTOptions=0
+  FTOptions=4
   failureModel=3
-  failureFrequency=4
+  failureFrequency=6
+  firstFailure=10000
   tthreads=16
   snapshot=2
 
@@ -11,10 +12,10 @@ function ResetParameters() {
   Arrival_Control=1
   targetHz=200000
   Time_Control=1
-  time_Interval=3000
+  time_Interval=5000
   timeSliceLengthMs=1000
   input_store_batch=20000
-  systemRuntime=80
+  systemRuntime=150
   #shellcheck disable=SC2006
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
@@ -22,9 +23,9 @@ function ResetParameters() {
   NUM_ITEMS=81920
   NUM_EVENTS=16000000
   ZIP_SKEW=400
-  RATIO_OF_READ=1000
+  RATIO_OF_READ=500
   RATIO_OF_ABORT=200
-  RATIO_OF_DEPENDENCY=200
+  RATIO_OF_DEPENDENCY=500
   complexity=0
   NUM_ACCESSES=2
   partition_num_per_txn=8
@@ -39,6 +40,7 @@ function runFTStream() {
             --FTOptions $FTOptions \
             --failureModel $failureModel \
             --failureFrequency $failureFrequency \
+            --firstFailure $firstFailure \
             --tthreads $tthreads \
             --snapshot $snapshot \
             --Arrival_Control $Arrival_Control \
@@ -65,6 +67,7 @@ function runFTStream() {
               --FTOptions $FTOptions \
               --failureModel $failureModel \
               --failureFrequency $failureFrequency \
+              --firstFailure $firstFailure \
               --tthreads $tthreads \
               --snapshot $snapshot \
               --Arrival_Control $Arrival_Control \
@@ -88,8 +91,11 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-    for FTOptions in 4
+  for FTOptions in 1 2 3 4
+     do
+     for time_Interval in 2000 4000 6000 8000
         do runFTStream
+        done
         done
 }
 baselineEvaluation

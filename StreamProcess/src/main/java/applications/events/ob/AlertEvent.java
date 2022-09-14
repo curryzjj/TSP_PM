@@ -56,10 +56,10 @@ public class AlertEvent extends TxnEvent {
         for (int i = 0; i < top_arrays.length; i++) {
             this.ask_price[i] = Long.parseLong(top_arrays[i].trim());
         }
-        this.timestamp=timestamp;
+        this.timestamp = timestamp;
     }
     private void setValues(int num_access,SplittableRandom rnd){
-        ask_price=new long[num_access];
+        ask_price = new long[num_access];
         for (int access_id=0;access_id<num_access;++access_id){
             if (isAbort) {
                 ask_price[access_id] = -1;

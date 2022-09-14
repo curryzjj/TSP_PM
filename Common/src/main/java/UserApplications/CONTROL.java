@@ -37,6 +37,7 @@ public class CONTROL {
     public static int failureInterval = 0;
     public static Queue<Long> failureFlagBid = new ArrayDeque<>();
     public static int failureTimes = 0;
+    public static int firstFailure = 0;
     public static boolean Exactly_Once = false;
     //Measure Methods
     public static boolean enable_checkpoint = false;
@@ -54,6 +55,9 @@ public class CONTROL {
     public static boolean enable_align_wait = false;
     public static boolean enable_determinants_log = false;
     public static boolean enable_recovery_dependency = false;
+
+    public static boolean conventional = false;
+
     //latency related.
     public static boolean enable_latency_measurement = true;//
 
@@ -99,6 +103,6 @@ public class CONTROL {
                     failureTimes --;
                 }
             }
-        },  10000, failureInterval);//ms
+        },  firstFailure, failureInterval);//ms
     }
 }

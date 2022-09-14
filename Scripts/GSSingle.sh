@@ -2,8 +2,9 @@
 function ResetParameters() {
   app="GS_txn"
   FTOptions=0
-  failureModel=2
+  failureModel=3
   failureFrequency=6
+  firstFailure=10000
   tthreads=16
   snapshot=2
 
@@ -39,6 +40,7 @@ function runFTStream() {
             --FTOptions $FTOptions \
             --failureModel $failureModel \
             --failureFrequency $failureFrequency \
+            --firstFailure $firstFailure \
             --tthreads $tthreads \
             --snapshot $snapshot \
             --Arrival_Control $Arrival_Control \
@@ -88,10 +90,12 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-  RATIO_OF_READ=500
-  for FTOptions in 1
-      do runFTStream
-      done
+  for FTOptions in 1 2 3 4
+       do
+       for time_Interval in 2000 4000 6000 8000
+          do runFTStream
+          done
+          done
   ResetParameters
 }
 baselineEvaluation

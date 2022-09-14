@@ -16,11 +16,9 @@ public class InsideDeterminant implements Serializable {
     public int partitionId;
     //<Key,SchemaRecord>
     public HashMap<String, SchemaRecord> ackValues;
-    public HashMap<String, List<SchemaRecord>> ackValueList;
     public InsideDeterminant(long input, int partitionId){
         this.input = input;
         this.ackValues = new HashMap<>();
-        this.ackValueList = new HashMap<>();
         this.isAbort = false;
         this.partitionId = partitionId;
     }

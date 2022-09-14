@@ -18,11 +18,11 @@ public class OutsideDeterminant implements Serializable {
     public void setOutSideEvent(String outSideEvent) {
         this.outSideEvent = outSideEvent;
     }
-    public void setTargetPartitionId(int targetIds) {
-        if (this.targetPartitionIds.contains(targetIds)){
+    public void setTargetPartitionId(int targetId) {
+        if (this.targetPartitionIds.contains(targetId)){
             return;
         }
-        this.targetPartitionIds.add(targetIds);
+        this.targetPartitionIds.add(targetId);
     }
     public void setAckValues(String key, SchemaRecord schemaRecord) {
         this.ackValues.put(key, schemaRecord);

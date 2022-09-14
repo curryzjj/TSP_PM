@@ -31,8 +31,8 @@ import static UserApplications.CONTROL.*;
 import static streamprocess.faulttolerance.FaultToleranceConstants.FaultToleranceStatus.*;
 import static streamprocess.faulttolerance.recovery.RecoveryHelperProvider.getLastCommitSnapshotResult;
 
-public class CheckpointManager extends FTManager {
-    private final Logger LOG= LoggerFactory.getLogger(CheckpointManager.class);
+public class ConsistentCheckpointManager extends FTManager {
+    private final Logger LOG= LoggerFactory.getLogger(ConsistentCheckpointManager.class);
     public boolean running=true;
     private Path Current_Path;
     private FileSystem localFS;
@@ -46,7 +46,7 @@ public class CheckpointManager extends FTManager {
     private Queue<Long> SnapshotOffset;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callSnapshot;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callRecovery;
-    public CheckpointManager(ExecutionGraph g, Configuration conf, Database db){
+    public ConsistentCheckpointManager(ExecutionGraph g, Configuration conf, Database db){
         this.SnapshotOffset = new ArrayDeque<>();
         this.callSnapshot = new ConcurrentHashMap<>();
         this.callRecovery = new ConcurrentHashMap<>();
