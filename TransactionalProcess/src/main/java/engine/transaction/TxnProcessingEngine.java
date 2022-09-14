@@ -549,7 +549,7 @@ public class TxnProcessingEngine {
         List<DataBox> srcRecord = operation.s_record.record_.getValues();
         if(operation.function instanceof AVG){
             if (enable_transaction_abort) {
-                if (operation.function.delta_double > 180) {
+                if (operation.function.delta_double > 400) {
                     operation.isFailed = true;
                     return false;
                 }

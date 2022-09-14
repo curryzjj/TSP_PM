@@ -89,9 +89,9 @@ public class TPDataGenerator extends InputDataGenerator {
         assert !enable_states_partition|| verify(keys,current_pid, partition_num);
         current_bid++;
         if (random.nextInt(1000) < RATIO_OF_ABORT) {
-            return new TollProcessingEvent(param.getSegmentIds(),NUM_ACCESSES, bid, current_pid, randomNumberGenerator.generateRandom(180,200),randomNumberGenerator.generateRandom(1,100),p_bid,partition_num,true);
+            return new TollProcessingEvent(param.getSegmentIds(),NUM_ACCESSES, bid, current_pid, randomNumberGenerator.generateRandom(400,450),randomNumberGenerator.generateRandom(1,100),p_bid,partition_num,true);
         } else {
-            return new TollProcessingEvent(param.getSegmentIds(),NUM_ACCESSES, bid, current_pid, randomNumberGenerator.generateRandom(60,180),randomNumberGenerator.generateRandom(1,100),p_bid,partition_num,false);
+            return new TollProcessingEvent(param.getSegmentIds(),NUM_ACCESSES, bid, current_pid, randomNumberGenerator.generateRandom(120,350),randomNumberGenerator.generateRandom(1,100),p_bid,partition_num,false);
         }
     }
 

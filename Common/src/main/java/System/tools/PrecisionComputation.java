@@ -125,8 +125,8 @@ public class PrecisionComputation {
                 double compareCnt = compareString[1].split(" ").length;
                 Degradation = Math.abs(baseCnt - compareCnt) / baseCnt;
             } else {
-                double baseSpeed = Double.parseDouble(baseScanner.nextLine().split(",")[1].trim());
-                double compareSpeed = Double.parseDouble(scanner.nextLine().split(",")[1].trim());
+                double baseSpeed = Double.parseDouble(baseString[1]);
+                double compareSpeed = Double.parseDouble(compareString[1]);
                 Degradation = Math.abs(baseSpeed - compareSpeed) / baseSpeed;
             }
             sum =  sum + Degradation;

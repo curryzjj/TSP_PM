@@ -123,7 +123,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 event.toll = -1;
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new ArrayList<>(Collections.singletonList(event.toll))));//the tuple is finished.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{event.toll}));//the tuple is finished.
             } else {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 double spendValue = 0;
@@ -133,13 +133,17 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                     cntValue = cntValue + event.cntValues[i];
                 }
                 //Some UDF function
-                event.toll = spendValue / cntValue;
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true,null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new ArrayList<>(Collections.singletonList(event.toll))));//the tuple is finished.
+                if (cntValue <= 50) {
+                    event.toll = spendValue * 50;
+                } else {
+                    event.toll = spendValue * 50 * (cntValue - 50) * (cntValue - 50);
+                }
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true,null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{event.toll}));//the tuple is finished.
             }
         } else {
             if (event.txnContext.isAbort.get()) {
                 event.toll = -1;
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(),  new ApplicationResult(event.getBid(), new ArrayList<>(Collections.singletonList(event.toll))));//the tuple is finished.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{event.toll}));//the tuple is finished.
             } else {
                 double spendValue = 0;
                 int cntValue = 0;
@@ -148,8 +152,12 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                     cntValue = cntValue + event.cntValues[i];
                 }
                 //Some UDF function
-                event.toll = spendValue / cntValue;
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null,null, event.getTimestamp(), new ApplicationResult(event.getBid(), new ArrayList<>(Collections.singletonList(event.toll))));//the tuple is finished.
+                if (cntValue <= 50) {
+                    event.toll = spendValue * 50;
+                } else {
+                    event.toll = spendValue * 50 * (cntValue - 50) * (cntValue - 50);
+                }
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null,null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{event.toll}));//the tuple is finished.
             }
         }
     }

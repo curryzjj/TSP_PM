@@ -1,5 +1,6 @@
 package applications.bolts.transactional.sl;
 import System.measure.MeasureTools;
+import System.sink.helper.ApplicationResult;
 import applications.events.SL.DepositEvent;
 import applications.events.SL.TransactionEvent;
 import applications.events.SL.TransactionResult;
@@ -19,6 +20,7 @@ import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.faulttolerance.clr.CausalService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
@@ -286,7 +288,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant,null, event.getTimestamp());
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant,null, event.getTimestamp(), new ApplicationResult(event.getBid(),new Double[]{-1.0}));
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
                 InsideDeterminant insideDeterminant = null;
@@ -313,16 +315,16 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
                     outsideDeterminant.setOutSideEvent(event.toString());
-                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, outsideDeterminant, event.getTimestamp());//the tuple is finished.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, outsideDeterminant, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValue().getLong(), (double) event.src_account_value.getRecord().getValue().getLong()}));//the tuple is finished.
                 } else {
-                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, null, event.getTimestamp());//the tuple is finished.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValue().getLong(), (double) event.src_account_value.getRecord().getValue().getLong()}));//the tuple is finished.
                 }
             }
         } else {
             if (event.txnContext.isAbort.get()) {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp());//the tuple is finished.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));//the tuple is finished.
             } else {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValue().getLong(), (double) event.src_account_value.getRecord().getValue().getLong()}));//the tuple is finished.
             }
         }
         if (enable_upstreamBackup) {
@@ -340,7 +342,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp());
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{-1.0}));
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
                 String[] keys = new String[]{((DepositEvent)event).getAccountId(), ((DepositEvent)event).getBookEntryId()};
@@ -352,16 +354,16 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
                     outsideDeterminant.setOutSideEvent(event.toString());
-                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, outsideDeterminant, event.getTimestamp());//the tuple is finished.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, outsideDeterminant, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
                 } else {
-                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished.
+                    targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
                 }
             }
         } else {
             if (event.txnContext.isAbort.get()) {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp());//the tuple is finished.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{-1.0}));//the tuple is finished.
             } else {
-                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished.
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
             }
         }
         if (enable_upstreamBackup) {

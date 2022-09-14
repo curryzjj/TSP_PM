@@ -1,11 +1,10 @@
 package System.sink.helper;
 
-import java.util.List;
 
 public class ApplicationResult {
     long bid;
-    List<Double> results;
-    public ApplicationResult(long bid, List<Double> results){
+    Double[] results;
+    public ApplicationResult(long bid, Double[] results){
         this.bid = bid;
         this.results = results;
     }

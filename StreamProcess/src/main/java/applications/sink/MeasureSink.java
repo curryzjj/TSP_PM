@@ -220,7 +220,7 @@ public class MeasureSink extends BaseSink {
 
     @Override
     protected void EXECUTE(Tuple in) {
-        this.results.putIfAbsent(in.getBID(), (ApplicationResult) in.getValue(4));
+        this.results.put(in.getBID(), (ApplicationResult) in.getValue(4));
         boolean finish = (boolean) in.getValue(0);
         if (!finish) {
             if (enable_determinants_log) {
