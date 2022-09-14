@@ -133,7 +133,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     return;
                 }
             }
-            for (int i = 0; i < event.getNum_access(); i++){
+            for (int i = 0; i < NUM_ACCESSES; i++){
                 if (this.recoveryPartitionIds.contains(this.getPartitionId(String.valueOf(event.getItemId()[i])))) {
                     transactionManager.Asy_ModifyRecord(txnContext, "goods", String.valueOf(event.getItemId()[i]), new INC(event.getItemTopUp()[i]), 2);//asynchronously return.
                 }
@@ -150,7 +150,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                     return;
                 }
             }
-            for (int i = 0; i < event.getNum_access(); i++){
+            for (int i = 0; i < NUM_ACCESSES; i++){
                 if (this.recoveryPartitionIds.contains(this.getPartitionId(String.valueOf(event.getItemId()[i])))) {
                     transactionManager.Asy_WriteRecord(txnContext, "goods", String.valueOf(event.getItemId()[i]), event.getAsk_price()[i], 1);//asynchronously return.
                 }
@@ -227,7 +227,6 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null,event.getTimestamp());
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
-                outsideDeterminant.setOutSideEvent(event.toString());
                 for (int itemId : event.getItemId()) {
                     if (this.getPartitionId(String.valueOf(itemId)) != event.getPid()) {
                         outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
@@ -235,6 +234,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 }
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
+                    outsideDeterminant.setOutSideEvent(event.toString());
                     return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true,null, outsideDeterminant, event.getTimestamp());//the tuple is finished.
                 } else {
                     return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, null, event.getTimestamp());//the tuple is finished.
@@ -258,7 +258,6 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,null,event.getTimestamp());
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
-                outsideDeterminant.setOutSideEvent(event.toString());
                 for (int itemId : event.getItemId()) {
                     if (this.getPartitionId(String.valueOf(itemId)) != event.getPid()) {
                         outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
@@ -266,6 +265,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 }
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
+                    outsideDeterminant.setOutSideEvent(event.toString());
                     return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, outsideDeterminant, event.getTimestamp(), event.alert_result);//the tuple is finished.
                 } else {
                     return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null,null, event.getTimestamp(), event.alert_result);//the tuple is finished.
@@ -290,7 +290,6 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp());
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
-                outsideDeterminant.setOutSideEvent(event.toString());
                 for (int itemId : event.getItemId()) {
                     if (this.getPartitionId(String.valueOf(itemId)) != event.getPid()) {
                         outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(itemId)));
@@ -298,6 +297,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 }
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
+                    outsideDeterminant.setOutSideEvent(event.toString());
                     return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, outsideDeterminant, event.getTimestamp(), event.topping_result);//the tuple is finished.
                 } else {
                     return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), event.topping_result);//the tuple is finished.
