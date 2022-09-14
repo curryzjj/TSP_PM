@@ -13,29 +13,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
 import streamprocess.controller.output.Determinant.InsideDeterminant;
-import streamprocess.controller.output.Determinant.OutsideDeterminant;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.faulttolerance.clr.CausalService;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
-import static applications.events.DeserializeEventHelper.deserializeEvent;
 
-public abstract class GSBolt_TStream extends TransactionalBoltTStream {
-    private static final Logger LOG= LoggerFactory.getLogger(GSBolt_TStream.class);
-    private static final long serialVersionUID = -2914962488031246108L;
+public abstract class GSBolt_TStream_Conventional extends TransactionalBoltTStream {
+    private static final Logger LOG= LoggerFactory.getLogger(GSBolt_TStream_Conventional.class);
+    private static final long serialVersionUID = -3329321262875763580L;
     List<MicroEvent> EventsHolder = new ArrayList<>();
-    public GSBolt_TStream( int fid) {
+    public GSBolt_TStream_Conventional( int fid) {
         super(LOG, fid);
         this.configPrefix="tpgs";
         status = new Status();
         this.setStateful();
     }
-
-
     @Override
     protected void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException {
         TxnContext txnContext = new TxnContext(thread_Id,this.fid,in.getBID());
@@ -67,14 +64,9 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
     protected void write_construct(MicroEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         for (int i = 0; i < NUM_ACCESSES; ++i) {
             //it simply construct the operations and return.
-           transactionManager.Asy_WriteRecord(txnContext, "MicroTable", String.valueOf(event.getKeys()[i]), event.getValues()[i], event.enqueue_time);//asynchronously return.
+            transactionManager.Asy_WriteRecord(txnContext, "MicroTable", String.valueOf(event.getKeys()[i]), event.getValues()[i], event.enqueue_time);//asynchronously return.
         }
         EventsHolder.add(event);//mark the tuple as ``in-complete"
-        if (enable_recovery_dependency) {
-            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
-            this.updateRecoveryDependency(event.getKeys(),true);
-            MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-        }
     }
 
     void determinant_read_construct(MicroEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
@@ -85,9 +77,8 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                     return;
                 }
             }
-        } else {
-            read_construct(event, txnContext);
         }
+        read_construct(event, txnContext);
     }
 
     protected void determinant_write_construct(MicroEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
@@ -98,34 +89,8 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                     return;
                 }
             }
-            for (int i = 0; i < NUM_ACCESSES; i++) {
-                if (this.recoveryPartitionIds.contains(this.getPartitionId( String.valueOf(event.getKeys()[i])))) {
-                    transactionManager.Asy_ReadRecord(txnContext, "MicroTable", String.valueOf(event.getKeys()[i]), event.getRecord_refs()[i], event.enqueue_time);
-                }
-            }
-        } else {
-            write_construct(event, txnContext);
         }
-    }
-
-    protected void CommitOutsideDeterminant(long markId) throws DatabaseException, InterruptedException {
-        if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
-            for (CausalService c:this.causalService.values()) {
-                if (c.outsideDeterminantList.get(markId) != null) {
-                    for (OutsideDeterminant outsideDeterminant:c.outsideDeterminantList.get(markId)) {
-                        TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
-                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
-                        event.setTxnContext(txnContext);
-                        MicroEvent microEvent = (MicroEvent) event;
-                        if (microEvent.READ_EVENT()) {
-                            determinant_read_construct(microEvent, txnContext);
-                        } else {
-                            determinant_write_construct(microEvent, txnContext);
-                        }
-                    }
-                }
-            }
-        }
+        write_construct(event, txnContext);
     }
 
     @Override
@@ -195,19 +160,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));
             } else {
-                OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
-                outsideDeterminant.setOutSideEvent(event.toString());
-                for (int i = 0; i < NUM_ACCESSES; i++) {
-                    if (this.getPartitionId(String.valueOf(event.getKeys()[i])) != event.getPid()) {
-                        outsideDeterminant.setTargetPartitionId(this.getPartitionId(String.valueOf(event.getKeys()[i])));
-                    }
-                }
-                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                if (outsideDeterminant.targetPartitionIds.size() !=0 ) {
-                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, outsideDeterminant, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished finally.
-                } else {
-                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished finally.
-                }
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished finally.
             }
         } else {
             if (event.txnContext.isAbort.get()) {

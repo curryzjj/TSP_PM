@@ -3,11 +3,7 @@ package applications.topology.transactional;
 import System.util.Configuration;
 import UserApplications.constants.GrepSumConstants;
 import UserApplications.constants.GrepSumConstants.Component;
-import applications.bolts.transactional.gs.GSBolt_TStream_CLR;
-import applications.bolts.transactional.gs.GSBolt_TStream_NoFT;
-import applications.bolts.transactional.gs.GSBolt_TStream_Snapshot;
-import applications.bolts.transactional.gs.GSBolt_TStream_Wal;
-import applications.events.InputDataGenerator.ImplDataGenerator.GSDataGenerator;
+import applications.bolts.transactional.gs.*;
 import applications.events.InputDataStore.ImplDataStore.GSInputStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,20 +52,34 @@ public class GS_txn extends TransactionalTopology {
                 grouping = new ShuffleGrouping(Component.SPOUT);
             }
             if (enable_checkpoint){
-                builder.setBolt(Component.EXECUTOR,
-                        new GSBolt_TStream_Snapshot(0),
-                        config.getInt(Executor_Threads),
-                        grouping);
+                if (conventional) {
+                    builder.setBolt(Component.EXECUTOR,
+                            new GSBolt_TStream_Global(0),
+                            config.getInt(Executor_Threads),
+                            grouping);
+                } else {
+                    builder.setBolt(Component.EXECUTOR,
+                            new GSBolt_TStream_ISC(0),
+                            config.getInt(Executor_Threads),
+                            grouping);
+                }
             }else if(enable_wal){
                 builder.setBolt(Component.EXECUTOR,
-                        new GSBolt_TStream_Wal(0),
+                        new GSBolt_TStream_WSC(0),
                         config.getInt(Executor_Threads),
                         grouping);
             }else if(enable_clr){
-                builder.setBolt(Component.EXECUTOR,
-                        new GSBolt_TStream_CLR(0),
-                        config.getInt(Executor_Threads),
-                        grouping);
+                if (conventional) {
+                    builder.setBolt(Component.EXECUTOR,
+                            new GSBolt_TStream_CLR(0),
+                            config.getInt(Executor_Threads),
+                            grouping);
+                } else {
+                    builder.setBolt(Component.EXECUTOR,
+                            new GSBolt_TStream_Local(0),
+                            config.getInt(Executor_Threads),
+                            grouping);
+                }
             }else {
                 builder.setBolt(Component.EXECUTOR,
                         new GSBolt_TStream_NoFT(0),

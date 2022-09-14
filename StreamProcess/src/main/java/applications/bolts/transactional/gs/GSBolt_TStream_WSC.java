@@ -13,9 +13,9 @@ import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.*;
 
-public class  GSBolt_TStream_Wal extends GSBolt_TStream{
+public class GSBolt_TStream_WSC extends GSBolt_TStream{
     private static final long serialVersionUID = -7735253055437818414L;
-    public GSBolt_TStream_Wal(int fid) {
+    public GSBolt_TStream_WSC(int fid) {
         super(fid);
     }
     @Override

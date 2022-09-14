@@ -4,18 +4,17 @@ import System.measure.MeasureTools;
 import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 
 import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 
-import static UserApplications.CONTROL.*;
+import static UserApplications.CONTROL.lostPartitionId;
 
-public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
-    private static final long serialVersionUID = 6126484047591969728L;
-    public GSBolt_TStream_Snapshot(int fid) {
+public class GSBolt_TStream_Global extends GSBolt_TStream_Conventional{
+    private static final long serialVersionUID = 3645334783158842952L;
+    public GSBolt_TStream_Global(int fid) {
         super(fid);
     }
     @Override
