@@ -9,6 +9,7 @@ import engine.Exception.DatabaseException;
 import engine.table.datatype.DataBox;
 import engine.table.tableRecords.SchemaRecordRef;
 import engine.transaction.TxnContext;
+import engine.transaction.function.INC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
@@ -64,7 +65,7 @@ public abstract class GSBolt_TStream_Conventional extends TransactionalBoltTStre
     protected void write_construct(MicroEvent event, TxnContext txnContext) throws DatabaseException, InterruptedException {
         for (int i = 0; i < NUM_ACCESSES; ++i) {
             //it simply construct the operations and return.
-            transactionManager.Asy_WriteRecord(txnContext, "MicroTable", String.valueOf(event.getKeys()[i]), event.getValues()[i], event.enqueue_time);//asynchronously return.
+            transactionManager.Asy_ModifyRecord(txnContext, "MicroTable", String.valueOf(event.getKeys()[i]), new INC(event.getValues()[i]));
         }
         EventsHolder.add(event);//mark the tuple as ``in-complete"
     }

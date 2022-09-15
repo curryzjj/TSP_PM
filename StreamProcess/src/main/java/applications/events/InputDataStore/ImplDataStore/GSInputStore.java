@@ -33,6 +33,8 @@ public class GSInputStore extends InputStore {
                     split_exp+
                     Arrays.toString(microEvent.getKeys())+//5 keys int
                     split_exp+
+                    Arrays.toString(microEvent.getValues())+//5 keys int
+                    split_exp+
                     microEvent.READ_EVENT()+//6 is read_event boolean
                     split_exp+
                     microEvent.getTimestamp()+//7 timestamp long

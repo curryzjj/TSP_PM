@@ -10,8 +10,8 @@ public interface GrepSumConstants extends BaseConstants {
 
     }
     interface Constant {
-        int FREQUENCY_MICRO = 100;
         int VALUE_LEN = 32;// 32 bytes --> one cache line.
+        int MAX_VALUE = 100;
     }
     interface Conf extends BaseConf{
         int NUM_SEGMENTS = NUM_ITEMS;

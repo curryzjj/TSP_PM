@@ -278,8 +278,6 @@ public class TxnProcessingEngine {
             case WRITE_ONLY:
                 if (app.equals("OB_txn")) {
                    this.OB_Alert_Fun(operation);
-                } else if(app.equals("GS_txn")) {
-                    this.GS_Write_Fun(operation);
                 }
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.d_record);
@@ -290,6 +288,8 @@ public class TxnProcessingEngine {
                     this.SL_Depo_Fun(operation);
                 }else if (app.equals("OB_txn")){
                     this.OB_Topping_Fun(operation);
+                } else if(app.equals("GS_txn")) {
+                    this.GS_Write_Fun(operation);
                 }
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.d_record);
@@ -537,15 +537,14 @@ public class TxnProcessingEngine {
     }
     private boolean GS_Write_Fun(Operation operation) {
         if (enable_transaction_abort) {
-            if (operation.value_list.size() == 0) {
+            if (operation.function.delta_long < 0) {
                 operation.isFailed = true;
                 return false;
             }
         }
         List<DataBox> values = operation.d_record.record_.getValues();
         int read_result = Integer.parseInt(values.get(1).getString().trim());
-        int update = Integer.parseInt(operation.value_list.get(1).getString().trim());
-        operation.d_record.record_.getValues().get(1).setString(String.valueOf(read_result + update), VALUE_LEN);
+        operation.d_record.record_.getValues().get(1).setString(String.valueOf(read_result + operation.function.delta_long), VALUE_LEN);
         CONTROL.randomDelay();
         return true;
     }

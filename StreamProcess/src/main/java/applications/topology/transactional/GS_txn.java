@@ -71,12 +71,12 @@ public class GS_txn extends TransactionalTopology {
             }else if(enable_clr){
                 if (conventional) {
                     builder.setBolt(Component.EXECUTOR,
-                            new GSBolt_TStream_CLR(0),
+                            new GSBolt_TStream_Local(0),
                             config.getInt(Executor_Threads),
                             grouping);
                 } else {
                     builder.setBolt(Component.EXECUTOR,
-                            new GSBolt_TStream_Local(0),
+                            new GSBolt_TStream_CLR(0),
                             config.getInt(Executor_Threads),
                             grouping);
                 }
