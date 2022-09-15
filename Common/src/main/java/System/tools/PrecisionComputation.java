@@ -51,7 +51,7 @@ public class PrecisionComputation {
             String[] compareResults = scanner.nextLine().split(";")[1].split(",");
             for (int i = 0; i < baseResults.length; i++) {
                 resultDegradation = resultDegradation
-                        + Math.abs(Double.parseDouble(compareResults[i]) - Double.parseDouble(baseResults[i])) / Double.parseDouble(baseResults[i]);
+                        + Math.abs(Double.parseDouble(compareResults[i]) - Double.parseDouble(baseResults[i])) / (Double.parseDouble(baseResults[i]) + 1);
             }
             sum = sum + resultDegradation;
         }

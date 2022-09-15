@@ -6,6 +6,7 @@ import engine.log.WALManager;
 import engine.table.datatype.DataBox;
 import engine.table.datatype.DataBoxImpl.DoubleDataBox;
 import engine.table.datatype.DataBoxImpl.IntDataBox;
+import engine.table.datatype.DataBoxImpl.StringDataBox;
 import engine.table.tableRecords.SchemaRecord;
 import engine.transaction.common.OperationChain;
 import engine.transaction.common.Operation;
@@ -13,6 +14,7 @@ import engine.transaction.function.AVG;
 import engine.log.LogRecord;
 import engine.transaction.function.DEC;
 import engine.transaction.function.INC;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import UserApplications.SOURCE_CONTROL;
@@ -24,6 +26,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static UserApplications.CONTROL.*;
+import static UserApplications.constants.GrepSumConstants.Constant.VALUE_LEN;
 
 public class TxnProcessingEngine {
     private static final Logger LOG = LoggerFactory.getLogger(TxnProcessingEngine.class);
@@ -539,7 +542,10 @@ public class TxnProcessingEngine {
                 return false;
             }
         }
-        operation.d_record.record_.updateValues(operation.value_list);
+        List<DataBox> values = operation.d_record.record_.getValues();
+        int read_result = Integer.parseInt(values.get(1).getString().trim());
+        int update = Integer.parseInt(operation.value_list.get(1).getString().trim());
+        operation.d_record.record_.getValues().get(1).setString(String.valueOf(read_result + update), VALUE_LEN);
         CONTROL.randomDelay();
         return true;
     }
