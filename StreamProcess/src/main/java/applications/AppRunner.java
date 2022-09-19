@@ -208,7 +208,7 @@ public class  AppRunner extends baseRunner {
         submitter.getOM().join();
         try {
             submitter.getOM().getEM().closeFTM();
-            submitter.getOM().getEM().dumpResultDatabase();
+            //submitter.getOM().getEM().dumpResultDatabase();
             final_topology.db.close();
             submitter.getOM().getEM().exit();
         } catch (IOException e) {
@@ -259,11 +259,11 @@ public class  AppRunner extends baseRunner {
                 config.getInt("failureModel"),
                 config.getInt("failureFrequency"),
                 config.getInt("FTOptions"));
-        MeasureTools.DumpOutputResult(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
-        double stateDegradation = PrecisionComputation.stateDegradation(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
-        double relativeError = PrecisionComputation.relativeError(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
-        MeasureTools.setStateDegradation(stateDegradation);
-        MeasureTools.setRelativeError(relativeError);
+        //MeasureTools.DumpOutputResult(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
+        //double stateDegradation = PrecisionComputation.stateDegradation(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
+        //double relativeError = PrecisionComputation.relativeError(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
+        //MeasureTools.setStateDegradation(stateDegradation);
+        //MeasureTools.setRelativeError(relativeError);
         MeasureTools.METRICS_REPORT(directory);
     }
     public static void main(String[] args) throws UnhandledCaseException, InterruptedException, IOException {

@@ -91,7 +91,7 @@ public class GSInitializer extends TableInitilizer{
             right_bound=(thread_id+1)*range_interval;
         }
         for (int key = left_bound; key < right_bound; key++) {
-            String value = GenerateValue(key);
+            String value = GenerateValue(100);
             assert value.length() == VALUE_LEN;
             insertMicroRecord(key, value);
         }
@@ -102,7 +102,7 @@ public class GSInitializer extends TableInitilizer{
     public void reloadDB(List<Integer> rangeId) {
         for (int key = 0; key < NUM_ITEMS ; key++) {
             if(rangeId.contains(getPartitionId(key))){
-                String value = GenerateValue(key);
+                String value = GenerateValue(100);
                 assert value.length() == VALUE_LEN;
                 insertMicroRecord(key, value);
             }
