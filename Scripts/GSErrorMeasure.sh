@@ -7,6 +7,8 @@ function ResetParameters() {
   firstFailure=10000
   tthreads=16
   snapshot=2
+  relativeError=0
+  stateDegradation=0
 
   #System Configurations
   Arrival_Control=1
@@ -43,6 +45,8 @@ function runFTStream() {
             --firstFailure $firstFailure \
             --tthreads $tthreads \
             --snapshot $snapshot \
+            --relativeError $relativeError \
+            --stateDegradation $stateDegradation \
             --Arrival_Control $Arrival_Control \
             --targetHz $targetHz \
             --Time_Control $Time_Control \
@@ -69,6 +73,8 @@ function runFTStream() {
               --failureFrequency $failureFrequency \
               --tthreads $tthreads \
               --snapshot $snapshot \
+              --relativeError $relativeError \
+              --stateDegradation $stateDegradation \
               --Arrival_Control $Arrival_Control \
               --targetHz $targetHz \
               --Time_Control $Time_Control \
@@ -90,11 +96,13 @@ function runFTStream() {
 }
 function baselineEvaluation() {
   ResetParameters
-  for FTOptions in 1 2 3 4
-       do
-       for time_Interval in 2000 4000 6000 8000
+  failureFrequency=0
+  failureModel=0
+  FTOptions=0
+  runFTStream
+  ResetParameters
+  for FTOptions in 5 6 7 1 2 3 4
           do runFTStream
-          done
           done
   ResetParameters
 }

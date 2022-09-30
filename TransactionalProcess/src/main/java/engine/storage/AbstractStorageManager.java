@@ -60,5 +60,10 @@ public abstract class AbstractStorageManager {
                                                                                           long timestamp,
                                                                                           @Nonnull CheckpointStreamFactory streamFactory,
                                                                                           @Nonnull CheckpointOptions checkpointOptions) throws Exception;
+    public abstract SnapshotStrategy.SnapshotResultSupplier asyncSnapshot(long checkpointId,
+                                                                          long timestamp,
+                                                                          int partitionId,
+                                                                          @Nonnull CheckpointStreamFactory streamFactory,
+                                                                          @Nonnull CheckpointOptions checkpointOptions) throws Exception;
     public abstract void dumpDataBase() throws IOException;
 }

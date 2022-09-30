@@ -1,11 +1,12 @@
 package engine.transaction;
 
 import engine.Exception.DatabaseException;
+import engine.Meta.MetaTypes;
 import engine.table.datatype.DataBox;
 import engine.table.tableRecords.SchemaRecordRef;
 import engine.transaction.function.Condition;
 import engine.transaction.function.Function;
-import scala.Int;
+import utils.Lock.PartitionedOrderLock;
 
 import java.io.IOException;
 import java.util.List;
@@ -57,7 +58,10 @@ public interface TxnManager {
      * @throws DatabaseException
      */
     boolean Asy_ReadRecord(TxnContext txn_context, String srcTable, String key, SchemaRecordRef record_ref, double[] enqueue_time) throws DatabaseException;
-
-
     int start_evaluate(int taskId, long mark_ID) throws InterruptedException, BrokenBarrierException, IOException, DatabaseException;
+    //S-Store
+    PartitionedOrderLock.LOCK getOrderLock(int p_id);//partitioned. Global ordering can not be partitioned.
+    boolean lock_ahead(String table_name, String key, MetaTypes.AccessType accessType) throws DatabaseException;
+    boolean SelectKeyRecord_noLock(TxnContext txn_context, String table_name, String key, SchemaRecordRef record_ref, MetaTypes.AccessType accessType) throws DatabaseException;
+    void CommitTransaction(List<String> keys);
 }

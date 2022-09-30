@@ -7,6 +7,7 @@ import scala.Tuple2;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SnapshotResult implements Serializable {
     private static final long serialVersionUID = 8003076517462798444L;
@@ -14,12 +15,16 @@ public class SnapshotResult implements Serializable {
     private static SnapshotResult EMPTY = new SnapshotResult();
     public SnapshotResult() {
     }
+    public SnapshotResult(long checkpointId) {
+        this.checkpointId = checkpointId;
+        this.snapshotResults = new ConcurrentHashMap<>();
+    }
     public static <T> SnapshotResult empty() {
         return (SnapshotResult) EMPTY;
     }
     /** Use in the parallel snapshot */
     //<partitionId, Tuple2>
-    private HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResults;
+    private ConcurrentHashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResults;
     private int taskId;
 
     private Path snapshotPath;
@@ -31,9 +36,9 @@ public class SnapshotResult implements Serializable {
         this.keyGroupRangeOffsets = keyGroupRangeOffsets;
         this.checkpointId = checkpointId;
         this.timestamp = timestamp;
-        this.snapshotResults=new HashMap<>();
+        this.snapshotResults = new ConcurrentHashMap<>();
     }
-    public SnapshotResult(HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResults,long timestamp,long checkpointId){
+    public SnapshotResult(ConcurrentHashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResults,long timestamp,long checkpointId){
         this.checkpointId = checkpointId;
         this.timestamp = timestamp;
         this.snapshotResults = snapshotResults;
@@ -56,15 +61,19 @@ public class SnapshotResult implements Serializable {
         return timestamp;
     }
 
-    public HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> getSnapshotResults() {
+    public ConcurrentHashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> getSnapshotResults() {
         if (snapshotResults.size() == 0){
-            HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResult=new HashMap<>();
+            ConcurrentHashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResult = new ConcurrentHashMap<>();
             Tuple2 tuple = new Tuple2(this.snapshotPath,this.keyGroupRangeOffsets);
             snapshotResult.put(0,tuple);
             return snapshotResult;
         }else{
             return snapshotResults;
         }
+    }
+
+    public void setSnapshotResults(int partitionId, Tuple2<Path,KeyGroupRangeOffsets> results){
+        this.snapshotResults.put(partitionId,results);
     }
 
     public Path getSnapshotPath() {

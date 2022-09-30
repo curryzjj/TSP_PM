@@ -276,6 +276,11 @@ public class RocksDBManager extends AbstractStorageManager {
     }
 
     @Override
+    public SnapshotStrategy.SnapshotResultSupplier asyncSnapshot(long checkpointId, long timestamp, int partitionId, @NotNull CheckpointStreamFactory streamFactory, @NotNull CheckpointOptions checkpointOptions) throws Exception {
+        return null;
+    }
+
+    @Override
     public void dumpDataBase() throws IOException {
 
     }

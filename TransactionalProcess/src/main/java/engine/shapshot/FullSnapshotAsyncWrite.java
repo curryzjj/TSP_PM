@@ -78,20 +78,20 @@ public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSu
         OutputStream kgOutStream = null;
         CheckpointStreamFactory.CheckpointStateOutputStream checkpointOutputStream =
                 checkpointStreamWithResultProvider.getCheckpointOutputStream();
-        kgOutStream =checkpointOutputStream;
+        kgOutStream = checkpointOutputStream;
         kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
         try{
             while(mergeIterator.isValid()){
                 if(mergeIterator.isNewKeyValueState()){
-                    kgOutStream =checkpointOutputStream;
+                    kgOutStream = checkpointOutputStream;
                     kgOutView = new DataOutputViewStreamWrapper(kgOutStream);
-                    kgOutView.writeShort(mergeIterator.kvStateId());
+                    kgOutView.writeInt(mergeIterator.kvStateId());
                     keyGroupRangeOffsets.setKeyGroupOffset(
                             mergeIterator.kvStateId(), checkpointOutputStream.getPos());
                 }
-                writeKeyValuePair(mergeIterator.nextkey(),mergeIterator.nextvalue(),kgOutView);
+                writeKeyValuePair(mergeIterator.nextkey(), mergeIterator.nextvalue(), kgOutView);
                 if(!mergeIterator.isIteratorValid()){
-                    kgOutView.writeShort(END_OF_KEY_GROUP_MARK);
+                    kgOutView.writeInt(END_OF_KEY_GROUP_MARK);
                     mergeIterator.switchIterator();
                 }
             }
@@ -101,7 +101,7 @@ public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSu
     }
 
     private void writeKVStateMetaData(DataOutputView outputView) throws IOException {
-        outputView.writeShort(snapshotResources.getMetaInfoSnapshots().size());
+        outputView.writeInt(snapshotResources.getMetaInfoSnapshots().size());
         for (StateMetaInfoSnapshot metaInfoSnapshot : snapshotResources.getMetaInfoSnapshots()) {
             StateMetaInfoSnapshotReadersWriters.getWriter().writeStateMetaInfoSnapshot(metaInfoSnapshot,outputView);
         }
@@ -138,7 +138,7 @@ public class FullSnapshotAsyncWrite implements SnapshotStrategy.SnapshotResultSu
     }
     private void writeKeyValuePair(byte[] key, byte[] value, DataOutputView out)
             throws IOException {
-        Serialize.writeSerializedKV(key,out);
+        //Serialize.writeSerializedKV(key,out);
         Serialize.writeSerializedKV(value,out);
     }
 

@@ -84,13 +84,27 @@ public final class SnapshotStrategyRunner<SR extends SnapshotResources> {
                                                          @Nonnull CheckpointOptions checkpointOptions) throws Exception {
         long startTime=System.currentTimeMillis();
         List<SR> snapshotResources = snapshotStrategy.syncPrepareResources(checkpointId, checkpointOptions.partitionNum);
-        SnapshotStrategy.SnapshotResultSupplier parallelSnapshot=
+        SnapshotStrategy.SnapshotResultSupplier parallelSnapshot =
                 snapshotStrategy.parallelSnapshot(snapshotResources,
                         checkpointId,
                         timestamp,
                         streamFactory,
                         checkpointOptions);
         return parallelSnapshot;
+    }
+    public final SnapshotStrategy.SnapshotResultSupplier asyncSnapshot(long checkpointId,
+                                                                       long timestamp,
+                                                                       int partitionId,
+                                                                       @Nonnull CheckpointStreamFactory streamFactory,
+                                                                       @Nonnull CheckpointOptions checkpointOptions) throws Exception {
+        long startTime=System.currentTimeMillis();
+        SR snapshotResources = snapshotStrategy.syncPrepareResourcesByPartitionId(checkpointId, partitionId);
+        SnapshotStrategy.SnapshotResultSupplier asyncSnapshot = snapshotStrategy.asyncSnapshot(snapshotResources,
+                checkpointId,
+                timestamp,
+                streamFactory,
+                checkpointOptions);
+        return asyncSnapshot;
     }
     @Override
     public String toString() {

@@ -33,4 +33,19 @@ public class SOURCE_CONTROL {
         }
     }
 
+    public void preStateAccessBarrier(int threadId) {
+        try {
+            start_barrier.await();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void postStateAccessBarrier(int threadId) {
+        try {
+            end_barrier.await();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

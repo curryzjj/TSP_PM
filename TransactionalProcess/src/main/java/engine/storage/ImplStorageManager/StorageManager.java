@@ -186,6 +186,14 @@ public class StorageManager extends AbstractStorageManager {
     }
 
     @Override
+    public SnapshotStrategy.SnapshotResultSupplier asyncSnapshot(long checkpointId, long timestamp, int partitionId, @NotNull CheckpointStreamFactory streamFactory, @NotNull CheckpointOptions checkpointOptions) throws Exception {
+        return new SnapshotStrategyRunner<>( checkpointSnapshotStrategy.getDescription(),
+                checkpointSnapshotStrategy,
+                SYNCHRONOUS,
+                cancelStreamRegistry).asyncSnapshot(checkpointId,timestamp,partitionId,streamFactory,checkpointOptions);
+    }
+
+    @Override
     public void dumpDataBase() throws IOException {
         String filePath = this.FileDirectory + OsUtils.osWrapperPostFix("Database")
                 + OsUtils.osWrapperPostFix(this.application)

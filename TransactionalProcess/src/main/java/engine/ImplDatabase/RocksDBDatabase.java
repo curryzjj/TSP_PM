@@ -103,6 +103,11 @@ public class RocksDBDatabase extends Database {
     }
 
     @Override
+    public SnapshotResult asyncSnapshot(long checkpointId, long timestamp, int partitionId) throws Exception {
+        return null;
+    }
+
+    @Override
     public RunnableFuture<LogResult> commitLog(long checkpointId, long timestamp) throws IOException {
         return null;
     }

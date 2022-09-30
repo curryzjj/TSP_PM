@@ -54,7 +54,7 @@ public class GS_txn extends TransactionalTopology {
             if (enable_checkpoint){
                 if (conventional) {
                     builder.setBolt(Component.EXECUTOR,
-                            new GSBolt_TStream_Global(0),
+                            new GSBolt_SStore_Global(0),
                             config.getInt(Executor_Threads),
                             grouping);
                 } else {

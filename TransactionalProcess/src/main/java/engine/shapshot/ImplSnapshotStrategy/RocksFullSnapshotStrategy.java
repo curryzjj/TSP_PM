@@ -46,6 +46,11 @@ public class RocksFullSnapshotStrategy extends RocksDBSnapshotStrategyBase<FullS
     }
 
     @Override
+    public FullSnapshotResources syncPrepareResourcesByPartitionId(long checkpointId, int partitionId) throws Exception {
+        return null;
+    }
+
+    @Override
     public List<FullSnapshotResources> syncPrepareResources(long checkpointId, int partitionNum) throws IOException {
         return null;
     }

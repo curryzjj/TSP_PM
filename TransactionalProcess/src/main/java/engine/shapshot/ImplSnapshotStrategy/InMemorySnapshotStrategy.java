@@ -53,6 +53,19 @@ public class InMemorySnapshotStrategy extends InMemorySnapshotStrategyBase<FullS
     }
 
     @Override
+    public FullSnapshotResources syncPrepareResourcesByPartitionId(long checkpointId, int partitionId) throws Exception {
+        Map<String,BaseTable> tables = new HashMap<>();
+        LinkedHashMap<String,StorageManager.InMemoryKvStateInfo> kvStateInformation = new LinkedHashMap<>();
+        for (String tableName : this.tables.keySet()){
+            if(StringHelper.isDigitStr(tableName) == partitionId){
+                tables.put(tableName, this.tables.get(tableName));
+                kvStateInformation.put(tableName, this.kvStateInformation.get(tableName));
+            }
+        }
+        return InMemoryFullSnapshotResources.create(kvStateInformation, tables, resourceGuard, keyGroupRange, checkpointId);
+    }
+
+    @Override
     public SnapshotResultSupplier asyncSnapshot(FullSnapshotResources snapshotResources,
                                                 long checkpointId,
                                                 long timestamp,

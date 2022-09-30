@@ -30,4 +30,6 @@ public abstract class FTManager extends Thread {
     public abstract void boltRegister(int executorId, FaultToleranceConstants.FaultToleranceStatus status);
     public abstract Object getLock();
     public abstract void close();
+    public void takeSnapshot(long checkpointId, int partitionId) throws Exception {
+    }
 }

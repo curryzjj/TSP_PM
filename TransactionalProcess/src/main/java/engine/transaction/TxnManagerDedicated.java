@@ -10,6 +10,7 @@ import engine.transaction.function.Condition;
 import engine.transaction.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import utils.Lock.PartitionedOrderLock;
 
 import java.util.List;
 
@@ -39,7 +40,7 @@ public abstract class TxnManagerDedicated implements TxnManager{
         this.thread_id = thread_Id;
         this.num_tasks = num_tasks;
         delta = (int) Math.ceil(NUM_ITEMS / (double) num_tasks);//NUM_ITEMS / tthread;
-        partition_delta=(int) Math.ceil(NUM_ITEMS / (double) PARTITION_NUM);//NUM_ITEMS / partition_num;
+        partition_delta = (int) Math.ceil(NUM_ITEMS / (double) PARTITION_NUM);//NUM_ITEMS / partition_num;
     }
     @Override
     public boolean Asy_ModifyRecord_Read(TxnContext txn_context, String srcTable, String key, SchemaRecordRef record_ref, Function function) throws DatabaseException {
@@ -93,9 +94,9 @@ public abstract class TxnManagerDedicated implements TxnManager{
         MetaTypes.AccessType accessType = MetaTypes.AccessType.READ_ONLY;
         String tableName="";
         if(enable_states_partition){
-            tableName=srcTable+"_"+ getPartitionId(primary_key);
+            tableName = srcTable+"_"+ getPartitionId(primary_key);
         }else{
-            tableName=srcTable;
+            tableName = srcTable;
         }
         TableRecord t_record = storageManager.getTable(tableName).SelectKeyRecord(primary_key);
         if (t_record != null) {
@@ -241,15 +242,47 @@ public abstract class TxnManagerDedicated implements TxnManager{
         }
     }
     //implement in the TxnManagerTStream
-    protected abstract boolean Asy_ModifyRecord_ReadCC(TxnContext txn_context, String srcTable, TableRecord tableRecord, SchemaRecordRef record_ref, Function function, MetaTypes.AccessType accessType);
-    protected abstract boolean Asy_ModifyRecord_ReadCC(TxnContext txn_context, String srcTable, TableRecord s_record, SchemaRecordRef record_ref, Function function,
-                                              TableRecord[] condition_records, Condition condition, MetaTypes.AccessType accessType, boolean[] success);
-    protected abstract boolean Asy_ReadRecordCC(TxnContext txn_context, String primary_key, String table_name, TableRecord t_record, SchemaRecordRef record_ref, double[] enqueue_time, MetaTypes.AccessType access_type);
-    protected abstract boolean Asy_WriteRecordCC(TxnContext txn_context, String table_name, TableRecord t_record, String primary_key, List<DataBox> value, double[] enqueue_time, MetaTypes.AccessType access_type);
-    protected abstract boolean Asy_WriteRecordCC(TxnContext txn_context, String primary_key, String table_name, TableRecord t_record, long value, int column_id, MetaTypes.AccessType access_type);
-    protected abstract boolean Asy_ModifyRecordCC(TxnContext txn_context, String srcTable, TableRecord t_record, TableRecord d_record, Function function, MetaTypes.AccessType accessType, int column_id);
-    protected abstract boolean Asy_ModifyRecordCC(TxnContext txn_context, String srcTable, TableRecord s_record, TableRecord d_record, Function function, TableRecord[] condition_source, Condition condition, MetaTypes.AccessType accessType, boolean[] success);
+    protected boolean Asy_ModifyRecord_ReadCC(TxnContext txn_context, String srcTable, TableRecord tableRecord, SchemaRecordRef record_ref, Function function, MetaTypes.AccessType accessType){
+        throw new UnsupportedOperationException();
+    }
+    protected boolean Asy_ModifyRecord_ReadCC(TxnContext txn_context, String srcTable, TableRecord s_record, SchemaRecordRef record_ref, Function function,
+                                              TableRecord[] condition_records, Condition condition, MetaTypes.AccessType accessType, boolean[] success){
+        throw new UnsupportedOperationException();
+    }
+    protected  boolean Asy_ReadRecordCC(TxnContext txn_context, String primary_key, String table_name, TableRecord t_record, SchemaRecordRef record_ref, double[] enqueue_time, MetaTypes.AccessType access_type){
+        throw new UnsupportedOperationException();
+    }
+    protected  boolean Asy_WriteRecordCC(TxnContext txn_context, String table_name, TableRecord t_record, String primary_key, List<DataBox> value, double[] enqueue_time, MetaTypes.AccessType access_type){
+        throw new UnsupportedOperationException();
+    }
+    protected  boolean Asy_WriteRecordCC(TxnContext txn_context, String primary_key, String table_name, TableRecord t_record, long value, int column_id, MetaTypes.AccessType access_type){
+        throw new UnsupportedOperationException();
+    }
+    protected  boolean Asy_ModifyRecordCC(TxnContext txn_context, String srcTable, TableRecord t_record, TableRecord d_record, Function function, MetaTypes.AccessType accessType, int column_id){
+        throw new UnsupportedOperationException();
+    }
+    protected  boolean Asy_ModifyRecordCC(TxnContext txn_context, String srcTable, TableRecord s_record, TableRecord d_record, Function function, TableRecord[] condition_source, Condition condition, MetaTypes.AccessType accessType, boolean[] success){
+        throw new UnsupportedOperationException();
+    }
     protected boolean Asy_ModifyRecordCC(TxnContext txn_context, String srcTable, TableRecord s_record, Function function, TableRecord[] condition_source, Condition condition, MetaTypes.AccessType accessType, boolean[] success) {
         return Asy_ModifyRecordCC(txn_context, srcTable, s_record, s_record, function, condition_source, condition, accessType, success);
+    }
+    //implement in the TxnManagerSStore
+    public PartitionedOrderLock.LOCK getOrderLock(int p_id){
+        throw new UnsupportedOperationException();
+    }//partitioned. Global ordering can not be partitioned.
+
+    @Override
+    public boolean lock_ahead(String table_name, String key, MetaTypes.AccessType accessType) throws DatabaseException {
+        throw new UnsupportedOperationException();
+    }
+    @Override
+    public boolean SelectKeyRecord_noLock(TxnContext txn_context, String table_name, String key, SchemaRecordRef record_ref, MetaTypes.AccessType accessType) throws DatabaseException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void CommitTransaction(List<String> key) {
+        throw new UnsupportedOperationException();
     }
 }

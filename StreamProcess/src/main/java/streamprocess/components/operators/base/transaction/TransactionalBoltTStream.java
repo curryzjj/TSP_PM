@@ -63,35 +63,8 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     }
     //used in the T-Stream_CC
     protected abstract void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException;
-    protected abstract boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
-    protected abstract boolean TXN_PROCESS()throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
     protected void REQUEST_POST() throws InterruptedException{};//implement in the application
     protected void REQUEST_CORE() throws InterruptedException{};//implement in the application
-    protected void execute_ts_normal(Tuple in) throws DatabaseException, InterruptedException {
-        if(status.isMarkerArrived(in.getSourceTask())){
-            PRE_EXECUTE(in);
-        }else{
-            PRE_TXN_PROCESS(in);
-        }
-    }
-    public void BUFFER_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        for (Queue<Tuple> tuples : bufferedTuples.values()) {
-            if (tuples.size() != 0) {
-                boolean isMarker = false;
-                while (!isMarker) {
-                    Tuple tuple = tuples.poll();
-                    if (tuple != null) {
-                        execute(tuple);
-                        if (tuple.isMarker()) {
-                            isMarker = true;
-                        }
-                    } else {
-                        isMarker = true;
-                    }
-                }
-            }
-        }
-    }
     /**
      * To register persist when there is no transaction abort
      */
