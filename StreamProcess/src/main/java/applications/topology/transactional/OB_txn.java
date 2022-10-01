@@ -53,7 +53,7 @@ public class OB_txn extends TransactionalTopology {
            if(enable_checkpoint){
                if (conventional) {
                    builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
-                           new OBBolt_TStream_Global(0),
+                           new OBBolt_SStore_Global(0),
                            config.getInt(Executor_Threads),
                            grouping);
                } else {

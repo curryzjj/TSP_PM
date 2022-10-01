@@ -119,17 +119,16 @@ public class LocalManager extends FTManager {
                     failureTimes ++;
                     List<Integer> recoveryIds;
                     long alignOffset;
+                    SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(SnapshotFile);
                     if (enable_determinants_log) {
                         recoveryIds = this.db.getTxnProcessingEngine().getRecoveryRangeId();
                         ConcurrentHashMap<Integer,CausalService> causalService = this.g.getSink().askCausalService();
                         alignOffset = causalService.get(recoveryIds.get(0)).currentMarkerId;
                     } else {
-                        RecoveryDependency recoveryDependency = this.g.getSink().ackRecoveryDependency();
-                        alignOffset = recoveryDependency.currentMarkId;
+                        alignOffset = lastSnapshotResult.getCheckpointId();
                         recoveryIds = this.db.getTxnProcessingEngine().getRecoveryRangeId();
                     }
                     LOG.info("Recovery partitions are" + recoveryIds.toString() + "Align offset is  " + alignOffset);
-                    SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(SnapshotFile);
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(), recoveryIds, alignOffset);
                     MeasureTools.State_load_begin(System.nanoTime());
                     this.db.recoveryFromTargetSnapshot(lastSnapshotResult, recoveryIds);

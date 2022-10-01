@@ -32,32 +32,36 @@ public abstract class GSBolt_SStore extends TransactionalBoltSStore {
     private static final Logger LOG= LoggerFactory.getLogger(GSBolt_SStore.class);
     public GSBolt_SStore(int fid) {
         super(LOG, fid);
-        this.configPrefix="tptxn";
+        this.configPrefix="gstxn";
         status = new Status();
         this.setStateful();
     }
 
     @Override
-    public void Sort_Lock(int thread_Id) {
-        SOURCE_CONTROL.getInstance().preStateAccessBarrier(thread_Id);
-        LA_RESETALL(transactionManager, thread_Id);
-        //Sort
-        if (thread_Id == 0) {
-            int[] p_bids = new int[(int) PARTITION_NUM];
-            HashMap<Integer, Integer> pids = new HashMap<>();//<partitionId, batchId>
-            for (TxnEvent event : GlobalSorter.sortedEvents) {
-                if (event instanceof MicroEvent) {
-                    parseMicroEvent((MicroEvent) event, pids);
-                    event.setBid_array(Arrays.toString(p_bids), Arrays.toString(pids.keySet().toArray()));
-                    pids.replaceAll((k, v) -> p_bids[k]++);
-                } else {
-                    throw new UnsupportedOperationException();
+    public boolean Sort_Lock(int thread_Id) {
+        if (SOURCE_CONTROL.getInstance().preStateAccessBarrier(thread_Id)) {
+            LA_RESETALL(transactionManager, thread_Id);
+            //Sort
+            if (thread_Id == 0) {
+                int[] p_bids = new int[(int) PARTITION_NUM];
+                HashMap<Integer, Integer> pids = new HashMap<>();//<partitionId, batchId>
+                for (TxnEvent event : GlobalSorter.sortedEvents) {
+                    if (event instanceof MicroEvent) {
+                        parseMicroEvent((MicroEvent) event, pids);
+                        event.setBid_array(Arrays.toString(p_bids), Arrays.toString(pids.keySet().toArray()));
+                        pids.replaceAll((k, v) -> p_bids[k]++);
+                    } else {
+                        throw new UnsupportedOperationException();
+                    }
+                    pids.clear();
                 }
-                pids.clear();
+                GlobalSorter.sortedEvents.clear();
             }
-            GlobalSorter.sortedEvents.clear();
+        } else {
+            return false;
         }
         SOURCE_CONTROL.getInstance().postStateAccessBarrier(thread_Id);
+        return true;
     }
     private void parseMicroEvent(MicroEvent event, HashMap<Integer, Integer> pids) {
         for (int key : event.getKeys()) {

@@ -11,7 +11,7 @@ import static UserApplications.constants.OnlineBidingSystemConstants.Constant.MA
 public class ToppingEvent extends TxnEvent {
     //place-rangeMap.
     public SchemaRecordRef[] record_refs;
-    public boolean topping_result=true;
+    public boolean topping_result = true;
 
     private int[] itemId;
     private long[] itemTopUp;

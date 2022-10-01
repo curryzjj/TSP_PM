@@ -109,16 +109,20 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
         if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
             for (CausalService c:this.causalService.values()) {
                 if (c.outsideDeterminantList.get(markerId) != null) {
+                    List<Long> isCommit = new ArrayList<>();
                     for (OutsideDeterminant outsideDeterminant:c.outsideDeterminantList.get(markerId)) {
                         TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
-                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
-                        event.setTxnContext(txnContext);
-                        if (event instanceof BuyingEvent) {
-                            Determinant_Buying_request_construct((BuyingEvent) event, txnContext);
-                        } else if (event instanceof AlertEvent){
-                            Determinant_Alert_request_construct((AlertEvent) event, txnContext);
-                        } else {
-                            Determinant_Topping_request_construct((ToppingEvent) event, txnContext);
+                        if (!isCommit.contains(event.getBid())) {
+                            TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
+                            event.setTxnContext(txnContext);
+                            if (event instanceof BuyingEvent) {
+                                Determinant_Buying_request_construct((BuyingEvent) event, txnContext);
+                            } else if (event instanceof AlertEvent){
+                                Determinant_Alert_request_construct((AlertEvent) event, txnContext);
+                            } else {
+                                Determinant_Topping_request_construct((ToppingEvent) event, txnContext);
+                            }
+                            isCommit.add(event.getBid());
                         }
                     }
                 }
@@ -194,7 +198,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     }
     protected void BUYING_REQUEST_CORE(BuyingEvent event) {
         //measure_end if any item is not able to buy.
-        event.biding_result = new BidingResult(event, event.success[0]);
+        event.biding_result = event.success[0];
     }
     @Override
     protected void REQUEST_POST() throws InterruptedException {

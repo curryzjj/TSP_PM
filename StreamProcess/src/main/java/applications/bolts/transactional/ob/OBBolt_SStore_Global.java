@@ -1,4 +1,4 @@
-package applications.bolts.transactional.tp;
+package applications.bolts.transactional.ob;
 
 import UserApplications.CONTROL;
 import applications.events.GlobalSorter;
@@ -13,12 +13,12 @@ import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.lostPartitionId;
 
-public class TPBolt_SStore_Global extends TPBolt_SStore{
-    private static final long serialVersionUID = 614573586272859488L;
-
-    public TPBolt_SStore_Global(int fid) {
+public class OBBolt_SStore_Global extends OBBolt_SStore{
+    private static final long serialVersionUID = 7285315358359232553L;
+    public OBBolt_SStore_Global(int fid) {
         super(fid);
     }
+
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(CONTROL.failureFlag.get()){

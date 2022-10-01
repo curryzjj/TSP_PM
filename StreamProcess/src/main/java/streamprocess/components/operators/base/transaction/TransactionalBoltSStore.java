@@ -7,9 +7,7 @@ import engine.transaction.TxnManager;
 import engine.transaction.impl.TxnManagerSStore;
 import org.slf4j.Logger;
 import streamprocess.components.operators.api.TransactionalBolt;
-import streamprocess.components.topology.TopologyComponent;
 import streamprocess.execution.ExecutionGraph;
-import streamprocess.execution.ExecutionNode;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.FaultToleranceConstants;
 
@@ -37,7 +35,7 @@ public abstract class TransactionalBoltSStore extends TransactionalBolt {
     }
     @Override
     public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException;
-    public abstract void Sort_Lock(int thread_Id) ;
+    public abstract boolean Sort_Lock(int thread_Id) ;
     public abstract void PostLAL_Process(TxnEvent event) throws DatabaseException;
     public abstract void POST_PROCESS(TxnEvent txnEvent) throws InterruptedException;
     public abstract void LAL(TxnEvent event) throws DatabaseException;

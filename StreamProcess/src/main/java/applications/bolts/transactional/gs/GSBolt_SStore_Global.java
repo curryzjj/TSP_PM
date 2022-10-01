@@ -42,21 +42,23 @@ public class GSBolt_SStore_Global extends GSBolt_SStore{
                     if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
                         switch (in.getMarker().getValue()){
                             case "marker":
-                                Sort_Lock(this.thread_Id);
-                                TXN_PROCESS();
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                this.markerId = in.getBID();
+                                if (TXN_PROCESS()) {
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                }
                                 break;
                             case "snapshot":
-                                Sort_Lock(this.thread_Id);
-                                this.checkpointId = in.getBID();
-                                TXN_PROCESS_FT();
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                this.checkpointId = this.markerId = in.getBID();
+                                if (TXN_PROCESS_FT()) {
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                }
                                 break;
                             case "finish":
-                                Sort_Lock(this.thread_Id);
-                                TXN_PROCESS();
-                                forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
-                                this.context.stop_running();
+                                this.markerId = in.getBID();
+                                if (TXN_PROCESS()) {
+                                    forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
+                                    this.context.stop_running();
+                                }
                                 break;
                             default:
                                 throw new IllegalStateException("Unexpected value: " + in.getMarker().getValue());
@@ -71,26 +73,56 @@ public class GSBolt_SStore_Global extends GSBolt_SStore{
 
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        for (TxnEvent event : this.EventsHolder) {
-            LAL_PROCESS(event);
-            PostLAL_Process(event);
-            POST_PROCESS(event);
+        if (Sort_Lock(this.thread_Id)) {
+            for (TxnEvent event : this.EventsHolder) {
+                LAL_PROCESS(event);
+                PostLAL_Process(event);
+                POST_PROCESS(event);
+            }
+            this.EventsHolder.clear();
+            this.syncSnapshot();
+            BUFFER_PROCESS();
+            return true;
+        } else {
+            if (this.executor.isFirst_executor()) {
+                this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                CONTROL.failureFlagBid.add(markerId);
+                GlobalSorter.sortedEvents.clear();
+            }
+            this.SyncRegisterRecovery();
+            this.collector.cleanAll();
+            this.EventsHolder.clear();
+            for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                tuples.clear();
+            }
+            return false;
         }
-        this.EventsHolder.clear();
-        this.syncSnapshot();
-        BUFFER_PROCESS();
-        return true;
     }
 
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        for (TxnEvent event : this.EventsHolder) {
-            LAL_PROCESS(event);
-            PostLAL_Process(event);
-            POST_PROCESS(event);
+        if (Sort_Lock(this.thread_Id)) {
+            for (TxnEvent event : this.EventsHolder) {
+                LAL_PROCESS(event);
+                PostLAL_Process(event);
+                POST_PROCESS(event);
+            }
+            this.EventsHolder.clear();
+            BUFFER_PROCESS();
+            return true;
+        } else {
+            if (this.executor.isFirst_executor()) {
+                this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
+                CONTROL.failureFlagBid.add(markerId);
+                GlobalSorter.sortedEvents.clear();
+            }
+            this.SyncRegisterRecovery();
+            this.collector.cleanAll();
+            this.EventsHolder.clear();
+            for (Queue<Tuple> tuples : bufferedTuples.values()) {
+                tuples.clear();
+            }
+            return false;
         }
-        this.EventsHolder.clear();
-        BUFFER_PROCESS();
-        return true;
     }
 }

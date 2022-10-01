@@ -113,15 +113,19 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
         if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
             for (CausalService c:this.causalService.values()) {
                 if (c.outsideDeterminantList.get(markId) != null) {
+                    List<Long> isCommit = new ArrayList<>();
                     for (OutsideDeterminant outsideDeterminant:c.outsideDeterminantList.get(markId)) {
                         TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
-                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
-                        event.setTxnContext(txnContext);
-                        MicroEvent microEvent = (MicroEvent) event;
-                        if (microEvent.READ_EVENT()) {
-                            determinant_read_construct(microEvent, txnContext);
-                        } else {
-                            determinant_write_construct(microEvent, txnContext);
+                        if (!isCommit.contains(event.getBid())) {
+                            TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
+                            event.setTxnContext(txnContext);
+                            MicroEvent microEvent = (MicroEvent) event;
+                            if (microEvent.READ_EVENT()) {
+                                determinant_read_construct(microEvent, txnContext);
+                            } else {
+                                determinant_write_construct(microEvent, txnContext);
+                            }
+                            isCommit.add(event.getBid());
                         }
                     }
                 }

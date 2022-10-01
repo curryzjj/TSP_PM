@@ -203,6 +203,7 @@ public class CLRManager extends FTManager {
         for(int id:callRecovery.keySet()){
             g.getExecutionNode(id).ackCommit(true, alignMakerId);
         }
+        g.getSink().ackCommit(true,alignMakerId);
         this.callRecovery_ini();
     }
     private boolean not_all_register(){

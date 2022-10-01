@@ -14,11 +14,7 @@ public class BuyingEvent extends TxnEvent {
     public SchemaRecordRef[] record_refs;
 
     //updated state...to be written.
-    public BidingResult biding_result;
-
-    //expected state.
-    //long Item_value=0;
-    //long asset_value=0;
+    public boolean biding_result = true;
 
     private int[] itemId;
     private long[] bid_price;

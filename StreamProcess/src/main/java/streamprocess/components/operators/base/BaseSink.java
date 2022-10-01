@@ -25,13 +25,15 @@ import static UserApplications.CONTROL.*;
 
 public abstract class BaseSink extends BaseOperator implements emitMarker {
     private static final Logger LOG= LoggerFactory.getLogger(BaseSink.class);
+    private static final long serialVersionUID = 1016176274750558777L;
     protected static ExecutionGraph graph;
     protected int thisTaskId;
-    boolean isSINK=true;
+    boolean isSINK = true;
     protected static final int max_num_msg=(int) 1E5;
     //<MarkerId,RD>
     public ConcurrentHashMap<Long, RecoveryDependency> recoveryDependency = new ConcurrentHashMap<>();
     public long currentMarkerId = 0;
+    public long recoveryId = -1;
     //<PartitionId, CausalService>
     public ConcurrentHashMap<Integer, CausalService> causalService = new ConcurrentHashMap<>();
     //<UpstreamId,bufferQueue>
@@ -118,10 +120,11 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
         for (Queue<Tuple> tuples : bufferedTuples.values()) {
             tuples.clear();
         }
-        for (CausalService causalService : this.causalService.values()) {
-            causalService.outsideDeterminant.clear();
-            causalService.abortEvent.clear();
-        }
+    }
+
+    @Override
+    public void setRecoveryId(long alignMarkerId){
+        this.recoveryId = alignMarkerId;
     }
 
     protected abstract Logger getLogger();

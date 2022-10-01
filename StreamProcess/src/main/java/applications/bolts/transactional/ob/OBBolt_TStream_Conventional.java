@@ -130,7 +130,7 @@ public abstract class OBBolt_TStream_Conventional extends TransactionalBoltTStre
     }
     protected void BUYING_REQUEST_CORE(BuyingEvent event) {
         //measure_end if any item is not able to buy.
-        event.biding_result = new BidingResult(event, event.success[0]);
+        event.biding_result = event.success[0];
     }
     @Override
     protected void REQUEST_POST() throws InterruptedException {

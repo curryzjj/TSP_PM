@@ -34,7 +34,6 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     protected long recoveryId = -1;
     protected List<Integer> recoveryPartitionIds = new ArrayList<>();
     protected boolean isSnapshot;
-    protected long markerId = 0;
     protected MultiStreamInFlightLog multiStreamInFlightLog;
     protected int firstDownTask;
     public TransactionalBoltTStream(Logger log,int fid){

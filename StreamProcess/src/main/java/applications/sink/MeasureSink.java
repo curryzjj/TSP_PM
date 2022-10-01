@@ -6,7 +6,6 @@ import System.measure.MeasureTools;
 import System.sink.helper.ApplicationResult;
 import System.util.Configuration;
 import UserApplications.CONTROL;
-import applications.events.TxnResult;
 import engine.Exception.DatabaseException;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
@@ -101,10 +100,10 @@ public class MeasureSink extends BaseSink {
                     }
                 }
                 if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
-                    this.currentMarkerId = in.getBID();
                     if (enable_determinants_log) {
+                        this.currentMarkerId = in.getBID();
                         for (CausalService causalService : this.causalService.values()) {
-                            causalService.setCurrentMarkerId(currentMarkerId);
+                            causalService.setDeterminant(in.getBID());
                         }
                     }
                     switch (in.getMarker().getValue()) {

@@ -217,20 +217,24 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
         if ((enable_key_based || this.executor.isFirst_executor()) && !this.causalService.isEmpty()) {
             for (CausalService c:this.causalService.values()) {
                 if (c.outsideDeterminantList.get(markId) != null){
+                    List<Long> isCommit = new ArrayList<>();
                     for (OutsideDeterminant outsideDeterminant:c.outsideDeterminantList.get(markId)) {
                         TxnEvent event = deserializeEvent(outsideDeterminant.outSideEvent);
-                        TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
-                        event.setTxnContext(txnContext);
-                        if (event instanceof DepositEvent) {
-                            DeterminantDepositRequestConstruct((DepositEvent) event, txnContext);
-                        } else {
-                            if (outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceAccountId()) != null) {
-                                ((TransactionEvent) event).src_account_value.setRecord(outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceAccountId()));
+                        if (!isCommit.contains(event.getBid())) {
+                            TxnContext txnContext = new TxnContext(thread_Id,this.fid,event.getBid());
+                            event.setTxnContext(txnContext);
+                            if (event instanceof DepositEvent) {
+                                DeterminantDepositRequestConstruct((DepositEvent) event, txnContext);
+                            } else {
+                                if (outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceAccountId()) != null) {
+                                    ((TransactionEvent) event).src_account_value.setRecord(outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceAccountId()));
+                                }
+                                if (outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceBookEntryId()) != null) {
+                                    ((TransactionEvent) event).src_asset_value.setRecord(outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceBookEntryId()));
+                                }
+                                DeterminantTransferRequestConstruct((TransactionEvent) event, txnContext);
                             }
-                            if (outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceBookEntryId()) != null) {
-                                ((TransactionEvent) event).src_asset_value.setRecord(outsideDeterminant.ackValues.get(((TransactionEvent) event).getSourceBookEntryId()));
-                            }
-                            DeterminantTransferRequestConstruct((TransactionEvent) event, txnContext);
+                            isCommit.add(event.getBid());
                         }
                     }
                 }

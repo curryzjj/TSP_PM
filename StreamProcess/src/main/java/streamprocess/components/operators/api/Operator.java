@@ -67,6 +67,7 @@ public abstract class Operator implements Serializable{
     public FTManager FTM;
 
     protected long checkpointId;
+    protected long markerId = 0;
 
     public boolean isCommit;
     public boolean replay=false;
