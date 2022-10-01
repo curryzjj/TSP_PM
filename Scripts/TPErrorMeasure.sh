@@ -7,8 +7,8 @@ function ResetParameters() {
   firstFailure=10000
   tthreads=16
   snapshot=2
-  relativeError=0
-  stateDegradation=0
+  relativeError=1
+  stateDegradation=1
 
   #System Configurations
   Arrival_Control=1

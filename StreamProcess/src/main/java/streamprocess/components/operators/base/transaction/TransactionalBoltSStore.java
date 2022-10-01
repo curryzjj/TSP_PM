@@ -41,6 +41,7 @@ public abstract class TransactionalBoltSStore extends TransactionalBolt {
     public abstract void PostLAL_Process(TxnEvent event) throws DatabaseException;
     public abstract void POST_PROCESS(TxnEvent txnEvent) throws InterruptedException;
     public abstract void LAL(TxnEvent event) throws DatabaseException;
+    public abstract boolean checkAbort(TxnEvent txnEvent);
 
     public void LA_LOCK_Reentrant(TxnManager txnManager, long[] bid_array, int[] partition_Indexes, long _bid){
         for (int _pid : partition_Indexes) {
@@ -91,5 +92,9 @@ public abstract class TransactionalBoltSStore extends TransactionalBolt {
     @Override
     public void setRecoveryId(long alignMarkerId){
         this.recoveryId = alignMarkerId;
+    }
+    public int getPartitionId(String key){
+        Integer _key = Integer.valueOf(key);
+        return _key / partition_delta;
     }
 }

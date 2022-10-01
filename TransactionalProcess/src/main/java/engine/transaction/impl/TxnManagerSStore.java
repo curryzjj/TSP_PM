@@ -23,14 +23,10 @@ import static UserApplications.CONTROL.enable_states_partition;
 public class TxnManagerSStore extends TxnManagerDedicated {
     private static final Logger LOG = LoggerFactory.getLogger(TxnManagerSStore.class);
     public final PartitionedOrderLock orderLock;
-    public final ConcurrentHashMap<Integer, SpinLock> spinLocks = new ConcurrentHashMap<>();
     public TxnManagerSStore(AbstractStorageManager storageManager, String thisComponentId, int thread_Id, int num_tasks) {
         super(storageManager, thisComponentId, thread_Id, num_tasks);
         this.orderLock = PartitionedOrderLock.getInstance();
         this.orderLock.initilize(PARTITION_NUM);
-        for (int i = 0; i < PARTITION_NUM; i++) {
-            spinLocks.put(i, new SpinLock());
-        }
     }
 
     public PartitionedOrderLock.LOCK getOrderLock(int p_id) {
@@ -52,7 +48,7 @@ public class TxnManagerSStore extends TxnManagerDedicated {
         }
         TableRecord t_record = storageManager.getTable(tableName).SelectKeyRecord(primary_key);
         if (t_record != null) {
-            this.spinLocks.get(getPartitionId(primary_key)).lock();
+            this.storageManager.spinLocks.get(tableName).lock();
             return true;
         } else {
             LOG.info("No record is found:" + primary_key);
@@ -80,8 +76,8 @@ public class TxnManagerSStore extends TxnManagerDedicated {
 
     @Override
     public void CommitTransaction(List<String> keys) {
-        for (String primary_key : keys) {
-            this.spinLocks.get(getPartitionId(primary_key)).unlock();
+        for (String table : keys) {
+            this.storageManager.spinLocks.get(table).unlock();
         }
     }
 }

@@ -132,7 +132,7 @@ public class GlobalManager extends FTManager {
                     return;
                 }
                 if(callFaultTolerance.containsValue(Recovery)){
-                    LOG.info("CheckpointManager received all register and start recovery");
+                    LOG.info("GlobalManager received all register and start recovery");
                     failureFlag.compareAndSet(true, false);
                     failureTimes ++;
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(checkpointFile);
@@ -176,7 +176,7 @@ public class GlobalManager extends FTManager {
         dataOutputStream.flush();
         dataOutputStream.close();
 
-        LOG.info("CheckpointManager commit the checkpoint to the current.log");
+        LOG.info("GlobalManager commit the checkpoint to the current.log");
         return true;
     }
     public void notifyAllComplete(long alignMarkerId) throws Exception {
@@ -207,7 +207,7 @@ public class GlobalManager extends FTManager {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            LOG.info("CheckpointManager stops");
+            LOG.info("GlobalManager stops");
             LOG.info("Failure Time : " + failureTimes);
         }
     }

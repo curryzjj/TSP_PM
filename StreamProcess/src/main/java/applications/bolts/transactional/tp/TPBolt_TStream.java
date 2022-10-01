@@ -17,9 +17,6 @@ import streamprocess.components.operators.base.transaction.TransactionalBoltTStr
 import streamprocess.faulttolerance.clr.CausalService;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
 import static UserApplications.CONTROL.*;
@@ -97,7 +94,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     }
     private void TS_REQUEST_CORE(TollProcessingEvent event) {
        for (int i = 0; i < NUM_ACCESSES; i++) {
-           event.spendValues[i] = event.getSpeed_value()[i].getRecord().getValue().getDouble();
+           event.roadSpendValues[i] = event.getSpeed_value()[i].getRecord().getValue().getDouble();
            event.cntValues[i] = event.getCount_value()[i].getRecord().getValue().getInt();
        }
     }
@@ -129,7 +126,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                 double spendValue = 0;
                 int cntValue = 0;
                 for (int i = 0; i < NUM_ACCESSES; i++) {
-                    spendValue = spendValue + event.spendValues[i];
+                    spendValue = spendValue + event.roadSpendValues[i];
                     cntValue = cntValue + event.cntValues[i];
                 }
                 //Some UDF function
@@ -148,7 +145,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                 double spendValue = 0;
                 int cntValue = 0;
                 for (int i = 0; i < NUM_ACCESSES; i++) {
-                    spendValue = spendValue + event.spendValues[i];
+                    spendValue = spendValue + event.roadSpendValues[i];
                     cntValue = cntValue + event.cntValues[i];
                 }
                 //Some UDF function

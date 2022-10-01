@@ -49,7 +49,7 @@ public class TxnProcessingEngine {
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
     //initialize
     private String app;
-    public void initialize(int size,String app){
+    public void initialize(int size, String app){
         num_op = size;
         this.app = app;
         holder_by_stage = new ConcurrentHashMap<>();

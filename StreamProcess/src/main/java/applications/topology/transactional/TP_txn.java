@@ -53,7 +53,7 @@ public class TP_txn extends TransactionalTopology {
             if(enable_checkpoint){
                 if (conventional) {
                     builder.setBolt(Component.EXECUTOR,
-                            new TPBolt_TStream_Global(0),
+                            new TPBolt_SStore_Global(0),
                             config.getInt(Executor_Threads,1),
                             grouping
                     );

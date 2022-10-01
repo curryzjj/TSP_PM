@@ -101,7 +101,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
             }
             for (int i = 0; i < NUM_ACCESSES; i++) {
                 if (this.recoveryPartitionIds.contains(this.getPartitionId( String.valueOf(event.getKeys()[i])))) {
-                    transactionManager.Asy_ReadRecord(txnContext, "MicroTable", String.valueOf(event.getKeys()[i]), event.getRecord_refs()[i], event.enqueue_time);
+                    transactionManager.Asy_ModifyRecord(txnContext, "MicroTable", String.valueOf(event.getKeys()[i]), new INC(event.getValues()[i]));
                 }
             }
         } else {

@@ -4,6 +4,7 @@ import System.tools.SortHelper;
 import System.tools.StringHelper;
 import System.util.Configuration;
 import System.util.OsUtils;
+import System.util.SpinLock;
 import engine.Exception.DatabaseException;
 import engine.Meta.RegisteredKeyValueStateBackendMetaInfo;
 import engine.Meta.RegisteredStateMetaInfoBase;
@@ -75,6 +76,7 @@ public class StorageManager extends AbstractStorageManager {
         }
         tables.put(tableName, new ShareTable(s, tableName,true));//here we decide which table to use.
         this.RegisterState(tableName, s);
+        this.spinLocks.put(tableName, new SpinLock());
         table_count++;
     }
     public synchronized void cleanTable(String tableName) throws IOException {

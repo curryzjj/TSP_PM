@@ -66,61 +66,6 @@ public abstract class GSBolt_SStore extends TransactionalBoltSStore {
     }
 
     @Override
-    public void PostLAL_Process(TxnEvent event) throws DatabaseException {
-        MicroEvent microEvent = (MicroEvent) event;
-        boolean flag = microEvent.READ_EVENT();
-        TxnContext txnContext = new TxnContext(this.thread_Id, fid, event.getBid());
-        if (flag) {
-            process_request_noLock(microEvent,txnContext,READ_ONLY);
-            for (int i = 0; i < NUM_ACCESSES; i ++) {
-                SchemaRecordRef ref = microEvent.getRecord_refs()[i];
-                if (ref.isEmpty()) {
-                    return;//not yet processed.
-                }
-                DataBox dataBox = ref.getRecord().getValues().get(1);
-                int read_result = Integer.parseInt(dataBox.getString().trim());
-                microEvent.result[i] = read_result;
-                microEvent.sum += microEvent.result[i];
-            }
-        } else {
-            process_request_noLock(microEvent,txnContext,READ_WRITE);
-            for (int i = 0; i < NUM_ACCESSES; i++) {
-                SchemaRecordRef ref = microEvent.getRecord_refs()[i];
-                if (ref.isEmpty()) {
-                    return;//not yet processed.
-                }
-                List<DataBox> values = ref.getRecord().getValues();
-                int read_result = Integer.parseInt(values.get(1).getString().trim());
-                ref.getRecord().getValues().get(1).setString(String.valueOf(read_result + microEvent.getValues()[i]), VALUE_LEN);
-            }
-        }
-        List<String> keys = new ArrayList<>();
-        for (int i = 0; i < NUM_ACCESSES; ++i) {
-           keys.add(String.valueOf(microEvent.getKeys()[i]));
-        }
-        transactionManager.CommitTransaction(keys);
-    }
-
-    @Override
-    public void POST_PROCESS(TxnEvent txnEvent) throws InterruptedException {
-        MicroEvent microEvent = (MicroEvent) txnEvent;
-        boolean flag = microEvent.READ_EVENT();
-        if (flag) {
-            READ_POST(microEvent);
-        } else {
-            WRITE_POST(microEvent);
-        }
-    }
-
-    protected void READ_POST(MicroEvent event) throws InterruptedException {
-        collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double)event.sum}));
-    }
-
-    protected void WRITE_POST(MicroEvent event) throws InterruptedException {
-        collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));
-    }
-
-    @Override
     public void LAL(TxnEvent event) throws DatabaseException {
         MicroEvent microEvent = (MicroEvent) event;
         boolean flag = ((MicroEvent) event).READ_EVENT();
@@ -140,6 +85,44 @@ public abstract class GSBolt_SStore extends TransactionalBoltSStore {
             transactionManager.lock_ahead("MicroTable", String.valueOf(event.getKeys()[i]), READ_WRITE);
         }
     }
+
+    @Override
+    public void PostLAL_Process(TxnEvent event) throws DatabaseException {
+        MicroEvent microEvent = (MicroEvent) event;
+        boolean flag = microEvent.READ_EVENT();
+        TxnContext txnContext = new TxnContext(this.thread_Id, fid, microEvent.getBid());
+        if (!checkAbort(microEvent)) {
+            if (flag) {
+                process_request_noLock(microEvent,txnContext,READ_ONLY);
+                for (int i = 0; i < NUM_ACCESSES; i ++) {
+                    SchemaRecordRef ref = microEvent.getRecord_refs()[i];
+                    if (ref.isEmpty()) {
+                        return;//not yet processed.
+                    }
+                    DataBox dataBox = ref.getRecord().getValues().get(1);
+                    int read_result = Integer.parseInt(dataBox.getString().trim());
+                    microEvent.result[i] = read_result;
+                    microEvent.sum += microEvent.result[i];
+                }
+            } else {
+                process_request_noLock(microEvent,txnContext,READ_WRITE);
+                for (int i = 0; i < NUM_ACCESSES; i++) {
+                    SchemaRecordRef ref = microEvent.getRecord_refs()[i];
+                    if (ref.isEmpty()) {
+                        return;//not yet processed.
+                    }
+                    List<DataBox> values = ref.getRecord().getValues();
+                    int read_result = Integer.parseInt(values.get(1).getString().trim());
+                    ref.getRecord().getValues().get(1).setString(String.valueOf(read_result + microEvent.getValues()[i]), VALUE_LEN);
+                }
+            }
+        }
+        List<String> keys = new ArrayList<>();
+        for (int i = 0; i < NUM_ACCESSES; ++i) {
+           keys.add("MicroTable_" + getPartitionId(String.valueOf(microEvent.getKeys()[i])));
+        }
+        transactionManager.CommitTransaction(keys);
+    }
     private void process_request_noLock(MicroEvent microEvent, TxnContext txnContext, MetaTypes.AccessType accessType) throws DatabaseException {
         for (int i = 0; i < NUM_ACCESSES; ++i){
             boolean rt = transactionManager.SelectKeyRecord_noLock(txnContext, "MicroTable",
@@ -150,5 +133,47 @@ public abstract class GSBolt_SStore extends TransactionalBoltSStore {
                 return;
             }
         }
+    }
+
+    @Override
+    public void POST_PROCESS(TxnEvent txnEvent) throws InterruptedException {
+        MicroEvent microEvent = (MicroEvent) txnEvent;
+        boolean flag = microEvent.READ_EVENT();
+        if (flag) {
+            READ_POST(microEvent);
+        } else {
+            WRITE_POST(microEvent);
+        }
+    }
+
+    protected void READ_POST(MicroEvent event) throws InterruptedException {
+        if (checkAbort(event)) {
+            collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));
+        } else {
+            collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double)event.sum}));
+        }
+    }
+
+    protected void WRITE_POST(MicroEvent event) throws InterruptedException {
+        if (checkAbort(event)) {
+            collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{-1.0}));
+        } else {
+            collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));
+        }
+    }
+
+    @Override
+    public boolean checkAbort(TxnEvent txnEvent) {
+        MicroEvent event = (MicroEvent) txnEvent;
+        if (event.READ_EVENT()) {
+            return false;
+        } else {
+            for (int values : event.getValues()){
+                if (values < 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
