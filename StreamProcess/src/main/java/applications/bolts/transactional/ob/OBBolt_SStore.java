@@ -208,21 +208,21 @@ public abstract class OBBolt_SStore extends TransactionalBoltSStore {
         if (toppingEvent.topping_result) {
             collector.emit_single(DEFAULT_STREAM_ID, toppingEvent.getBid(), true, null,null, toppingEvent.getTimestamp(),new ApplicationResult(toppingEvent.getBid(), new Double[]{1.0}));//the tuple is finished finally.
         } else {
-            collector.emit_single(DEFAULT_STREAM_ID, toppingEvent.getBid(), false, null,null, toppingEvent.getTimestamp(),new ApplicationResult(toppingEvent.getBid(), new Double[]{-1.0}));//the tuple is finished finally.
+            collector.emit_single(DEFAULT_STREAM_ID, toppingEvent.getBid(), false, null,null, toppingEvent.getTimestamp(),new ApplicationResult(toppingEvent.getBid(), new Double[]{0.0}));//the tuple is finished finally.
         }
     }
     private void ALERT_POST(AlertEvent alertEvent) throws InterruptedException {
         if (alertEvent.alert_result) {
             collector.emit_single(DEFAULT_STREAM_ID, alertEvent.getBid(), true, null,null, alertEvent.getTimestamp(),new ApplicationResult(alertEvent.getBid(), new Double[]{1.0}));//the tuple is finished finally.
         } else {
-            collector.emit_single(DEFAULT_STREAM_ID, alertEvent.getBid(), false, null,null, alertEvent.getTimestamp(),new ApplicationResult(alertEvent.getBid(), new Double[]{-1.0}));//the tuple is finished finally.
+            collector.emit_single(DEFAULT_STREAM_ID, alertEvent.getBid(), false, null,null, alertEvent.getTimestamp(),new ApplicationResult(alertEvent.getBid(), new Double[]{0.0}));//the tuple is finished finally.
         }
     }
     private void BUYING_POST(BuyingEvent buyingEvent) throws InterruptedException {
         if (buyingEvent.biding_result) {
             collector.emit_single(DEFAULT_STREAM_ID, buyingEvent.getBid(), true, null,null, buyingEvent.getTimestamp(),new ApplicationResult(buyingEvent.getBid(), new Double[]{1.0}));//the tuple is finished finally.
         } else {
-            collector.emit_single(DEFAULT_STREAM_ID, buyingEvent.getBid(), false, null,null, buyingEvent.getTimestamp(),new ApplicationResult(buyingEvent.getBid(), new Double[]{-1.0}));//the tuple is finished finally.
+            collector.emit_single(DEFAULT_STREAM_ID, buyingEvent.getBid(), false, null,null, buyingEvent.getTimestamp(),new ApplicationResult(buyingEvent.getBid(), new Double[]{0.0}));//the tuple is finished finally.
         }
     }
 

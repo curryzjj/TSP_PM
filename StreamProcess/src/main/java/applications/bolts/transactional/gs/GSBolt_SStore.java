@@ -152,7 +152,7 @@ public abstract class GSBolt_SStore extends TransactionalBoltSStore {
 
     protected void READ_POST(MicroEvent event) throws InterruptedException {
         if (checkAbort(event)) {
-            collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));
+            collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{0.0}));
         } else {
             collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double)event.sum}));
         }
@@ -160,7 +160,7 @@ public abstract class GSBolt_SStore extends TransactionalBoltSStore {
 
     protected void WRITE_POST(MicroEvent event) throws InterruptedException {
         if (checkAbort(event)) {
-            collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{-1.0}));
+            collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{0.0}));
         } else {
             collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));
         }

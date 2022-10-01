@@ -180,9 +180,9 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));
+                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{0.0}));
             } else {
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false,null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{-1.0}));
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false,null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{0.0}));
             }
         } else {
             for (int i = 0; i < NUM_ACCESSES;i++){
@@ -198,7 +198,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));
+                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{0.0}));
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
                 outsideDeterminant.setOutSideEvent(event.toString());
@@ -216,7 +216,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
             }
         } else {
             if (event.txnContext.isAbort.get()) {
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false,null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{-1.0}));//the tuple is finished finally.
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false,null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{0.0}));//the tuple is finished finally.
             } else {
                 return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished finally.
             }
