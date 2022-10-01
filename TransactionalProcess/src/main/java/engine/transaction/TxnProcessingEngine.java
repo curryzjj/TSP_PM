@@ -500,9 +500,7 @@ public class TxnProcessingEngine {
             }
         }
         // check the preconditions
-        if (bidPrice < askPrice || bid_qty > left_qty ) {
-            operation.success[0] = false;
-        } else {
+        if (bidPrice > askPrice || bid_qty < left_qty ) {
             d_record.get(2).setLong(left_qty - operation.function.delta_long);//new quantity.
             operation.success[0] = true;
         }

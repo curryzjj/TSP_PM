@@ -50,8 +50,13 @@ public class PrecisionComputation {
             String[] baseResults = baseScanner.nextLine().split(";")[1].split(",");
             String[] compareResults = scanner.nextLine().split(";")[1].split(",");
             for (int i = 0; i < baseResults.length; i++) {
-                resultDegradation = resultDegradation
-                        + Math.abs(Double.parseDouble(compareResults[i]) - Double.parseDouble(baseResults[i])) / (Double.parseDouble(baseResults[i]) + 1);
+                if (Double.parseDouble(baseResults[i]) == 0){
+                    resultDegradation = resultDegradation
+                            + Math.abs(Double.parseDouble(compareResults[i]) - Double.parseDouble(baseResults[i])) / (Double.parseDouble(baseResults[i]) + 1);
+                } else {
+                    resultDegradation = resultDegradation
+                            + Math.abs(Double.parseDouble(compareResults[i]) - Double.parseDouble(baseResults[i])) / (Double.parseDouble(baseResults[i]));
+                }
             }
             sum = sum + resultDegradation;
         }
@@ -61,18 +66,20 @@ public class PrecisionComputation {
         double totalNum = 0;
         double sum = 0;
         while (baseScanner.hasNextLine()) {
+            String baseResult = baseScanner.nextLine();
+            String compareResult = scanner.nextLine();
             totalNum ++;
             double priceDegradation;
-            double basePrice = Long.parseLong(baseScanner.nextLine().split(",")[1].trim());
-            double comparePrice = Long.parseLong(scanner.nextLine().split(",")[1].trim());
+            double basePrice = Long.parseLong(baseResult.split(",")[1].trim());
+            double comparePrice = Long.parseLong(compareResult.split(",")[1].trim());
             if (basePrice == 0) {
                 priceDegradation = Math.abs(basePrice - comparePrice) / (basePrice + 1);
             } else {
                 priceDegradation = Math.abs(basePrice - comparePrice) / basePrice;
             }
             double qtyDegradation;
-            double baseQty = Long.parseLong(baseScanner.nextLine().split(",")[2]);
-            double compareQty = Long.parseLong(scanner.nextLine().split(",")[2]);
+            double baseQty = Long.parseLong(baseResult.split(",")[2]);
+            double compareQty = Long.parseLong(compareResult.split(",")[2]);
             if (baseQty == 0) {
                 qtyDegradation = Math.abs(baseQty - compareQty) / (baseQty + 1);
             } else {

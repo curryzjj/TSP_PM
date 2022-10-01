@@ -100,8 +100,8 @@ public class MeasureSink extends BaseSink {
                     }
                 }
                 if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
+                    this.currentMarkerId = in.getBID();
                     if (enable_determinants_log) {
-                        this.currentMarkerId = in.getBID();
                         for (CausalService causalService : this.causalService.values()) {
                             causalService.setDeterminant(in.getBID());
                         }
