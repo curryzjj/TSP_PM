@@ -64,6 +64,5 @@ public interface TxnManager {
     PartitionedOrderLock.LOCK getOrderLock(int p_id);//partitioned. Global ordering can not be partitioned.
     boolean lock_ahead(String table_name, String key, MetaTypes.AccessType accessType) throws DatabaseException;
     boolean SelectKeyRecord_noLock(TxnContext txn_context, String table_name, String key, SchemaRecordRef record_ref, MetaTypes.AccessType accessType) throws DatabaseException;
-    boolean SelectRecords_noLock(TxnContext txnContext, String table_name, String key, TableRecord record_ref, MetaTypes.AccessType accessType) throws DatabaseException;
     void CommitTransaction(List<String> keys);
 }
