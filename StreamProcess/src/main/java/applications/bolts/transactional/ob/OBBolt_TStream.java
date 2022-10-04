@@ -235,7 +235,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null,event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{-1.0}));
+                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant, null,event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{0.0}));
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
                 for (int itemId : event.getItemId()) {
@@ -266,7 +266,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,null,new ApplicationResult(event.getBid(), new Double[]{-1.0}));
+                return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), false, insideDeterminant,null,new ApplicationResult(event.getBid(), new Double[]{0.0}));
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
                 for (int itemId : event.getItemId()) {
@@ -277,7 +277,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
                     outsideDeterminant.setOutSideEvent(event.toString());
-                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, outsideDeterminant, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{0.0}));//the tuple is finished.
+                    return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null, outsideDeterminant, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
                 } else {
                     return collector.emit_single(DEFAULT_STREAM_ID,event.getBid(), true, null,null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
                 }
@@ -298,7 +298,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{0.0}));
             } else {
                 OutsideDeterminant outsideDeterminant = new OutsideDeterminant();
                 for (int itemId : event.getItemId()) {
@@ -309,7 +309,7 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 if (!outsideDeterminant.targetPartitionIds.isEmpty()) {
                     outsideDeterminant.setOutSideEvent(event.toString());
-                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, outsideDeterminant, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{0.0}));//the tuple is finished.
+                    return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, outsideDeterminant, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
                 } else {
                     return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
                 }
