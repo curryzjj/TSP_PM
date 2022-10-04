@@ -97,7 +97,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
      * To register undo when there is transaction abort
      */
     protected void SyncRegisterUndo() throws InterruptedException {
-        this.lock=this.FTM.getLock();
+        this.lock = this.FTM.getLock();
         synchronized (lock){
             this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Undo);
             lock.notifyAll();

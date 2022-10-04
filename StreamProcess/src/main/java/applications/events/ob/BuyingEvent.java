@@ -120,7 +120,6 @@ public class BuyingEvent extends TxnEvent {
             bid_qty[access_id] = rnd.nextLong(MAX_BUY_Transfer);
         }
         bid_price[access_id] = rnd.nextLong(MAX_Price);
-
     }
     public void setValues(SplittableRandom rnd) {
         for (int access_id = 0; access_id < NUM_ACCESSES; ++access_id) {

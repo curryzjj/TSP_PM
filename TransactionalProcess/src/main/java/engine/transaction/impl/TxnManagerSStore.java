@@ -1,6 +1,5 @@
 package engine.transaction.impl;
 
-import System.util.SpinLock;
 import engine.Exception.DatabaseException;
 import engine.Meta.MetaTypes;
 import engine.storage.AbstractStorageManager;
@@ -15,7 +14,6 @@ import utils.Lock.PartitionedOrderLock;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static UserApplications.CONTROL.PARTITION_NUM;
 import static UserApplications.CONTROL.enable_states_partition;

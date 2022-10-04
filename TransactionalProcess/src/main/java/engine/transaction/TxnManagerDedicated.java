@@ -285,4 +285,5 @@ public abstract class TxnManagerDedicated implements TxnManager{
     public void CommitTransaction(List<String> key) {
         throw new UnsupportedOperationException();
     }
+
 }

@@ -22,7 +22,7 @@ public class SOURCE_CONTROL {
     }
     public boolean Wait_Start(int thread_Id){
         try {
-            start_barrier.await(2, TimeUnit.SECONDS);
+            start_barrier.await(3, TimeUnit.SECONDS);
             return true;
         } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
            LOG.info("Failure OutTime");
@@ -39,7 +39,7 @@ public class SOURCE_CONTROL {
 
     public boolean preStateAccessBarrier(int threadId) {
         try {
-            start_barrier.await(2, TimeUnit.SECONDS);
+            start_barrier.await(3, TimeUnit.SECONDS);
             return true;
         } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
             LOG.info("Failure OutTime");

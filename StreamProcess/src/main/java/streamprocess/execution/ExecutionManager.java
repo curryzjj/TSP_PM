@@ -147,7 +147,6 @@ public class ExecutionManager {
     private executorThread launchBolt_SingleCore(ExecutionNode e,TopologyContext context,Configuration conf,int node,CountDownLatch latch){
         long cpu[];
         if (!conf.getBoolean("NAV", true)) {
-            //implement after AC
             cpu = new long[2];
         } else {
             cpu = new long[1];

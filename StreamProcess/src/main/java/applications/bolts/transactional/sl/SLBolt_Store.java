@@ -126,7 +126,7 @@ public abstract class SLBolt_Store extends TransactionalBoltSStore {
         transactionManager.SelectKeyRecord_noLock(txnContext, "T_assets" ,event.getSourceBookEntryId(), event.src_asset_value, READ_WRITE);
         transactionManager.SelectKeyRecord_noLock(txnContext, "T_assets" ,event.getTargetBookEntryId(), targetBookRef, READ_WRITE);
         //To contron the abort ratio, wo modify the violation of consistency property
-        if (event.getAccountTransfer() > 0 && event.getBookEntryTransfer() > 0) {
+        if (event.getMinAccountBalance() > 0) {
             long sourceBalance = event.src_account_value.getRecord().getValues().get(1).getLong();
             event.src_account_value.getRecord().getValues().get(1).decLong(event.getAccountTransfer());
             targetAccountRef.getRecord().getValues().get(1).incLong((long) (event.getAccountTransfer() + sourceBalance * 0.1));

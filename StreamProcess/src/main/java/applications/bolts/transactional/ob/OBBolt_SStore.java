@@ -231,7 +231,7 @@ public abstract class OBBolt_SStore extends TransactionalBoltSStore {
         if (txnEvent instanceof BuyingEvent) {
             BuyingEvent event = (BuyingEvent) txnEvent;
             for (int i = 0; i < NUM_ACCESSES; ++i){
-                if (event.getBidPrice()[i] < 0) {
+                if (event.getBidQty()[i] < 0) {
                     return true;
                 }
             }
