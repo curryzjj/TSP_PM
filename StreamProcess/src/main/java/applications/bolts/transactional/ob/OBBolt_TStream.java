@@ -225,9 +225,9 @@ public abstract class OBBolt_TStream extends TransactionalBoltTStream {
     protected int BUYING_REQUEST_POST(BuyingEvent event) throws InterruptedException {
         double result;
         if (event.success[0]) {
-            result = 1;
+            result = 1.0;
         } else {
-            result = 0;
+            result = 0.0;
         }
         if (enable_determinants_log) {
             MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());

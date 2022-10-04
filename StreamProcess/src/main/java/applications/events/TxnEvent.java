@@ -24,7 +24,7 @@ public class TxnEvent implements Comparable<TxnEvent> {
         this.isAbort = isAbort;
         this.number_of_partitions = number_of_partitions;
         success = new boolean[1];
-        success[0] = false;
+        success[0] = true;
     }
     public TxnEvent(long bid, int partition_id, String bid_array, int number_of_partitions, boolean isAbort) {
         this.bid = bid;
@@ -38,7 +38,7 @@ public class TxnEvent implements Comparable<TxnEvent> {
         }
         this.number_of_partitions = number_of_partitions;
         success = new boolean[1];
-        success[0] = false;
+        success[0] = true;
     }
     public long getBid() {
         return bid;
