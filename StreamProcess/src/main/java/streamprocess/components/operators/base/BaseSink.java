@@ -120,6 +120,11 @@ public abstract class BaseSink extends BaseOperator implements emitMarker {
         for (Queue<Tuple> tuples : bufferedTuples.values()) {
             tuples.clear();
         }
+        for (CausalService causalService:this.causalService.values()) {
+            causalService.abortEvent.clear();
+            causalService.outsideDeterminant.clear();
+            causalService.insideDeterminant.clear();
+        }
     }
 
     @Override

@@ -68,7 +68,7 @@ public class ToppingEvent extends TxnEvent {
         for (int i = 0; i < top_arrays.length; i++) {
             this.itemTopUp[i] = Long.parseLong(top_arrays[i].trim());
         }
-        this.timestamp=timestamp;
+        this.timestamp = timestamp;
     }
 
     public int getNum_access() {

@@ -110,7 +110,6 @@ public abstract class OBBolt_SStore extends TransactionalBoltSStore {
             } else {
                 TxnContext txnContext = new TxnContext(this.thread_Id, fid, event.getBid());
                 process_buy_request_noLock(event, txnContext);
-                event.biding_result = true;
             }
             for (int i = 0; i < NUM_ACCESSES; ++i) {
                 keys.add("goods_" + getPartitionId(String.valueOf(event.getItemId()[i])));
@@ -122,7 +121,6 @@ public abstract class OBBolt_SStore extends TransactionalBoltSStore {
             } else {
                 TxnContext txnContext = new TxnContext(this.thread_Id, fid, event.getBid());
                 process_alert_request_noLock(event,txnContext);
-                event.alert_result = true;
             }
             for (int i = 0; i < NUM_ACCESSES; ++i) {
                 keys.add("goods_" + getPartitionId(String.valueOf(event.getItemId()[i])));
@@ -134,7 +132,6 @@ public abstract class OBBolt_SStore extends TransactionalBoltSStore {
             } else {
                 TxnContext txnContext = new TxnContext(this.thread_Id, fid, event.getBid());
                 process_top_request_noLock(event, txnContext);
-                event.topping_result = true;
             }
             for (int i = 0; i < NUM_ACCESSES; ++i) {
                 keys.add("goods_" + getPartitionId(String.valueOf(event.getItemId()[i])));

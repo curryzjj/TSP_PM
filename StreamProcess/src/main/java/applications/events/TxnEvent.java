@@ -94,9 +94,6 @@ public class TxnEvent implements Comparable<TxnEvent> {
      */
     @Override
     public int compareTo(TxnEvent event) {
-//        if (this.bid == event.bid) {
-//            System.out.println("ss");
-//        }
         return Long.compare(this.bid, event.bid);
     }
 }

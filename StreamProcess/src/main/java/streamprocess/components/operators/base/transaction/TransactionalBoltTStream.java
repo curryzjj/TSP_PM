@@ -138,7 +138,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
                 }
             }
         }
-        LOG.info("Align offset is  " + this.recoveryId);
+        LOG.info("Recovery id is " + this.recoveryPartitionIds.toString() + " Align offset is  " + this.recoveryId);
     }
     public int getPartitionId(String key){
         int _key = Integer.parseInt(key);

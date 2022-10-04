@@ -16,7 +16,7 @@ public class AlertEvent extends TxnEvent {
     public SchemaRecordRef[] record_refs;
     public AlertEvent(int num_access, int[] itemId, SplittableRandom rnd,int partition_id,long[] bid_array,long bid,int number_of_partitions,boolean isAbort){
         super(bid,partition_id,bid_array,number_of_partitions,isAbort);
-        this.num_access=num_access;
+        this.num_access = num_access;
         record_refs=new SchemaRecordRef[num_access];
         for (int i=0;i<num_access;i++){
             record_refs[i]=new SchemaRecordRef();
