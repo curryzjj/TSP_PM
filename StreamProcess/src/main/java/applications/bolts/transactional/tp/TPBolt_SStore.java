@@ -74,7 +74,7 @@ public abstract class TPBolt_SStore extends TransactionalBoltSStore {
     }
 
     @Override
-    public void PostLAL_Process(TxnEvent event) throws DatabaseException {
+    public void PostLAL_Process(TxnEvent event, boolean snapshotLock) throws DatabaseException {
         TollProcessingEvent tollProcessingEvent = (TollProcessingEvent) event;
         boolean isAbort = checkAbort(tollProcessingEvent);
         if (!isAbort) {
@@ -99,6 +99,9 @@ public abstract class TPBolt_SStore extends TransactionalBoltSStore {
         for (int i = 0; i < NUM_ACCESSES; ++i) {
             keys.add("segment_speed_" + getPartitionId(String.valueOf(tollProcessingEvent.getKeys()[i])));
             keys.add("segment_cnt_" + getPartitionId(String.valueOf(tollProcessingEvent.getKeys()[i])));
+        }
+        if (snapshotLock) {
+            this.syncSnapshot();
         }
         transactionManager.CommitTransaction(keys);
     }

@@ -36,7 +36,7 @@ public abstract class TransactionalBoltSStore extends TransactionalBolt {
     @Override
     public abstract void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException;
     public abstract boolean Sort_Lock(int thread_Id) ;
-    public abstract void PostLAL_Process(TxnEvent event) throws DatabaseException;
+    public abstract void PostLAL_Process(TxnEvent event, boolean snapshotLock) throws DatabaseException;
     public abstract void POST_PROCESS(TxnEvent txnEvent) throws InterruptedException;
     public abstract void LAL(TxnEvent event) throws DatabaseException;
     public abstract boolean checkAbort(TxnEvent txnEvent);

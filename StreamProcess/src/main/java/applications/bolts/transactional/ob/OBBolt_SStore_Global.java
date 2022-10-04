@@ -73,13 +73,13 @@ public class OBBolt_SStore_Global extends OBBolt_SStore{
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         if (Sort_Lock(this.thread_Id)) {
-            for (TxnEvent event : this.EventsHolder) {
+            for (int i = 0; i < this.EventsHolder.size(); i ++) {
+                TxnEvent event = this.EventsHolder.get(i);
                 LAL_PROCESS(event);
-                PostLAL_Process(event);
+                PostLAL_Process(event, i == this.EventsHolder.size() - 1);
                 POST_PROCESS(event);
             }
             this.EventsHolder.clear();
-            this.syncSnapshot();
             BUFFER_PROCESS();
             return true;
         } else {
@@ -103,7 +103,7 @@ public class OBBolt_SStore_Global extends OBBolt_SStore{
         if (Sort_Lock(this.thread_Id)) {
             for (TxnEvent event : this.EventsHolder) {
                 LAL_PROCESS(event);
-                PostLAL_Process(event);
+                PostLAL_Process(event, false);
                 POST_PROCESS(event);
             }
             this.EventsHolder.clear();

@@ -2,15 +2,10 @@ package applications.bolts.transactional.sl;
 
 import System.sink.helper.ApplicationResult;
 import UserApplications.SOURCE_CONTROL;
-import applications.bolts.transactional.gs.GSBolt_SStore;
 import applications.events.GlobalSorter;
 import applications.events.SL.DepositEvent;
 import applications.events.SL.TransactionEvent;
 import applications.events.TxnEvent;
-import applications.events.gs.MicroEvent;
-import applications.events.ob.AlertEvent;
-import applications.events.ob.BuyingEvent;
-import applications.events.ob.ToppingEvent;
 import engine.Exception.DatabaseException;
 import engine.table.tableRecords.SchemaRecordRef;
 import engine.transaction.TxnContext;
@@ -25,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import static System.constants.BaseConstants.BaseStream.DEFAULT_STREAM_ID;
-import static UserApplications.CONTROL.NUM_ACCESSES;
 import static UserApplications.CONTROL.PARTITION_NUM;
 import static engine.Meta.MetaTypes.AccessType.READ_WRITE;
 
@@ -97,7 +91,7 @@ public abstract class SLBolt_Store extends TransactionalBoltSStore {
     }
 
     @Override
-    public void PostLAL_Process(TxnEvent event) throws DatabaseException {
+    public void PostLAL_Process(TxnEvent event, boolean snapshotLock) throws DatabaseException {
         List<String> keys = new ArrayList<>();
         if (event instanceof TransactionEvent) {
             TransactionEvent transactionEvent = (TransactionEvent) event;
@@ -115,6 +109,9 @@ public abstract class SLBolt_Store extends TransactionalBoltSStore {
             process_Deposit_request_noLock(depositEvent, txnContext);
             keys.add("T_accounts_" + getPartitionId(depositEvent.getAccountId()));
             keys.add("T_assets_" + getPartitionId(depositEvent.getBookEntryId()));
+        }
+        if (snapshotLock) {
+            this.syncSnapshot();
         }
         transactionManager.CommitTransaction(keys);
     }

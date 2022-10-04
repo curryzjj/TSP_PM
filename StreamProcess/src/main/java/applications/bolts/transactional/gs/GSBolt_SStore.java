@@ -91,7 +91,7 @@ public abstract class GSBolt_SStore extends TransactionalBoltSStore {
     }
 
     @Override
-    public void PostLAL_Process(TxnEvent event) throws DatabaseException {
+    public void PostLAL_Process(TxnEvent event, boolean snapshotLock) throws DatabaseException {
         MicroEvent microEvent = (MicroEvent) event;
         boolean flag = microEvent.READ_EVENT();
         TxnContext txnContext = new TxnContext(this.thread_Id, fid, microEvent.getBid());
@@ -124,6 +124,9 @@ public abstract class GSBolt_SStore extends TransactionalBoltSStore {
         List<String> keys = new ArrayList<>();
         for (int i = 0; i < NUM_ACCESSES; ++i) {
            keys.add("MicroTable_" + getPartitionId(String.valueOf(microEvent.getKeys()[i])));
+        }
+        if (snapshotLock) {
+            this.syncSnapshot();
         }
         transactionManager.CommitTransaction(keys);
     }

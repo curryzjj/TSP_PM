@@ -101,7 +101,7 @@ public abstract class OBBolt_SStore extends TransactionalBoltSStore {
     }
 
     @Override
-    public void PostLAL_Process(TxnEvent txnEvent) throws DatabaseException {
+    public void PostLAL_Process(TxnEvent txnEvent, boolean snapshotLock) throws DatabaseException {
         List<String> keys = new ArrayList<>();
         if (txnEvent instanceof BuyingEvent) {
             BuyingEvent event = (BuyingEvent) txnEvent;
@@ -136,6 +136,9 @@ public abstract class OBBolt_SStore extends TransactionalBoltSStore {
             for (int i = 0; i < NUM_ACCESSES; ++i) {
                 keys.add("goods_" + getPartitionId(String.valueOf(event.getItemId()[i])));
             }
+        }
+        if (snapshotLock) {
+            this.syncSnapshot();
         }
         transactionManager.CommitTransaction(keys);
     }
