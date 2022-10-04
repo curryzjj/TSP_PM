@@ -4,6 +4,7 @@ import engine.Exception.DatabaseException;
 import engine.Meta.MetaTypes;
 import engine.table.datatype.DataBox;
 import engine.table.tableRecords.SchemaRecordRef;
+import engine.table.tableRecords.TableRecord;
 import engine.transaction.function.Condition;
 import engine.transaction.function.Function;
 import utils.Lock.PartitionedOrderLock;
@@ -63,5 +64,6 @@ public interface TxnManager {
     PartitionedOrderLock.LOCK getOrderLock(int p_id);//partitioned. Global ordering can not be partitioned.
     boolean lock_ahead(String table_name, String key, MetaTypes.AccessType accessType) throws DatabaseException;
     boolean SelectKeyRecord_noLock(TxnContext txn_context, String table_name, String key, SchemaRecordRef record_ref, MetaTypes.AccessType accessType) throws DatabaseException;
+    boolean SelectRecords_noLock(TxnContext txnContext, String table_name, String key, TableRecord record_ref, MetaTypes.AccessType accessType) throws DatabaseException;
     void CommitTransaction(List<String> keys);
 }

@@ -43,7 +43,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public void initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
         super.initialize(thread_Id, thisTaskId, graph);
         transactionManager = new TxnManagerTStream(db.getStorageManager(),this.context.getThisComponentId(),thread_Id,NUM_SEGMENTS,this.context.getThisComponent().getNumTasks());
-        partition_delta=(int) Math.ceil(NUM_ITEMS / (double) PARTITION_NUM);//NUM_ITEMS / partition_num;
+        partition_delta = NUM_ITEMS / PARTITION_NUM;//NUM_ITEMS / partition_num;
         if(enable_recovery_dependency){
             this.epochInfo = new EpochInfo(0L,this.executor.getExecutorID());
         }
@@ -141,7 +141,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
         LOG.info("Align offset is  " + this.recoveryId);
     }
     public int getPartitionId(String key){
-        Integer _key = Integer.valueOf(key);
+        int _key = Integer.parseInt(key);
         return _key / partition_delta;
     }
     public void updateRecoveryDependency(int[] key, boolean isModify){

@@ -18,7 +18,7 @@ public class CausalService implements Serializable {
     public ConcurrentHashMap<Long, InsideDeterminant> insideDeterminant;
     public List<OutsideDeterminant> outsideDeterminant;
     public List<Long> abortEvent;
-    //markId, outsideDeterminant
+    //markId, Determinant
     public ConcurrentHashMap<Long,List<OutsideDeterminant>> outsideDeterminantList;
     public ConcurrentHashMap<Long,List<Long>> abortEventList;
     public ConcurrentHashMap<Long,ConcurrentHashMap<Long, InsideDeterminant>> insideDeterminantList;
