@@ -100,7 +100,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                 }
             }
             for (int i = 0; i < NUM_ACCESSES; i++) {
-                if (this.recoveryPartitionIds.contains(this.getPartitionId( String.valueOf(event.getKeys()[i])))) {
+                if (this.recoveryPartitionIds.contains(this.getPartitionId(String.valueOf(event.getKeys()[i])))) {
                     transactionManager.Asy_ModifyRecord(txnContext, "MicroTable", String.valueOf(event.getKeys()[i]), new INC(event.getValues()[i]));
                 }
             }
@@ -208,7 +208,7 @@ public abstract class GSBolt_TStream extends TransactionalBoltTStream {
                     }
                 }
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                if (outsideDeterminant.targetPartitionIds.size() !=0 ) {
+                if (outsideDeterminant.targetPartitionIds.size() != 0) {
                     return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, outsideDeterminant, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished finally.
                 } else {
                     return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished finally.

@@ -52,9 +52,9 @@ public class CausalService implements Serializable {
         outsideDeterminantList.putIfAbsent(currentMarkerId, this.outsideDeterminant);
         abortEventList.putIfAbsent(currentMarkerId, this.abortEvent);
         insideDeterminantList.putIfAbsent(currentMarkerId, this.insideDeterminant);
-        this.abortEvent = new ArrayList<>();
-        this.outsideDeterminant =  new ArrayList<>();
-        this.insideDeterminant = new ConcurrentHashMap<>();
+        this.abortEvent.clear();
+        this.outsideDeterminant.clear();
+        this.insideDeterminant.clear();
         this.currentMarkerId = currentMarkerId;
     }
 

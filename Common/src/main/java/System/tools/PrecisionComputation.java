@@ -60,6 +60,8 @@ public class PrecisionComputation {
             }
             sum = sum + resultDegradation;
         }
+        scanner.close();
+        baseScanner.close();
         return sum / totalNum;
     }
     public static double OBApplication(Scanner scanner, Scanner baseScanner) {
@@ -87,6 +89,8 @@ public class PrecisionComputation {
             }
             sum = sum + (priceDegradation + qtyDegradation) / 2;
         }
+        scanner.close();
+        baseScanner.close();
         return sum / totalNum;
     }
     public static double SLApplication(Scanner scanner, Scanner baseScanner) {
@@ -138,6 +142,8 @@ public class PrecisionComputation {
             }
             sum =  sum + Degradation;
         }
+        scanner.close();
+        baseScanner.close();
         return sum / totalNum;
     }
 }

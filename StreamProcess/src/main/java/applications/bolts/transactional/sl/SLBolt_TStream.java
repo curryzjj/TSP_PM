@@ -307,9 +307,7 @@ public abstract class SLBolt_TStream extends TransactionalBoltTStream {
                 }
                 if (this.getPartitionId(keys[3]) != event.getPid()) {
                     outsideDeterminant.setTargetPartitionId(this.getPartitionId(keys[3]));
-                    if(this.getPartitionId(keys[3]) != this.getPartitionId(keys[1])) {
-                        outsideDeterminant.setAckValues(keys[1], event.src_asset_value.getRecord());
-                    }
+                    outsideDeterminant.setAckValues(keys[1], event.src_asset_value.getRecord());
                 } else {
                     if (this.getPartitionId(keys[3]) != this.getPartitionId(keys[1])) {
                         insideDeterminant = new InsideDeterminant(event.getBid(),event.getPid());
