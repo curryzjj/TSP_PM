@@ -101,7 +101,11 @@ public class CLRManager extends FTManager {
     }
     @Override
     public boolean sinkRegister(long id) throws IOException {
-        return this.commitCurrentLog(id);
+        if (this.callFaultTolerance.containsValue(Recovery) && !not_all_register()) {
+            return false;
+        } else {
+            return this.commitCurrentLog(id);
+        }
     }
 
     private void execute() throws Exception {
