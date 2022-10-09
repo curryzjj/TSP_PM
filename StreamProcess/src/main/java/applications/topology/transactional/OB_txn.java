@@ -55,7 +55,7 @@ public class OB_txn extends TransactionalTopology {
                    builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
                            new OBBolt_SStore_Global(0),
                            config.getInt(Executor_Threads),
-                           grouping);
+                           new KeyBasedGrouping(GrepSumConstants.Component.SPOUT));
                } else {
                    builder.setBolt(OnlineBidingSystemConstants.Component.EXECUTOR,
                            new OBBolt_TStream_ISC(0),
