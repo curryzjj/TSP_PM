@@ -34,7 +34,6 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     protected long recoveryId = -1;
     protected List<Integer> recoveryPartitionIds = new ArrayList<>();
     protected boolean isSnapshot;
-    protected long markerId = 0;
     protected MultiStreamInFlightLog multiStreamInFlightLog;
     protected int firstDownTask;
     public TransactionalBoltTStream(Logger log,int fid){
@@ -44,7 +43,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     public void initialize(int thread_Id, int thisTaskId, ExecutionGraph graph) {
         super.initialize(thread_Id, thisTaskId, graph);
         transactionManager = new TxnManagerTStream(db.getStorageManager(),this.context.getThisComponentId(),thread_Id,NUM_SEGMENTS,this.context.getThisComponent().getNumTasks());
-        partition_delta=(int) Math.ceil(NUM_ITEMS / (double) PARTITION_NUM);//NUM_ITEMS / partition_num;
+        partition_delta = NUM_ITEMS / PARTITION_NUM;//NUM_ITEMS / partition_num;
         if(enable_recovery_dependency){
             this.epochInfo = new EpochInfo(0L,this.executor.getExecutorID());
         }
@@ -63,35 +62,8 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
     }
     //used in the T-Stream_CC
     protected abstract void PRE_TXN_PROCESS(Tuple in) throws DatabaseException, InterruptedException;
-    protected abstract boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
-    protected abstract boolean TXN_PROCESS()throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
     protected void REQUEST_POST() throws InterruptedException{};//implement in the application
     protected void REQUEST_CORE() throws InterruptedException{};//implement in the application
-    protected void execute_ts_normal(Tuple in) throws DatabaseException, InterruptedException {
-        if(status.isMarkerArrived(in.getSourceTask())){
-            PRE_EXECUTE(in);
-        }else{
-            PRE_TXN_PROCESS(in);
-        }
-    }
-    public void BUFFER_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        for (Queue<Tuple> tuples : bufferedTuples.values()) {
-            if (tuples.size() != 0) {
-                boolean isMarker = false;
-                while (!isMarker) {
-                    Tuple tuple = tuples.poll();
-                    if (tuple != null) {
-                        execute(tuple);
-                        if (tuple.isMarker()) {
-                            isMarker = true;
-                        }
-                    } else {
-                        isMarker = true;
-                    }
-                }
-            }
-        }
-    }
     /**
      * To register persist when there is no transaction abort
      */
@@ -125,7 +97,7 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
      * To register undo when there is transaction abort
      */
     protected void SyncRegisterUndo() throws InterruptedException {
-        this.lock=this.FTM.getLock();
+        this.lock = this.FTM.getLock();
         synchronized (lock){
             this.FTM.boltRegister(this.executor.getExecutorID(), FaultToleranceConstants.FaultToleranceStatus.Undo);
             lock.notifyAll();
@@ -166,10 +138,10 @@ public abstract class TransactionalBoltTStream extends TransactionalBolt {
                 }
             }
         }
-        LOG.info("Align offset is  " + this.recoveryId);
+        LOG.info("Recovery id is " + this.recoveryPartitionIds.toString() + " Align offset is  " + this.recoveryId);
     }
     public int getPartitionId(String key){
-        Integer _key = Integer.valueOf(key);
+        int _key = Integer.parseInt(key);
         return _key / partition_delta;
     }
     public void updateRecoveryDependency(int[] key, boolean isModify){

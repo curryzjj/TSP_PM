@@ -1,5 +1,6 @@
 package engine.storage;
 
+import System.util.SpinLock;
 import engine.Exception.DatabaseException;
 import engine.shapshot.CheckpointOptions;
 import engine.shapshot.CheckpointStream.CheckpointStreamFactory;
@@ -15,11 +16,13 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RunnableFuture;
 
 public abstract class AbstractStorageManager {
     public Map<String, BaseTable> tables = null;
     public int table_count = 0;
+    public ConcurrentHashMap<String, SpinLock> spinLocks = new ConcurrentHashMap<>();
     public abstract BaseTable getTable(String tableName) throws DatabaseException;
     public abstract TableRecord getTableRecords(String tableName,String key) throws DatabaseException;
     public synchronized void createTable(RecordSchema s, String tableName, DataBoxTypes type) throws DatabaseException, RocksDBException {};
@@ -60,5 +63,10 @@ public abstract class AbstractStorageManager {
                                                                                           long timestamp,
                                                                                           @Nonnull CheckpointStreamFactory streamFactory,
                                                                                           @Nonnull CheckpointOptions checkpointOptions) throws Exception;
+    public abstract SnapshotStrategy.SnapshotResultSupplier asyncSnapshot(long checkpointId,
+                                                                          long timestamp,
+                                                                          int partitionId,
+                                                                          @Nonnull CheckpointStreamFactory streamFactory,
+                                                                          @Nonnull CheckpointOptions checkpointOptions) throws Exception;
     public abstract void dumpDataBase() throws IOException;
 }

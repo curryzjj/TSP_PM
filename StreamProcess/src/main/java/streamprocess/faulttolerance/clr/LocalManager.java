@@ -114,29 +114,22 @@ public class LocalManager extends FTManager {
                     return;
                 }
                 if(callFaultTolerance.containsValue(Recovery)){
-                    LOG.info("CLRManager received all bolt register and start recovery");
+                    LOG.info("LocalManager received all bolt register and start recovery");
                     failureFlag.compareAndSet(true, false);
                     failureTimes ++;
                     List<Integer> recoveryIds;
                     long alignOffset;
+                    SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(SnapshotFile);
                     if (enable_determinants_log) {
                         recoveryIds = this.db.getTxnProcessingEngine().getRecoveryRangeId();
                         ConcurrentHashMap<Integer,CausalService> causalService = this.g.getSink().askCausalService();
                         alignOffset = causalService.get(recoveryIds.get(0)).currentMarkerId;
                     } else {
-                        RecoveryDependency recoveryDependency = this.g.getSink().ackRecoveryDependency();
-                        alignOffset = recoveryDependency.currentMarkId;
+                        alignOffset = lastSnapshotResult.getCheckpointId();
                         recoveryIds = this.db.getTxnProcessingEngine().getRecoveryRangeId();
                     }
                     LOG.info("Recovery partitions are" + recoveryIds.toString() + "Align offset is  " + alignOffset);
-                    SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(SnapshotFile);
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(), recoveryIds, alignOffset);
-                    //undo to align offset
-//                    MeasureTools.Align_time_begin(System.nanoTime());
-//                    if (enable_align_wait) {
-//                        this.db.undoFromWALToTargetOffset(recoveryIds, alignOffset);
-//                    }
-                    MeasureTools.Align_time_finish(System.nanoTime());
                     MeasureTools.State_load_begin(System.nanoTime());
                     this.db.recoveryFromTargetSnapshot(lastSnapshotResult, recoveryIds);
                     MeasureTools.State_load_finish(System.nanoTime());
@@ -155,7 +148,7 @@ public class LocalManager extends FTManager {
                     notifyAllComplete(alignOffset);
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Snapshot)) {
-                    LOG.info("CLRManager received all bolt register and start snapshot");
+                    LOG.info("LocalManager received all bolt register and start snapshot");
                     MeasureTools.startSnapshot(System.nanoTime());
                     SnapshotResult snapshotResult = this.db.parallelSnapshot(this.SnapshotOffset.poll(),00000L);
                     this.snapshotResults.put(snapshotResult.getCheckpointId(), snapshotResult);
@@ -165,7 +158,7 @@ public class LocalManager extends FTManager {
                     notifyBoltComplete();
                     lock.notifyAll();
                 } else if(callFaultTolerance.containsValue(Undo)) {
-                    LOG.info("CheckpointManager received all register and start undo");
+                    LOG.info("LocalManager received all register and start undo");
                     this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
                     notifyBoltComplete();
                     lock.notifyAll();
@@ -181,7 +174,7 @@ public class LocalManager extends FTManager {
         dataOutputStream.writeInt(len);
         dataOutputStream.write(result);
         dataOutputStream.close();
-        LOG.info("CLRManager commit the checkpoint to the current.log at " + checkpointId);
+        LOG.info("LocalManager commit the checkpoint to the current.log at " + checkpointId);
         g.getSpout().ackCommit(checkpointId);
         g.getSink().ackCommit(checkpointId);
         for (int eId : this.callFaultTolerance.keySet()) {
@@ -249,7 +242,7 @@ public class LocalManager extends FTManager {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            LOG.info("CLRManager stops");
+            LOG.info("LocalManager stops");
             LOG.info("Failure Time : " + failureTimes);
         }
     }

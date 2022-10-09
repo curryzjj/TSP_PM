@@ -1,6 +1,7 @@
 package applications.bolts.transactional.sl;
 
 import System.measure.MeasureTools;
+import System.sink.helper.ApplicationResult;
 import applications.events.SL.DepositEvent;
 import applications.events.SL.TransactionEvent;
 import applications.events.SL.TransactionResult;
@@ -12,6 +13,7 @@ import engine.transaction.function.DEC;
 import engine.transaction.function.INC;
 import streamprocess.components.operators.base.transaction.TransactionalBoltTStream;
 import streamprocess.controller.output.Determinant.InsideDeterminant;
+import streamprocess.controller.output.Determinant.OutsideDeterminant;
 import streamprocess.execution.runtime.tuple.Tuple;
 import streamprocess.faulttolerance.checkpoint.Status;
 import streamprocess.faulttolerance.clr.CausalService;
@@ -144,48 +146,15 @@ public abstract class SLBolt_TStream_Conventional extends TransactionalBoltTStre
         //deduplication at upstream
         if (this.markerId > recoveryId) {
             for (TxnEvent event:EventsHolder){
-                TransactionResult transactionResult = null;
-                int targetId;
-                if (enable_determinants_log) {
-                    MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
-                    InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
-                    if (event.txnContext.isAbort.get()) {
-                        insideDeterminant.setAbort(true);
-                        MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                        targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, event.getTimestamp());//the tuple is finished.
-                    } else {
-                        if(event instanceof TransactionEvent){
-                            transactionResult = ((TransactionEvent) event).transaction_result;
-                            if (this.getPartitionId(((TransactionEvent)event).getSourceAccountId()) != event.getPid()) {
-                                insideDeterminant.setAckValues(((TransactionEvent)event).getSourceAccountId(), ((TransactionEvent) event).src_account_value.getRecord());
-                            }
-                            if (this.getPartitionId(((TransactionEvent)event).getSourceBookEntryId()) != event.getPid()) {
-                                insideDeterminant.setAckValues(((TransactionEvent)event).getSourceBookEntryId(), ((TransactionEvent) event).src_asset_value.getRecord());
-                            }
-                        }else{
-                            transactionResult = ((DepositEvent) event).transactionResult;
-                        }
-                        MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                        if (insideDeterminant.ackValues.size() != 0) {
-                            targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, insideDeterminant, event.getTimestamp());//the tuple is finished.
-                        } else {
-                            targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
-                        }
-                    }
+                if (event instanceof TransactionEvent){
+                    TRANSFER_POST((TransactionEvent) event);
                 } else {
-                    if (event.txnContext.isAbort.get()) {
-                        targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, event.getTimestamp());//the tuple is finished.
-                    } else {
-                        targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, event.getTimestamp());//the tuple is finished.
-                    }
-                }
-                if (enable_upstreamBackup) {
-                    MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, transactionResult);
-                    MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
+                    DEPOSIT_POST((DepositEvent) event);
                 }
             }
-            MeasureTools.Upstream_backup_finish_acc(this.executor.getExecutorID());
+            if (enable_upstreamBackup) {
+                MeasureTools.Upstream_backup_finish_acc(this.executor.getExecutorID());
+            }
         }
     }
 
@@ -204,12 +173,64 @@ public abstract class SLBolt_TStream_Conventional extends TransactionalBoltTStre
 
     private void TRANSFER_REQUEST_CORE(TransactionEvent event) {
         if (event.txnContext.isAbort.get()) {
-            event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), false);
+            event.transaction_result = new TransactionResult(event.getBid(), false);
         } else {
-            event.transaction_result = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0], event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
+            event.transaction_result = new TransactionResult(event.getBid(), event.success[0], event.src_account_value.getRecord().getValues().get(1).getLong(), event.src_asset_value.getRecord().getValues().get(1).getLong());
         }
     }
     protected void DEPOSITE_REQUEST_CORE(DepositEvent event) {
-        event.transactionResult = new TransactionResult(event.getBid(), event.getTimestamp(), event.success[0]);
+        event.transactionResult = new TransactionResult(event.getBid(), event.success[0]);
+    }
+    protected void TRANSFER_POST(TransactionEvent event) throws InterruptedException {
+        TransactionResult transactionResult = event.transaction_result;
+        int targetId;
+        if (enable_determinants_log) {
+            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
+            if (event.txnContext.isAbort.get()) {
+                InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
+                insideDeterminant.setAbort(true);
+                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant,null, event.getTimestamp(), new ApplicationResult(event.getBid(),new Double[]{-1.0}));
+            } else {
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValues().get(1).getLong(), (double) event.src_account_value.getRecord().getValues().get(1).getLong()}));//the tuple is finished.
+            }
+        } else {
+            if (event.txnContext.isAbort.get()) {
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{-1.0}));//the tuple is finished.
+            } else {
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{(double) event.src_account_value.getRecord().getValues().get(1).getLong(), (double) event.src_account_value.getRecord().getValues().get(1).getLong()}));//the tuple is finished.
+            }
+        }
+        if (enable_upstreamBackup) {
+            MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
+            this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, transactionResult);
+            MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
+        }
+    }
+    protected void DEPOSIT_POST(DepositEvent event) throws InterruptedException {
+        TransactionResult transactionResult = event.transactionResult;
+        int targetId;
+        if (enable_determinants_log) {
+            MeasureTools.HelpLog_backup_begin(this.thread_Id, System.nanoTime());
+            if (event.txnContext.isAbort.get()) {
+                InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
+                insideDeterminant.setAbort(true);
+                MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{-1.0}));
+            } else {
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));
+            }
+        } else {
+            if (event.txnContext.isAbort.get()) {
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{-1.0}));//the tuple is finished.
+            } else {
+                targetId = collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{1.0}));//the tuple is finished.
+            }
+        }
+        if (enable_upstreamBackup) {
+            MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
+            this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, transactionResult);
+            MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
+        }
     }
 }

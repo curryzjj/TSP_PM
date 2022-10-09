@@ -6,6 +6,7 @@ import engine.log.WALManager;
 import engine.table.datatype.DataBox;
 import engine.table.datatype.DataBoxImpl.DoubleDataBox;
 import engine.table.datatype.DataBoxImpl.IntDataBox;
+import engine.table.datatype.DataBoxImpl.StringDataBox;
 import engine.table.tableRecords.SchemaRecord;
 import engine.transaction.common.OperationChain;
 import engine.transaction.common.Operation;
@@ -13,6 +14,7 @@ import engine.transaction.function.AVG;
 import engine.log.LogRecord;
 import engine.transaction.function.DEC;
 import engine.transaction.function.INC;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import UserApplications.SOURCE_CONTROL;
@@ -24,6 +26,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static UserApplications.CONTROL.*;
+import static UserApplications.constants.GrepSumConstants.Constant.VALUE_LEN;
 
 public class TxnProcessingEngine {
     private static final Logger LOG = LoggerFactory.getLogger(TxnProcessingEngine.class);
@@ -46,7 +49,7 @@ public class TxnProcessingEngine {
     private HashMap<Integer, ExecutorServiceInstance> multi_engine = new HashMap<>();//one island one engine.
     //initialize
     private String app;
-    public void initialize(int size,String app){
+    public void initialize(int size, String app){
         num_op = size;
         this.app = app;
         holder_by_stage = new ConcurrentHashMap<>();
@@ -275,8 +278,6 @@ public class TxnProcessingEngine {
             case WRITE_ONLY:
                 if (app.equals("OB_txn")) {
                    this.OB_Alert_Fun(operation);
-                } else if(app.equals("GS_txn")) {
-                    this.GS_Write_Fun(operation);
                 }
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.d_record);
@@ -287,6 +288,8 @@ public class TxnProcessingEngine {
                     this.SL_Depo_Fun(operation);
                 }else if (app.equals("OB_txn")){
                     this.OB_Topping_Fun(operation);
+                } else if(app.equals("GS_txn")) {
+                    this.GS_Write_Fun(operation);
                 }
                 if(enable_wal){
                     logRecord.setUpdateTableRecord(operation.d_record);
@@ -497,11 +500,10 @@ public class TxnProcessingEngine {
             }
         }
         // check the preconditions
-        if (bidPrice < askPrice || bid_qty > left_qty ) {
-            operation.success[0] = false;
-        } else {
+        if (bidPrice > askPrice && bid_qty < left_qty ) {
             d_record.get(2).setLong(left_qty - operation.function.delta_long);//new quantity.
-            operation.success[0] = true;
+        } else {
+            operation.success[0] = false;
         }
         CONTROL.randomDelay();
         return true;
@@ -534,12 +536,14 @@ public class TxnProcessingEngine {
     }
     private boolean GS_Write_Fun(Operation operation) {
         if (enable_transaction_abort) {
-            if (operation.value_list.size() == 0) {
+            if (operation.function.delta_long < 0) {
                 operation.isFailed = true;
                 return false;
             }
         }
-        operation.d_record.record_.updateValues(operation.value_list);
+        List<DataBox> values = operation.d_record.record_.getValues();
+        int read_result = Integer.parseInt(values.get(1).getString().trim());
+        operation.d_record.record_.getValues().get(1).setString(String.valueOf(read_result + operation.function.delta_long), VALUE_LEN);
         CONTROL.randomDelay();
         return true;
     }
@@ -549,7 +553,7 @@ public class TxnProcessingEngine {
         List<DataBox> srcRecord = operation.s_record.record_.getValues();
         if(operation.function instanceof AVG){
             if (enable_transaction_abort) {
-                if (operation.function.delta_double > 180) {
+                if (operation.function.delta_double > 400) {
                     operation.isFailed = true;
                     return false;
                 }

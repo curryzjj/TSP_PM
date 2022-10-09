@@ -22,9 +22,9 @@ public class BaseManager extends FTManager{
     public BaseManager(ExecutionGraph g, Configuration conf, Database db){
         this.callAbort = new ConcurrentHashMap<>();
         this.lock = new Object();
-        this.g=g;
-        this.db=db;
-        this.close=false;
+        this.g = g;
+        this.db = db;
+        this.close = false;
         this.callAbort_ini();
     }
 

@@ -47,13 +47,13 @@ public abstract class baseRunner {
     public boolean profile = false;
     @Parameter(names = {"--benchmark"}, description = "benchmarking the throughput of all applications")
     public boolean benchmark = false;
-    @Parameter(names = {"--load"}, description = "benchmarking the throughput of all applications")
-    public boolean load = false;
     @Parameter(names = {"--microbenchmark"}, description = "benchmarking the throughput of all applications")
     public boolean microbenchmark = false;
 
-    @Parameter(names = {"--r", "--runtime"}, description = "Runtime in seconds for the Brisk.topology (local mode only)")
-    public int runtimeInSeconds = 30;
+    @Parameter(names = {"--stateDegradation"}, description = "measure state degradation")
+    public int stateDegradation = 0;
+    @Parameter(names = {"--relativeError"}, description = "measure relative error")
+    public int relativeError = 0;
 
     @Parameter(names = {"--bt"}, description = "fixed batch", required = false)
     public int batch = 1000;
@@ -165,10 +165,19 @@ public abstract class baseRunner {
         config.put("microbenchmark", microbenchmark);
         config.put("metrics.output", metric_path);
 
-        config.put("runtimeInSeconds", runtimeInSeconds);
         config.put("DataBase",DataBase);
         config.put("Sequential_Binding",true);
 
+        if (relativeError == 0) {
+            config.put("relativeError", false);
+        } else {
+            config.put("relativeError", true);
+        }
+        if (stateDegradation == 0) {
+            config.put("stateDegradation", false);
+        } else {
+            config.put("stateDegradation", true);
+        }
         //Fault tolerance
         config.put("FTOptions", FTOptions);
         config.put("failureModel",failureModel);

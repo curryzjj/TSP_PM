@@ -3,6 +3,7 @@ package applications.sink;
 import System.FileSystem.FileSystem;
 import System.FileSystem.ImplFS.LocalFileSystem;
 import System.measure.MeasureTools;
+import System.sink.helper.ApplicationResult;
 import System.util.Configuration;
 import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
@@ -31,7 +32,7 @@ public class MeasureSink extends BaseSink {
     private static final long serialVersionUID = 6249684803036342603L;
     private static final Logger LOG = LoggerFactory.getLogger(MeasureSink.class);
     private final DescriptiveStatistics latency = new DescriptiveStatistics();
-    private final ConcurrentSkipListMap<Long,Double> results = new ConcurrentSkipListMap<>();
+    private final ConcurrentSkipListMap<Long, ApplicationResult> results = new ConcurrentSkipListMap<>();
     //Exactly_Once
     protected final List<Double> latency_map = new ArrayList<>();
     //no_Exactly_Once
@@ -102,7 +103,7 @@ public class MeasureSink extends BaseSink {
                     this.currentMarkerId = in.getBID();
                     if (enable_determinants_log) {
                         for (CausalService causalService : this.causalService.values()) {
-                            causalService.setCurrentMarkerId(currentMarkerId);
+                            causalService.setDeterminant(in.getBID());
                         }
                     }
                     switch (in.getMarker().getValue()) {
@@ -218,6 +219,7 @@ public class MeasureSink extends BaseSink {
 
     @Override
     protected void EXECUTE(Tuple in) {
+        this.results.put(in.getBID(), (ApplicationResult) in.getValue(4));
         boolean finish = (boolean) in.getValue(0);
         if (!finish) {
             if (enable_determinants_log) {
@@ -267,6 +269,7 @@ public class MeasureSink extends BaseSink {
         MeasureTools.setLatency(thisTaskId, latency);
         MeasureTools.setCheckpointTimes(CheckpointTimes);
         MeasureTools.setSystemRuntime((long) ((System.nanoTime() - startTime) / 1E9));
+        MeasureTools.setResultsMap(thisTaskId,results);
     }
 
     public long getCount() {

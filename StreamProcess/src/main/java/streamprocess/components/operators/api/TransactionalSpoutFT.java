@@ -308,9 +308,10 @@ public abstract class TransactionalSpoutFT extends AbstractSpout implements emit
                         split[2], //bid_array
                         Integer.parseInt(split[3]),//num_of_partition
                         split[5],//key_array
-                        Boolean.parseBoolean(split[6]),//flag
-                        Long.parseLong(split[7]),//timestamp
-                        Boolean.parseBoolean(split[8])//isAbort
+                        split[6],//values
+                        Boolean.parseBoolean(split[7]),//flag
+                        Long.parseLong(split[8]),//timestamp
+                        Boolean.parseBoolean(split[9])//isAbort
                 );
                 break;
             case "BuyingEvent":

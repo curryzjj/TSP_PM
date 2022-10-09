@@ -22,12 +22,8 @@ public class CONTROL {
     //combo optimization
     public static boolean enable_app_combo = false;//compose all operators into one.
     public static int combo_bid_size = 1;//reduce conflict. NOT applicable to LAL, LWM and PAT (must set to one).
-
-
     //order related.
-
     boolean enable_force_ordering = true;
-
     //db related.
     public static boolean enable_shared_state = true;//this is for transactional state mgmt.
     /**Configure in the appRunner**/
@@ -65,8 +61,9 @@ public class CONTROL {
 
     //profile related.
     public static boolean enable_measure = true;//enable this only when we want to test for breakdown.
-
     public static boolean enable_debug = true;//some critical debug section.
+    public static boolean enableStateDegradation = false;
+    public static boolean enableRelativeError = false;
 
     //engine related.
     public static boolean enable_engine = true;//1. enable TP_engine. Always enabled. There's no meaning if we disable engine for T-Stream.

@@ -25,6 +25,7 @@ public class SLBolt_TStream_CLR extends SLBolt_TStream {
                 this.db.getTxnProcessingEngine().mimicFailure(lostPartitionId);
                 CONTROL.failureFlagBid.add(in.getBID());
             }
+            this.recoveryPartitionIds.clear();
             this.recoveryPartitionIds.add(lostPartitionId);
             this.SyncRegisterRecovery();
             if (enable_align_wait){

@@ -11,8 +11,10 @@ import UserApplications.SOURCE_CONTROL;
 import engine.Database;
 import engine.shapshot.SnapshotResult;
 import engine.table.datatype.serialize.Serialize;
+import engine.table.keyGroup.KeyGroupRangeOffsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 import streamprocess.execution.ExecutionGraph;
 import streamprocess.execution.ExecutionNode;
 import streamprocess.faulttolerance.FTManager;
@@ -47,11 +49,9 @@ public class GlobalManager extends FTManager {
     private Object lock;
     private ConcurrentHashMap<Long, SnapshotResult> snapshotResults = new ConcurrentHashMap<>();
     private boolean close;
-    private Queue<Long> SnapshotOffset;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callFaultTolerance;
     private ConcurrentHashMap<Integer, FaultToleranceConstants.FaultToleranceStatus> callRecovery;
     public GlobalManager(ExecutionGraph g, Configuration conf, Database db){
-        this.SnapshotOffset = new ArrayDeque<>();
         this.callFaultTolerance = new ConcurrentHashMap<>();
         this.callRecovery = new ConcurrentHashMap<>();
         this.lock = new Object();
@@ -87,7 +87,7 @@ public class GlobalManager extends FTManager {
         }
     }
     public boolean spoutRegister(long checkpointId){
-        this.SnapshotOffset.add(checkpointId);
+        this.snapshotResults.put(checkpointId, new SnapshotResult(checkpointId));
         LOG.debug("Spout register the checkpoint with the checkpointId= "+checkpointId);
         return true;
     }
@@ -132,7 +132,7 @@ public class GlobalManager extends FTManager {
                     return;
                 }
                 if(callFaultTolerance.containsValue(Recovery)){
-                    LOG.info("CheckpointManager received all register and start recovery");
+                    LOG.info("GlobalManager received all register and start recovery");
                     failureFlag.compareAndSet(true, false);
                     failureTimes ++;
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(checkpointFile);
@@ -150,35 +150,22 @@ public class GlobalManager extends FTManager {
                     this.db.getTxnProcessingEngine().getRecoveryRangeId().clear();
                     this.db.getTxnProcessingEngine().cleanAllOperations();
                     SOURCE_CONTROL.getInstance().config(PARTITION_NUM);
-                    this.SnapshotOffset.clear();
                     this.g.getSink().clean_status();
                     notifyAllComplete(lastSnapshotResult.getCheckpointId());
                     LOG.info("Recovery complete!");
-                    lock.notifyAll();
-                } else if(callFaultTolerance.containsValue(Snapshot)){
-                    LOG.info("CheckpointManager received all register and start snapshot");
-                    SnapshotResult snapshotResult;
-                    MeasureTools.startSnapshot(System.nanoTime());
-                    if(enable_parallel){
-                        snapshotResult = this.db.parallelSnapshot(SnapshotOffset.poll(),00000L);
-                    }else{
-                        RunnableFuture<SnapshotResult> getSnapshotResult = this.db.snapshot(SnapshotOffset.poll(),00000L);
-                        snapshotResult = getSnapshotResult.get();
-                    }
-                    MeasureTools.finishSnapshot(System.nanoTime());
-                    MeasureTools.setSnapshotFileSize(snapshotResult.getSnapshotPaths());
-                    this.snapshotResults.put(snapshotResult.getCheckpointId(),snapshotResult);
-                    notifyBoltComplete();
-                    lock.notifyAll();
-                } else if(callFaultTolerance.containsValue(Undo)) {
-                    LOG.info("CheckpointManager received all register and start undo");
-                    this.db.getTxnProcessingEngine().isTransactionAbort.compareAndSet(true, false);
-                    notifyBoltComplete();
                     lock.notifyAll();
                 }
             }
         }
     }
+
+    @Override
+    public void takeSnapshot(long checkpointId, int partitionId) throws Exception {
+        SnapshotResult snapshotResult = this.db.asyncSnapshot(checkpointId, 00000L, partitionId);
+        Tuple2<Path, KeyGroupRangeOffsets> tuple2 = new Tuple2<>(snapshotResult.getSnapshotPath(),snapshotResult.getKeyGroupRangeOffsets());
+        this.snapshotResults.get(checkpointId).setSnapshotResults(partitionId,tuple2);
+    }
+
     public boolean commitCurrentLog(long id) throws IOException {
         LocalDataOutputStream localDataOutputStream = new LocalDataOutputStream(checkpointFile);
         DataOutputStream dataOutputStream = new DataOutputStream(localDataOutputStream);
@@ -188,14 +175,9 @@ public class GlobalManager extends FTManager {
         dataOutputStream.write(result);
         dataOutputStream.flush();
         dataOutputStream.close();
-        LOG.info("CheckpointManager commit the checkpoint to the current.log");
+
+        LOG.info("GlobalManager commit the checkpoint to the current.log");
         return true;
-    }
-    public void notifyBoltComplete() throws Exception {
-        for(int id:callFaultTolerance.keySet()){
-            g.getExecutionNode(id).ackCommit(false, 0L);
-        }
-        this.callFaultTolerance_ini();
     }
     public void notifyAllComplete(long alignMarkerId) throws Exception {
         for(int id: callFaultTolerance.keySet()){
@@ -225,7 +207,7 @@ public class GlobalManager extends FTManager {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            LOG.info("CheckpointManager stops");
+            LOG.info("GlobalManager stops");
             LOG.info("Failure Time : " + failureTimes);
         }
     }

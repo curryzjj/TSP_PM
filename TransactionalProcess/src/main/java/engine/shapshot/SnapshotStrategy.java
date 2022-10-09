@@ -18,6 +18,7 @@ public interface SnapshotStrategy<SR extends SnapshotResources>{
      * @throws Exception
      */
     SR syncPrepareResources(long checkpointId) throws Exception;
+    SR syncPrepareResourcesByPartitionId(long checkpointId, int partitionId) throws Exception;
     List<SR> syncPrepareResources(long checkpointId, int partitionNum) throws IOException;
     /**
      * Operation that writes a snapshot into a stream that is provided by the given {@link CheckpointStreamFactory}

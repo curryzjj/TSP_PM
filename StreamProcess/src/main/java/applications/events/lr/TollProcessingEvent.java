@@ -11,7 +11,7 @@ public class TollProcessingEvent extends TxnEvent {
     private final int[] keys;
     private final int segmentId;
     private final int speedValue;
-    public double[] spendValues;
+    public double[] roadSpendValues;
     public int[] cntValues;
     public double toll;
     private final int Vid;
@@ -21,7 +21,7 @@ public class TollProcessingEvent extends TxnEvent {
         this.keys = keys;
         speed_value = new SchemaRecordRef[numAccess];
         count_value = new SchemaRecordRef[numAccess];
-        spendValues = new double[numAccess];
+        roadSpendValues = new double[numAccess];
         cntValues = new int[numAccess];
         for (int i = 0; i < numAccess; i++) {
             count_value[i] = new SchemaRecordRef();
@@ -41,7 +41,7 @@ public class TollProcessingEvent extends TxnEvent {
         }
         speed_value = new SchemaRecordRef[keys.length];
         count_value = new SchemaRecordRef[keys.length];
-        spendValues = new double[keys.length];
+        roadSpendValues = new double[keys.length];
         cntValues = new int[keys.length];
         for (int i = 0; i < keys.length; i++) {
             count_value[i] = new SchemaRecordRef();

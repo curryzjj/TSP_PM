@@ -14,11 +14,7 @@ public class BuyingEvent extends TxnEvent {
     public SchemaRecordRef[] record_refs;
 
     //updated state...to be written.
-    public BidingResult biding_result;
-
-    //expected state.
-    //long Item_value=0;
-    //long asset_value=0;
+    public boolean biding_result = true;
 
     private int[] itemId;
     private long[] bid_price;
@@ -124,7 +120,6 @@ public class BuyingEvent extends TxnEvent {
             bid_qty[access_id] = rnd.nextLong(MAX_BUY_Transfer);
         }
         bid_price[access_id] = rnd.nextLong(MAX_Price);
-
     }
     public void setValues(SplittableRandom rnd) {
         for (int access_id = 0; access_id < NUM_ACCESSES; ++access_id) {

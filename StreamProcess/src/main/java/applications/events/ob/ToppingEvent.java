@@ -11,7 +11,7 @@ import static UserApplications.constants.OnlineBidingSystemConstants.Constant.MA
 public class ToppingEvent extends TxnEvent {
     //place-rangeMap.
     public SchemaRecordRef[] record_refs;
-    public boolean topping_result=true;
+    public boolean topping_result = true;
 
     private int[] itemId;
     private long[] itemTopUp;
@@ -68,7 +68,7 @@ public class ToppingEvent extends TxnEvent {
         for (int i = 0; i < top_arrays.length; i++) {
             this.itemTopUp[i] = Long.parseLong(top_arrays[i].trim());
         }
-        this.timestamp=timestamp;
+        this.timestamp = timestamp;
     }
 
     public int getNum_access() {

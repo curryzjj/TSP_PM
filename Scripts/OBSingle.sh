@@ -1,5 +1,5 @@
 function ResetParameters() {
-  app="OB_txn"
+app="OB_txn"
   FTOptions=0
   failureModel=3
   failureFrequency=6
@@ -19,7 +19,7 @@ function ResetParameters() {
   #shellcheck disable=SC2003
   batch_number_per_wm=`expr $input_store_batch \* $tthreads`
   #Workload Configurations
-  NUM_ITEMS=327680
+  NUM_ITEMS=163840
   NUM_EVENTS=16000000
   ZIP_SKEW=400
   RATIO_OF_READ=500
@@ -27,7 +27,7 @@ function ResetParameters() {
   RATIO_OF_DEPENDENCY=1000
   complexity=0
   NUM_ACCESSES=2
-  partition_num_per_txn=2
+  partition_num_per_txn=16
   partition_num=16
 }
 function runFTStream() {

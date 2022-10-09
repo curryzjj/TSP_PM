@@ -1,4 +1,4 @@
-package applications.bolts.transactional.tp;
+package applications.bolts.transactional.ob;
 
 import System.measure.MeasureTools;
 import UserApplications.CONTROL;
@@ -13,11 +13,13 @@ import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.*;
 
-public class TPBolt_TStream_Wal extends TPBolt_TStream{
-    private static final long serialVersionUID = 2082014261100781714L;
-    public TPBolt_TStream_Wal(int fid) {
+public class OBBolt_TStream_WSC extends OBBolt_TStream{
+    private static final long serialVersionUID = -8626226381744987803L;
+
+    public OBBolt_TStream_WSC(int fid) {
         super(fid);
     }
+
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(CONTROL.failureFlag.get()){
@@ -27,7 +29,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
             }
             this.SyncRegisterRecovery();
             this.collector.cleanAll();
-            this.LREvents.clear();
+            this.EventsHolder.clear();
             for (Queue<Tuple> tuples : bufferedTuples.values()) {
                 tuples.clear();
             }
@@ -37,6 +39,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                     PRE_EXECUTE(in);
                 } else {
                     if (status.allMarkerArrived(in.getSourceTask(),this.executor)){
+                        //this.collector.ack(in,in.getMarker());
                         switch (in.getMarker().getValue()){
                             case "recovery":
                                 forward_marker(in.getSourceTask(),in.getBID(),in.getMarker(),in.getMarker().getValue());
@@ -90,7 +93,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 REQUEST_POST();
                 MeasureTools.finishPostTransaction(thread_Id, System.nanoTime());
                 this.SyncCommitLog();
-                LREvents.clear();//clear stored events.
+                EventsHolder.clear();//clear stored events.
                 BUFFER_PROCESS();
                 break;
             case 1:
@@ -106,7 +109,7 @@ public class TPBolt_TStream_Wal extends TPBolt_TStream{
                 }
                 this.SyncRegisterRecovery();
                 this.collector.cleanAll();
-                this.LREvents.clear();
+                this.EventsHolder.clear();
                 for (Queue<Tuple> tuples : bufferedTuples.values()) {
                     tuples.clear();
                 }

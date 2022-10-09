@@ -1,10 +1,11 @@
-package applications.bolts.transactional.gs;
+package applications.bolts.transactional.tp;
 
 import System.measure.MeasureTools;
 import UserApplications.CONTROL;
 import engine.Exception.DatabaseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import streamprocess.execution.runtime.tuple.Tuple;
-import streamprocess.execution.runtime.tuple.msgs.FailureFlag;
 
 import java.io.IOException;
 import java.util.Queue;
@@ -13,11 +14,14 @@ import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.*;
 
-public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
-    private static final long serialVersionUID = 6126484047591969728L;
-    public GSBolt_TStream_Snapshot(int fid) {
+public class TPBolt_TStream_ISC extends TPBolt_TStream {
+    private static final Logger LOG = LoggerFactory.getLogger(TPBolt_TStream_ISC.class);
+    private static final long serialVersionUID = 701564387363737406L;
+
+    public TPBolt_TStream_ISC(int fid) {
         super(fid);
     }
+
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(CONTROL.failureFlag.get()){
@@ -27,16 +31,16 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
             }
             this.SyncRegisterRecovery();
             this.collector.cleanAll();
-            this.EventsHolder.clear();
+            this.LREvents.clear();
             for (Queue<Tuple> tuples : bufferedTuples.values()) {
                 tuples.clear();
             }
-        }else {
+        } else {
             if(in.isMarker()){
                 if (status.isMarkerArrived(in.getSourceTask())) {
                     PRE_EXECUTE(in);
                 } else {
-                    if(status.allMarkerArrived(in.getSourceTask(), this.executor)){
+                    if(status.allMarkerArrived(in.getSourceTask(),this.executor)){
                         switch (in.getMarker().getValue()){
                             case "marker":
                                 this.markerId = in.getBID();
@@ -72,13 +76,12 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
             }
         }
     }
-
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
         MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
+        int FT=transactionManager.start_evaluate(thread_Id,this.markerId);
         MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
-        boolean transactionSuccess=FT==0;
+        boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
                 this.AsyncRegisterPersist();
@@ -87,7 +90,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                 REQUEST_POST();
                 MeasureTools.finishPostTransaction(thread_Id, System.nanoTime());
                 this.SyncCommitLog();
-                EventsHolder.clear();//clear stored events.
+                LREvents.clear();//clear stored events.
                 BUFFER_PROCESS();
                 break;
             case 1:
@@ -103,7 +106,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                 }
                 this.SyncRegisterRecovery();
                 this.collector.cleanAll();
-                this.EventsHolder.clear();
+                this.LREvents.clear();
                 for (Queue<Tuple> tuples : bufferedTuples.values()) {
                     tuples.clear();
                 }
@@ -124,12 +127,11 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                 REQUEST_CORE();
                 REQUEST_POST();
                 MeasureTools.finishPostTransaction(thread_Id, System.nanoTime());
-                EventsHolder.clear();
+                LREvents.clear();
                 BUFFER_PROCESS();
                 break;
             case 1:
                 MeasureTools.Transaction_abort_begin(this.thread_Id, System.nanoTime());
-                SyncRegisterUndo();
                 transactionSuccess = this.TXN_PROCESS();
                 MeasureTools.Transaction_abort_finish(this.thread_Id, System.nanoTime());
                 break;
@@ -140,7 +142,7 @@ public class GSBolt_TStream_Snapshot extends GSBolt_TStream{
                 }
                 this.SyncRegisterRecovery();
                 this.collector.cleanAll();
-                this.EventsHolder.clear();
+                this.LREvents.clear();
                 for (Queue<Tuple> tuples : bufferedTuples.values()) {
                     tuples.clear();
                 }

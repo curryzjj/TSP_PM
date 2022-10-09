@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 import static engine.Database.snapshotExecutor;
@@ -183,7 +184,7 @@ public class AbstractRecoveryManager {
     }
     public static void parallelRecoveryTargetPartitionFromSnapshot(Database db, SnapshotResult snapshotResult, List<Integer> targetId) throws InterruptedException {
         List<recoveryFromSnapshot> callables=new ArrayList<>();
-        HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResults = snapshotResult.getSnapshotResults();
+        ConcurrentHashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> snapshotResults = snapshotResult.getSnapshotResults();
         for (int id:targetId) {
             callables.add(new recoveryFromSnapshot(db,new SnapshotResult(snapshotResults.get(id)._1,snapshotResults.get(id)._2)));
         }

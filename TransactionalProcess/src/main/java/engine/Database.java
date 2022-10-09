@@ -101,6 +101,7 @@ public abstract class Database {
      * @throws Exception
      */
     public abstract SnapshotResult parallelSnapshot(final long checkpointId, final long timestamp) throws Exception;
+    public abstract SnapshotResult asyncSnapshot(final long checkpointId, final long timestamp, int partitionId) throws Exception;
     /**
      * To commit the update log for the group of transactions
      * @param globalLSN

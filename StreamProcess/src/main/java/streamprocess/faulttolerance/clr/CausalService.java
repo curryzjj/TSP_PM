@@ -18,7 +18,7 @@ public class CausalService implements Serializable {
     public ConcurrentHashMap<Long, InsideDeterminant> insideDeterminant;
     public List<OutsideDeterminant> outsideDeterminant;
     public List<Long> abortEvent;
-    //markId, outsideDeterminant
+    //markId, Determinant
     public ConcurrentHashMap<Long,List<OutsideDeterminant>> outsideDeterminantList;
     public ConcurrentHashMap<Long,List<Long>> abortEventList;
     public ConcurrentHashMap<Long,ConcurrentHashMap<Long, InsideDeterminant>> insideDeterminantList;
@@ -31,7 +31,7 @@ public class CausalService implements Serializable {
         abortEvent = new ArrayList<>();
     }
     public void addInsideDeterminant(InsideDeterminant insideDeterminant) {
-        this.insideDeterminant.put(insideDeterminant.input, insideDeterminant);
+        this.insideDeterminant.putIfAbsent(insideDeterminant.input, insideDeterminant);
     }
     public void addOutsideDeterminant(OutsideDeterminant outsideDeterminant) {
         this.outsideDeterminant.add(outsideDeterminant);
@@ -48,15 +48,16 @@ public class CausalService implements Serializable {
         this.insideDeterminantList.clear();
     }
 
-    public void setCurrentMarkerId(long currentMarkerId) {
+    public void setDeterminant(long currentMarkerId) {
         outsideDeterminantList.putIfAbsent(currentMarkerId, this.outsideDeterminant);
         abortEventList.putIfAbsent(currentMarkerId, this.abortEvent);
         insideDeterminantList.putIfAbsent(currentMarkerId, this.insideDeterminant);
-        this.abortEvent = new ArrayList<>();
-        this.outsideDeterminant =  new ArrayList<>();
-        this.insideDeterminant = new ConcurrentHashMap<>();
+        insideDeterminant = new ConcurrentHashMap<>();
+        outsideDeterminant = new ArrayList<>();
+        abortEvent = new ArrayList<>();
         this.currentMarkerId = currentMarkerId;
     }
+
     public List<Long> getAbortEventsByMarkerId(long markerId){
         ArrayList<Long> keys = SortHelper.sortKey(this.abortEventList.keySet());
         for (long key:keys) {

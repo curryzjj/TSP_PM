@@ -183,9 +183,9 @@ public class OBDataGenerator extends InputDataGenerator {
     private AlertEvent randomAlertEvents(long[] bid_array, long bid, SplittableRandom rnd){
         OBParam param = new OBParam(NUM_ACCESSES);
         Set<Integer> keys = new HashSet<>();
-        randomKeys(param,keys,NUM_ACCESSES);
+        randomKeys(param, keys, NUM_ACCESSES);
         assert verify(keys, current_pid, partition_num);
-        current_bid++;
+        current_bid ++;
         if (random.nextInt(1000) < RATIO_OF_ABORT) {
             return new AlertEvent(NUM_ACCESSES,param.keys(),rnd,current_pid,bid_array,bid, partition_num,true);
         } else {
@@ -197,7 +197,7 @@ public class OBDataGenerator extends InputDataGenerator {
         Set<Integer> keys=new HashSet<>();
         randomKeys(param,keys,NUM_ACCESSES);
         assert verify(keys, current_pid, partition_num);
-        current_bid++;
+        current_bid ++;
         if (random.nextInt(1000) < RATIO_OF_ABORT) {
             return new ToppingEvent(NUM_ACCESSES,param.keys(),rnd,current_pid,bid_array,bid, partition_num,true);
         } else {

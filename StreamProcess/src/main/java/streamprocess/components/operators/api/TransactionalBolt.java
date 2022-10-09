@@ -79,7 +79,7 @@ public abstract class TransactionalBolt extends AbstractBolt implements emitMark
         bufferedTuples.get(in.getSourceTask()).add(in);
         _bid = in.getBID();
         input_event = in.getValue(0);
-        TxnContext temp=new TxnContext(thread_Id, this.fid, _bid);
+        TxnContext temp = new TxnContext(thread_Id, this.fid, _bid);
         txn_context[0] = temp;
         sum = 0;
     }
@@ -88,6 +88,32 @@ public abstract class TransactionalBolt extends AbstractBolt implements emitMark
     protected Object input_event;
     int sum = 0;
     //used in the T-Stream_CC
-    protected void PRE_TXN_PROCESS(Tuple input_event) throws DatabaseException, InterruptedException {
+    protected abstract void PRE_TXN_PROCESS(Tuple input_event) throws DatabaseException, InterruptedException;
+    protected abstract boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
+    protected abstract boolean TXN_PROCESS()throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException;
+    protected void execute_ts_normal(Tuple in) throws DatabaseException, InterruptedException {
+        if(status.isMarkerArrived(in.getSourceTask())){
+            PRE_EXECUTE(in);
+        }else{
+            PRE_TXN_PROCESS(in);
+        }
+    }
+    public void BUFFER_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
+        for (Queue<Tuple> tuples : bufferedTuples.values()) {
+            if (tuples.size() != 0) {
+                boolean isMarker = false;
+                while (!isMarker) {
+                    Tuple tuple = tuples.poll();
+                    if (tuple != null) {
+                        execute(tuple);
+                        if (tuple.isMarker()) {
+                            isMarker = true;
+                        }
+                    } else {
+                        isMarker = true;
+                    }
+                }
+            }
+        }
     }
 }

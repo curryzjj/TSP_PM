@@ -71,6 +71,8 @@ public class GSDataGenerator extends InputDataGenerator {
                     split_exp+
                     Arrays.toString(microEvent.getKeys())+//5 keys int
                     split_exp+
+                    Arrays.toString(microEvent.getValues())+//5 keys int
+                    split_exp+
                     microEvent.READ_EVENT()+//6 is read_event boolean
                     split_exp+
                     microEvent.getTimestamp()+
@@ -98,9 +100,9 @@ public class GSDataGenerator extends InputDataGenerator {
         assert !enable_states_partition|| verify(keys, current_pid, partition_num);
         current_bid++;
         if (random.nextInt(1000) < RATIO_OF_ABORT) {
-            return new MicroEvent(param.getKeys(), flag, NUM_ACCESSES, bid, current_pid, p_bid, partition_num,true);
+            return new MicroEvent(param.getKeys(), flag, NUM_ACCESSES, bid, current_pid, p_bid, partition_num,true, new SplittableRandom());
         } else {
-            return new MicroEvent(param.getKeys(), flag, NUM_ACCESSES, bid, current_pid, p_bid, partition_num,false);
+            return new MicroEvent(param.getKeys(), flag, NUM_ACCESSES, bid, current_pid, p_bid, partition_num,false, new SplittableRandom());
         }
     }
 

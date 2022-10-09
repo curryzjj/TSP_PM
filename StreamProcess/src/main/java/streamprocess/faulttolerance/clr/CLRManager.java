@@ -101,7 +101,11 @@ public class CLRManager extends FTManager {
     }
     @Override
     public boolean sinkRegister(long id) throws IOException {
-        return this.commitCurrentLog(id);
+        if (this.callFaultTolerance.containsValue(Recovery) && !not_all_register()) {
+            return false;
+        } else {
+            return this.commitCurrentLog(id);
+        }
     }
 
     private void execute() throws Exception {
@@ -128,9 +132,12 @@ public class CLRManager extends FTManager {
                         alignOffset = recoveryDependency.currentMarkId;
                         recoveryIds = recoveryDependency.getDependencyByPartitionId(this.db.getTxnProcessingEngine().getRecoveryRangeId());
                     }
-                    LOG.info("Recovery partitions are" + recoveryIds.toString() + "Align offset is  " + alignOffset);
                     SnapshotResult lastSnapshotResult = getLastCommitSnapshotResult(SnapshotFile);
+                    if (lastSnapshotResult.getCheckpointId() > alignOffset) {
+                        alignOffset = lastSnapshotResult.getCheckpointId();
+                    }
                     this.g.getSpout().recoveryInput(lastSnapshotResult.getCheckpointId(), recoveryIds, alignOffset);
+                    LOG.info("Recovery partitions are" + recoveryIds.toString() + "Align offset is  " + alignOffset);
                     //undo to align offset
                     MeasureTools.Align_time_begin(System.nanoTime());
                     if (enable_align_wait) {
@@ -203,6 +210,7 @@ public class CLRManager extends FTManager {
         for(int id:callRecovery.keySet()){
             g.getExecutionNode(id).ackCommit(true, alignMakerId);
         }
+        g.getSink().ackCommit(true,alignMakerId);
         this.callRecovery_ini();
     }
     private boolean not_all_register(){

@@ -155,7 +155,7 @@ public class SLDataGenerator extends InputDataGenerator {
         final int book = param.keys()[1];
         final long accountsDeposit = rnd.nextLong(MAX_ACCOUNT_DEPOSIT) + 500;
         final long bookDeposit= rnd.nextLong(MAX_BOOK_DEPOSIT) + 500;
-        current_bid++;
+        current_bid ++;
         if (random.nextInt(1000) < RATIO_OF_ABORT) {
             return new DepositEvent(bid, current_pid, bid_array, partition_num, String.valueOf(account), String.valueOf(book), MIN_BALANCE, MIN_BALANCE, true);
         } else {
@@ -174,7 +174,7 @@ public class SLDataGenerator extends InputDataGenerator {
         final int targetAcct = param.keys()[1];
         final int sourceBook = param.keys()[2];
         final int targetBook = param.keys()[3];
-        current_bid++;
+        current_bid ++;
         if (random.nextInt(1000) < RATIO_OF_ABORT) {
             return new TransactionEvent(bid, current_pid, bid_array, partition_num, String.valueOf(sourceAcct),  String.valueOf(sourceBook), String.valueOf(targetAcct), String.valueOf(targetBook), accountsTransfer, transfer, MIN_BALANCE,true);
         } else {

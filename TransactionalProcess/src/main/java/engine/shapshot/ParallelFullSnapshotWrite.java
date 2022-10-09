@@ -21,10 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static engine.Database.snapshotExecutor;
 import static utils.FullSnapshotUtil.END_OF_KEY_GROUP_MARK;
@@ -52,7 +49,7 @@ public class ParallelFullSnapshotWrite implements SnapshotStrategy.SnapshotResul
         Collection<SnapshotTask> callables = new ArrayList<>();
         initTasks(callables,snapshotCloseableRegistry);
         List<Future<Tuple2<Path,KeyGroupRangeOffsets>>> snapshotPaths = snapshotExecutor.invokeAll(callables);
-        HashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> results = new HashMap<>();
+        ConcurrentHashMap<Integer, Tuple2<Path,KeyGroupRangeOffsets>> results = new ConcurrentHashMap<>();
         for(int i = 0; i < snapshotPaths.size(); i++){
             try {
                 Tuple2<Path,KeyGroupRangeOffsets> tuple = snapshotPaths.get(i).get();

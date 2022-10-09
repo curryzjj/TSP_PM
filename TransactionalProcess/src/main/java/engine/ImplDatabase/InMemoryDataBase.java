@@ -134,8 +134,19 @@ public class InMemoryDataBase extends Database {
                 16,
                 snapshotPath,
                 fs);
-        SnapshotStrategy.SnapshotResultSupplier parallelSnapshot= storageManager.parallelSnapshot(checkpointId,timestamp,streamFactory,checkpointOptions);
+        SnapshotStrategy.SnapshotResultSupplier parallelSnapshot = storageManager.parallelSnapshot(checkpointId,timestamp,streamFactory,checkpointOptions);
         return parallelSnapshot.get(cancelStreamRegistry);
+    }
+
+    @Override
+    public SnapshotResult asyncSnapshot(long checkpointId, long timestamp, int partitionId) throws Exception {
+        CloseableRegistry cancelStreamRegistry=new CloseableRegistry();
+        CheckpointStreamFactory streamFactory=new FsCheckpointStreamFactory(16,
+                16,
+                snapshotPath,
+                fs);
+        SnapshotStrategy.SnapshotResultSupplier asyncSnapshot = storageManager.asyncSnapshot(checkpointId,timestamp,partitionId,streamFactory,checkpointOptions);
+        return asyncSnapshot.get(cancelStreamRegistry);
     }
 
     @Override

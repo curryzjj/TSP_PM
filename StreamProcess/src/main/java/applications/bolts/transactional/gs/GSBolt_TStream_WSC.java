@@ -1,4 +1,4 @@
-package applications.bolts.transactional.ob;
+package applications.bolts.transactional.gs;
 
 import System.measure.MeasureTools;
 import UserApplications.CONTROL;
@@ -13,13 +13,11 @@ import java.util.concurrent.ExecutionException;
 
 import static UserApplications.CONTROL.*;
 
-public class OBBolt_TStream_Wal extends OBBolt_TStream{
-    private static final long serialVersionUID = -8626226381744987803L;
-
-    public OBBolt_TStream_Wal(int fid) {
+public class GSBolt_TStream_WSC extends GSBolt_TStream{
+    private static final long serialVersionUID = -7735253055437818414L;
+    public GSBolt_TStream_WSC(int fid) {
         super(fid);
     }
-
     @Override
     public void execute(Tuple in) throws InterruptedException, DatabaseException, BrokenBarrierException, IOException, ExecutionException {
         if(CONTROL.failureFlag.get()){
@@ -81,9 +79,9 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
 
     @Override
     protected boolean TXN_PROCESS_FT() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        MeasureTools.startTransaction(this.thread_Id,System.nanoTime());
-        int FT = transactionManager.start_evaluate(thread_Id,this.markerId);
-        MeasureTools.finishTransaction(this.thread_Id,System.nanoTime());
+        MeasureTools.startTransaction(thread_Id, System.nanoTime());
+        int FT = transactionManager.start_evaluate(thread_Id, this.markerId);
+        MeasureTools.finishTransaction(thread_Id, System.nanoTime());
         boolean transactionSuccess = FT == 0;
         switch (FT){
             case 0:
@@ -113,13 +111,12 @@ public class OBBolt_TStream_Wal extends OBBolt_TStream{
                 for (Queue<Tuple> tuples : bufferedTuples.values()) {
                     tuples.clear();
                 }
-                break;
         }
         return transactionSuccess;
     }
 
     @Override
     protected boolean TXN_PROCESS() throws DatabaseException, InterruptedException, BrokenBarrierException, IOException, ExecutionException {
-        return true;
+      return true;
     }
 }

@@ -54,7 +54,7 @@ public class SL_txn extends TransactionalTopology {
             if(enable_checkpoint){
                 if (conventional) {
                     builder.setBolt(StreamLedgerConstants.Component.EXECUTOR,
-                            new SLBolt_TStream_Global(0),
+                            new SLBolt_Store_Global(0),
                             config.getInt(Executor_Threads),
                             grouping);
                 } else {

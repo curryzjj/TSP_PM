@@ -1,6 +1,7 @@
 package applications.bolts.transactional.tp;
 
 import System.measure.MeasureTools;
+import System.sink.helper.ApplicationResult;
 import applications.events.lr.TollProcessingEvent;
 import applications.events.lr.TollProcessingResult;
 import engine.Exception.DatabaseException;
@@ -93,7 +94,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
     }
     private void TS_REQUEST_CORE(TollProcessingEvent event) {
        for (int i = 0; i < NUM_ACCESSES; i++) {
-           event.spendValues[i] = event.getSpeed_value()[i].getRecord().getValue().getDouble();
+           event.roadSpendValues[i] = event.getSpeed_value()[i].getRecord().getValue().getDouble();
            event.cntValues[i] = event.getCount_value()[i].getRecord().getValue().getInt();
        }
     }
@@ -103,7 +104,7 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                 int targetId = TP_REQUEST_POST(event);
                 if (enable_upstreamBackup) {
                     MeasureTools.Upstream_backup_begin(this.executor.getExecutorID(), System.nanoTime());
-                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new TollProcessingResult(event.getBid(), event.getTimestamp(),event.toll));
+                    this.multiStreamInFlightLog.addEvent(targetId - firstDownTask, DEFAULT_STREAM_ID, new TollProcessingResult(event.getBid(), event.toll));
                     MeasureTools.Upstream_backup_acc(this.executor.getExecutorID(), System.nanoTime());
                 }
             }
@@ -118,32 +119,42 @@ public abstract class TPBolt_TStream extends TransactionalBoltTStream {
                 InsideDeterminant insideDeterminant = new InsideDeterminant(event.getBid(), event.getPid());
                 insideDeterminant.setAbort(true);
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp());//the tuple is finished.
+                event.toll = -1;
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, insideDeterminant, null, event.getTimestamp(),new ApplicationResult(event.getBid(), new Double[]{event.toll}));//the tuple is finished.
             } else {
                 MeasureTools.HelpLog_backup_acc(this.thread_Id, System.nanoTime());
                 double spendValue = 0;
                 int cntValue = 0;
                 for (int i = 0; i < NUM_ACCESSES; i++) {
-                    spendValue = spendValue + event.spendValues[i];
+                    spendValue = spendValue + event.roadSpendValues[i];
                     cntValue = cntValue + event.cntValues[i];
                 }
                 //Some UDF function
-                event.toll = spendValue / cntValue;
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true,null, null, event.getTimestamp(), event.toll);//the tuple is finished.
+                if (cntValue <= 50) {
+                    event.toll = spendValue * 50;
+                } else {
+                    event.toll = spendValue * 50 * (cntValue - 50) * (cntValue - 50);
+                }
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true,null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{event.toll}));//the tuple is finished.
             }
         } else {
             if (event.txnContext.isAbort.get()) {
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp());//the tuple is finished.
+                event.toll = -1;
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), false, null, null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{event.toll}));//the tuple is finished.
             } else {
                 double spendValue = 0;
                 int cntValue = 0;
                 for (int i = 0; i < NUM_ACCESSES; i++) {
-                    spendValue = spendValue + event.spendValues[i];
+                    spendValue = spendValue + event.roadSpendValues[i];
                     cntValue = cntValue + event.cntValues[i];
                 }
                 //Some UDF function
-                event.toll = spendValue / cntValue;
-                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null,null, event.getTimestamp());//the tuple is finished.
+                if (cntValue <= 50) {
+                    event.toll = spendValue * 50;
+                } else {
+                    event.toll = spendValue * 50 * (cntValue - 50) * (cntValue - 50);
+                }
+                return collector.emit_single(DEFAULT_STREAM_ID, event.getBid(), true, null,null, event.getTimestamp(), new ApplicationResult(event.getBid(), new Double[]{event.toll}));//the tuple is finished.
             }
         }
     }

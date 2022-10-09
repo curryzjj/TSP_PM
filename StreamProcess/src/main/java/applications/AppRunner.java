@@ -21,6 +21,7 @@ import streamprocess.components.topology.Topology;
 import streamprocess.components.topology.TopologySubmitter;
 import streamprocess.execution.runtime.threads.executorThread;
 
+import javax.naming.ldap.Control;
 import java.io.IOException;
 import java.util.*;
 
@@ -191,6 +192,9 @@ public class  AppRunner extends baseRunner {
             failureTimes = config.getInt("failureFrequency");
             CONTROL.firstFailure = config.getInt("firstFailure");
         }
+        //MeasureTools
+        CONTROL.enableRelativeError = config.getBoolean("relativeError");
+        CONTROL.enableStateDegradation = config.getBoolean("stateDegradation");
     }
 
     private static double runTopologyLocally(Topology topology, Configuration conf) throws UnhandledCaseException, InterruptedException, IOException {
@@ -208,7 +212,9 @@ public class  AppRunner extends baseRunner {
         submitter.getOM().join();
         try {
             submitter.getOM().getEM().closeFTM();
-            submitter.getOM().getEM().dumpResultDatabase();
+            if (enableStateDegradation) {
+                submitter.getOM().getEM().dumpResultDatabase();
+            }
             final_topology.db.close();
             submitter.getOM().getEM().exit();
         } catch (IOException e) {
@@ -259,9 +265,15 @@ public class  AppRunner extends baseRunner {
                 config.getInt("failureModel"),
                 config.getInt("failureFrequency"),
                 config.getInt("FTOptions"));
-        double precision = PrecisionComputation.precisionComputation(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
-        System.out.println(precision);
-        MeasureTools.setPrecision(precision);
+        if (enableRelativeError) {
+            MeasureTools.DumpOutputResult(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
+            double relativeError = PrecisionComputation.relativeError(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
+            MeasureTools.setRelativeError(relativeError);
+        }
+        if (enableStateDegradation) {
+            double stateDegradation = PrecisionComputation.stateDegradation(config.getString("metrics.output"), config.getString("application"), config.getInt("FTOptions"), config.getInt("failureFrequency"));
+            MeasureTools.setStateDegradation(stateDegradation);
+        }
         MeasureTools.METRICS_REPORT(directory);
     }
     public static void main(String[] args) throws UnhandledCaseException, InterruptedException, IOException {
